@@ -1,7 +1,10 @@
 FROM amazoncorretto:8
 
+ARG JAR_VERSION
+ENV JAR_FILE=indexer-aws-${JAR_VERSION}-spring-boot.jar
+
 WORKDIR /
-COPY provider/indexer-aws/target/indexer-aws-0.0.1-SNAPSHOT-spring-boot.jar indexer-aws-0.0.1-SNAPSHOT-spring-boot.jar
+COPY provider/indexer-aws/target/$JAR_FILE $JAR_FILE
 EXPOSE 8080
 
-CMD ["java","-jar", "indexer-aws-0.0.1-SNAPSHOT-spring-boot.jar"]
+CMD java -jar $JAR_FILE
