@@ -51,53 +51,11 @@
         </repository>
     </distributionManagement>
 
-    <profiles>
-        <profile>
-            <id>indexer-core</id>
-            <activation>
-                <!-- this profile is active by default -->
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <modules>
-                <module>indexer-core</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>indexer-aws</id>
-            <activation>
-                <property>
-                    <name>provider</name>
-                    <value>indexer-aws</value>
-                </property>
-            </activation>
-            <modules>
-                <module>provider/indexer-aws</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>indexer-azure</id>
-            <activation>
-                <property>
-                    <name>provider</name>
-                    <value>indexer-azure</value>
-                </property>
-            </activation>
-            <modules>
-                <module>provider/indexer-azure</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>indexer-gcp</id>
-            <activation>
-                <property>
-                    <name>provider</name>
-                    <value>indexer-gcp</value>
-                </property>
-            </activation>
-            <modules>
-                <module>provider/indexer-gcp</module>
-            </modules>
-        </profile>
-    </profiles>
+    <modules>
+        <module>indexer-core</module>
+        <module>provider/indexer-aws</module>
+        <module>provider/indexer-azure</module>
+        <module>provider/indexer-gcp</module>
+    </modules>
 
 </project>
