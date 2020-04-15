@@ -1,0 +1,48 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+      - README.md
+      - .gitignore
+
+pool:
+  name: dps-build
+  demands: maven
+
+steps:
+- task: Maven@3
+  displayName: 'build, test, code coverage'
+  inputs:
+    mavenPomFile: 'pom.xml'
+    options: '--settings ./indexer-core/maven/settings.xml -DVSTS_FEED_TOKEN=$(VSTS_FEED_TOKEN) -U'
+    testResultsFiles: '**/*/TEST-*.xml'
+    codeCoverageToolOption: JaCoCo
+    goals: 'install'
+
+- task: Maven@3
+  displayName: 'build, test, code coverage'
+  inputs:
+    mavenPomFile: 'pom.xml'
+    options: '--settings ./provider/indexer-gcp/maven/settings.xml -DVSTS_FEED_TOKEN=$(VSTS_FEED_TOKEN) -P indexer-gcp'
+    testResultsFiles: '**/*/TEST-*.xml'
+    codeCoverageToolOption: JaCoCo
+    goals: 'package'
+
+- task: ShellScript@2
+  displayName: 'Bash Script: Stage artifacts'
+  inputs:
+    scriptPath: 'provider/indexer-gcp/scripts/stage-artifacts.sh'
+    args: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
+  condition: succeededOrFailed()

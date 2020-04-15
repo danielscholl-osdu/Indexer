@@ -1,0 +1,109 @@
+[
+  {
+    "id": "test:well:2.0.0:1",
+    "kind": "<kind>",
+    "acl": "{viewers=[<Data-Group>], owners=[<Data-Group>]}",
+    "x-acl": [
+      "<Data-Group>"
+    ],
+    "legal": {
+      "legaltags": [
+        "<Legal-Tag>"
+      ],
+      "otherRelevantDataCountries": [
+        "<Country>"
+      ],
+      "status": "compliant"
+    },
+    "data": {
+      "Field": "OSDU OFFICE - 2",
+      "Location": "29.7604,-95.3698",
+      "Basin": "Houston",
+      "County": "Harris",
+      "State": "TX",
+      "Country": "USA",
+      "WellStatus": "Under development",
+      "OriginalOperator": "OFFICE2",
+      "WellName": "Data Platform Services",
+      "WellType": "Data Lake Cloud",
+      "EmptyAttribute": "",
+      "Rank": 1,
+      "Score": 10,
+      "Established": "2000-03-27T23:38:48Z"
+    },
+    "index": {
+      "statusCode": 200,
+      "lastUpdateTime": "2018-10-04T10:11:22.303000"
+    }
+  },
+  {
+    "id": "test:well:2.0.0:2",
+    "kind": "<kind>",
+    "acl": "{viewers=[<Data-Group>], owners=[<Data-Group>]}",
+    "x-acl": [
+      "<Data-Group>"
+    ],
+    "legal": {
+      "legaltags": [
+        "<Legal-Tag>"
+      ],
+      "otherRelevantDataCountries": [
+        "<Country>"
+      ],
+      "status": "compliant"
+    },
+    "data": {
+      "Field": "OSDU OFFICE - 5",
+      "Location": "37.3861,-122.0839",
+      "Basin": "Mountain View",
+      "County": "Orange",
+      "State": "CA",
+      "Country": "USA",
+      "WellStatus": "Under development",
+      "OriginalOperator": "OFFICE5",
+      "WellName": "Data Platform Services",
+      "WellType": "Lake Cloud",
+      "EmptyAttribute": "",
+      "Rank": 2,
+      "Score": 5,
+      "Established": "1980-03-27T20:38:48Z"
+    },
+    "index": {
+      "statusCode": 200,
+      "lastUpdateTime": "2018-10-04T10:11:22.303000"
+    }
+  },
+  {
+    "id": "test:well:2.0.0:3",
+    "kind": "<kind>",
+    "acl": "{viewers=[<Data-Group>], owners=[<Data-Group>]}",
+    "x-acl": [
+      "<Data-Group>"
+    ],
+    "legal": {
+      "legaltags": [
+        "<Legal-Tag>"
+      ],
+      "otherRelevantDataCountries": [
+        "<Country>"
+      ],
+      "status": "compliant"
+    },
+    "data": {
+      "Field": "OSDU OFFICE - 6",
+      "Location": "43.6108, 3.8767",
+      "WellStatus": "Under development",
+      "OriginalOperator": "OFFICE6",
+      "Country": "France",
+      "WellName": "Data Platform Services",
+      "WellType": "Data Lake Cloud",
+      "EmptyAttribute": "",
+      "Rank": 20,
+      "Established": "2005-03-27T23:38:48Z"
+    },
+    "index": {
+      "statusCode": 200,
+      "lastUpdateTime": "2018-10-04T10:11:22.303000"
+    }
+  }
+]

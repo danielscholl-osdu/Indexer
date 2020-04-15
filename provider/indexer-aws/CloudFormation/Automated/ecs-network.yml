@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  CloudFormation template for creating the network resources used for the ECS cluster the application will
+  be deployed into. This is separated from the rest of the ECS resources in order to avoid a circular dependency.
+  Because there can be any number of cache stacks, but only one ECS stack per service, it makes sense to have
+  the caches import ECS exports in order to permit access from ECS, rather than the other way around, since
+  the number of cache clusters and their names can vary, and would require hardcoding them into the ECS template,
+  whereas this way things stay generic and the ECS CloudFormation template does not need to be updated in order to
+  add or remove ElastiCache clusters.
+
+Parameters:
+  Environment:
+    Description: An environment name that will be prefixed to resource names.
+    Type: String
+    AllowedValues:
+      - dev
+      - uat
+      - prod
+    ConstraintDescription: Can only be "dev/uat/prod"
+    Default: dev
+
+  Region:
+    Description: The AWS region to deploy the resources to.
+    Type: String
+    Default: us-east-1
+
+  ApplicationName:
+    Description: >
+      The name of the application, which will be used to generate the ECS cluster name.
+      It will be prefixed with the environment name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: os-indexer
+
+  ECSPort:
+    Description: The port that the ECS Service will listen on.
+    Type: Number
+    Default: 80
+    MinValue: 1
+    MaxValue: 65535
+
+Resources:
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${Environment}-${ApplicationName}-sg"
+      GroupDescription: indexer Service ECS Security Group
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${Environment}-OSDU-VPC"
+
+  # Public access to ECS Listening Port
+  ECSSecurityGroupECSListenerInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref 'ECSSecurityGroup'
+      IpProtocol: tcp
+      FromPort: !Ref ECSPort
+      ToPort: !Ref ECSPort
+      CidrIp: 0.0.0.0/0
+
+  # Public access to port 443
+  ECSSecurityGroupHTTPSInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref 'ECSSecurityGroup'
+      IpProtocol: tcp
+      FromPort: '443'
+      ToPort: '443'
+      CidrIp: 0.0.0.0/0
+
+  # Public access to port 8080
+  ECSSecurityGroupHTTPAltInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref 'ECSSecurityGroup'
+      IpProtocol: tcp
+      FromPort: '8080'
+      ToPort: '8080'
+      CidrIp: 0.0.0.0/0
+
+  # Public access to port 8443
+  ECSSecurityGroupHTTPSAltInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref 'ECSSecurityGroup'
+      IpProtocol: tcp
+      FromPort: '8443'
+      ToPort: '8443'
+      CidrIp: 0.0.0.0/0
+
+  # SSH access for instances in our VPC's jump box subnet group (coming soon – will be part of the Util CFN)
+  ECSSecurityGroupSSHInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref 'ECSSecurityGroup'
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
+
+  # Open Application Load Balancer port range to itself
+  ECSSecurityGroupALBports:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref 'ECSSecurityGroup'
+      IpProtocol: tcp
+      FromPort: '31000'
+      ToPort: '61000'
+      SourceSecurityGroupId: !Ref 'ECSSecurityGroup'
+
+Outputs:
+  EcsNetworkSecurityGroupId:
+    Description: The ID of the indexer Service ECS EC2 security group.
+    Value: !Ref 'ECSSecurityGroup'
+    Export:
+      Name: !Sub ${Environment}-${ApplicationName}-EcsNetworkSecurityGroupId

@@ -1,0 +1,230 @@
+# Copyright © Amazon Web Services
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  CloudFormation template for creating the resources used for the tenant info database for OSDU.
+  It creates the DynamoDB table and the API Gateway endpoints.
+
+Parameters:
+  Environment:
+    Description: An environment name that will be prefixed to resource names.
+    Type: String
+    AllowedValues:
+      - dev
+      - uat
+      - prod
+    ConstraintDescription: Can only be "dev/uat/prod"
+    Default: dev
+
+  Region:
+    Description: The AWS region to deploy the resources to.
+    Type: String
+    Default: us-east-1
+
+  ElasticsearchDomainName:
+    Description: The name of the Elasticsearch domain. Will be prefixed with the environment name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: osdu-indexer
+
+  ElasticsearchNodeInstanceType:
+    Description: The instance type for the main Elasticsearch nodes.
+    ConstraintDescription: Must be a valid instance type from the list of allowed values.
+    Default: t2.medium.elasticsearch
+    AllowedValues:
+      - t2.small.elasticsearch
+      - t2.medium.elasticsearch
+      - m5.large.elasticsearch
+      - m5.xlarge.elasticsearch
+      - m5.2xlarge.elasticsearch
+      - m5.4xlarge.elasticsearch
+      - m5.12xlarge.elasticsearch
+      - c5.large.elasticsearch
+      - c5.xlarge.elasticsearch
+      - c5.2xlarge.elasticsearch
+      - c5.4xlarge.elasticsearch
+      - c5.9xlarge.elasticsearch
+      - c5.18xlarge.elasticsearch
+      - r5.large.elasticsearch
+      - r5.xlarge.elasticsearch
+      - r5.2xlarge.elasticsearch
+      - r5.4xlarge.elasticsearch
+      - r5.12xlarge.elasticsearch
+      - i3.large.elasticsearch
+      - i3.xlarge.elasticsearch
+      - i3.2xlarge.elasticsearch
+      - i3.4xlarge.elasticsearch
+      - i3.8xlarge.elasticsearch
+      - i3.16xlarge.elasticsearch
+    Type: String
+
+  DedicatedMasterInstanceType:
+    Description: >
+      The instance type for the dedicated master nodes. These nodes perform cluster management
+      tasks, but doesn't hold data or respond to data upload requests.
+    ConstraintDescription: Must be a valid instance type from the list of allowed values.
+    Default: t2.medium.elasticsearch
+    AllowedValues:
+      - t2.small.elasticsearch
+      - t2.medium.elasticsearch
+      - m5.large.elasticsearch
+      - m5.xlarge.elasticsearch
+      - m5.2xlarge.elasticsearch
+      - m5.4xlarge.elasticsearch
+      - m5.12xlarge.elasticsearch
+      - c5.large.elasticsearch
+      - c5.xlarge.elasticsearch
+      - c5.2xlarge.elasticsearch
+      - c5.4xlarge.elasticsearch
+      - c5.9xlarge.elasticsearch
+      - c5.18xlarge.elasticsearch
+      - r5.large.elasticsearch
+      - r5.xlarge.elasticsearch
+      - r5.2xlarge.elasticsearch
+      - r5.4xlarge.elasticsearch
+      - r5.12xlarge.elasticsearch
+      - i3.large.elasticsearch
+      - i3.xlarge.elasticsearch
+      - i3.2xlarge.elasticsearch
+      - i3.4xlarge.elasticsearch
+      - i3.8xlarge.elasticsearch
+      - i3.16xlarge.elasticsearch
+    Type: String
+
+  NumberOfElasticsearchNodes:
+    Description: An integer value specifying the number of Elasticsearch primary nodes in the cluster.
+    Type: Number
+    Default: 2
+    MinValue: 1
+    MaxValue: 40
+
+  NumberOfDedicatedMasterNodes:
+    Description: An integer value specifying the number of dedicated master nodes.
+    Type: Number
+    Default: 2
+    MinValue: 2
+    MaxValue: 5
+    
+  ZoneAwarenessEnabled:
+    Description: >
+      When Zone Awareness is enabled, Elasticsearch allocates the nodes and replica
+      index shards that belong to a cluster across multiple AZs in the deployment region.
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: false
+
+  ElasticsearchVersion:
+    Description: >
+      The version of Elasticsearch to deploy on the cluster. Defaults to 6.8. Note
+      that an update requires a full replacement of the Elasticsearch cluster.
+    Type: String
+    AllowedValues:
+      - 1.5
+      - 2.3
+      - 5.1
+      - 5.3
+      - 5.5
+      - 5.6
+      - 6.0
+      - 6.2
+      - 6.3
+      - 6.4
+      - 6.5
+      - 6.6
+      - 6.8
+      - 6.8
+      - 7.1
+    Default: 6.8
+
+  EBSVolumeSize:
+    Description: >
+      The size of the EBS volume (per instance; total cluster size = EBS volume size x Instance count)
+      Maximum size varies by instance type, from 35GiB for t2 instances, up to 12TiB for r5.12xlarge.
+    Type: Number
+    Default: 10
+    MinValue: 10
+    MaxValue: 12000
+
+Resources:
+  ElasticsearchDomain:
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      DomainName: !Sub ${Environment}-${ElasticsearchDomainName}
+      ElasticsearchVersion: !Ref ElasticsearchVersion
+      ElasticsearchClusterConfig:
+        DedicatedMasterEnabled: "true"
+        InstanceCount: !Ref NumberOfElasticsearchNodes
+        ZoneAwarenessEnabled: !Ref ZoneAwarenessEnabled
+        InstanceType: !Ref ElasticsearchNodeInstanceType
+        DedicatedMasterType: !Ref DedicatedMasterInstanceType
+        DedicatedMasterCount: !Ref NumberOfDedicatedMasterNodes
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: !Ref EBSVolumeSize
+        VolumeType: "gp2"
+      NodeToNodeEncryptionOptions:
+        Enabled: false
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: "0"
+#      AccessPolicies:
+#        - Version: "2012-10-17"
+#            Statement:
+#              - Effect: "Allow"
+#                Principal:
+#                  AWS:
+#                    - !Sub arn:aws:iam::${AWS::AccountId}:root
+#                    - Fn::ImportValue:
+#                        !Sub "${Environment}-IndexerServiceIamUserArn"
+#                      # TODO: need to create cognito user and identity pool and link it to principal for dynamic creation
+#                    - "arn:aws:iam::888733619319:role/Cognito_osduelasticsearchAuth_Role"
+#                Action:
+#                  - "es:*"
+#                  - 'es:ESHttp*'
+#                  - 'cognito-identity:*'
+#                  - 'cognito-idp:*'
+#                  - 'sts:AssumeRole'
+#                Resource: !Sub arn:aws:es:us-east-1:846973539254:domain/${Environment}-${ElasticsearchDomainName}/*
+#        - "Version": "2012-10-17"
+#          "Statement":
+#            - "Effect": "Allow"
+#              "Action":
+#                - "iam:PassRole"
+#              "Resource": "arn:aws:iam::888733619319:role/service-role/CognitoAccessForAmazonES"
+      AdvancedOptions:
+        rest.action.multi.allow_explicit_index: "true"
+      Tags:
+        -
+          Key: "Environment"
+          Value: !Ref Environment
+
+Outputs:
+  # Elasticsearch domain ARN
+  ElasticsearchDomainArn:
+    Description: The ARN of the Elasticsearch domain.
+    Value: !GetAtt ElasticsearchDomain.DomainArn
+    Export:
+      Name: !Sub ${Environment}-${ElasticsearchDomainName}-ElasticsearchDomainArn
+
+  # Elasticsearch domain endpoint
+  ElasticsearchDomainEndpoint:
+    Description: The endpoint URL of the Elasticsearch domain.
+    Value: !GetAtt ElasticsearchDomain.DomainEndpoint
+    Export:
+      Name: !Sub ${Environment}-${ElasticsearchDomainName}-ElasticsearchDomainEndpoint

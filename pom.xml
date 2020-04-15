@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.1.7.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>org.opengroup.osdu.indexer</groupId>
+    <artifactId>indexer-service</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0.4-SNAPSHOT</version>
+    <description>Indexer Service</description>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <springfox-version>2.7.0</springfox-version>
+        <spring-cloud.version>Greenwich.SR2</spring-cloud.version>
+<!--        <maven.compiler.target>1.8</maven.compiler.target>-->
+<!--        <maven.compiler.source>1.8</maven.compiler.source>-->
+<!--        <maven.war.plugin>2.6</maven.war.plugin>-->
+<!--        <appengine.maven.plugin>1.0.0</appengine.maven.plugin>-->
+<!--        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
+<!--        <failOnMissingWebXml>false</failOnMissingWebXml>-->
+<!--        <spring-cloud.version>Greenwich.SR2</spring-cloud.version>-->
+<!--        <springfox-version>2.7.0</springfox-version>-->
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>os-core</id>
+            <url>https://pkgs.dev.azure.com/slb-des-ext-collaboration/_packaging/os-core/maven/v1</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>os-core</id>
+            <url>https://pkgs.dev.azure.com/slb-des-ext-collaboration/_packaging/os-core/maven/v1</url>
+        </repository>
+    </distributionManagement>
+
+    <profiles>
+        <profile>
+            <id>indexer-core</id>
+            <activation>
+                <!-- this profile is active by default -->
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>indexer-core</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>indexer-aws</id>
+            <activation>
+                <property>
+                    <name>provider</name>
+                    <value>indexer-aws</value>
+                </property>
+            </activation>
+            <modules>
+                <module>provider/indexer-aws</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>indexer-azure</id>
+            <activation>
+                <property>
+                    <name>provider</name>
+                    <value>indexer-azure</value>
+                </property>
+            </activation>
+            <modules>
+                <module>provider/indexer-azure</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>indexer-gcp</id>
+            <activation>
+                <property>
+                    <name>provider</name>
+                    <value>indexer-gcp</value>
+                </property>
+            </activation>
+            <modules>
+                <module>provider/indexer-gcp</module>
+            </modules>
+        </profile>
+    </profiles>
+
+</project>

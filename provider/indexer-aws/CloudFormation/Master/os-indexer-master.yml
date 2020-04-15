@@ -1,0 +1,550 @@
+# Copyright © Amazon Web Services
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates all AWS resources used by OSDU's Indexer Service. Requires having previously setup the CodeCommit repository, as well as the CodePipeline (manual template).
+Parameters:
+  Environment:
+    Description: The name of the environment.
+    Type: String
+    AllowedValues:
+      - dev
+      - uat
+      - prod
+    ConstraintDescription: Environment can only be "dev/uat/prod".
+    Default: dev
+
+  DeploymentRegion:
+    Description: The AWS region to deploy the resources to.
+    Type: String
+    Default: us-east-1
+
+  ChildTemplateBasePath:
+    Description: >-
+      The base path for where child CloudFormation templates are located – can be relative or absolute, e.g.
+      https://s3.amazonaws.com/dev-osdu-cloudformation-scripts/Automated/
+    Type: String
+    AllowedPattern: '^https:\/\/s3.amazonaws.com\/.*\/$'
+    Default: https://s3.amazonaws.com/dev-osdu-cloudformation-scripts/Automated/
+
+  ApplicationName:
+    Description: >
+      The name of the application, should be equal to the repository name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: os-indexer
+
+  StorageApplicationName:
+    Description: >
+      The name of the storage application
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: osdu-storage
+
+  KeyName:
+    Description: >
+      Name of an existing EC2 KeyPair to enable SSH access to the ECS instances. Note that key pairs cannot
+      be created through CloudFormation, but instead must be uploaded through the AWS Console.
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: ecs_indexer_key
+
+  DesiredCapacity:
+    Description: The default number of instances to launch in the ECS cluster.
+    Type: Number
+    Default: '1'
+
+  MinSize:
+    Description: Maximum number of instances that can be launched in the ECS cluster.
+    Type: Number
+    Default: '0'
+
+  MaxSize:
+    Description: Maximum number of instances that can be launched in the ECS cluster.
+    Type: Number
+    Default: '1'
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t3.large
+    AllowedValues:
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.12xlarge
+      - m5.16xlarge
+      - m5.24xlarge
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m4.16xlarge
+      - t3.nano
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - c5.large
+      - c5.xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.12xlarge
+      - c5.16xlarge
+      - c5.24xlarge
+      - r5.large
+      - r5.xlarge
+      - r5.2xlarge
+      - r5.4xlarge
+      - r5.12xlarge
+      - r5.24xlarge
+      - r4.large
+      - r4.xlarge
+      - r4.2xlarge
+      - r4.4xlarge
+      - r4.8xlarge
+      - r4.16xlarge
+      - i3.large
+      - i3.xlarge
+      - i3.2xlarge
+      - i3.4xlarge
+      - i3.10xlarge
+      - i3.16xlarge
+      - x1e.xlarge
+      - x1e.2xlarge
+      - x1e.4xlarge
+      - x1e.8xlarge
+      - x1e.16xlarge
+      - x1e.32xlarge
+    ConstraintDescription: Please choose a valid EC2 instance type for the ECS container instances.
+
+  IndexerServiceIamUsername:
+    Description: The username of the service user for the OS Indexer Service.
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Type: String
+    Default: service-user-os-indexer
+    MinLength: '1'
+    MaxLength: '64'
+
+  IndexerServiceIamKeyRotationSerial:
+    Description: This integer value can only ever be incremented, and an increase in value results in a rotation of the user's access key.
+    Type: Number
+    Default: 1
+
+  SNSTopicName:
+    Description: >-
+      The name of the Simple Notification Service topic for the OS Indexer Service. Defaults to osdu-indexer-messages.
+      Will be prefixed with the environment name.
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: osdu-indexer-messages
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+
+  SQSQueueName:
+    Description: >-
+      The name of the Simple Queue Service queue for the OS Indexer Service. Defaults to osdu-indexer-queue.
+      Will be prefixed with the environment name.
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: osdu-indexer-queue
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+
+  IndexCacheName:
+    Description: The name of the cache cluster for the legal tag cache. Will be prefixed with the environment name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: indexerIndexCache
+
+  IndexCacheEngine:
+    Description: Which caching platform to use for the legal tag cache. Can be set to 'redis' or 'memcached'.
+    Type: String
+    AllowedValues:
+      - redis
+      - memcached
+    ConstraintDescription: Can only be "redis" or "memcached"
+    Default: redis
+
+  IndexCacheNodeInstanceType:
+    Description: The instance type for redis cache nodes for the legal tag cache.
+    ConstraintDescription: Must be a valid instance type from the list of allowed values.
+    Default: cache.t2.micro
+    AllowedValues:
+      - cache.m5.large
+      - cache.m5.xlarge
+      - cache.m5.2xlarge
+      - cache.m5.4xlarge
+      - cache.m5.12xlarge
+      - cache.m5.24xlarge
+      - cache.m4.large
+      - cache.m4.xlarge
+      - cache.m4.2xlarge
+      - cache.m4.4xlarge
+      - cache.m4.10xlarge
+      - cache.t2.micro
+      - cache.t2.small
+      - cache.t2.medium
+      - cache.c1.xlarge
+      - cache.r5.large
+      - cache.r5.xlarge
+      - cache.r5.2xlarge
+      - cache.r5.4xlarge
+      - cache.r5.12xlarge
+      - cache.r5.24xlarge
+      - cache.r4.large
+      - cache.r4.xlarge
+      - cache.r4.2xlarge
+      - cache.r4.4xlarge
+      - cache.r4.8xlarge
+      - cache.r4.16xlarge
+    Type: String
+
+  IndexCacheNumberOfCacheNodes:
+    Description: An integer value specifying the number of node in the redis cache for the legal tag cache.
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 128
+
+  SchemaCacheName:
+    Description: The name of the cache cluster for the schema cache. Will be prefixed with the environment name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: indexerSchemaCache
+
+  SchemaCacheEngine:
+    Description: Which caching platform to use for the schema cache. Can be set to 'redis' or 'memcached'.
+    Type: String
+    AllowedValues:
+      - redis
+      - memcached
+    ConstraintDescription: Can only be "redis" or "memcached"
+    Default: redis
+
+  SchemaCacheNodeInstanceType:
+    Description: The instance type for redis cache nodes for the schema cache.
+    ConstraintDescription: Must be a valid instance type from the list of allowed values.
+    Default: cache.t2.micro
+    AllowedValues:
+      - cache.m5.large
+      - cache.m5.xlarge
+      - cache.m5.2xlarge
+      - cache.m5.4xlarge
+      - cache.m5.12xlarge
+      - cache.m5.24xlarge
+      - cache.m4.large
+      - cache.m4.xlarge
+      - cache.m4.2xlarge
+      - cache.m4.4xlarge
+      - cache.m4.10xlarge
+      - cache.t2.micro
+      - cache.t2.small
+      - cache.t2.medium
+      - cache.c1.xlarge
+      - cache.r5.large
+      - cache.r5.xlarge
+      - cache.r5.2xlarge
+      - cache.r5.4xlarge
+      - cache.r5.12xlarge
+      - cache.r5.24xlarge
+      - cache.r4.large
+      - cache.r4.xlarge
+      - cache.r4.2xlarge
+      - cache.r4.4xlarge
+      - cache.r4.8xlarge
+      - cache.r4.16xlarge
+    Type: String
+
+  SchemaCacheNumberOfCacheNodes:
+    Description: An integer value specifying the number of node in the redis cache for the schema cache.
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 128
+
+  ElasticsearchDomainName:
+    Description: The name of the Elasticsearch domain. Will be prefixed with the environment name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: osdu-indexer
+
+  ElasticsearchNodeInstanceType:
+    Description: The instance type for the main Elasticsearch nodes.
+    ConstraintDescription: Must be a valid instance type from the list of allowed values.
+    Default: t2.medium.elasticsearch
+    AllowedValues:
+      - t2.small.elasticsearch
+      - t2.medium.elasticsearch
+      - m5.large.elasticsearch
+      - m5.xlarge.elasticsearch
+      - m5.2xlarge.elasticsearch
+      - m5.4xlarge.elasticsearch
+      - m5.12xlarge.elasticsearch
+      - c5.large.elasticsearch
+      - c5.xlarge.elasticsearch
+      - c5.2xlarge.elasticsearch
+      - c5.4xlarge.elasticsearch
+      - c5.9xlarge.elasticsearch
+      - c5.18xlarge.elasticsearch
+      - r5.large.elasticsearch
+      - r5.xlarge.elasticsearch
+      - r5.2xlarge.elasticsearch
+      - r5.4xlarge.elasticsearch
+      - r5.12xlarge.elasticsearch
+      - i3.large.elasticsearch
+      - i3.xlarge.elasticsearch
+      - i3.2xlarge.elasticsearch
+      - i3.4xlarge.elasticsearch
+      - i3.8xlarge.elasticsearch
+      - i3.16xlarge.elasticsearch
+    Type: String
+
+  DedicatedMasterInstanceType:
+    Description: >
+      The instance type for the dedicated master nodes. These nodes perform cluster management
+      tasks, but doesn't hold data or respond to data upload requests.
+    ConstraintDescription: Must be a valid instance type from the list of allowed values.
+    Default: t2.medium.elasticsearch
+    AllowedValues:
+      - t2.small.elasticsearch
+      - t2.medium.elasticsearch
+      - m5.large.elasticsearch
+      - m5.xlarge.elasticsearch
+      - m5.2xlarge.elasticsearch
+      - m5.4xlarge.elasticsearch
+      - m5.12xlarge.elasticsearch
+      - c5.large.elasticsearch
+      - c5.xlarge.elasticsearch
+      - c5.2xlarge.elasticsearch
+      - c5.4xlarge.elasticsearch
+      - c5.9xlarge.elasticsearch
+      - c5.18xlarge.elasticsearch
+      - r5.large.elasticsearch
+      - r5.xlarge.elasticsearch
+      - r5.2xlarge.elasticsearch
+      - r5.4xlarge.elasticsearch
+      - r5.12xlarge.elasticsearch
+      - i3.large.elasticsearch
+      - i3.xlarge.elasticsearch
+      - i3.2xlarge.elasticsearch
+      - i3.4xlarge.elasticsearch
+      - i3.8xlarge.elasticsearch
+      - i3.16xlarge.elasticsearch
+    Type: String
+
+  NumberOfElasticsearchNodes:
+    Description: An integer value specifying the number of Elasticsearch primary nodes in the cluster.
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 40
+
+  NumberOfDedicatedMasterNodes:
+    Description: An integer value specifying the number of dedicated master nodes.
+    Type: Number
+    Default: 2
+    MinValue: 2
+    MaxValue: 5
+
+  ZoneAwarenessEnabled:
+    Description: >
+      When Zone Awareness is enabled, Elasticsearch allocates the nodes and replica
+      index shards that belong to a cluster across multiple AZs in the deployment region.
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: false
+
+  ElasticsearchVersion:
+    Description: >
+      The version of Elasticsearch to deploy on the cluster. Defaults to 6.8. Note
+      that an update requires a full replacement of the Elasticsearch cluster.
+    Type: String
+    AllowedValues:
+      - 1.5
+      - 2.3
+      - 5.1
+      - 5.3
+      - 5.5
+      - 5.6
+      - 6.0
+      - 6.2
+      - 6.3
+      - 6.4
+      - 6.5
+      - 6.6
+      - 6.8
+      - 6.8
+      - 7.1
+    Default: 6.8
+
+  EBSVolumeSize:
+    Description: >
+      The size of the EBS volume, in GiB, (per instance; total cluster size =
+      EBS volume size x Instance count). Maximum size varies by instance type, from 35GiB
+      for t2 instances, up to 12TiB for r5.12xlarge.
+    Type: Number
+    Default: 10
+    MinValue: 10
+    MaxValue: 12000
+
+  ECSPort:
+    Description: The port that the ECS Service will listen on.
+    Type: Number
+    Default: 80
+    MinValue: 1
+    MaxValue: 65535
+
+  ECSCPUAllocation:
+    Description: The amount of CPU resources to allocate to each ECS task/container. Scale - 1024 = 1 vCPU core.
+    Type: Number
+    Default: 1024
+    MinValue: 10
+    MaxValue: 65535
+
+  ECSMemoryAllocation:
+    Description: The amount of memory (RAM) to allocate to each ECS task/container. Scale - 1 = 1MB of memory.
+    Type: Number
+    Default: 2048
+    MinValue: 256
+    MaxValue: 131072
+
+Resources:
+
+  #### Shared Resources ################################################################
+
+  IAMCredentialsStack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, iam-credentials.yml ] ]
+      Parameters:
+        Environment: !Ref Environment
+        Region: !Ref DeploymentRegion
+        IndexerServiceIamUsername: !Ref IndexerServiceIamUsername
+        IndexerServiceIamKeyRotationSerial: !Ref IndexerServiceIamKeyRotationSerial
+
+  MessageBusSNSStack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Join ['', [!Ref ChildTemplateBasePath, sns-topic.yml ] ]
+      Parameters:
+        Environment: !Ref Environment
+        Region: !Ref DeploymentRegion
+        SNSTopicName: !Ref SNSTopicName
+        SQSQueueName: !Ref SQSQueueName
+
+  #### ECS Resources ###################################################################
+
+  ECSNetworkStack:
+    Type: 'AWS::CloudFormation::Stack'
+    DependsOn: IAMCredentialsStack
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, ecs-network.yml ] ]
+      Parameters:
+        Environment: !Ref Environment
+        Region: !Ref DeploymentRegion
+        ApplicationName: !Ref ApplicationName
+        ECSPort: !Ref ECSPort
+
+  ECSClusterStack:
+    Type: 'AWS::CloudFormation::Stack'
+    DependsOn: [SchemaCacheStack, IndexCacheStack]
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, ecs-cluster.yml ] ]
+      Parameters:
+        Environment: !Ref Environment
+        Region: !Ref DeploymentRegion
+        ApplicationName: !Ref ApplicationName
+        KeyName: !Ref KeyName
+        DesiredCapacity: !Ref DesiredCapacity
+        MaxSize: !Ref MaxSize
+        InstanceType: !Ref InstanceType
+        SchemaCacheName: !Ref SchemaCacheName
+        IndexCacheName: !Ref IndexCacheName
+        ECSPort: !Ref ECSPort
+        SNSTopicName: !Ref SNSTopicName
+        ECSMemoryAllocation: !Ref ECSMemoryAllocation
+
+  #### Caching Resources ###############################################################
+
+  IndexCacheStack:
+    Type: 'AWS::CloudFormation::Stack'
+    DependsOn: ECSNetworkStack
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, cache.yml ] ]
+      Parameters:
+        Environment: !Ref Environment
+        Region: !Ref DeploymentRegion
+        ApplicationName: !Ref ApplicationName
+        CacheName: !Ref IndexCacheName
+        CacheEngine: !Ref IndexCacheEngine
+        NodeInstanceType: !Ref IndexCacheNodeInstanceType
+        NumberOfCacheNodes: !Ref IndexCacheNumberOfCacheNodes
+
+  SchemaCacheStack:
+    Type: 'AWS::CloudFormation::Stack'
+    DependsOn: ECSNetworkStack
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, cache.yml ] ]
+      Parameters:
+        Environment: !Ref Environment
+        Region: !Ref DeploymentRegion
+        ApplicationName: !Ref ApplicationName
+        CacheName: !Ref SchemaCacheName
+        CacheEngine: !Ref SchemaCacheEngine
+        NodeInstanceType: !Ref SchemaCacheNodeInstanceType
+        NumberOfCacheNodes: !Ref SchemaCacheNumberOfCacheNodes
+
+  #### Elasticsearch Resources #########################################################
+  # TODO: Add VPCs to Elasticsearch
+
+  ElasticsearchStack:
+    Type: 'AWS::CloudFormation::Stack'
+    DependsOn: IAMCredentialsStack
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, elasticsearch.yml ] ]
+      Parameters:
+        Environment: !Ref Environment
+        Region: !Ref DeploymentRegion
+        ElasticsearchDomainName: !Ref ElasticsearchDomainName
+        ElasticsearchNodeInstanceType: !Ref ElasticsearchNodeInstanceType
+        DedicatedMasterInstanceType: !Ref DedicatedMasterInstanceType
+        NumberOfElasticsearchNodes: !Ref NumberOfElasticsearchNodes
+        NumberOfDedicatedMasterNodes: !Ref NumberOfDedicatedMasterNodes
+        ZoneAwarenessEnabled: !Ref ZoneAwarenessEnabled
+        ElasticsearchVersion: !Ref ElasticsearchVersion
+        EBSVolumeSize: !Ref EBSVolumeSize

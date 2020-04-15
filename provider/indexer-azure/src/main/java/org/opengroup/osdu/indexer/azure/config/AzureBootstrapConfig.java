@@ -1,0 +1,104 @@
+//  Copyright © Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+package org.opengroup.osdu.indexer.azure.config;
+
+import com.azure.security.keyvault.secrets.SecretClient;
+import org.opengroup.osdu.azure.KeyVaultFacade;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Named;
+
+@Component
+public class AzureBootstrapConfig {
+
+    @Value("${aad.oboApi}")
+    private String aadOboAPI;
+
+    @Value("${azure.keyvault.url}")
+    private String keyVaultURL;
+
+    @Value("${azure.servicebus.topic-name}")
+    private String serviceBusTopicName;
+
+    @Value("${azure.servicebus.namespace-name}")
+    private String serviceBusNamespaceName;
+
+    @Value("${ELASTIC_CACHE_EXPIRATION}")
+    private Integer elasticCacheExpiration;
+
+    @Value("${MAX_CACHE_VALUE_SIZE}")
+    private Integer maxCacheValueSize;
+
+    @Bean
+    @Named("KEY_VAULT_URL")
+    public String getKeyVaultURL(){
+        return keyVaultURL;
+    }
+
+    @Bean
+    @Named("SERVICE_BUS_NAMESPACE")
+    public String serviceBusNamespaceName() {
+        return serviceBusNamespaceName;
+    }
+
+    @Bean
+    @Named("SERVICE_BUS_TOPIC")
+    public String serviceBusTopicName() {
+        return serviceBusTopicName;
+    }
+
+    @Bean
+    @Named("ELASTIC_CACHE_EXPIRATION")
+    public Integer getElasticCacheExpiration() {
+        return  elasticCacheExpiration;
+    }
+
+    @Bean
+    @Named("MAX_CACHE_VALUE_SIZE")
+    public Integer getMaxCacheValueSize() {
+        return  maxCacheValueSize;
+    }
+
+    private String authority;
+    private String secretKey;
+
+    @Bean
+    @Named("AAD_OBO_API")
+    public String aadClientID() {
+        return aadOboAPI;
+    }
+
+    @Bean
+    @Named("AUTH_CLIENT_ID")
+    public String authClientID(final SecretClient sc) {
+        return KeyVaultFacade.getSecretWithValidation(sc, "app-dev-sp-username");
+    }
+
+    @Bean
+    @Named("AUTH_CLIENT_SECRET")
+    public String authClientSecret(final SecretClient sc) {
+        return KeyVaultFacade.getSecretWithValidation(sc, "app-dev-sp-password");
+    }
+
+    @Bean
+    @Named("AUTH_URL")
+    public String authURL(final SecretClient sc) {
+        String urlFormat = "https://login.microsoftonline.com/%s/oauth2/token/";
+        String tenant = KeyVaultFacade.getSecretWithValidation(sc, "app-dev-sp-tenant-id");
+        return String.format(urlFormat, tenant);
+    }
+}

@@ -1,0 +1,176 @@
+# os-indexer-azure
+
+os-indexer-azure is a [Spring Boot](https://spring.io/projects/spring-boot) service that is responsible for indexing Records that enable the `os-search` service to execute OSDU R2 domain searches against Elasticsearch.
+
+## Running Locally
+
+### Requirements
+
+In order to run this service locally, you will need the following:
+
+- [Maven 3.6.0+](https://maven.apache.org/download.cgi)
+- [AdoptOpenJDK8](https://adoptopenjdk.net/)
+- Infrastructure dependencies, deployable through the relevant [infrastructure template](https://dev.azure.com/slb-des-ext-collaboration/open-data-ecosystem/_git/infrastructure-templates?path=%2Finfra&version=GBmaster&_a=contents)
+- While not a strict dependency, example commands in this document use [bash](https://www.gnu.org/software/bash/)
+
+### General Tips
+
+**Environment Variable Management**
+The following tools make environment variable configuration simpler
+ - [direnv](https://direnv.net/) - for a shell/terminal environment
+ - [EnvFile](https://plugins.jetbrains.com/plugin/7861-envfile) - for [Intellij IDEA](https://www.jetbrains.com/idea/)
+
+**Lombok**
+This project uses [Lombok](https://projectlombok.org/) for code generation. You may need to configure your IDE to take advantage of this tool.
+ - [Intellij configuration](https://projectlombok.org/setup/intellij)
+ - [VSCode configuration](https://projectlombok.org/setup/vscode)
+
+
+### Environment Variables
+
+In order to run the service locally, you will need to have the following environment variables defined.
+
+**Note** The following command can be useful to pull secrets from keyvault:
+```bash
+az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NAME --query value -otsv
+```
+
+**Required to run service**
+
+| name | value | description | sensitive? | source |
+| ---  | ---   | ---         | ---        | ---    |
+| `storage_service_url` | ex `https://storage.azurewebsites.net` | Endpoint of storage service | no | output of infrastructure deployments |
+| `STORAGE_SCHEMA_HOST` | `${storage_service_url}/schemas` | Endpoint of schema API | no | - |
+| `STORAGE_QUERY_RECORD_HOST` | `${storage_service_url}/query/records` | Endpoint of records API | no | - |
+| `STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST` | `${storage_service_url}/query/records:batch` | Endpoint of records batch API | no | - |
+| `servicebus_namespace_name` | ex `foo-sb-namespace` | . | . | . |
+| `KEYVAULT_URI` | ex `https://foo-kv.vault.azure.net/` | . | . | . |
+| `appinsights_key` | `********` | App Insights key | yes | output of infrastructure deployments |
+| `aad_client_id` | `********` | AAD client application ID | yes | output of infrastructure deployment |
+| `cosmosdb_account` | ex `devintosdur2cosmosacct` | Cosmos account name | no | output of infrastructure deployment |
+| `cosmosdb_key` | `********` | Key for CosmosDB | yes | output of infrastructure deployments |
+| `cosmosdb_database` | ex `dev-osdu-r2-db` | Cosmos database for documents | no | output of infrastructure deployment |
+| `servicebus_topic_name` | `recordstopic` | Service Bus topic name | no | output of infrastructure deployments |
+| `entitlements_service_endpoint` | ex `https://entitlements.azurewebsites.net` | Entitlements service endpoint | no | Service Bus topic name |
+| `AZURE_CLIENT_ID` | `********` | Identity to run the service locally. This enables access to Azure resources. You only need this if running locally | yes | keyvault secret: `$KEYVAULT_URI/secrets/app-dev-sp-username` |
+| `AZURE_TENANT_ID` | `********` | AD tenant to authenticate users from | yes | keyvault secret: `$KEYVAULT_URI/secrets/app-dev-sp-tenant-id` |
+| `AZURE_CLIENT_SECRET` | `********` | Secret for `$AZURE_CLIENT_ID` | yes | keyvault secret: `$KEYVAULT_URI/secrets/app-dev-sp-password` |
+
+**Required to run integration tests**
+
+| name | value | description | sensitive? | source |
+| ---  | ---   | ---         | ---        | ---    |
+| `AZURE_AD_TENANT_ID` | `********` | AD tenant to authenticate users from | yes | -- |
+| `AZURE_TESTER_SERVICEPRINCIPAL_SECRET` | `********` | Secret for `$INTEGRATION_TESTER` | yes | -- |
+| `INTEGRATION_TESTER` | `********` | System identity to assume for API calls. Note: this user must have entitlements configured already | no | -- |
+| `AZURE_AD_APP_RESOURCE_ID` | `********` | AAD client application ID | yes | output of infrastructure deployment |
+| `ELASTIC_USER_NAME` | ex `elastic` | Elasticsearch cluster username | yes | output of infrastructure deployment |
+| `ELASTIC_PASSWORD` | `********` | Elasticsearch cluster password | yes | output of infrastructure deployment |
+| `ELASTIC_HOST` | ex `foobar.ece.msft-osdu-test.org` | Elasticsearch cluster endpoint | no | output of infrastructure deployment |
+| `ELASTIC_PORT` | ex `9243` | Elasticsearch cluster port | no | output of infrastructure deployment |
+| `aad_client_id` | `********` | AAD client application ID | yes | output of infrastructure deployment |
+| `DEFAULT_DATA_PARTITION_ID_TENANT1` | ex `opendes` | Primary data partition for queries | no | Data in search index |
+| `DEFAULT_DATA_PARTITION_ID_TENANT2` | ex `common` | Secondary data partition for queries | no | Data in search index |
+| `STORAGE_HOST` | ex `https://storage.azurewebsites.net/` | Storage service endpoint | no | output of infrastructure deployment |
+| `ENVIRONMENT` | `CLOUD` | Deployment environment | no | - |
+| `ENTITLEMENTS_DOMAIN` | `contoso.com` | OSDU R2 service domain | no | - |
+| `LEGAL_TAG` | `opendes-public-usa-dataset-7643990` | Legal tag used for test records | no | Needs to be in DB. The referenced tag should already exist. |
+| `OTHER_RELEVANT_DATA_COUNTRIES` | `US` | ? | no | - |
+
+### Configure Maven
+
+Check that maven is installed:
+```bash
+$ mvn --version
+Apache Maven 3.6.0
+Maven home: /usr/share/maven
+Java version: 1.8.0_212, vendor: AdoptOpenJDK, runtime: /usr/lib/jvm/jdk8u212-b04/jre
+...
+```
+
+You will need to configure access to the remote maven repository that holds the OSDU dependencies. This file should live within `~/.m2/settings.xml`:
+```bash
+$ cat ~/.m2/settings.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <servers>
+        <server>
+            <id>os-core</id>
+            <username>mvn-pat</username>
+            <!-- Treat this auth token like a password. Do not share it with anyone, including Microsoft support. -->
+            <!-- The generated token expires on or before 11/14/2019 -->
+            <password>$PERSONAL_ACCESS_TOKEN_GOES_HERE</password>
+        </server>
+    </servers>
+</settings>
+```
+
+### Build and run the application
+
+After configuring your environment as specified above, you can follow these steps to build and run the application. These steps should be invoked from the *repository root.*
+
+```bash
+# build + test + install core service code
+$ mvn clean install
+
+# build + test + package azure service code
+$ (cd provider/indexer-azure/ && mvn clean package)
+
+# run service
+#
+# Note: this assumes that the environment variables for running the service as outlined
+#       above are already exported in your environment.
+$ java -jar $(find provider/indexer-azure/target/ -name *-spring-boot.jar)
+```
+
+### Test the application
+
+After the service has started it should be accessible via a web browser by visiting [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). If the request does not fail, you can then run the integration tests.
+
+> **Note**: the integration tests for `os-indexer-azure` work by validating that records submitted to `os-storage-azure` can eventually be queried by `os-search-azure`. This only works if the messages emitted by `os-storage-azure` can be consumed by `os-indexer-queue-azure`, which will submit the indexing request to `os-indexer-azure`. 
+>
+> In order to make sure that the integration tests are running against your local environment, you will need to make sure that the there is an instance of `os-indexer-queue-azure` that is configured to call your deployment of `os-indexer-azure`, and that this instance of `os-indexer-queue-azure` is the only consumer of the Service Bus topic.
+>
+> There are a few ways to do this:
+>   - Stop the `os-indexer-queue-azure` function in the Azure portal and run it locally. You'll need to remember to restart the Azure deployed `os-indexer-queue-azure` when you are finished testing
+>   - Deploy your own infrastructure stack and configure all the services *except* `os-indexer-queue-azure` and `os-indexer-azure` to run in Azure. Then, run `os-indexer-queue-azure` locally
+>   - Rely on the integration tests to run through the CI/CD pipeline
+
+```bash
+# build + install integration test core
+$ (cd testing/indexer-test-core/ && mvn clean install)
+
+# build + run Azure integration tests.
+#
+# Note: this assumes that the environment variables for integration tests as outlined
+#       above are already exported in your environment.
+$ (cd testing/indexer-test-azure/ && mvn clean test)
+```
+
+## Debugging
+
+Jet Brains - the authors of Intellij IDEA, have written an [excellent guide](https://www.jetbrains.com/help/idea/debugging-your-first-java-application.html) on how to debug java programs.
+
+
+## Deploying service to Azure
+
+Service deployments into Azure are standardized to make the process the same for all services. The steps to deploy into
+Azure can be [found here](https://dev.azure.com/slb-des-ext-collaboration/open-data-ecosystem/_git/infrastructure-templates?path=%2Fdocs%2Fosdu%2FSERVICE_DEPLOYMENTS.md&_a=preview)
+
+
+## License
+Copyright © Microsoft Corporation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at 
+
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

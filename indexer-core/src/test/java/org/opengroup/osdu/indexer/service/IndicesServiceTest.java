@@ -1,0 +1,222 @@
+// Copyright 2017-2019, Schlumberger
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package org.opengroup.osdu.indexer.service;
+
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.client.*;
+import org.elasticsearch.rest.RestStatus;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.core.common.model.search.IndexInfo;
+import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.List;
+
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+@RunWith(SpringRunner.class)
+@PrepareForTest({RestHighLevelClient.class, IndicesClient.class, EntityUtils.class})
+public class IndicesServiceTest {
+    @Mock
+    private ElasticClientHandler elasticClientHandler;
+    @Mock
+    private ElasticIndexNameResolver elasticIndexNameResolver;
+    @Mock
+    private IIndexCache indicesExistCache;
+    @Mock
+    @Lazy
+    private JaxRsDpsLog log;
+    @Mock
+    private RestClient restClient;
+    @Mock
+    private Response response;
+    @Mock
+    private HttpEntity httpEntity;
+    @InjectMocks
+    private IndicesServiceImpl sut;
+
+    private RestHighLevelClient restHighLevelClient;
+    private IndicesClient indicesClient;
+
+    @Before
+    public void setup() {
+        initMocks(this);
+        indicesClient = PowerMockito.mock(IndicesClient.class);
+        restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
+    }
+
+    @Test
+    public void delete_existingElasticIndex() throws Exception {
+        AcknowledgedResponse indexResponse = new AcknowledgedResponse(true);
+
+        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        doReturn(indicesClient).when(restHighLevelClient).indices();
+        doReturn(indexResponse).when(indicesClient).delete(any(), any(RequestOptions.class));
+        boolean response = this.sut.deleteIndex("anyIndex");
+        assertTrue(response);
+    }
+
+    @Test
+    public void delete_existingElasticIndex_usingSameClient() throws Exception {
+        AcknowledgedResponse indexResponse = new AcknowledgedResponse(true);
+
+        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        doReturn(indicesClient).when(restHighLevelClient).indices();
+        doReturn(indexResponse).when(indicesClient).delete(any(), any(RequestOptions.class));
+        boolean response = this.sut.deleteIndex(restHighLevelClient, "anyIndex");
+        assertTrue(response);
+    }
+
+    @Test
+    public void should_throw_internalServerException_delete_isNotAcknowledged() throws Exception {
+        AcknowledgedResponse indexResponse = new AcknowledgedResponse(false);
+        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        doReturn(indicesClient).when(restHighLevelClient).indices();
+        doReturn(indexResponse).when(indicesClient).delete(any(), any(RequestOptions.class));
+
+        try {
+            this.sut.deleteIndex("anyIndex");
+            fail("Should not succeed!");
+        } catch (AppException e) {
+            assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getError().getCode());
+            assertEquals("Could not delete index anyIndex", e.getError().getMessage());
+            assertEquals("Index deletion error", e.getError().getReason());
+        } catch (Exception e) {
+            fail("Should not throw this exception " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void should_throwAppException_when_delete_existingElasticIndex_and_backupIsRunning() throws Exception {
+        ElasticsearchStatusException exception = new ElasticsearchStatusException(
+                "Cannot delete indices that are being snapshotted: [[anyIndex/8IXuPeFnTJGEu_LjjXrHwA]]. Try again after snapshot finishes or cancel the currently running snapshot.", RestStatus.BAD_REQUEST);
+        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        doReturn(indicesClient).when(restHighLevelClient).indices();
+        doThrow(exception).when(indicesClient).delete(any(), any(RequestOptions.class));
+
+        try {
+            this.sut.deleteIndex("anyIndex");
+            fail("Should not succeed!");
+        } catch (AppException e) {
+            assertEquals(HttpStatus.SC_CONFLICT, e.getError().getCode());
+            assertEquals("Unable to delete the index because it is currently locked. Try again in few minutes.", e.getError().getMessage());
+            assertEquals("Index deletion error", e.getError().getReason());
+        } catch (Exception e) {
+            fail("Should not throw this exception " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void should_throwAppException_when_delete_nonExistent_index() throws Exception {
+        ElasticsearchStatusException exception = new ElasticsearchStatusException("no such index", RestStatus.NOT_FOUND);
+        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        doReturn(indicesClient).when(restHighLevelClient).indices();
+        doThrow(exception).when(indicesClient).delete(any(), any(RequestOptions.class));
+
+        try {
+            this.sut.deleteIndex("anyIndex");
+            fail("Should not succeed!");
+        } catch (AppException e) {
+            assertEquals(HttpStatus.SC_NOT_FOUND, e.getError().getCode());
+            assertEquals("Index anyIndex not found", e.getError().getMessage());
+            assertEquals("Index deletion error", e.getError().getReason());
+        } catch (Exception e) {
+            fail("Should not throw this exception " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void should_get_valid_indexInfo() throws IOException {
+        String responseJson = "[" +
+                "  {" +
+                "    \"index\": \"tenant1-aapg-file-1.0.0\"," +
+                "    \"docs.count\": \"92\"," +
+                "    \"creation.date\": \"1545912860994\"" +
+                "  }" +
+                "]";
+        Request request = new Request("GET", "/_cat/indices/*,-.*?h=index,docs.count,creation.date&s=docs.count:asc&format=json");
+        StringEntity entity = new StringEntity(responseJson, ContentType.APPLICATION_JSON);
+        when(this.restHighLevelClient.getLowLevelClient()).thenReturn(this.restClient);
+        when(this.restClient.performRequest(request)).thenReturn(response);
+        when(this.response.getEntity()).thenReturn(entity);
+
+        List<IndexInfo> infos = this.sut.getIndexInfo(this.restHighLevelClient, "");
+        assertNotNull(infos);
+        assertEquals(1, infos.size());
+    }
+
+    @Test
+    public void should_get_valid_indexInfoByPattern() throws IOException {
+        String responseJson = "[" +
+                "  {" +
+                "    \"index\": \"tenant1-aapg-file-1.0.0\"," +
+                "    \"docs.count\": \"92\"," +
+                "    \"creation.date\": \"1545912860994\"" +
+                "  }," +
+                "  {" +
+                "    \"index\": \"tenant1-aapg-document-1.0.0\"," +
+                "    \"docs.count\": \"0\"," +
+                "    \"creation.date\": \"1545912868416\"" +
+                "  }" +
+                "]";
+        Request request = new Request("GET", "/_cat/indices/tenant1-aapg-*?h=index,docs.count,creation.date&format=json");
+        StringEntity entity = new StringEntity(responseJson, ContentType.APPLICATION_JSON);
+        when(this.restHighLevelClient.getLowLevelClient()).thenReturn(this.restClient);
+        when(this.restClient.performRequest(request)).thenReturn(response);
+        when(this.response.getEntity()).thenReturn(entity);
+
+        List<IndexInfo> infos = this.sut.getIndexInfo(this.restHighLevelClient, "tenant1-aapg-*");
+        assertNotNull(infos);
+        assertEquals(2, infos.size());
+    }
+
+    @Test
+    public void should_properly_deserialize_indices_get_response() {
+        String jsonResponse = "[{\"index\":\"tenant1-test-hello-1.0.1\",\"docs.count\":\"1\",\"creation.date\":\"1551996907769\"}]";
+
+        final Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
+        List<IndexInfo> indicesList = new Gson().fromJson(jsonResponse, typeOf);
+
+        assertEquals(1, indicesList.size());
+        assertEquals("tenant1-test-hello-1.0.1", indicesList.get(0).getName());
+        assertEquals("1", indicesList.get(0).getDocumentCount());
+        assertEquals("1551996907769", indicesList.get(0).getCreationDate());
+    }
+}

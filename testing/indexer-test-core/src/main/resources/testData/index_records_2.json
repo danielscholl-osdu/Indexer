@@ -1,0 +1,113 @@
+[
+  {
+    "id": "tenant1:ihs:testIngest7<timestamp>",
+    "data": {
+      "Field": "OSDU OFFICE - 2",
+      "Location": {
+        "latitude":32.406402588,
+        "longitude":-86.565592762
+      },
+      "Basin": "Houston",
+      "County": "Harris",
+      "State": "TX",
+      "Country": "USA",
+      "WellStatus": "Under development",
+      "OriginalOperator": "OFFICE2",
+      "WellName": "Data Platform Services",
+      "WellType": "Data Lake Cloud",
+      "EmptyAttribute": "",
+      "Rank": 1,
+      "Score" : 10,
+      "Established": "2000-03-27T23:38:48Z"
+    }
+  },
+  {
+    "id": "tenant1:ihs:testIngest8<timestamp>",
+    "data": {
+      "Field": "OSDU OFFICE - 2",
+      "Location": {
+        "latitude":32.406402588,
+        "longitude":-86.565592762
+      },
+      "Basin": "Houston",
+      "County": "Harris",
+      "State": "TX",
+      "Country": "USA",
+      "WellStatus": "Under development",
+      "OriginalOperator": "OFFICE2",
+      "WellName": "Data Platform Services",
+      "WellType": "Data Lake Cloud",
+      "EmptyAttribute": "",
+      "Rank": 1,
+      "Score" : 10,
+      "Established": "2000-03-27T23:38:48Z"
+    }
+  },
+  {
+    "id": "tenant1:ihs:testIngest9<timestamp>",
+    "data": {
+      "Field": "OSDU OFFICE - 2",
+      "Location": {
+        "latitude":32.406402588,
+        "longitude":-86.565592762
+      },
+      "Basin": "Houston",
+      "County": "Harris",
+      "State": "TX",
+      "Country": "USA",
+      "WellStatus": "Under development",
+      "OriginalOperator": "OFFICE2",
+      "WellName": "Data Platform Services",
+      "WellType": "Data Lake Cloud",
+      "EmptyAttribute": "",
+      "Rank": 1,
+      "Score" : 10,
+      "Established": "2000-03-27T23:38:48Z"
+    }
+  },
+  {
+    "id": "tenant1:ihs:testIngest10<timestamp>",
+    "data": {
+      "Field": "OSDU OFFICE - 2",
+      "Location": {
+        "latitude":32.406402588,
+        "longitude":-86.565592762
+      },
+      "Basin": "Houston",
+      "County": "Harris",
+      "State": "TX",
+      "Country": "USA",
+      "WellStatus": "Under development",
+      "OriginalOperator": "OFFICE2",
+      "WellName": "Data Platform Services",
+      "WellType": "Data Lake Cloud",
+      "EmptyAttribute": "",
+      "Rank": 1,
+      "Score" : 10,
+      "Established": "2000-03-27T23:38:48Z"
+    }
+  },
+  {
+    "id": "tenant1:ihs:testIngest11<timestamp>",
+    "data": {
+      "Field": 1234,
+      "Location": {
+        "latitude":"BA1",
+        "longitude":-86.565592762
+      },
+      "Basin": 789,
+      "County": 0.99,
+      "State": 0.56,
+      "Country": 1234,
+      "WellStatus": 528693,
+      "OriginalOperator": 564,
+      "WellName": 0.98,
+      "WellType": 454476578,
+      "EmptyAttribute": 1234,
+      "Rank": "Test",
+      "Score" : 10,
+      "Established": 123456,
+      "InvalidInteger": 2147483648
+    }
+  }
+]
