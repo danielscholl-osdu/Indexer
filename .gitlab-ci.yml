@@ -1,0 +1,18 @@
+variables:
+  AWS_BUILD_SUBDIR: provider/indexer-aws
+  AWS_APPLICATION_NAME: os-indexer
+  AWS_ENVIRONMENT: dev
+  GCP_BUILD_SUBDIR: provider/indexer-gcp
+  GCP_INT_TEST_SUBDIR: testing/indexer-test-gcp
+  GCP_APPLICATION_NAME: os-indexer
+  GCP_ENVIRONMENT: dev
+  GCP_PROJECT: opendes
+  GCP_TENANT_NAME: opendes
+  GCP_DEPLOY_ENV: p4d
+  GCP_DOMAIN: cloud.slb-ds.com
+  GCP_STORAGE_URL: https://os-indexer-dot-opendes.appspot.com/api/storage/v2/
+
+include:
+  - project: 'osdu/platform/ci-cd-pipelines'
+    ref: 'master'
+    file: 'service.gitlab-ci.yml'
