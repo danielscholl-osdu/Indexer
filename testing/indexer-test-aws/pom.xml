@@ -49,9 +49,9 @@
 
         <!-- AWS managed packages -->
         <dependency>
-            <groupId>com.amazonaws</groupId>
+            <groupId>com.github.awslabs</groupId>
             <artifactId>aws-request-signing-apache-interceptor</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>deb7941</version>
         </dependency>
 
         <!-- Testing -->
@@ -143,6 +143,11 @@
         <repository>
             <id>${gitlab-server}</id>
             <url>https://community.opengroup.org/api/v4/groups/17/-/packages/maven</url>
+        </repository>
+
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 
