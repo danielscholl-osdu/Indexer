@@ -1,3 +1,17 @@
+# Copyright © Amazon Web Services
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   CloudFormation template for creating the resources used for the ECS cluster the application will
@@ -161,6 +175,30 @@ Parameters:
     MinValue: 256
     MaxValue: 131072
 
+  DomainName:
+    Description: >-
+      The optional custom DNS name for the ECS service's load balancer. If omitted, the site will only be accessible
+      via the ECS service's Application Load Balancer DNS name. This value is used in the creation and signing of
+      the service's SSL certificate. Leave blank is not using a custom domain for this deployment.
+    Type: String
+    Default: ''
+
+  HostedZoneName:
+    Description: >-
+      The name of the hosted zone (ex: for indexer.osdu.slb.com, this would likely be osdu.slb.com).
+      Leave blank is not using a custom domain for this deployment.
+    Type: String
+    Default: ''
+
+  ElasticsearchDomainName:
+    Description: The name of the Elasticsearch domain. Will be prefixed with the environment name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: osdu-indexer
+
 Mappings:
   # This mapping is for the ECS-optimized edition of the November 13-14, 2019 release of the Amazon Linux 2 AMI
   # It will need to be periodically updated as new versions are released by Amazon.
@@ -200,7 +238,45 @@ Mappings:
     sa-east-1:
       AMIID: ami-0c947c117562538ee
 
+Conditions:
+  IncludeCustomDomain: !Not [!Equals [ !Ref DomainName, '' ]]
+  IsPortStandardSSL:
+    !Or [!Equals [ !Ref ECSPort, '443' ], !Equals [ !Ref ECSPort, '8443' ]]
+  IsLoadBalancerHTTPS: !And # HTTPS for ECS requires a custom domain, but CloudFront will still have HTTPS/SSL
+    - !Condition IncludeCustomDomain
+    - !Condition IsPortStandardSSL
+
 Resources:
+  # This sets up a Route 53 record for CloudFront if a custom domain is being used,
+  # otherwise a default cloudfront.net value will be used instead
+  CloudFrontDNSName:
+    Type: AWS::Route53::RecordSetGroup
+    Condition: IncludeCustomDomain
+    Properties:
+      HostedZoneName: !Join ['', [!Ref HostedZoneName, .]] # Route 53 requires a trailing period
+      RecordSets:
+        - Name: !Ref DomainName
+          Type: A
+          AliasTarget:
+            # This hosted zone ID is for ALL CloudFront distributions, always, and should be hard-coded
+            HostedZoneId: Z2FDTNDATAQYW2
+            DNSName: !GetAtt ECSCloudFrontDistribution.DomainName
+
+  # This sets up a Route 53 record for the ECS ALB origin if a custom domain is being used
+  ECSDNSName:
+    Type: AWS::Route53::RecordSetGroup
+    Condition: IncludeCustomDomain
+    Properties:
+      HostedZoneName: !Join ['', [!Ref HostedZoneName, .]] # Route 53 requires a trailing period
+      RecordSets:
+        - Name: !Join ['.', ['origin', !Ref DomainName]] # prefix the ECS origin record with 'origin.'
+          Type: A
+          AliasTarget:
+            HostedZoneId: !GetAtt ECSALB.CanonicalHostedZoneID # this value comes from the ALB attributes
+            DNSName: !GetAtt ECSALB.DNSName
+            EvaluateTargetHealth: true # Route 53 routes traffic to ECS targets based on their health checks
+    DependsOn: ECSALB
+
   CodeDeployApplication:
     Type: AWS::CodeDeploy::Application
     Properties:
@@ -220,11 +296,11 @@ Resources:
               AWS:
                 - !Sub arn:aws:iam::${AWS::AccountId}:root
                 - Fn::ImportValue:
-                    !Sub "${Environment}-${ApplicationName}-CodeBuildRoleArn"
+                    !Sub "${Environment}-CodeBuildRoleArn"
                 - Fn::ImportValue:
-                    !Sub "${Environment}-${ApplicationName}-CFNRoleArn"
+                    !Sub "${Environment}-CFNRoleArn"
                 - Fn::ImportValue:
-                    !Sub "${Environment}-${ApplicationName}-PipelineRoleArn"
+                    !Sub "${Environment}-PipelineRoleArn"
               Service:
                 - codebuild.amazonaws.com
             Action:
@@ -278,6 +354,8 @@ Resources:
               Value: '{{resolve:secretsmanager:dev-IndexerServiceIamCredentials:SecretString:secret_key}}'
             - Name: ENVIRONMENT
               Value: !Ref Environment
+            - Name: VSTS_FEED_USER
+              Value: '{{resolve:secretsmanager:dev-VSTSFeedToken:SecretString:vsts_feed_user}}'
             - Name: VSTS_FEED_TOKEN
               Value: '{{resolve:secretsmanager:dev-VSTSFeedToken:SecretString:vsts_feed_token}}'
             - Name: CACHE_CLUSTER_SCHEMA_ENDPOINT
@@ -304,8 +382,22 @@ Resources:
               Value: !Ref 'AWS::AccountId'
             - Name: SNS_TOPIC_NAME
               Value: !Ref SNSTopicName
+            - Name: ELASTIC_HOST
+              Value:
+                Fn::ImportValue:
+                  !Sub "${Environment}-${ElasticsearchDomainName}-ElasticsearchDomainEndpoint"
+            - Name: ELASTIC_PORT
+              Value: '443' # the Elasticsearch port is not configurable on AWS, and is always 80 for HTTP and 443 for HTTPS, so there's no value in using a CFN parameter
             - Name: JAVA_HEAP_MEMORY
               Value: !Ref ECSMemoryAllocation
+            - Name: STORAGE_HOST
+              Value:
+                Fn::ImportValue:
+                  !Sub "${Environment}-os-storage-EcsCloudFrontDomainName"
+            - Name: SNS_STORAGE_TOPIC_NAME
+              Value:
+                Fn::ImportValue:
+                  !Sub "${Environment}-OSDUStorageSNSTopic"
       Volumes:
         - Name: docker-volume
 
@@ -335,7 +427,16 @@ Resources:
           TargetGroupArn: !Ref 'ECSTargetGroup'
       LoadBalancerArn: !Ref 'ECSALB'
       Port: !Ref ECSPort
-      Protocol: HTTP
+      Protocol: !If [IsLoadBalancerHTTPS, HTTPS, HTTP]
+
+  LoadBalancerALBListenerCertificate:
+    Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
+    Condition: IncludeCustomDomain
+    Properties:
+      Certificates:
+        - Fn::ImportValue:
+            !Sub "${Environment}-${ApplicationName}-LoadBalancerSSLCertificateArn"
+      ListenerArn: !Ref 'ALBListener'
 
   ECSALBPrimaryListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -356,16 +457,91 @@ Resources:
     Properties:
       HealthCheckIntervalSeconds: 120
       HealthCheckPath: /api/indexer/v2/liveness_check
-      HealthCheckProtocol: HTTP
+      HealthCheckProtocol: !If [IsLoadBalancerHTTPS, HTTPS, HTTP]
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
-      Name: !Sub ECSTargetGroup-${ApplicationName}
+      Name: !Sub ECSTargetGroup-New-${ApplicationName}
       Port: !Ref ECSPort
-      Protocol: HTTP
+      Protocol: !If [IsLoadBalancerHTTPS, HTTPS, HTTP]
       UnhealthyThresholdCount: 2
       VpcId:
         Fn::ImportValue:
           !Sub "${Environment}-OSDU-VPC"
+
+  ECSCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    DependsOn: ECSALB
+    Properties:
+      DistributionConfig:
+        Comment: 'Cloudfront Distribution pointing ALB Origin'
+        Origins:
+          - DomainName: !GetAtt 'ECSALB.DNSName'
+            Id: !Ref 'ECSALB'
+            CustomOriginConfig:
+              HTTPPort: !Ref ECSPort # The ports are the same because we'll only ever be accessing the ECS cluster over one protocol, as set in OriginProtocolPolicy below
+              HTTPSPort: !Ref ECSPort # The ports are the same because we'll only ever be accessing the ECS cluster over one protocol, as set in OriginProtocolPolicy below
+              OriginProtocolPolicy: !If [IsLoadBalancerHTTPS, https-only, http-only] # this only affects the origin, not CloudFront / the user's request
+              OriginKeepaliveTimeout: '60'
+              OriginReadTimeout: '60'
+              OriginSSLProtocols:
+                - TLSv1
+                - TLSv1.1
+                - TLSv1.2
+                - SSLv3
+        Enabled: true
+        HttpVersion: 'http2'
+        Aliases:
+          - Fn::If:
+              - IncludeCustomDomain
+              - !Ref DomainName
+              - !Ref AWS::NoValue
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - POST
+            - PATCH
+            - DELETE
+          Compress: true
+          TargetOriginId: !Ref 'ECSALB'
+          DefaultTTL: 5
+          MaxTTL: 30
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: all
+            Headers:
+              - Authorization
+              - Data-Partition-Id
+              - Content-Type
+              - Kind
+              - Limit
+              - Cursor
+          ViewerProtocolPolicy: redirect-to-https # CloudFront requests will always be HTTPS, regardless of the origin or the request
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::If:
+              - IncludeCustomDomain
+              - Fn::ImportValue:
+                  !Sub "${Environment}-${ApplicationName}-LoadBalancerSSLCertificateArn"
+              - Ref: AWS::NoValue
+          CloudFrontDefaultCertificate:
+            Fn::If:
+              - IncludeCustomDomain
+              - Ref: AWS::NoValue
+              - true
+          SslSupportMethod:
+            Fn::If:
+              - IncludeCustomDomain
+              - sni-only # sni-only is free; 'vip' is the only other option, which allows viewers without Server Name Indication (SNI) support by using dedicated IP addresses, but it costs $600/mo per SSL certificate
+              - Ref: AWS::NoValue
+          MinimumProtocolVersion:
+            Fn::If:
+              - IncludeCustomDomain
+              - TLSv1
+              - Ref: AWS::NoValue # this is not used when using the default CloudFront certificate (which is always TLSv1)
 
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -554,6 +730,26 @@ Outputs:
     Value: !Join ['', [!GetAtt [ECSALB, DNSName]]]
     Export:
       Name: !Sub ${Environment}-${ApplicationName}-EcsAlbUrl
+
+  ECSALBCustomDNSName:
+    Description: The custom DNS name of the ECS service's ALB origin.
+    Condition: IncludeCustomDomain
+    Value: !Join ['.', ['origin', !Ref DomainName]]
+    Export:
+      Name: !Sub ${Environment}-${ApplicationName}-EcsAlbCustomDnsName
+
+  ECSCloudFrontCustomDNSName:
+    Description: The custom DNS name of the ECS service's CloudFront Distribution.
+    Condition: IncludeCustomDomain
+    Value: !Ref DomainName
+    Export:
+      Name: !Sub ${Environment}-${ApplicationName}-EcsCloudFrontCustomDnsName
+
+  ECSCloudFrontDomainName:
+    Description: The custom DNS name of the ECS service's CloudFront Distribution.
+    Value: !GetAtt ECSCloudFrontDistribution.DomainName
+    Export:
+      Name: !Sub ${Environment}-${ApplicationName}-EcsCloudFrontDomainName
 
   TaskDefinitionArn:
     Description: The ARN of the Indexer Service ECS task definition.

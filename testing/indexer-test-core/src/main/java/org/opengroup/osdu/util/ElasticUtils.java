@@ -257,12 +257,24 @@ public class ElasticUtils {
     }
 
 
-    protected RestHighLevelClient createClient(String username, String password, String host) {
+    private RestHighLevelClient createClient(String username, String password, String host) {
 
         RestHighLevelClient restHighLevelClient;
         int port = Config.PORT;
         try {
             String rawString = String.format("%s:%s", username, password);
+
+            RestClientBuilder builder = createClientBuilder(host,rawString, port);
+
+            restHighLevelClient = new RestHighLevelClient(builder);
+
+        } catch (Exception e) {
+            throw new AssertionError("Setup elastic error");
+        }
+        return restHighLevelClient;
+    }
+
+    public RestClientBuilder createClientBuilder(String host, String usernameAndPassword, int port) {
             RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, "https"));
             builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
                     .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
@@ -275,15 +287,12 @@ public class ElasticUtils {
                     new BasicHeader("request.headers.X-Found-Cluster", Config.getElasticHost()),
                     new BasicHeader("cluster.name", Config.getElasticHost()),
                     new BasicHeader("xpack.security.transport.ssl.enabled", Boolean.toString(true)),
-                    new BasicHeader("Authorization", String.format("Basic %s", Base64.getEncoder().encodeToString(rawString.getBytes()))),
+                new BasicHeader("Authorization", String.format("Basic %s", Base64.getEncoder().encodeToString(usernameAndPassword.getBytes()))),
             };
 
             builder.setDefaultHeaders(defaultHeaders);
-            restHighLevelClient = new RestHighLevelClient(builder);
-
-        } catch (Exception e) {
-            throw new AssertionError("Setup elastic error");
-        }
-        return restHighLevelClient;
+        return builder;
     }
+
+
 }

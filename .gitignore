@@ -36,4 +36,7 @@ build/
 target/*
 */target
 /mvn
-provider/indexer-gcp/bin/
+provider/indexer-gcp/bin/*
+
+# Environment configuration
+*.env

@@ -2,8 +2,8 @@
   "Parameters" : {
     "Environment" : "dev",
     "DeploymentRegion" : "us-east-1",
-    "ChildTemplateBasePath" : "https://s3.amazonaws.com/dev-os-indexer-cloudformation-scripts/Automated/",
     "ApplicationName" : "os-indexer",
+    "SearchApplicationName" : "os-search",
     "KeyName": "indexer-ecs-keypair",
     "DesiredCapacity": "2",
     "MinSize": "0",
@@ -24,14 +24,19 @@
     "ElasticsearchDomainName": "osdu-indexer",
     "ElasticsearchNodeInstanceType": "t2.medium.elasticsearch",
     "DedicatedMasterInstanceType": "t2.medium.elasticsearch",
-    "NumberOfElasticsearchNodes": "2",
-    "NumberOfDedicatedMasterNodes": "2",
+    "NumberOfElasticsearchNodes": "4",
+    "NumberOfDedicatedMasterNodes": "3",
     "ZoneAwarenessEnabled": "false",
     "ElasticsearchVersion": "6.8",
     "EBSVolumeSize": "10",
-    "ECSPort": "80",
+    "ECSPort": "443",
     "ECSCPUAllocation": "1024",
-    "ECSMemoryAllocation": "3072"
+    "ECSMemoryAllocation": "3072",
+    "DomainName": "",
+    "HostedZoneName": "",
+    "AcmCertificateArn": "",
+    "ServiceName": "indexer",
+    "VersionNumber": "1.0.5-SNAPSHOT"
   },
   "Tags" : {
     "Environment" : "dev"

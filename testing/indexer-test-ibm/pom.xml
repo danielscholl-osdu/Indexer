@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.opengroup.osdu.indexer</groupId>
+    <artifactId>indexer-test-ibm</artifactId>
+    <version>0.0.2</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <cucumber.version>1.2.5</cucumber.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>1.28.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opengroup.osdu.indexer</groupId>
+            <artifactId>indexer-test-core</artifactId>
+            <version>0.0.2-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Cucumber -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>info.cukes</groupId>
+            <artifactId>cucumber-java</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>info.cukes</groupId>
+            <artifactId>cucumber-junit</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Gson: Java to Json conversion -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.5</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-json-provider</artifactId>
+            <version>2.9.9</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.19.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
+        </dependency>
+
+        <!--Elasticsearch-->
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>6.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>6.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>6.6.2</version>
+        </dependency>
+
+        <!--Logging-->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.11.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>1.8.0-beta4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>27.1-jre</version>
+        </dependency>
+    </dependencies>
+
+      <repositories>
+        <repository>
+            <id>os-core</id>
+            <url>https://pkgs.dev.azure.com/slb-des-ext-collaboration/_packaging/os-core/maven/v1</url>
+            <releases>
+              <enabled>true</enabled>
+            </releases>
+            <snapshots>
+              <enabled>true</enabled>
+            </snapshots>
+          </repository>
+    </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <executions>
+                    <execution>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/index</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                    <systemPropertyVariables>
+
+                        <KEYCLOAK_URL>keycloak-osdu-r2.osduadev-a1c3eaf78a86806e299f5f3f207556f0-0000.us-south.containers.appdomain.cloud</KEYCLOAK_URL>
+                        <KEYCLOAK_REALM>OSDU</KEYCLOAK_REALM>
+                        <KEYCLOAK_CLIENT_ID>osdu-login</KEYCLOAK_CLIENT_ID>
+                        <AUTH_USER_ACCESS>osdu-user</AUTH_USER_ACCESS>
+                        <AUTH_USER_ACCESS_PASSWORD>CHANGE_ME</AUTH_USER_ACCESS_PASSWORD>
+
+                    	  <ENTITLEMENTS_DOMAIN>ibm.com</ENTITLEMENTS_DOMAIN>
+                        <OTHER_RELEVANT_DATA_COUNTRIES>US</OTHER_RELEVANT_DATA_COUNTRIES>
+                        <!-- must be a valid, existing tag -->
+                        <LEGAL_TAG>opendes-public-usa-dataset</LEGAL_TAG>
+
+                     	  <!-- tenant1 MUSTG be opendes to work -->
+                        <DEFAULT_DATA_PARTITION_ID_TENANT1>opendes</DEFAULT_DATA_PARTITION_ID_TENANT1>
+						            <DEFAULT_DATA_PARTITION_ID_TENANT2>tenant2</DEFAULT_DATA_PARTITION_ID_TENANT2>
+
+                        <!-- test against OpenShift -->
+           				      <STORAGE_HOST>https://storage.osdu-r2-dev-a1c3eaf78a86806e299f5f3f207556f0-0000.us-south.containers.appdomain.cloud/api/storage/v2/</STORAGE_HOST>
+
+            						<!-- test locally -->
+            						<!--
+            						<STORAGE_HOST>http://localhost:8082/api/storage/v2/</STORAGE_HOST>
+            						-->
+						            <ELASTIC_HOST>CHANGE_ME.us-south.containers.appdomain.cloud</ELASTIC_HOST>
+                        <ELASTIC_USER_NAME>CHANGE_ME</ELASTIC_USER_NAME>
+                        <ELASTIC_PASSWORD>CHANGE_ME</ELASTIC_PASSWORD>
+                        <ELASTIC_PORT>443</ELASTIC_PORT>
+
+
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

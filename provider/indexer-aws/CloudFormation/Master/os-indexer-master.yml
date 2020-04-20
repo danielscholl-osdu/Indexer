@@ -15,6 +15,18 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Creates all AWS resources used by OSDU's Indexer Service. Requires having previously setup the CodeCommit repository, as well as the CodePipeline (manual template).
 Parameters:
+
+  VersionNumber:
+    Description: Version Number for the pom to deploy the jar and Docker Image deployment in the Dockerfile
+    Type: String
+    Default: '0.0.1'
+
+  ServiceName:
+    Description: >-
+      Service name for jar deployment in the Dockerfile
+    Type: String
+    Default: 'indexer'
+
   Environment:
     Description: The name of the environment.
     Type: String
@@ -30,17 +42,9 @@ Parameters:
     Type: String
     Default: us-east-1
 
-  ChildTemplateBasePath:
-    Description: >-
-      The base path for where child CloudFormation templates are located – can be relative or absolute, e.g.
-      https://s3.amazonaws.com/dev-osdu-cloudformation-scripts/Automated/
-    Type: String
-    AllowedPattern: '^https:\/\/s3.amazonaws.com\/.*\/$'
-    Default: https://s3.amazonaws.com/dev-osdu-cloudformation-scripts/Automated/
-
   ApplicationName:
     Description: >
-      The name of the application, should be equal to the repository name.
+      The name of the indexer application, should be equal to the repository name.
     Type: String
     MinLength: '1'
     MaxLength: '64'
@@ -48,15 +52,15 @@ Parameters:
     ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
     Default: os-indexer
 
-  StorageApplicationName:
+  SearchApplicationName:
     Description: >
-      The name of the storage application
+      The name of the Search Service application (ex: os-search). Should be the same as the Search Service repo name.
     Type: String
     MinLength: '1'
     MaxLength: '64'
     AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
     ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
-    Default: osdu-storage
+    Default: os-search
 
   KeyName:
     Description: >
@@ -443,6 +447,30 @@ Parameters:
     MinValue: 256
     MaxValue: 131072
 
+  DomainName:
+    Description: >-
+      The optional custom DNS name for the ECS service's load balancer. If omitted, the site will only be accessible
+      via the ECS service's Application Load Balancer DNS name. This value is used in the creation and signing of
+      the service's SSL certificate. Leave blank is not using a custom domain for this deployment.
+    Type: String
+    Default: ''
+
+  HostedZoneName:
+    Description: >-
+      The name of the hosted zone (ex: for indexer.osdu.slb.com, this would likely be osdu.slb.com).
+      Leave blank is not using a custom domain for this deployment.
+    Type: String
+    Default: ''
+
+  AcmCertificateArn:
+    Description: >-
+      The Amazon Resource Name (ARN) of an existing AWS Certificate Manager (ACM) certificate.
+      If omitted, a new SSL certified will be requested/generated (only if the custom domain name
+      parameter is provided, otherwise the ECS service's ALB will not use SSL/HTTPS).
+    Type: String
+    AllowedPattern: "^(|arn:aws:acm:.*)$"
+    Default: ''
+
 Resources:
 
   #### Shared Resources ################################################################
@@ -450,7 +478,11 @@ Resources:
   IAMCredentialsStack:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
-      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, iam-credentials.yml ] ]
+      TemplateURL: !Sub
+        - https://s3.amazonaws.com/${CloudFormationS3Bucket}/${ApplicationName}/Automated/${CFNTemplateFilename}
+        - CloudFormationS3Bucket: !ImportValue
+            'Fn::Sub': '${Environment}-S3BucketCloudFormation'
+          CFNTemplateFilename: iam-credentials.yml
       Parameters:
         Environment: !Ref Environment
         Region: !Ref DeploymentRegion
@@ -460,7 +492,11 @@ Resources:
   MessageBusSNSStack:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
-      TemplateURL: !Join ['', [!Ref ChildTemplateBasePath, sns-topic.yml ] ]
+      TemplateURL: !Sub
+        - https://s3.amazonaws.com/${CloudFormationS3Bucket}/${ApplicationName}/Automated/${CFNTemplateFilename}
+        - CloudFormationS3Bucket: !ImportValue
+            'Fn::Sub': '${Environment}-S3BucketCloudFormation'
+          CFNTemplateFilename: sns-topic.yml
       Parameters:
         Environment: !Ref Environment
         Region: !Ref DeploymentRegion
@@ -473,18 +509,28 @@ Resources:
     Type: 'AWS::CloudFormation::Stack'
     DependsOn: IAMCredentialsStack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, ecs-network.yml ] ]
+      TemplateURL: !Sub
+        - https://s3.amazonaws.com/${CloudFormationS3Bucket}/${ApplicationName}/Automated/${CFNTemplateFilename}
+        - CloudFormationS3Bucket: !ImportValue
+            'Fn::Sub': '${Environment}-S3BucketCloudFormation'
+          CFNTemplateFilename: ecs-network.yml
       Parameters:
         Environment: !Ref Environment
         Region: !Ref DeploymentRegion
         ApplicationName: !Ref ApplicationName
         ECSPort: !Ref ECSPort
+        DomainName: !Ref DomainName
+        AcmCertificateArn: !Ref AcmCertificateArn
 
   ECSClusterStack:
     Type: 'AWS::CloudFormation::Stack'
     DependsOn: [SchemaCacheStack, IndexCacheStack]
     Properties:
-      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, ecs-cluster.yml ] ]
+      TemplateURL: !Sub
+        - https://s3.amazonaws.com/${CloudFormationS3Bucket}/${ApplicationName}/Automated/${CFNTemplateFilename}
+        - CloudFormationS3Bucket: !ImportValue
+            'Fn::Sub': '${Environment}-S3BucketCloudFormation'
+          CFNTemplateFilename: ecs-cluster.yml
       Parameters:
         Environment: !Ref Environment
         Region: !Ref DeploymentRegion
@@ -498,6 +544,9 @@ Resources:
         ECSPort: !Ref ECSPort
         SNSTopicName: !Ref SNSTopicName
         ECSMemoryAllocation: !Ref ECSMemoryAllocation
+        DomainName: !Ref DomainName
+        HostedZoneName: !Ref HostedZoneName
+        ElasticsearchDomainName: !Ref ElasticsearchDomainName
 
   #### Caching Resources ###############################################################
 
@@ -505,7 +554,11 @@ Resources:
     Type: 'AWS::CloudFormation::Stack'
     DependsOn: ECSNetworkStack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, cache.yml ] ]
+      TemplateURL: !Sub
+        - https://s3.amazonaws.com/${CloudFormationS3Bucket}/${ApplicationName}/Automated/${CFNTemplateFilename}
+        - CloudFormationS3Bucket: !ImportValue
+            'Fn::Sub': '${Environment}-S3BucketCloudFormation'
+          CFNTemplateFilename: cache.yml
       Parameters:
         Environment: !Ref Environment
         Region: !Ref DeploymentRegion
@@ -519,7 +572,11 @@ Resources:
     Type: 'AWS::CloudFormation::Stack'
     DependsOn: ECSNetworkStack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, cache.yml ] ]
+      TemplateURL: !Sub
+        - https://s3.amazonaws.com/${CloudFormationS3Bucket}/${ApplicationName}/Automated/${CFNTemplateFilename}
+        - CloudFormationS3Bucket: !ImportValue
+            'Fn::Sub': '${Environment}-S3BucketCloudFormation'
+          CFNTemplateFilename: cache.yml
       Parameters:
         Environment: !Ref Environment
         Region: !Ref DeploymentRegion
@@ -530,13 +587,16 @@ Resources:
         NumberOfCacheNodes: !Ref SchemaCacheNumberOfCacheNodes
 
   #### Elasticsearch Resources #########################################################
-  # TODO: Add VPCs to Elasticsearch
 
   ElasticsearchStack:
     Type: 'AWS::CloudFormation::Stack'
-    DependsOn: IAMCredentialsStack
+    DependsOn: [IAMCredentialsStack, ECSNetworkStack]
     Properties:
-      TemplateURL: !Join [ '', [ !Ref ChildTemplateBasePath, elasticsearch.yml ] ]
+      TemplateURL: !Sub
+        - https://s3.amazonaws.com/${CloudFormationS3Bucket}/${ApplicationName}/Automated/${CFNTemplateFilename}
+        - CloudFormationS3Bucket: !ImportValue
+            'Fn::Sub': '${Environment}-S3BucketCloudFormation'
+          CFNTemplateFilename: elasticsearch.yml
       Parameters:
         Environment: !Ref Environment
         Region: !Ref DeploymentRegion
@@ -548,3 +608,18 @@ Resources:
         ZoneAwarenessEnabled: !Ref ZoneAwarenessEnabled
         ElasticsearchVersion: !Ref ElasticsearchVersion
         EBSVolumeSize: !Ref EBSVolumeSize
+        ApplicationName: !Ref ApplicationName
+        SearchApplicationName: !Ref SearchApplicationName
+
+Outputs:
+  JarVersionNumber:
+    Description: The service name associated with the JAR package for the Dockerfile.
+    Value: !Ref 'VersionNumber'
+    Export:
+      Name: !Sub ${Environment}-${ApplicationName}-JarVersionNumber
+
+  JarServiceName:
+    Description: The service name associated with the JAR package for the Dockerfile.
+    Value: !Ref 'ServiceName'
+    Export:
+      Name: !Sub ${Environment}-${ApplicationName}-JarServiceName

@@ -4,10 +4,12 @@
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
 
   <servers>
+    <!-- Azure DevOps Artifact Store -->
     <server>
       <id>os-core</id>
-      <username>slb-des-ext-collaboration</username>
-      <password>${VSTS_FEED_TOKEN}</password>
+      <username>${azure.devops.username}</username>
+      <!-- The generated token was last updated on 01/13/2020 and expires on or before 01/12/2021 -->
+      <password>${azure.devops.token}</password>
     </server>
 
   </servers>

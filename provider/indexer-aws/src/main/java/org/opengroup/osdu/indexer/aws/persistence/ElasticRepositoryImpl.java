@@ -28,7 +28,8 @@ public class ElasticRepositoryImpl implements IElasticRepository {
     @Value("${aws.es.host}")
     String host;
 
-    int port = 8080;
+    @Value("${aws.es.port}")
+    int port;
 
     String userNameAndPassword = "testing";
 

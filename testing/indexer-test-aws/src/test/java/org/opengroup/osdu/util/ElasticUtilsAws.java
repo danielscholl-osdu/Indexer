@@ -14,24 +14,36 @@
 
 package org.opengroup.osdu.util;
 
-import com.amazonaws.auth.AWS4Signer;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.http.AWSRequestSigningApacheInterceptor;
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.opengroup.osdu.core.aws.iam.IAMConfig;
+import org.elasticsearch.client.RestClientBuilder;
 
 public class ElasticUtilsAws extends ElasticUtils {
 
+    private static final int REST_CLIENT_CONNECT_TIMEOUT = 60000;
+    private static final int REST_CLIENT_SOCKET_TIMEOUT = 60000;
+    private static final int REST_CLIENT_RETRY_TIMEOUT = 60000;
+
     @Override
-    protected RestHighLevelClient createClient(String username, String password, String host) {
-        AWSCredentialsProvider credentials = new IAMConfig().amazonAWSCredentials();
-        AWS4Signer signer = new AWS4Signer();
-        signer.setServiceName(username);
-        signer.setRegionName(password);
-        HttpRequestInterceptor interceptor = new AWSRequestSigningApacheInterceptor(username, signer, credentials);
-        return new RestHighLevelClient(RestClient.builder(HttpHost.create(host)).setHttpClientConfigCallback(configCallBack -> configCallBack.addInterceptorLast(interceptor)));
+    public RestClientBuilder createClientBuilder(String host, String usernameAndPassword, int port) {
+        RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, "https"));
+        builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
+                .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
+        builder.setMaxRetryTimeoutMillis(REST_CLIENT_RETRY_TIMEOUT);
+        builder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setSSLHostnameVerifier((s, sslSession) -> true));
+
+        Header[] defaultHeaders = new Header[]{
+                new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
+                new BasicHeader("client.transport.ping_timeout", "30s"),
+                new BasicHeader("client.transport.sniff", "false"),
+                new BasicHeader("request.headers.X-Found-Cluster", Config.getElasticHost()),
+                new BasicHeader("cluster.name", Config.getElasticHost()),
+                new BasicHeader("xpack.security.transport.ssl.enabled", Boolean.toString(true))
+        };
+
+        builder.setDefaultHeaders(defaultHeaders);
+        return builder;
     }
 }

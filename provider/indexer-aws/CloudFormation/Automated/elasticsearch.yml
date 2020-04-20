@@ -28,6 +28,28 @@ Parameters:
     ConstraintDescription: Can only be "dev/uat/prod"
     Default: dev
 
+  ApplicationName:
+    Description: >
+      The name of the application, which will be used to generate the ECS cluster name.
+      It will be prefixed with the environment name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: os-indexer
+
+  SearchApplicationName:
+    Description: >
+      The name of the application, which will be used to generate the ECS cluster name.
+      It will be prefixed with the environment name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
+    ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
+    Default: os-search
+
   Region:
     Description: The AWS region to deploy the resources to.
     Type: String
@@ -183,36 +205,26 @@ Resources:
         Enabled: false
       SnapshotOptions:
         AutomatedSnapshotStartHour: "0"
-#      AccessPolicies:
-#        - Version: "2012-10-17"
-#            Statement:
-#              - Effect: "Allow"
-#                Principal:
-#                  AWS:
-#                    - !Sub arn:aws:iam::${AWS::AccountId}:root
-#                    - Fn::ImportValue:
-#                        !Sub "${Environment}-IndexerServiceIamUserArn"
-#                      # TODO: need to create cognito user and identity pool and link it to principal for dynamic creation
-#                    - "arn:aws:iam::888733619319:role/Cognito_osduelasticsearchAuth_Role"
-#                Action:
-#                  - "es:*"
-#                  - 'es:ESHttp*'
-#                  - 'cognito-identity:*'
-#                  - 'cognito-idp:*'
-#                  - 'sts:AssumeRole'
-#                Resource: !Sub arn:aws:es:us-east-1:846973539254:domain/${Environment}-${ElasticsearchDomainName}/*
-#        - "Version": "2012-10-17"
-#          "Statement":
-#            - "Effect": "Allow"
-#              "Action":
-#                - "iam:PassRole"
-#              "Resource": "arn:aws:iam::888733619319:role/service-role/CognitoAccessForAmazonES"
+      AccessPolicies:
+        Version: 2012-10-17
+        Statement:
+          - Effect: "Allow"
+            Principal: "*"
+            Resource: '*'
+            Action: "*"
       AdvancedOptions:
         rest.action.multi.allow_explicit_index: "true"
       Tags:
         -
           Key: "Environment"
           Value: !Ref Environment
+      VPCOptions:
+        SubnetIds:
+          - Fn::ImportValue:
+              !Sub "${Environment}-OSDU-PrivateSubnet-AZ1"
+        SecurityGroupIds:
+          - Fn::ImportValue:
+              !Sub "${Environment}-${ApplicationName}-EcsNetworkSecurityGroupId"
 
 Outputs:
   # Elasticsearch domain ARN

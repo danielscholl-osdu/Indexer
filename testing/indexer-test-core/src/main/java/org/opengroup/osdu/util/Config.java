@@ -22,6 +22,10 @@ public class Config {
     private static final String DEFAULT_ENTITLEMENTS_DOMAIN = "";
 
 
+    public static int getPort() {
+        return Integer.parseInt(getEnvironmentVariableOrDefaultValue("ELASTIC_PORT", String.valueOf(PORT)));
+    }
+
     public static String getOtherRelevantDataCountries() {
         return getEnvironmentVariableOrDefaultValue("OTHER_RELEVANT_DATA_COUNTRIES", DEFAULT_OTHER_RELEVANT_DATA_COUNTRIES);
     }
