@@ -32,7 +32,7 @@
   <properties>
       <aws.version>1.11.637</aws.version>
       <deployment.environment>dev</deployment.environment>
-        <version.number>1.0.4-SNAPSHOT</version.number>
+      <version.number>1.0.4-SNAPSHOT</version.number>
   </properties>
 
   <dependencies>
