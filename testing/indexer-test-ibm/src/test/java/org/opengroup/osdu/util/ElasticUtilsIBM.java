@@ -40,16 +40,15 @@ import lombok.extern.java.Log;
  */
 @Log
 public class ElasticUtilsIBM extends ElasticUtils {
-	
-	private static final int REST_CLIENT_CONNECT_TIMEOUT = 5000;
+
+    private static final int REST_CLIENT_CONNECT_TIMEOUT = 5000;
     private static final int REST_CLIENT_SOCKET_TIMEOUT = 60000;
     private static final int REST_CLIENT_RETRY_TIMEOUT = 60000;
 
     public ElasticUtilsIBM() {
         super();
     }
-    
-    @Override
+
     protected RestHighLevelClient createClient(String username, String password, String host) {
 
         RestHighLevelClient restHighLevelClient;
@@ -70,29 +69,33 @@ public class ElasticUtilsIBM extends ElasticUtils {
                     new BasicHeader("xpack.security.transport.ssl.enabled", Boolean.toString(true)),
                     new BasicHeader("Authorization", String.format("Basic %s", Base64.getEncoder().encodeToString(rawString.getBytes()))),
             };
-            
-            
+
+
             SSLContext sslContext = SSLContext.getInstance("SSL");
             // set up a TrustManager that trusts everything
-	        sslContext.init(null, new TrustManager[] { new X509TrustManager() {
-	           	public X509Certificate[] getAcceptedIssuers() {
-	           		return null;
-	           	}
-	           	public void checkClientTrusted(X509Certificate[] certs, String authType) { }
-	           	public void checkServerTrusted(X509Certificate[] certs, String authType) { }
-	         } }, new SecureRandom());
-              
-               builder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
-                   @Override
-                   public HttpAsyncClientBuilder customizeHttpClient(
-                           HttpAsyncClientBuilder httpClientBuilder) {
-                       return httpClientBuilder
-                       		.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
-                       		.setSSLContext(sslContext);
-                   }
-               })
-               .setDefaultHeaders(defaultHeaders);
-               
+            sslContext.init(null, new TrustManager[]{new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }}, new SecureRandom());
+
+            builder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
+
+                public HttpAsyncClientBuilder customizeHttpClient(
+                        HttpAsyncClientBuilder httpClientBuilder) {
+                    return httpClientBuilder
+                            .setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
+                            .setSSLContext(sslContext);
+                }
+            })
+                    .setDefaultHeaders(defaultHeaders);
+
             restHighLevelClient = new RestHighLevelClient(builder);
 
         } catch (Exception e) {
@@ -100,5 +103,4 @@ public class ElasticUtilsIBM extends ElasticUtils {
         }
         return restHighLevelClient;
     }
-    
 }
