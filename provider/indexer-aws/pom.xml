@@ -27,11 +27,12 @@
   <artifactId>indexer-aws</artifactId>
   <description>Storage service on AWS</description>
   <packaging>jar</packaging>
+    <version>${version.number}</version>
 
   <properties>
       <aws.version>1.11.637</aws.version>
       <deployment.environment>dev</deployment.environment>
-      <deployment.repositorybucket>osdu-local-maven-repository</deployment.repositorybucket>
+      <version.number>1.0.4-SNAPSHOT</version.number>
   </properties>
 
   <dependencies>
@@ -48,8 +49,8 @@
     </dependency>
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
-        <artifactId>aws-osdu-util</artifactId>
-        <version>0.0.9</version>
+        <artifactId>os-core-lib-aws</artifactId>
+        <version>0.0.10</version>
     </dependency>
 
     <!-- AWS managed packages -->
@@ -57,11 +58,6 @@
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-core</artifactId>
       <version>1.11.651</version>
-    </dependency>
-    <dependency>
-      <groupId>com.github.awslabs</groupId>
-      <artifactId>aws-request-signing-apache-interceptor</artifactId>
-      <version>deb7941</version>
     </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
@@ -177,13 +173,6 @@
           </executions>
         </plugin>
       </plugins>
-      <extensions>
-          <extension>
-              <groupId>com.github.seahen</groupId>
-              <artifactId>maven-s3-wagon</artifactId>
-              <version>1.3.0</version>
-          </extension>
-      </extensions>
   </build>
   <repositories>
       <repository>

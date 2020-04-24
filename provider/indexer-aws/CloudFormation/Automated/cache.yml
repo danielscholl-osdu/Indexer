@@ -42,7 +42,7 @@ Parameters:
     MaxLength: '64'
     AllowedPattern: "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
     ConstraintDescription: Must start with a letter. Only numbers, letters, -, and _ accepted. Max. length 64 characters.
-    Default: os-storage
+    Default: os-indexer
 
   CacheName:
     Description: The name of the cache cluster. Will be prefixed with the environment name.

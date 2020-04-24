@@ -62,6 +62,7 @@
         <module>provider/indexer-aws</module>
         <module>provider/indexer-azure</module>
         <module>provider/indexer-gcp</module>
+        <module>provider/indexer-ibm</module>
     </modules>
 
 </project>

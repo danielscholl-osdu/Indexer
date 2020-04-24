@@ -25,6 +25,24 @@
     <version>0.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <repositories>
+        <repository>
+            <id>${gitlab-server}</id>
+            <url>https://community.opengroup.org/api/v4/groups/17/-/packages/maven</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>${gitlab-server}</id>
+            <url>https://community.opengroup.org/api/v4/projects/25/packages/maven</url>
+        </repository>
+        <snapshotRepository>
+            <id>${gitlab-server}</id>
+            <url>https://community.opengroup.org/api/v4/projects/25/packages/maven</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -43,15 +61,8 @@
         <!-- AWS specific packages -->
         <dependency>
             <groupId>org.opengroup.osdu.core.aws</groupId>
-            <artifactId>aws-osdu-util</artifactId>
-            <version>0.0.9</version>
-        </dependency>
-
-        <!-- AWS managed packages -->
-        <dependency>
-            <groupId>com.github.awslabs</groupId>
-            <artifactId>aws-request-signing-apache-interceptor</artifactId>
-            <version>deb7941</version>
+            <artifactId>os-core-lib-aws</artifactId>
+            <version>0.0.10</version>
         </dependency>
 
         <!-- Testing -->
@@ -138,44 +149,12 @@
         </dependency>
 
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>${gitlab-server}</id>
-            <url>https://community.opengroup.org/api/v4/groups/17/-/packages/maven</url>
-        </repository>
-
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>${gitlab-server}</id>
-            <url>https://community.opengroup.org/api/v4/projects/25/packages/maven</url>
-        </repository>
-        <snapshotRepository>
-            <id>${gitlab-server}</id>
-            <url>https://community.opengroup.org/api/v4/projects/25/packages/maven</url>
-        </snapshotRepository>
-    </distributionManagement>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.5</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <AWS_COGNITO_CLIENT_ID>3rmgmg8mup281ttc1mbut1pimc</AWS_COGNITO_CLIENT_ID>
-                        <AWS_COGNITO_AUTH_FLOW>USER_PASSWORD_AUTH</AWS_COGNITO_AUTH_FLOW>
-                        <AWS_COGNITO_AUTH_PARAMS_USER>test-user-with-access@testing.com</AWS_COGNITO_AUTH_PARAMS_USER>
-                        <AWS_COGNITO_AUTH_PARAMS_USER_NO_ACCESS>test-user-without-access@testing.com</AWS_COGNITO_AUTH_PARAMS_USER_NO_ACCESS>
-                        <AWS_COGNITO_AUTH_PARAMS_PASSWORD>Password123*</AWS_COGNITO_AUTH_PARAMS_PASSWORD>
-                    </systemPropertyVariables>
-                </configuration>
             </plugin>
         </plugins>
     </build>
