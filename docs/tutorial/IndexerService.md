@@ -220,7 +220,7 @@ API will respond with status of task.
             "requests_per_second": -1,
             "throttled_until_millis": 0
         },
-        "description": "reindex from [scheme=https host=host-id port=9243 query={\n  \"match_all\" : {\n    \"boost\" : 1.0\n  }\n} username=indexer-user password=<<>>][common:welldb:wellbore:1.0.0] to [common:welldb:wellbore:1.0.0]",
+        "description": "reindex from [scheme=https host=host-id port=9243 query={\n  \"match_all\" : {\n    \"boost\" : 1.0\n  }\n}][common:welldb:wellbore:1.0.0] to [common:welldb:wellbore:1.0.0]",
         "start_time_in_millis": 1539735233086,
         "running_time_in_nanos": 1094744315,
         "cancellable": true,
