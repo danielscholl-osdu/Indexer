@@ -186,7 +186,7 @@ GET /api/indexer/v2/copyIndex/taskStatus/{taskId}
 
 ```
 curl --request GET \
-  --url '/api/indexer/v2/copyIndex/taskStatus/CrOX4STSQF6kgtSRdERhbw:92863567' \
+  --url '/api/indexer/v2/copyIndex/taskStatus/[taskid]]' \
   --header 'accept: application/json' \
   --header 'authorization: Bearer <JWT>' \
   --header 'content-type: application/json' \
@@ -200,7 +200,7 @@ API will respond with status of task.
 {
     "completed": true,
     "task": {
-        "node": "CrOX4STSQF6kgtSRdERhbw",
+        "node": "[nodeid]",
         "id": 113159669,
         "type": "transport",
         "action": "indices:data/write/reindex",
