@@ -24,8 +24,8 @@ public class IndexCacheImpl implements IIndexCache<String, Boolean>, AutoCloseab
 
     private RedisCache<String, Boolean> cache;
 
-    public IndexCacheImpl(@Value("${aws.elasticache.cluster.index.endpoint}") final String REDIS_SEARCH_HOST,
-                      @Value("${aws.elasticache.cluster.index.port}") final String REDIS_SEARCH_PORT,
+    public IndexCacheImpl(@Value("${aws.elasticache.cluster.endpoint}") final String REDIS_SEARCH_HOST,
+                      @Value("${aws.elasticache.cluster.port}") final String REDIS_SEARCH_PORT,
                       @Value("${aws.elasticache.cluster.index.expiration}") final String INDEX_CACHE_EXPIRATION) {
         cache = new RedisCache<>(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT),
                 Integer.parseInt(INDEX_CACHE_EXPIRATION) * 60, String.class, Boolean.class);

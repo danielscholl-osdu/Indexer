@@ -14,16 +14,18 @@
 
 package org.opengroup.osdu.indexer.aws.persistence;
 
+import org.opengroup.osdu.core.aws.ssm.ParameterStorePropertySource;
+import org.opengroup.osdu.core.aws.ssm.SSMConfig;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 @Component
 public class ElasticRepositoryImpl implements IElasticRepository {
-
-    // TODO: Will need to be implemented later
 
     @Value("${aws.es.host}")
     String host;
@@ -32,6 +34,27 @@ public class ElasticRepositoryImpl implements IElasticRepository {
     int port;
 
     String userNameAndPassword = "testing";
+
+    @Value("${aws.elasticsearch.port}")
+    String portParameter;
+
+    @Value("${aws.elasticsearch.host}")
+    String hostParameter;
+
+    @Value("${aws.ssm}")
+    String ssmEnabledString;
+
+    private ParameterStorePropertySource ssm;
+
+    @PostConstruct
+    private void postConstruct() {
+        if( Boolean.parseBoolean(ssmEnabledString)) {
+            SSMConfig ssmConfig = new SSMConfig();
+            ssm = ssmConfig.amazonSSM();
+            host = ssm.getProperty(hostParameter).toString();
+            port = Integer.parseInt(ssm.getProperty(portParameter).toString());
+        }
+    }
 
     @Override
     public ClusterSettings getElasticClusterSettings(TenantInfo tenantInfo) {

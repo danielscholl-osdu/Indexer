@@ -21,6 +21,8 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
+import org.opengroup.osdu.core.aws.ssm.ParameterStorePropertySource;
+import org.opengroup.osdu.core.aws.ssm.SSMConfig;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.aws.sqs.AmazonSQSConfig;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
@@ -39,21 +41,29 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
     private AmazonSNS snsClient;
 
-    @Value("${aws.region}")
-    private String region;
+    private ParameterStorePropertySource ssm;
 
-    @Value("${aws.sns.storage.arn}")
     private String amazonSNSTopic;
 
     private String retryString = "retry";
 
     private Gson gson;
 
+    @Value("${aws.region}")
+    private String region;
+
+    @Value("${aws.storage.sns.topic.arn}")
+    String parameter;
+
+
     @Inject
     public void init() {
         AmazonSNSConfig config = new AmazonSNSConfig(region);
         snsClient = config.AmazonSNS();
         gson =new Gson();
+        SSMConfig ssmConfig = new SSMConfig();
+        ssm = ssmConfig.amazonSSM();
+        amazonSNSTopic = ssm.getProperty(parameter).toString();
     }
 
     @Override
