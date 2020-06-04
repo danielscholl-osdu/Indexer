@@ -16,6 +16,7 @@ package org.opengroup.osdu.step_definitions.index.record;
 
 import lombok.extern.java.Log;
 import org.opengroup.osdu.common.RecordSteps;
+import org.opengroup.osdu.core.common.model.legal.Legal;
 import org.opengroup.osdu.util.AWSHTTPClient;
 
 import cucumber.api.Scenario;
@@ -25,22 +26,53 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.opengroup.osdu.util.ElasticUtilsAws;
+import org.opengroup.osdu.util.LegalTagUtilsAws;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.opengroup.osdu.util.Config.getLegalTag;
+import static org.opengroup.osdu.util.Config.getOtherRelevantDataCountries;
 
 @Log
 public class Steps extends RecordSteps {
+
+    protected LegalTagUtilsAws legalTagUtils;
+    private String legalTagName;
 
     public Steps() {
         super(new AWSHTTPClient(), new ElasticUtilsAws());
     }
 
     @Before
-    public void before(Scenario scenario) {
+    public void before(Scenario scenario) throws Exception {
         this.scenario = scenario;
         this.httpClient = new AWSHTTPClient();
+        legalTagUtils = new LegalTagUtilsAws(this.httpClient);
+        this.legalTagName = this.legalTagUtils.createRandomName();
+        this.legalTagUtils.create(this.legalTagName);
+    }
+
+    @Override
+    public void tearDown() {
+        super.tearDown();
+        this.legalTagUtils.delete(this.legalTagName);
+    }
+
+    @Override
+    protected Legal generateLegalTag() {
+        Legal legal = new Legal();
+        Set<String> legalTags = new HashSet<>();
+        legalTags.add(this.legalTagName);
+        legal.setLegaltags(legalTags);
+        Set<String> otherRelevantCountries = new HashSet<>();
+        otherRelevantCountries.add(getOtherRelevantDataCountries());
+        legal.setOtherRelevantDataCountries(otherRelevantCountries);
+        return legal;
     }
 
     @Given("^the schema is created with the following kind$")
-    public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
+    public void the_schema_is_created_with_the_following_kind(DataTable dataTable){
         super.the_schema_is_created_with_the_following_kind(dataTable);
     }
 

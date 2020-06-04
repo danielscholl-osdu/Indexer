@@ -11,6 +11,6 @@
       <!-- The generated token was last updated on 01/13/2020 and expires on or before 01/12/2021 -->
       <password>${azure.devops.token}</password>
     </server>
-
   </servers>
+
 </settings>

@@ -17,6 +17,8 @@ package org.opengroup.osdu.indexer.aws.publish;
 import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.AmazonSNS;
+import org.opengroup.osdu.core.aws.ssm.ParameterStorePropertySource;
+import org.opengroup.osdu.core.aws.ssm.SSMConfig;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
 import org.opengroup.osdu.core.aws.sns.PublishRequestBuilder;
@@ -34,16 +36,24 @@ public class PublisherImpl implements IPublisher {
 
     AmazonSNS snsClient;
 
-    @Value("${aws.sns.arn}")
+    private ParameterStorePropertySource ssm;
+
     private String amazonSNSTopic;
 
-    @Value("${aws.sns.region}")
+    @Value("${aws.region}")
     private String amazonSNSRegion;
+
+    @Value("${aws.indexer.sns.topic.arn}")
+    private String parameter;
+
 
     @Inject
     public void init(){
         AmazonSNSConfig snsConfig = new AmazonSNSConfig(amazonSNSRegion);
         snsClient = snsConfig.AmazonSNS();
+        SSMConfig ssmConfig = new SSMConfig();
+        ssm = ssmConfig.amazonSSM();
+        amazonSNSTopic = ssm.getProperty(parameter).toString();
     }
 
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception

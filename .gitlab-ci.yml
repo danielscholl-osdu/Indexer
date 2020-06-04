@@ -1,6 +1,7 @@
 variables:
-  AWS_BUILD_SUBDIR: provider/indexer-aws
-  AWS_APPLICATION_NAME: os-indexer
+  AWS_BUILD_SUBDIR: provider/indexer-aws/build-aws
+  AWS_TEST_SUBDIR: testing/indexer-test-aws
+  AWS_SERVICE: indexer
   AWS_ENVIRONMENT: dev
 
   GCP_BUILD_SUBDIR: provider/indexer-gcp
@@ -20,12 +21,21 @@ variables:
 include:
   - project: "osdu/platform/ci-cd-pipelines"
     file: "standard-setup.yml"
+
   - project: "osdu/platform/ci-cd-pipelines"
     file: "build/maven.yml"
-  - project: "osdu/platform/ci-cd-pipelines"
-    ref: "master"
-    file: "cloud-providers/azure.yml"
+
   - project: "osdu/platform/ci-cd-pipelines"
     file: "scanners/fossa.yml"
+
   - project: "osdu/platform/ci-cd-pipelines"
     file: "scanners/gitlab-ultimate.yml"
+
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/aws.yml"
+
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "publishing/pages.yml"
+
+aws-test:
+  tags: ['aws-internal-test']

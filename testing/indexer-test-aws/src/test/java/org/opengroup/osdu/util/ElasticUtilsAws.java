@@ -28,6 +28,7 @@ public class ElasticUtilsAws extends ElasticUtils {
 
     @Override
     public RestClientBuilder createClientBuilder(String host, String usernameAndPassword, int port) {
+        port = Integer.parseInt(System.getProperty("ELASTIC_PORT", System.getenv("ELASTIC_PORT")));
         RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, "https"));
         builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
                 .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
