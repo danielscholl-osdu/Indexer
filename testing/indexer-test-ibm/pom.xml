@@ -34,6 +34,12 @@
             <artifactId>indexer-test-core</artifactId>
             <version>0.0.2-SNAPSHOT</version>
         </dependency>
+        
+        <dependency>
+			<groupId>org.opengroup.osdu</groupId>
+			<artifactId>os-core-lib-ibm</artifactId>
+			<version>0.0.14-SNAPSHOT</version>
+		</dependency>
 
         <!-- Cucumber -->
         <dependency>
@@ -146,63 +152,4 @@
         </snapshotRepository>
     </distributionManagement>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-                <executions>
-                    <execution>
-                        <phase>integration-test</phase>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>none</exclude>
-                            </excludes>
-                            <includes>
-                                <include>**/index</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <trimStackTrace>false</trimStackTrace>
-                    <systemPropertyVariables>
-
-                        <KEYCLOAK_URL>keycloak-osdu-r2.osduadev-a1c3eaf78a86806e299f5f3f207556f0-0000.us-south.containers.appdomain.cloud</KEYCLOAK_URL>
-                        <KEYCLOAK_REALM>OSDU</KEYCLOAK_REALM>
-                        <KEYCLOAK_CLIENT_ID>osdu-login</KEYCLOAK_CLIENT_ID>
-                        <AUTH_USER_ACCESS>osdu-user</AUTH_USER_ACCESS>
-                        <AUTH_USER_ACCESS_PASSWORD>CHANGE_ME</AUTH_USER_ACCESS_PASSWORD>
-
-                    	  <ENTITLEMENTS_DOMAIN>ibm.com</ENTITLEMENTS_DOMAIN>
-                        <OTHER_RELEVANT_DATA_COUNTRIES>US</OTHER_RELEVANT_DATA_COUNTRIES>
-                        <!-- must be a valid, existing tag -->
-                        <LEGAL_TAG>opendes-public-usa-dataset</LEGAL_TAG>
-
-                     	  <!-- tenant1 MUSTG be opendes to work -->
-                        <DEFAULT_DATA_PARTITION_ID_TENANT1>opendes</DEFAULT_DATA_PARTITION_ID_TENANT1>
-						            <DEFAULT_DATA_PARTITION_ID_TENANT2>tenant2</DEFAULT_DATA_PARTITION_ID_TENANT2>
-
-                        <!-- test against OpenShift -->
-           				      <STORAGE_HOST>https://storage.osdu-r2-dev-a1c3eaf78a86806e299f5f3f207556f0-0000.us-south.containers.appdomain.cloud/api/storage/v2/</STORAGE_HOST>
-
-            						<!-- test locally -->
-            						<!--
-            						<STORAGE_HOST>http://localhost:8082/api/storage/v2/</STORAGE_HOST>
-            						-->
-						            <ELASTIC_HOST>CHANGE_ME.us-south.containers.appdomain.cloud</ELASTIC_HOST>
-                        <ELASTIC_USER_NAME>CHANGE_ME</ELASTIC_USER_NAME>
-                        <ELASTIC_PASSWORD>CHANGE_ME</ELASTIC_PASSWORD>
-                        <ELASTIC_PORT>443</ELASTIC_PORT>
-
-
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
