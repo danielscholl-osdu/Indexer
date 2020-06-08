@@ -260,7 +260,7 @@ public class ElasticUtils {
     private RestHighLevelClient createClient(String username, String password, String host) {
 
         RestHighLevelClient restHighLevelClient;
-        int port = Config.PORT;
+        int port = Config.getPort();
         try {
             String rawString = String.format("%s:%s", username, password);
 

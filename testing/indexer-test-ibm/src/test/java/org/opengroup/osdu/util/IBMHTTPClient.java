@@ -14,12 +14,12 @@
 
 package org.opengroup.osdu.util;
 
-import lombok.ToString;
-import lombok.extern.java.Log;
+import org.opengroup.osdu.core.ibm.util.IdentityClient;
 
 import com.google.common.base.Strings;
 
-@Log
+import lombok.ToString;
+
 @ToString
 public class IBMHTTPClient extends HTTPClient {
 	 private static String token = null;
@@ -28,7 +28,7 @@ public class IBMHTTPClient extends HTTPClient {
 	    public synchronized String getAccessToken() {
 	        if(Strings.isNullOrEmpty(token)) {
 	            try {
-	                token = "Bearer " + IdentityUtilIBM.getAccessToken();
+	                token = "Bearer " + IdentityClient.getTokenForUserWithAccess();
 	            } catch (Exception e) {
 	                e.printStackTrace();
 	            }

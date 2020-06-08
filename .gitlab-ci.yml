@@ -14,6 +14,9 @@ variables:
   GCP_DOMAIN: cloud.slb-ds.com
   GCP_STORAGE_URL: https://osdu-indexer-dot-opendes.appspot.com/api/storage/v2/
 
+  IBM_BUILD_SUBDIR: provider/indexer-ibm
+  IBM_INT_TEST_SUBDIR: testing/indexer-test-ibm
+
   AZURE_SERVICE: indexer
   AZURE_BUILD_SUBDIR: provider/indexer-azure
   AZURE_TEST_SUBDIR: testing/indexer-test-azure
@@ -33,6 +36,9 @@ include:
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/aws.yml"
+
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/ibm.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "publishing/pages.yml"
