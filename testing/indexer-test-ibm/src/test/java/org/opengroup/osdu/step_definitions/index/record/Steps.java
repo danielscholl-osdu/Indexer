@@ -1,7 +1,6 @@
 package org.opengroup.osdu.step_definitions.index.record;
 
 import org.opengroup.osdu.common.RecordSteps;
-import org.opengroup.osdu.util.ElasticUtilsIBM;
 import org.opengroup.osdu.util.IBMHTTPClient;
 
 import cucumber.api.DataTable;
@@ -16,7 +15,7 @@ import lombok.extern.java.Log;
 public class Steps extends RecordSteps {
 
     public Steps() {
-        super(new IBMHTTPClient(), new ElasticUtilsIBM());
+        super(new IBMHTTPClient());
     }
 
     @Before

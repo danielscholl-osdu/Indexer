@@ -28,3 +28,7 @@ analyze:
     type: mvn
     target: provider/indexer-gcp/pom.xml
     path: .
+  - name: indexer-ibm
+    type: mvn
+    target: provider/indexer-ibm/pom.xml
+    path: .
