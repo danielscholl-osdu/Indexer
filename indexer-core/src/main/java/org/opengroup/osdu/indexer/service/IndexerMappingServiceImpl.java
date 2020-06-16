@@ -39,6 +39,8 @@ import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.model.indexer.DEAnalyzerType;
+import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
@@ -47,6 +49,8 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.stereotype.Service;
 import javax.inject.Inject;
+
+import static org.opengroup.osdu.core.common.search.Config.isPreDemo;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IndexerMappingService {
@@ -121,7 +125,13 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         Map<String, Object> dataMapping = new HashMap<>();
         if (schema.getDataSchema() != null) {
             for (Map.Entry<String, String> entry : schema.getDataSchema().entrySet()) {
-                dataMapping.put(entry.getKey(), Records.Type.builder().type(entry.getValue()).build());
+                // Apply de_indexer_analyzer and de_search_analyzer to TEXT field
+                if (isPreDemo() && ElasticType.TEXT.getValue().equalsIgnoreCase(entry.getValue())) {
+                    log.info(String.format("indexing %s with custom analyzer", entry.getKey()));
+                    dataMapping.put(entry.getKey(), Records.Analyzer.builder().type(entry.getValue()).analyzer(DEAnalyzerType.INDEXER_ANALYZER.getValue()).search_analyzer(DEAnalyzerType.SEARCH_ANALYZER.getValue()).build());
+                } else {
+                    dataMapping.put(entry.getKey(), Records.Type.builder().type(entry.getValue()).build());
+                }
             }
 
             // inner properties.data.properties block

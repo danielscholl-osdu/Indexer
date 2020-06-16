@@ -9,6 +9,7 @@ public interface IAttributeParsingService {
     public static final String RECORD_GEOJSON_TAG = "GeoJSON.features.geometry";
     public static final String DATA_GEOJSON_TAG = "x-geojson";
 
+    void tryParseValueArray(Class<?> attributeClass, String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap);
 
     void tryParseInteger(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap);
 

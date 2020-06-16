@@ -19,6 +19,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+
+import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -32,6 +34,7 @@ import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.search.Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -40,15 +43,17 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.opengroup.osdu.core.common.model.http.DpsHeaders.FRAME_OF_REFERENCE;
 import static org.opengroup.osdu.core.common.Constants.SLB_FRAME_OF_REFERENCE_VALUE;
 
-@Log
 @Component
 public class StorageServiceImpl implements StorageService {
 
@@ -80,6 +85,7 @@ public class StorageServiceImpl implements StorageService {
         List<Records.Entity> valid = new ArrayList<>();
         List<String> notFound = new ArrayList<>();
         List<ConversionStatus> conversionStatuses = new ArrayList<>();
+        List<String> missingRetryRecordIds = new ArrayList<>();
 
         List<List<String>> batch = Lists.partition(ids, Integer.parseInt(STORAGE_RECORDS_BATCH_SIZE));
         for (List<String> recordsBatch : batch) {
@@ -87,8 +93,9 @@ public class StorageServiceImpl implements StorageService {
             valid.addAll(storageOut.getRecords());
             notFound.addAll(storageOut.getNotFound());
             conversionStatuses.addAll(storageOut.getConversionStatuses());
+            missingRetryRecordIds.addAll(storageOut.getMissingRetryRecords());
         }
-        return Records.builder().records(valid).notFound(notFound).conversionStatuses(conversionStatuses).build();
+        return Records.builder().records(valid).notFound(notFound).conversionStatuses(conversionStatuses).missingRetryRecords(missingRetryRecordIds).build();
     }
 
     private Records getRecords(List<String> ids) throws URISyntaxException {
@@ -98,56 +105,120 @@ public class StorageServiceImpl implements StorageService {
 //        Map<String, String> headers = this.requestInfo.getHeadersMap();
         DpsHeaders headers = this.requestInfo.getHeaders();
         headers.put(FRAME_OF_REFERENCE, SLB_FRAME_OF_REFERENCE_VALUE);
-        HttpResponse response = this.urlFetchService.sendRequest(HttpMethods.POST, STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST, headers, null, body);
-        String dataFromStorage = response.getBody();
-        if (Strings.isNullOrEmpty(dataFromStorage)) {
-            throw new AppException(HttpStatus.SC_NOT_FOUND, "Invalid request", "Storage service cannot locate records");
+        FetchServiceHttpRequest request = FetchServiceHttpRequest
+                .builder()
+                .httpMethod(HttpMethods.POST)
+                .url(STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST)
+                .headers(headers)
+                .body(body).build();
+        HttpResponse response = this.urlFetchService.sendRequest(request);
+        return this.validateStorageResponse(response, ids);
+    }
+
+    private Records validateStorageResponse(HttpResponse response, List<String> ids) {
+        String bulkStorageData = response.getBody();
+
+        // retry entire payload -- storage service returned empty response
+        if (Strings.isNullOrEmpty(bulkStorageData)) {
+            throw new AppException(HttpStatus.SC_NOT_FOUND, "Invalid request", "Storage service returned empty response");
         }
 
-        Type recordsListType = new TypeToken<Records>() {}.getType();
-        Records records = this.gson.fromJson(dataFromStorage, recordsListType);
+        Type recordsListType = new TypeToken<Records>() {
+        }.getType();
+        Records records = this.gson.fromJson(bulkStorageData, recordsListType);
 
-        // update status for invalid records from storage
-        if (records.getNotFound() != null && !records.getNotFound().isEmpty()) {
-            this.jobStatus.addOrUpdateRecordStatus(records.getNotFound(), IndexingStatus.FAIL, RequestStatus.INVALID_RECORD, "invalid storage records", String.format("invalid records: %s", String.join(",", records.getNotFound())));
+        // no retry possible, update record status as failed -- storage service cannot locate records
+        if (!records.getNotFound().isEmpty()) {
+            this.jobStatus.addOrUpdateRecordStatus(records.getNotFound(), IndexingStatus.FAIL, RequestStatus.INVALID_RECORD, "Storage service records not found", String.format("Storage service records not found: %s", String.join(",", records.getNotFound())));
         }
 
-        // don't proceed if there is nothing to process
         List<Records.Entity> validRecords = records.getRecords();
-        if (validRecords == null || validRecords.isEmpty()) {
+        if (validRecords.isEmpty()) {
+            // no need to retry, ack the CloudTask message -- nothing to process from RecordChangeMessage batch
             if (response.isSuccessCode()) {
-                throw new AppException(RequestStatus.INVALID_RECORD, "Invalid request", "Storage service returned retry or invalid records");
+                throw new AppException(RequestStatus.INVALID_RECORD, "Invalid request", "Successful Storage service response with no valid records");
             }
 
-            // TODO: returned actual code from storage service
+            // retry entire payload -- storage service returned empty valid records with non-success response-code
             jaxRsDpsLog.warning(String.format("unable to proceed, valid storage record not found. | upstream response code: %s | record ids: %s", response.getResponseCode(), String.join(" | ", ids)));
-            throw new AppException(HttpStatus.SC_NOT_FOUND, "Invalid request", "Storage service cannot locate valid records");
+            throw new AppException(HttpStatus.SC_NOT_FOUND, "Invalid request", "Storage service error");
+        }
+
+        Map<String, List<String>> conversionStatus = getConversionErrors(records.getConversionStatuses());
+        for (Records.Entity storageRecord : validRecords) {
+            String recordId = storageRecord.getId();
+            if (conversionStatus.get(recordId) == null) {
+                continue;
+            }
+            for (String status : conversionStatus.get(recordId)) {
+                this.jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, status, String.format("record-id: %s | %s", recordId, status));
+            }
+        }
+
+        // retry missing records -- storage did not return response for all RecordChangeMessage record-ids
+        if (records.getTotalRecordCount() != ids.size()) {
+            List<String> missingRecords = this.getMissingRecords(records, ids);
+            records.setMissingRetryRecords(missingRecords);
+            this.jobStatus.addOrUpdateRecordStatus(missingRecords, IndexingStatus.FAIL, HttpStatus.SC_NOT_FOUND, "Partial response received from Storage service - missing records", String.format("Partial response received from Storage service: %s", String.join(",", missingRecords)));
         }
 
         return records;
     }
 
+    private List<String> getMissingRecords(Records records, List<String> ids) {
+        List<String> validRecordIds = records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList());
+        List<String> invalidRecordsIds = records.getNotFound();
+        List<String> requestedIds = new ArrayList<>(ids);
+        requestedIds.removeAll(validRecordIds);
+        requestedIds.removeAll(invalidRecordsIds);
+        return requestedIds;
+    }
+
+    private Map<String, List<String>> getConversionErrors(List<ConversionStatus> conversionStatuses) {
+        Map<String, List<String>> errorsByRecordId = new HashMap<>();
+        for (ConversionStatus conversionStatus : conversionStatuses) {
+            if (Strings.isNullOrEmpty(conversionStatus.getStatus())) continue;
+            if (conversionStatus.getStatus().equalsIgnoreCase("ERROR")) {
+                List<String> statuses = errorsByRecordId.getOrDefault(conversionStatus.getId(), new LinkedList<>());
+                statuses.addAll(conversionStatus.getErrors());
+                errorsByRecordId.put(conversionStatus.getId(), statuses);
+            }
+        }
+        return errorsByRecordId;
+    }
+
     @Override
-    public RecordQueryResponse getRecordsByKind(RecordReindexRequest request) throws URISyntaxException {
+    public RecordQueryResponse getRecordsByKind(RecordReindexRequest reindexRequest) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(RecordMetaAttribute.KIND.getValue(), request.getKind());
+        queryParams.put(RecordMetaAttribute.KIND.getValue(), reindexRequest.getKind());
         queryParams.put("limit", STORAGE_RECORDS_BATCH_SIZE);
-        if (!Strings.isNullOrEmpty(request.getCursor())) {
-            queryParams.put("cursor", request.getCursor());
+        if (!Strings.isNullOrEmpty(reindexRequest.getCursor())) {
+            queryParams.put("cursor", reindexRequest.getCursor());
         }
 
         if(requestInfo == null)
             throw  new AppException(HttpStatus.SC_NO_CONTENT, "Invalid header", "header can't be null");
 
-        HttpResponse response = this.urlFetchService.sendRequest(HttpMethods.GET, STORAGE_QUERY_RECORD_HOST, this.requestInfo.getHeaders(), queryParams, null);
+        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
+                .httpMethod(HttpMethods.GET)
+                .headers(this.requestInfo.getHeadersMap())
+                .url(Config.getStorageQueryRecordHostUrl())
+                .queryParams(queryParams)
+                .build();
+
+        HttpResponse response = this.urlFetchService.sendRequest(request);
         return this.gson.fromJson(response.getBody(), RecordQueryResponse.class);
     }
 
     @Override
     public String getStorageSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        String url = String.format("%s/%s", STORAGE_SCHEMA_HOST, URLEncoder.encode(kind, "UTF-8"));
-        HttpResponse response = this.urlFetchService.sendRequest(HttpMethods.GET, url, this.requestInfo.getHeaders(), null, null);
-        if (response.getResponseCode() != HttpStatus.SC_OK) return null;
-        return response.getBody();
+        String url = String.format("%s/%s", STORAGE_SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
+        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
+                .httpMethod(HttpMethods.GET)
+                .headers(this.requestInfo.getHeadersMap())
+                .url(url)
+                .build();
+        HttpResponse response = this.urlFetchService.sendRequest(request);
+        return response.getResponseCode() != HttpStatus.SC_OK ? null : response.getBody();
     }
 }

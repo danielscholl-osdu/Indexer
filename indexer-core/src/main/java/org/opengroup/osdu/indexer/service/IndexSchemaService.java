@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import org.elasticsearch.ElasticsearchException;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
@@ -23,7 +24,11 @@ import java.util.Map;
 
 public interface IndexSchemaService {
 
-    IndexSchema getIndexerInputSchema(String kind) throws AppException;
+    IndexSchema getIndexerInputSchema(String kind, boolean invalidateCached) throws AppException;
 
     void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException;
+
+    void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException;
+
+    boolean isStorageSchemaSyncRequired(String kind, boolean forceClean) throws IOException;
 }

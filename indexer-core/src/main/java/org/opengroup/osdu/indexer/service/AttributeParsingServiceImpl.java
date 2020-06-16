@@ -20,8 +20,12 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.model.indexer.ElasticType;
+import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
 import org.opengroup.osdu.indexer.util.parser.NumberParser;
@@ -29,17 +33,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.Map;
+import java.util.*;
+import java.util.function.BiFunction;
 
 @Service
 @RequestScope
 public class AttributeParsingServiceImpl implements IAttributeParsingService {
 
     private static final String GEOJSON = "GeoJSON";
+    private static final String GEOMETRY_COLLECTION = "geometrycollection";
+    private static final String GEOMETRIES = "geometries";
 
     @Inject
     private NumberParser numberParser;
+    @Inject
+    private BooleanParser booleanParser;
     @Inject
     private DateTimeParser dateTimeParser;
     @Inject
@@ -48,6 +58,48 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
     private GeometryConversionService geometryConversionService;
     @Inject
     private JobStatus jobStatus;
+
+    @Override
+    public void tryParseValueArray(Class<?> attributeClass, String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
+        BiFunction<String, Object, ?> parser;
+        ElasticType elasticType = ElasticType.forValue(attributeClass.getSimpleName());
+        switch (elasticType) {
+            case DOUBLE:
+                parser = this.numberParser::parseDouble;
+                break;
+            case FLOAT:
+                parser = this.numberParser::parseFloat;
+                break;
+            case INTEGER:
+                parser = this.numberParser::parseInteger;
+                break;
+            case LONG:
+                parser = this.numberParser::parseLong;
+                break;
+            case BOOLEAN:
+                parser = this.booleanParser::parseBoolean;
+                break;
+            case DATE:
+                parser = this.dateTimeParser::parseDate;
+                // DateTime parser output is String
+                attributeClass = String.class;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid array attribute type");
+        }
+
+        try {
+            List<String> parsedStringList = isArrayType(attributeVal);
+            List out = new ArrayList<>();
+            for (Object o : parsedStringList) {
+                out.add(parser.apply(attributeName, o));
+            }
+            Object parsedAttribute = toTypeArray(attributeClass, out);
+            dataMap.put(attributeName, parsedAttribute);
+        } catch (IllegalArgumentException e) {
+            this.jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, e.getMessage(), String.format("record-id: %s | %s", recordId, e.getMessage()));
+        }
+    }
 
     @Override
     public void tryParseInteger(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
@@ -91,24 +143,18 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
 
     @Override
     public void tryParseBoolean(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
-        String val = attributeVal == null ? null : String.valueOf(attributeVal);
-        dataMap.put(attributeName, Boolean.parseBoolean(val));
+        boolean parsedBoolean = this.booleanParser.parseBoolean(attributeName, attributeVal);
+        dataMap.put(attributeName, parsedBoolean);
     }
 
     @Override
     public void tryParseDate(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
-        String val = attributeVal == null ? null : String.valueOf(attributeVal);
-        if (Strings.isNullOrEmpty(val)) {
-            // skip indexing
-            return;
-        }
-
-        String utcDate = this.dateTimeParser.convertDateObjectToUtc(val);
-        if (Strings.isNullOrEmpty(utcDate)) {
-            String parsingError = String.format("datetime parsing error: unknown format for attribute: %s | value: %s", attributeName, attributeVal);
-            jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, parsingError, String.format("record-id: %s | %s", recordId, parsingError));
-        } else {
-            dataMap.put(attributeName, utcDate);
+        try {
+            String parsedDate = this.dateTimeParser.parseDate(attributeName, attributeVal);
+            if (parsedDate == null) return;
+            dataMap.put(attributeName, parsedDate);
+        } catch (IllegalArgumentException e) {
+            jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, e.getMessage(), String.format("record-id: %s | %s", recordId, e.getMessage()));
         }
     }
 
@@ -160,6 +206,30 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
             String parsingError = String.format("geo-json shape parsing error: %s attribute: %s", e.getMessage(), attributeName);
             jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, parsingError, String.format("record-id: %s | %s", recordId, parsingError));
         }
+    }
+
+
+    private List<String> isArrayType(Object attributeVal) {
+        try {
+            String value = attributeVal == null ? null : String.valueOf(attributeVal);
+            if (attributeVal == null || Strings.isNullOrEmpty(value)) {
+                return Collections.EMPTY_LIST;
+            }
+
+            Gson converter = new Gson();
+            Type type = new TypeToken<List<String>>() {}.getType();
+            return converter.fromJson(value, type);
+        } catch (JsonSyntaxException e) {
+            throw new IllegalArgumentException("array parsing error, not a valid array");
+        }
+    }
+
+    private <N> N toTypeArray(Class<N> fieldClass, List<?> list) {
+        Object array = Array.newInstance(fieldClass, list.size());
+        for (int i = 0; i < list.size(); i++) {
+            Array.set(array, i, list.get(i));
+        }
+        return (N) array;
     }
 }
 

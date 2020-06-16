@@ -33,7 +33,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -196,7 +195,7 @@ public class JobStatusTest {
         jobStatus.addOrUpdateRecordStatus("skipped2", IndexingStatus.SKIP, 1, "");
         jobStatus.addOrUpdateRecordStatus("skipped3", IndexingStatus.SKIP, 1, "");
         jobStatus.addOrUpdateRecordStatus("skipped4", IndexingStatus.SKIP, 1, "");
-        jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS);
+        jobStatus.addOrUpdateRecordStatus("warn1", IndexingStatus.WARN, 1, "");
         return jobStatus;
     }
 
@@ -218,6 +217,13 @@ public class JobStatusTest {
     }
 
     @Test
+    public void should_get_correctUpdateMessageCount_given_updateRecordStatusTest() {
+        JobStatus jobStatus = insertTestCasesIntoJobStatus();
+
+        assertEquals(6, jobStatus.getIdsByValidUpsertIndexingStatus().size());
+    }
+
+    @Test
     public void should_returnValidList_getRecordStatuses() {
 
         String recordChangedMessages = "[{\"id\":\"tenant1:doc:test1\",\"kind\":\"tenant1:testindexer1:well:1.0.0\",\"op\":\"purge\"}," +
@@ -233,7 +239,10 @@ public class JobStatusTest {
         assertNotNull(statuses);
         assertEquals(1, statuses.size());
 
-        List<String> toString = statuses.stream().map(RecordStatus::toString).collect(Collectors.toList());
-        assertEquals(toString.get(0), "RecordStatus(id=tenant1:doc:test2, kind=tenant1:testindexer12:well:1.0.0, operationType=create, status=SUCCESS)");
+        RecordStatus recordStatus = statuses.get(0);
+        assertEquals("tenant1:doc:test2", recordStatus.getId());
+        assertEquals("tenant1:testindexer12:well:1.0.0", recordStatus.getKind());
+        assertEquals("create", recordStatus.getOperationType());
+        assertEquals(IndexingStatus.SUCCESS, recordStatus.getStatus());
     }
 }

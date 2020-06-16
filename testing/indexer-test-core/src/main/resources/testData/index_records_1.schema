@@ -56,6 +56,10 @@
     {
       "path": "Established",
       "kind": "datetime"
+    },
+    {
+       "path": "DblArray",
+       "kind": "[]double"
     }
   ]
 }

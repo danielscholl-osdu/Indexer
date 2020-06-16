@@ -17,6 +17,7 @@ package org.opengroup.osdu.indexer.util;
 import com.google.api.client.http.HttpMethods;
 import com.google.gson.Gson;
 import lombok.extern.java.Log;
+import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.CloudTaskRequest;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.net.URISyntaxException;
+import java.util.Map;
 import javax.inject.Inject;
 
 import static org.opengroup.osdu.core.common.Constants.REINDEX_RELATIVE_URL;
@@ -46,24 +48,36 @@ import static org.opengroup.osdu.core.common.Constants.WORKER_RELATIVE_URL;
     private String INDEXER_QUEUE_HOST;
 
     public void createWorkerTask(String payload, DpsHeaders headers) {
-        createTask(WORKER_RELATIVE_URL, payload, headers);
+        createTask(WORKER_RELATIVE_URL, payload, 0l, headers);
     }
 
-    public void createReIndexTask(String payload,DpsHeaders headers) {
-        createTask(REINDEX_RELATIVE_URL, payload, headers);
+    public void createWorkerTask(String payload, Long countdownMillis, DpsHeaders headers) {
+        createTask(WORKER_RELATIVE_URL, payload, countdownMillis, headers);
     }
 
-    private void createTask(String url, String payload, DpsHeaders headers) {
+    public void createReIndexTask(String payload, DpsHeaders headers) {
+        createTask(REINDEX_RELATIVE_URL, payload, 0l, headers);
+    }
 
-        CloudTaskRequest cloudTaskRequest = CloudTaskRequest.builder().message(payload).url(url).build();
+    public void createReIndexTask(String payload, Long countdownMillis, DpsHeaders headers) {
+        createTask(REINDEX_RELATIVE_URL, payload, countdownMillis, headers);
+    }
 
+    private void createTask(String url, String payload, Long countdownMillis, DpsHeaders headers) {
+        CloudTaskRequest cloudTaskRequest = CloudTaskRequest.builder()
+                .message(payload)
+                .url(url)
+                .initialDelayMillis(countdownMillis)
+                .build();
+
+        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
+                .httpMethod(HttpMethods.POST)
+                .url(INDEXER_QUEUE_HOST)
+                .body(new Gson().toJson(cloudTaskRequest))
+                .headers(headers)
+                .build();
         try {
-            HttpResponse response = this.urlFetchService.sendRequest(
-                    HttpMethods.POST,
-                    INDEXER_QUEUE_HOST,
-                    headers,
-                    null,
-                    new Gson().toJson(cloudTaskRequest));
+            HttpResponse response = this.urlFetchService.sendRequest(request);
             this.jaxRsDpsLog.info(String.format("task enqueuing response: %s", response.getResponseCode()));
         } catch (URISyntaxException e) {
             this.jaxRsDpsLog.warning(String.format("error enqueuing task message: %s | url: %s | task payload: %s", e.getMessage(), url, payload));

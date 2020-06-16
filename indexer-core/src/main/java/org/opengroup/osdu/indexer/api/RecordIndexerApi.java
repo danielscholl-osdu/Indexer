@@ -91,10 +91,9 @@ public class RecordIndexerApi {
     // THAT MEANS WE DON'T DOCUMENT IT IN SWAGGER, ACCESS IS LIMITED TO CLOUD TASK QUEUE CALLS ONLY
     @PostMapping("/reindex-worker")
     @ApiOperation(hidden = true, value = "", notes = "")
-    public ResponseEntity reindex(
+    public ResponseEntity<?> reindex(
             @RequestBody @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
             @Valid RecordReindexRequest recordReindexRequest) {
-
-        return new ResponseEntity(reIndexService.reindexRecords(recordReindexRequest),HttpStatus.OK);
+        return new ResponseEntity<>(reIndexService.reindexRecords(recordReindexRequest, false), HttpStatus.OK);
     }
 }

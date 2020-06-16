@@ -27,10 +27,14 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.search.Config;
 import org.opengroup.osdu.indexer.service.ReindexServiceImpl;
 import org.opengroup.osdu.indexer.service.StorageService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.*;
@@ -41,7 +45,9 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @Ignore
-@RunWith(SpringRunner.class)
+@RunWith(PowerMockRunner.class)
+@PowerMockRunnerDelegate(SpringRunner.class)
+@PrepareForTest({Config.class})
 public class ReindexServiceTest {
 
     private final String cursor = "100";
@@ -88,7 +94,7 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(null);
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String response = sut.reindexRecords(recordReindexRequest);
+            String response = sut.reindexRecords(recordReindexRequest, false);
 
             Assert.assertNull(response);
         } catch (Exception e) {
@@ -102,7 +108,7 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(new ArrayList<>());
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String response = sut.reindexRecords(recordReindexRequest);
+            String response = sut.reindexRecords(recordReindexRequest, false);
 
             Assert.assertNull(response);
         } catch (Exception e) {
@@ -117,9 +123,13 @@ public class ReindexServiceTest {
             List<String> results = new ArrayList<>();
             results.add("test1");
             recordQueryResponse.setResults(results);
+
+            mockStatic(Config.class);
+            when(Config.getStorageRecordsBatchSize()).thenReturn(1);
+
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String taskQueuePayload = sut.reindexRecords(recordReindexRequest);
+            String taskQueuePayload = sut.reindexRecords(recordReindexRequest, false);
 
             Assert.assertEquals("{\"kind\":\"tenant:test:test:1.0.0\",\"cursor\":\"100\"}", taskQueuePayload);
         } catch (Exception e) {
@@ -135,7 +145,7 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(results);
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String taskQueuePayload = sut.reindexRecords(recordReindexRequest);
+            String taskQueuePayload = sut.reindexRecords(recordReindexRequest, false);
 
             Assert.assertEquals(String.format("{\"data\":\"[{\\\"id\\\":\\\"test1\\\",\\\"kind\\\":\\\"tenant:test:test:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"slb-correlation-id\":\"%s\"}}", correlationId), taskQueuePayload);
         } catch (Exception e) {
