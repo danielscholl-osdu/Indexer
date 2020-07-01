@@ -17,18 +17,19 @@ package org.opengroup.osdu.indexer.api;
 import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
+import org.opengroup.osdu.indexer.service.IndexSchemaService;
 import org.opengroup.osdu.indexer.service.ReindexService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+
+import java.io.IOException;
 
 import static java.util.Collections.singletonList;
 
@@ -40,14 +41,17 @@ public class ReindexApi {
     @Inject
     private ReindexService reIndexService;
     @Inject
+    private IndexSchemaService indexSchemaService;
+    @Inject
     private AuditLogger auditLogger;
 
     @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
     @PostMapping
-    public ResponseEntity reindex(
-            @NotNull @Valid @RequestBody RecordReindexRequest recordReindexRequest) {
-        this.reIndexService.reindexRecords(recordReindexRequest);
+    public ResponseEntity<?> reindex(
+            @NotNull @Valid @RequestBody RecordReindexRequest recordReindexRequest,
+            @RequestParam(value = "force_clean", defaultValue = "false") boolean forceClean) throws IOException {
+        this.reIndexService.reindexRecords(recordReindexRequest, this.indexSchemaService.isStorageSchemaSyncRequired(recordReindexRequest.getKind(), forceClean));
         this.auditLogger.getReindex(singletonList(recordReindexRequest.getKind()));
-        return new ResponseEntity (org.springframework.http.HttpStatus.OK);
+        return new ResponseEntity<>(org.springframework.http.HttpStatus.OK);
     }
 }

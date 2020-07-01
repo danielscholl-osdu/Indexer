@@ -31,7 +31,11 @@
     <name>indexer-ibm</name>
     <description>Indexer Service IBM</description>
     <packaging>jar</packaging>
-
+	
+	<properties>
+		<os-core-lib-ibm.version>0.0.18</os-core-lib-ibm.version>
+	</properties>
+	
 	<profiles>
 		<profile>
 			<id>local</id>
@@ -51,13 +55,13 @@
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-core</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>1.0.5-SNAPSHOT</version>
         </dependency>
         
    		<dependency>
    			<groupId>org.opengroup.osdu</groupId>
    			<artifactId>os-core-lib-ibm</artifactId>
-   			<version>0.0.14-SNAPSHOT</version>
+   			<version>${os-core-lib-ibm.version}</version>
    		</dependency>
    		        
         <dependency>

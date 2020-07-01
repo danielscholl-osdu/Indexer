@@ -21,6 +21,7 @@ import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 
+import org.apache.commons.lang3.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,22 +45,32 @@ public class TypeMapper {
         metaAttributeIndexerType.put(RecordMetaAttribute.INDEX_STATUS.getValue(), getIndexStatusMapping());
 
         storageToIndexerType.put(StorageType.LINK.getValue(), ElasticType.KEYWORD.getValue());
-        storageToIndexerType.put(StorageType.LINK_ARRAY.getValue(), ElasticType.KEYWORD.getValue());
+        storageToIndexerType.put(StorageType.LINK_ARRAY.getValue(), ElasticType.KEYWORD_ARRAY.getValue());
         storageToIndexerType.put(StorageType.BOOLEAN.getValue(), ElasticType.BOOLEAN.getValue());
+        storageToIndexerType.put(StorageType.BOOLEAN_ARRAY.getValue(), ElasticType.BOOLEAN_ARRAY.getValue());
         storageToIndexerType.put(StorageType.STRING.getValue(), ElasticType.TEXT.getValue());
+        storageToIndexerType.put(StorageType.STRING_ARRAY.getValue(), ElasticType.TEXT_ARRAY.getValue());
         storageToIndexerType.put(StorageType.INT.getValue(), ElasticType.INTEGER.getValue());
+        storageToIndexerType.put(StorageType.INT_ARRAY.getValue(), ElasticType.INTEGER_ARRAY.getValue());
         storageToIndexerType.put(StorageType.FLOAT.getValue(), ElasticType.FLOAT.getValue());
+        storageToIndexerType.put(StorageType.FLOAT_ARRAY.getValue(), ElasticType.FLOAT_ARRAY.getValue());
         storageToIndexerType.put(StorageType.DOUBLE.getValue(), ElasticType.DOUBLE.getValue());
-        storageToIndexerType.put(StorageType.DOUBLE_ARRAY.getValue(), ElasticType.DOUBLE.getValue());
+        storageToIndexerType.put(StorageType.DOUBLE_ARRAY.getValue(), ElasticType.DOUBLE_ARRAY.getValue());
         storageToIndexerType.put(StorageType.LONG.getValue(), ElasticType.LONG.getValue());
+        storageToIndexerType.put(StorageType.LONG_ARRAY.getValue(), ElasticType.LONG_ARRAY.getValue());
         storageToIndexerType.put(StorageType.DATETIME.getValue(), ElasticType.DATE.getValue());
+        storageToIndexerType.put(StorageType.DATETIME_ARRAY.getValue(), ElasticType.DATE_ARRAY.getValue());
         storageToIndexerType.put(StorageType.GEO_POINT.getValue(), ElasticType.GEO_POINT.getValue());
         storageToIndexerType.put(StorageType.GEO_SHAPE.getValue(), ElasticType.GEO_SHAPE.getValue());
     }
 
 
     public static String getIndexerType(String storageType) {
-        return storageToIndexerType.getOrDefault(storageType, null);
+        String indexedType = storageToIndexerType.getOrDefault(storageType, null);
+        if (indexedType != null && indexedType.endsWith("_array")) {
+            return StringUtils.substringBefore(indexedType, "_");
+        }
+        return indexedType;
     }
 
     public static Object getIndexerType(RecordMetaAttribute attribute) {

@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
@@ -84,7 +85,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         if (msg.getValue() == OperationType.create_schema) {
             // reset cache and get new schema
             this.invalidateCache(kind);
-            IndexSchema schemaObj = this.getIndexerInputSchema(kind);
+            IndexSchema schemaObj = this.getIndexerInputSchema(kind, true);
             if (schemaObj.isDataSchemaMissing()) {
                 log.warning(String.format("schema not found for kind: %s", kind));
                 return;
@@ -118,7 +119,11 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     }
 
     @Override
-    public IndexSchema getIndexerInputSchema(String kind) throws AppException {
+    public IndexSchema getIndexerInputSchema(String kind, boolean invalidateCached) throws AppException {
+
+        if (invalidateCached) {
+            this.invalidateCache(kind);
+        }
 
         try {
             String schema = (String) this.schemaCache.get(kind);
@@ -151,6 +156,26 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             throw e;
         } catch (Exception e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Schema parse/read error", "Error while reading schema via storage service.", e);
+        }
+    }
+
+    public void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException {
+        String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
+        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+            if (this.indicesService.isIndexExist(restClient, index)) {
+                this.indicesService.deleteIndex(restClient, index);
+                this.log.info(String.format("deleted index: %s", index));
+            }
+            IndexSchema schemaObj = this.getIndexerInputSchema(kind, true);
+            this.indicesService.createIndex(restClient, index, null, schemaObj.getType(), this.mappingService.getIndexMappingFromRecordSchema(schemaObj));
+        }
+    }
+
+    public boolean isStorageSchemaSyncRequired(String kind, boolean forceClean) throws IOException {
+        String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
+        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+            boolean indexExist = this.indicesService.isIndexExist(restClient, index);
+            return !indexExist || forceClean;
         }
     }
 

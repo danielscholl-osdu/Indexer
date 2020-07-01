@@ -151,7 +151,7 @@ public class IndicesServiceImpl implements IndicesService {
      * @param client Elasticsearch client
      * @param index  Index name
      */
-    public boolean deleteIndex(RestHighLevelClient client, String index) throws Exception {
+    public boolean deleteIndex(RestHighLevelClient client, String index) throws ElasticsearchException, IOException, AppException {
         boolean responseStatus = removeIndexInElasticsearch(client, index);
         if (responseStatus) {
             this.indicesExistCache.delete(index);
@@ -164,7 +164,7 @@ public class IndicesServiceImpl implements IndicesService {
      *
      * @param index Index name
      */
-    public boolean deleteIndex(String index) throws Exception {
+    public boolean deleteIndex(String index) throws ElasticsearchException, IOException, AppException {
         try (RestHighLevelClient client = this.elasticClientHandler.createRestClient()) {
             return deleteIndex(client, index);
         }
@@ -177,7 +177,7 @@ public class IndicesServiceImpl implements IndicesService {
      * @param index  Index name
      * @throws Exception Throws {@link AppException} if index is not found or elastic cannot delete the index
      */
-    private boolean removeIndexInElasticsearch(RestHighLevelClient client, String index) throws Exception {
+    private boolean removeIndexInElasticsearch(RestHighLevelClient client, String index) throws ElasticsearchException, IOException, AppException {
 
         Preconditions.checkArgument(client, Objects::nonNull, "client cannot be null");
         Preconditions.checkArgument(index, Objects::nonNull, "index cannot be null");

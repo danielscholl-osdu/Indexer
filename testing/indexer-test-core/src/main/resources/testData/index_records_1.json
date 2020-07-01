@@ -18,7 +18,8 @@
       "EmptyAttribute": "",
       "Rank": 1,
       "Score" : 10,
-      "Established": "2000-03-27T23:38:48Z"
+      "Established": "2000-03-27T23:38:48Z",
+      "DblArray": [32.40, 36.45, 40.0]
     }
   },
   {
@@ -40,7 +41,8 @@
       "EmptyAttribute": "",
       "Rank": 1,
       "Score" : 10,
-      "Established": "2000-03-27T23:38:48Z"
+      "Established": "2000-03-27T23:38:48Z",
+      "DblArray": [62.40, 60.0]
     }
   },
   {

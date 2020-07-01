@@ -89,4 +89,15 @@ public class DateTimeParserTest {
         assertNull(this.sut.convertDateObjectToUtc(".2190851121908511EE44"));
         assertNull(this.sut.convertDateObjectToUtc("E.2131"));
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void should_throwException_given_invalidDate_parseDateTest() {
+        this.sut.parseDate("testDateTimeAttribute", "N/A");
+    }
+
+    @Test
+    public void should_returnNull_given_emptyOrNull_parseDateTest() {
+        assertNull(this.sut.parseDate("testDateTimeAttribute", ""));
+        assertNull(this.sut.parseDate("testDateTimeAttribute", null));
+    }
 }

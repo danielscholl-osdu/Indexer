@@ -21,8 +21,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
 import org.opengroup.osdu.indexer.util.parser.NumberParser;
@@ -31,6 +33,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Date;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
@@ -41,10 +44,12 @@ public class AttributeParsingServiceImplTest {
 
     @Mock
     private GeometryConversionService geometryConversionService;
-    @Mock
-    private NumberParser numberParser;
-    @Mock
-    private DateTimeParser dateTimeParser;
+    @Spy
+    private BooleanParser booleanParser = new BooleanParser();
+    @Spy
+    private NumberParser numberParser = new NumberParser();
+    @Spy
+    private DateTimeParser dateTimeParser = new DateTimeParser();
     @Mock
     private GeoShapeParser geoShapeParser;
     @Mock
@@ -58,17 +63,45 @@ public class AttributeParsingServiceImplTest {
     public void should_parseValidInteger() {
         Map<String, Object> dataMap = new HashMap<>();
 
-        when(this.numberParser.parseInteger(any(), any())).thenThrow(new IllegalArgumentException("number parsing error, integer out of range: attribute: lat | value: 101959.E1019594E"));
-        this.sut.tryParseInteger("common:welldb:wellbore-OGY4ZWQ5", "lat", "101959.E1019594E", dataMap);
-        assertEquals(dataMap.size(), 0);
-        assertFalse(dataMap.containsKey("lat"));
+        this.sut.tryParseInteger("common:welldb:wellbore-OGY4ZWQ5", "lat", "101959.15", dataMap);
+        assertEquals(dataMap.size(), 1);
+        assertTrue(dataMap.containsKey("lat"));
+    }
+
+    @Test
+    public void should_parseValidIntegerArray() {
+        Map<String, Object> dataMap = new HashMap<>();
+        final Map<Object, Object> inputs = new HashMap<Object, Object>() {
+            {
+                put("[]", new Integer[]{});
+                put("[101959.1]", new Integer[]{101959});
+                put("[139, 20]", new Integer[]{139, 20});
+                put("[\"139.987\", \"20\"]", new Integer[]{139, 20});
+            }
+        };
+
+        this.validateInput(this.sut::tryParseValueArray, Integer.class, Integer.class, inputs, dataMap);
+    }
+
+    @Test
+    public void should_parseValidLongArray() {
+        Map<String, Object> dataMap = new HashMap<>();
+        final Map<Object, Object> inputs = new HashMap<Object, Object>() {
+            {
+                put("[]", new Long[]{});
+                put("[4115420654264075766]", new Long[]{4115420654264075766L});
+                put("[4115420, 20]", new Long[]{4115420L, 20L});
+                put("[\"139\", \"20\"]", new Long[]{139L, 20L});
+            }
+        };
+
+        this.validateInput(this.sut::tryParseValueArray, Long.class, Long.class, inputs, dataMap);
     }
 
     @Test
     public void should_parseValidLong() {
         Map<String, Object> dataMap = new HashMap<>();
 
-        when(this.numberParser.parseLong(any(), any())).thenReturn(0L);
         this.sut.tryParseLong("common:welldb:wellbore-OGY4ZWQ5", "reference", "", dataMap);
         assertEquals(dataMap.size(), 1);
         assertEquals(dataMap.get("reference"), 0L);
@@ -78,20 +111,48 @@ public class AttributeParsingServiceImplTest {
     public void should_parseValidFloat() {
         Map<String, Object> dataMap = new HashMap<>();
 
-        when(this.numberParser.parseFloat(any(), any())).thenReturn(0f);
         this.sut.tryParseFloat("common:welldb:wellbore-MjVhND", "lon", null, dataMap);
         assertEquals(dataMap.size(), 1);
         assertEquals(dataMap.get("lon"), 0.0f);
     }
 
     @Test
+    public void should_parseValidFloatArray() {
+        Map<String, Object> dataMap = new HashMap<>();
+        final Map<Object, Object> inputs = new HashMap<Object, Object>() {
+            {
+                put("[]", new Float[]{});
+                put("[101959.1]", new Float[]{101959.1f});
+                put("[139.90, 20.7]", new Float[]{139.90f, 20.7f});
+                put("[\"139.987\", \"20\"]", new Float[]{139.987f, 20.0f});
+            }
+        };
+
+        this.validateInput(this.sut::tryParseValueArray, Float.class, Float.class, inputs, dataMap);
+    }
+
+    @Test
     public void should_parseValidDouble() {
         Map<String, Object> dataMap = new HashMap<>();
 
-        when(this.numberParser.parseDouble(any(), any())).thenReturn(20.0);
         this.sut.tryParseDouble("common:welldb:wellbore-zMWQtMm", "location", 20.0, dataMap);
         assertEquals(dataMap.size(), 1);
         assertEquals(dataMap.get("location"), 20.0);
+    }
+
+    @Test
+    public void should_parseValidDoubleArray() {
+        Map<String, Object> dataMap = new HashMap<>();
+        final Map<Object, Object> inputs = new HashMap<Object, Object>() {
+            {
+                put("[]", new Double[]{});
+                put("[101959.1]", new Double[]{101959.1});
+                put("[139.1, 20.0]", new Double[]{139.1, 20.0});
+                put("[\"139.9\", \"20.1\"]", new Double[]{139.9, 20.1});
+            }
+        };
+
+        this.validateInput(this.sut::tryParseValueArray, Double.class, Double.class, inputs, dataMap);
     }
 
     @Test
@@ -120,6 +181,21 @@ public class AttributeParsingServiceImplTest {
     }
 
     @Test
+    public void should_parseValidBooleanArray() {
+        Map<String, Object> dataMap = new HashMap<>();
+        final Map<Object, Object> inputs = new HashMap<Object, Object>() {
+            {
+                put("[]", new Boolean[]{});
+                put("[true]", new Boolean[]{true});
+                put("[false, truee]", new Boolean[]{false, false});
+                put("[\"true\", \"false\"]", new Boolean[]{true, false});
+            }
+        };
+
+        this.validateInput(this.sut::tryParseValueArray, Boolean.class, Boolean.class, inputs, dataMap);
+    }
+
+    @Test
     public void should_parseDate_tryParseDate() {
         Map<String, Object> dataMap = new HashMap<>();
 
@@ -135,11 +211,26 @@ public class AttributeParsingServiceImplTest {
         assertEquals(dataMap.size(), 0);
         assertFalse(dataMap.containsKey("activatedOn"));
 
-        when(this.dateTimeParser.convertDateObjectToUtc("2018-11-06T19:37:11.128Z")).thenReturn("2018-11-06T19:37:11+0000");
+        when(this.dateTimeParser.parseDate("disabledOn", "2018-11-06T19:37:11.128Z")).thenReturn("2018-11-06T19:37:11+0000");
         this.sut.tryParseDate("common:welldb:wellbore-OGY4ZWQ5", "disabledOn", "2018-11-06T19:37:11.128Z", dataMap);
         assertEquals(dataMap.size(), 1);
         assertTrue(dataMap.containsKey("disabledOn"));
         assertEquals(dataMap.get("disabledOn"), "2018-11-06T19:37:11+0000");
+    }
+
+    @Test
+    public void should_parseValidDateArray() {
+        Map<String, Object> dataMap = new HashMap<>();
+        final Map<Object, Object> inputs = new HashMap<Object, Object>() {
+            {
+                put("[]", new String[]{});
+                put("[\"2018-11-06T19:37:11.128Z\"]", new String[]{"2018-11-06T19:37:11.128+0000"});
+                put("[20000102, 2000-01-02]", new String[]{"2000-01-02T00:00:00+0000", "2000-01-02T00:00:00+0000"});
+                // TODO: put("[2018-11-06T19:37:11.128Z]", new String[]{"2018-11-06T19:37:11.128+0000"});
+            }
+        };
+
+        this.validateInput(this.sut::tryParseValueArray, Date.class, String.class, inputs, dataMap);
     }
 
     @Test
@@ -257,5 +348,33 @@ public class AttributeParsingServiceImplTest {
     private Map<String, Object> parseJson(String json) {
         Type type = new TypeToken<Map<String, Object>>() {}.getType();
         return new Gson().fromJson(json, type);
+    }
+
+    private <I, O> void validateInput(QuintConsumer<Class<I>, String, String, Object, Map<String, Object>> parser, Class<I> inputType, Class<O> expectedType, Map<Object, Object> inputs, Map<String, Object> outMap) {
+        inputs.forEach((attributeVal, expectedOut) -> {
+            try {
+                parser.accept(inputType, "dummyId", "dummyAttribute", attributeVal, outMap);
+
+                assertEquals(outMap.size(), 1);
+                assertTrue(outMap.containsKey("dummyAttribute"));
+                assertArrayEquals((I[]) outMap.get("dummyAttribute"), (O[]) expectedOut);
+            } catch (IllegalArgumentException e) {
+                fail(String.format("Parsing exception expected for %s with value [ %s ]", inputType.getName(), attributeVal));
+            }
+        });
+    }
+
+    @FunctionalInterface
+    private interface QuintConsumer<T, U, V, W, X> {
+        /**
+         * Applies this function to the given arguments.
+         *
+         * @param t the first function argument
+         * @param u the second function argument
+         * @param v the third function argument
+         * @param w the fourth function argument
+         *          * @return the function result
+         */
+        void accept(T t, U u, V v, W w, X x);
     }
 }

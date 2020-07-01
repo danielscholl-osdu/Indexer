@@ -87,22 +87,22 @@ public class ElasticClientHandler {
     }
 
     public RestClientBuilder createClientBuilder(String host, String basicAuthenticationHeaderVal, int port, String protocolScheme, String tls) {
-            RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, protocolScheme));
-            builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
-                    .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
-            builder.setMaxRetryTimeoutMillis(REST_CLIENT_RETRY_TIMEOUT);
+        RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, protocolScheme));
+        builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
+                .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
+        builder.setMaxRetryTimeoutMillis(REST_CLIENT_RETRY_TIMEOUT);
 
-            Header[] defaultHeaders = new Header[]{
-                    new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
-                    new BasicHeader("client.transport.ping_timeout", "30s"),
-                    new BasicHeader("client.transport.sniff", "false"),
+        Header[] defaultHeaders = new Header[]{
+                new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
+                new BasicHeader("client.transport.ping_timeout", "30s"),
+                new BasicHeader("client.transport.sniff", "false"),
                 new BasicHeader("request.headers.X-Found-Cluster", host),
                 new BasicHeader("cluster.name", host),
-                    new BasicHeader("xpack.security.transport.ssl.enabled", tls),
-                    new BasicHeader("Authorization", basicAuthenticationHeaderVal),
-            };
+                new BasicHeader("xpack.security.transport.ssl.enabled", tls),
+                new BasicHeader("Authorization", basicAuthenticationHeaderVal),
+        };
 
-            builder.setDefaultHeaders(defaultHeaders);
+        builder.setDefaultHeaders(defaultHeaders);
         return builder;
     }
 }

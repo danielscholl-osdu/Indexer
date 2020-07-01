@@ -81,7 +81,7 @@ public class IndexerSchemaServiceTest {
     public void should_returnNull_givenEmptySchema_getIndexerInputSchemaSchemaTest() throws Exception {
         when(storageService.getStorageSchema(any())).thenReturn(emptySchema);
 
-        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind);
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
         Assert.assertNotNull(indexSchema);
     }
@@ -90,7 +90,7 @@ public class IndexerSchemaServiceTest {
     public void should_returnValidResponse_givenValidSchema_getIndexerInputSchemaTest() throws Exception {
         when(storageService.getStorageSchema(any())).thenReturn(someSchema);
 
-        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind);
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
         Assert.assertEquals(kind, indexSchema.getKind());
     }
@@ -100,7 +100,7 @@ public class IndexerSchemaServiceTest {
         when(storageService.getStorageSchema(any())).thenReturn(someSchema);
         when(this.schemaCache.get(kind + "_flattened")).thenReturn(someSchema);
 
-        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind);
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
         Assert.assertEquals(kind, indexSchema.getKind());
     }
@@ -111,7 +111,7 @@ public class IndexerSchemaServiceTest {
             String invalidSchema = "{}}";
             when(storageService.getStorageSchema(any())).thenReturn(invalidSchema);
 
-            this.sut.getIndexerInputSchema(kind);
+            this.sut.getIndexerInputSchema(kind, false);
             fail("Should throw exception");
         } catch (AppException e) {
             Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getError().getCode());
@@ -123,7 +123,7 @@ public class IndexerSchemaServiceTest {
 
     @Test
     public void should_return_basic_schema_when_storage_returns_no_schema() {
-        IndexSchema returnedSchema = this.sut.getIndexerInputSchema(kind);
+        IndexSchema returnedSchema = this.sut.getIndexerInputSchema(kind, false);
 
         assertNotNull(returnedSchema.getDataSchema());
         assertNotNull(returnedSchema);
@@ -228,7 +228,7 @@ public class IndexerSchemaServiceTest {
 
         try {
             this.sut.processSchemaMessages(schemaMessages);
-        } catch (AppException e){
+        } catch (AppException e) {
             assertEquals(e.getError().getCode(), RequestStatus.SCHEMA_CONFLICT);
             assertEquals(e.getError().getMessage(), "error creating or merging index mapping");
             assertEquals(e.getError().getReason(), reason);
@@ -261,7 +261,7 @@ public class IndexerSchemaServiceTest {
 
         try {
             this.sut.processSchemaMessages(schemaMessages);
-        } catch (AppException e){
+        } catch (AppException e) {
             assertEquals(e.getError().getCode(), HttpStatus.SC_FORBIDDEN);
             assertEquals(e.getError().getMessage(), "blah");
             assertEquals(e.getError().getReason(), reason);
@@ -269,7 +269,6 @@ public class IndexerSchemaServiceTest {
             fail("Should not throw this exception " + e.getMessage());
         }
     }
-
 
     @Test
     public void should_log_and_do_nothing_when_storage_returns_invalid_schema() throws IOException, URISyntaxException {
@@ -319,5 +318,83 @@ public class IndexerSchemaServiceTest {
         this.sut.processSchemaMessages(schemaMessages);
 
         verify(this.log).warning(eq(String.format("Kind: %s not found", kind)));
+    }
+
+    @Test
+    public void should_sync_schema_with_storage() throws Exception {
+        String kind = "tenant1:avocet:completion:1.0.0";
+        String storageSchema = "{" +
+                "  \"kind\": \"tenant1:avocet:completion:1.0.0\"," +
+                "  \"schema\": [" +
+                "    {" +
+                "      \"path\": \"status\"," +
+                "      \"kind\": \"string\"" +
+                "    }" +
+                "  ]" +
+                "}";
+        when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
+        when(this.schemaCache.get(kind)).thenReturn(null);
+        when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
+        when(this.indicesService.deleteIndex(any(), any())).thenReturn(true);
+        when(this.storageService.getStorageSchema(kind)).thenReturn(storageSchema);
+
+        this.sut.syncIndexMappingWithStorageSchema(kind);
+
+        verify(this.mappingService, times(1)).getIndexMappingFromRecordSchema(any());
+        verify(this.indicesService, times(1)).isIndexExist(any(), any());
+        verify(this.indicesService, times(1)).deleteIndex(any(), any());
+        verify(this.indicesService, times(1)).createIndex(any(), any(), any(), any(), any());
+        verifyNoMoreInteractions(this.mappingService);
+    }
+
+    @Test
+    public void should_throw_exception_while_snapshot_running_sync_schema_with_storage() throws Exception {
+        String kind = "tenant1:avocet:completion:1.0.0";
+        when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
+        when(this.schemaCache.get(kind)).thenReturn(null);
+        when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
+        when(this.indicesService.deleteIndex(any(), any())).thenThrow(new AppException(HttpStatus.SC_CONFLICT, "Index deletion error", "blah"));
+
+        try {
+            this.sut.syncIndexMappingWithStorageSchema(kind);
+        } catch (AppException e) {
+            assertEquals(e.getError().getCode(), HttpStatus.SC_CONFLICT);
+            assertEquals(e.getError().getMessage(), "blah");
+            assertEquals(e.getError().getReason(), "Index deletion error");
+        } catch (Exception e) {
+            fail("Should not throw this exception " + e.getMessage());
+        }
+
+        verify(this.indicesService, times(1)).isIndexExist(any(), any());
+        verify(this.indicesService, times(1)).deleteIndex(any(), any());
+        verify(this.mappingService, never()).getIndexMappingFromRecordSchema(any());
+        verify(this.indicesService, never()).createIndex(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void should_return_true_while_if_forceClean_requested() throws IOException {
+        String kind = "tenant1:avocet:completion:1.0.0";
+        when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
+        when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
+
+        assertTrue(this.sut.isStorageSchemaSyncRequired(kind, true));
+    }
+
+    @Test
+    public void should_return_true_while_if_forceClean_notRequested_and_indexNotFound() throws IOException {
+        String kind = "tenant1:avocet:completion:1.0.0";
+        when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
+        when(this.indicesService.isIndexExist(any(), any())).thenReturn(false);
+
+        assertTrue(this.sut.isStorageSchemaSyncRequired(kind, false));
+    }
+
+    @Test
+    public void should_return_false_while_if_forceClean_notRequested_and_indexExist() throws IOException {
+        String kind = "tenant1:avocet:completion:1.0.0";
+        when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
+        when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
+
+        assertFalse(this.sut.isStorageSchemaSyncRequired(kind, false));
     }
 }

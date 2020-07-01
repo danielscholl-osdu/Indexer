@@ -83,4 +83,17 @@ public class DateTimeParser {
         }
         return null;
     }
+
+    public String parseDate(String attributeName, Object attributeVal) {
+        String val = attributeVal == null ? null : String.valueOf(attributeVal);
+        if (Strings.isNullOrEmpty(val)) {
+            // skip indexing
+            return null;
+        }
+        String utcDate = this.convertDateObjectToUtc(val);
+        if (Strings.isNullOrEmpty(utcDate)) {
+            throw new IllegalArgumentException(String.format("datetime parsing error: unknown format for attribute: %s | value: %s", attributeName, attributeVal));
+        }
+        return utcDate;
+    }
 }

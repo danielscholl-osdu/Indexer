@@ -16,7 +16,6 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
-import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -24,6 +23,7 @@ import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.search.Config;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Log
 @Component
 public class ReindexServiceImpl implements ReindexService {
 
@@ -47,13 +46,21 @@ public class ReindexServiceImpl implements ReindexService {
     @Inject
     private IRequestInfo requestInfo;
     @Inject
+    private IndexSchemaService indexSchemaService;
+    @Inject
     private JaxRsDpsLog jaxRsDpsLog;
 
     @Override
-    public String reindexRecords(RecordReindexRequest recordReindexRequest) {
+    public String reindexRecords(RecordReindexRequest recordReindexRequest, boolean forceClean) {
+        Long initialDelayMillis = 0l;
 
         try {
             DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
+
+            if (forceClean) {
+                this.indexSchemaService.syncIndexMappingWithStorageSchema(recordReindexRequest.getKind());
+                initialDelayMillis = 30000l;
+            }
 
             RecordQueryResponse recordQueryResponse = this.storageService.getRecordsByKind(recordReindexRequest);
 
@@ -70,11 +77,13 @@ public class ReindexServiceImpl implements ReindexService {
                 Gson gson = new Gson();
                 RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(msgs)).attributes(attributes).build();
                 String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-                this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, headers);
+                this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, initialDelayMillis, headers);
 
-                if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor())) {
+                // don't call reindex-worker endpoint if it's the last batch
+                // previous storage query result size will be less then requested (limit param)
+                if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == Config.getStorageRecordsBatchSize()) {
                     String newPayLoad = gson.toJson(RecordReindexRequest.builder().cursor(recordQueryResponse.getCursor()).kind(recordReindexRequest.getKind()).build());
-                    this.indexerQueueTaskBuilder.createReIndexTask(newPayLoad, headers);
+                    this.indexerQueueTaskBuilder.createReIndexTask(newPayLoad, initialDelayMillis, headers);
                     return newPayLoad;
                 }
 
