@@ -39,6 +39,7 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 
 | name | value | description | sensitive? | source |
 | ---  | ---   | ---         | ---        | ---    |
+| `server.servlet.contextPath` | `/api/indexer/v2/` | Servlet context path | no | - |
 | `storage_service_url` | ex `https://storage.azurewebsites.net` | Endpoint of storage service | no | output of infrastructure deployments |
 | `STORAGE_SCHEMA_HOST` | `${storage_service_url}/schemas` | Endpoint of schema API | no | - |
 | `STORAGE_QUERY_RECORD_HOST` | `${storage_service_url}/query/records` | Endpoint of records API | no | - |
