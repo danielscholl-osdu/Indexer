@@ -55,11 +55,13 @@ public class ElasticUtils {
     private final String username;
     private final String password;
     private final String host;
+    private final boolean sslEnabled;
 
     public ElasticUtils() {
         this.username = Config.getUserName();
         this.password = Config.getPassword();
         this.host = Config.getElasticHost();
+        this.sslEnabled = Config.isElasticSslEnabled();
     }
 
     public void createIndex(String index, String mapping) {
@@ -275,7 +277,8 @@ public class ElasticUtils {
     }
 
     public RestClientBuilder createClientBuilder(String host, String usernameAndPassword, int port) {
-            RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, "https"));
+            String scheme = this.sslEnabled ? "https" : "http";
+            RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, scheme));
             builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
                     .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
             builder.setMaxRetryTimeoutMillis(REST_CLIENT_RETRY_TIMEOUT);

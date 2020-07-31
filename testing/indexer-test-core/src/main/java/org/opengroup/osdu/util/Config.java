@@ -5,7 +5,8 @@ public class Config {
     private static final String DEFAULT_ELASTIC_HOST = "";
     private static final String DEFAULT_ELASTIC_USER_NAME = "";
     private static final String DEFAULT_ELASTIC_PASSWORD = "";
-    static final int PORT = 9243;
+    private static final int PORT = 9243;
+    private static final String DEFAULT_ELASTIC_SSL_ENABLED = "true";
 
     private static final String DEFAULT_INDEXER_HOST = "";
     private static final String DEFAULT_SEARCH_HOST = "";
@@ -60,6 +61,10 @@ public class Config {
 
     public static String getElasticHost() {
         return getEnvironmentVariableOrDefaultValue("ELASTIC_HOST", DEFAULT_ELASTIC_HOST);
+    }
+
+    public static boolean isElasticSslEnabled() {
+        return Boolean.parseBoolean(getEnvironmentVariableOrDefaultValue("ELASTIC_SSL_ENABLED", DEFAULT_ELASTIC_SSL_ENABLED));
     }
 
     public static String getIndexerBaseURL() {
