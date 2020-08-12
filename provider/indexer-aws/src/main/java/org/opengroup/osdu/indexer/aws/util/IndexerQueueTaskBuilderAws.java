@@ -14,17 +14,14 @@
 
 package org.opengroup.osdu.indexer.aws.util;
 
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.model.MessageAttributeValue;
-import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sqs.AmazonSQS;
+import org.opengroup.osdu.core.aws.sqs.AmazonSQSConfig;
+import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
-import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
 import org.opengroup.osdu.core.aws.ssm.ParameterStorePropertySource;
 import org.opengroup.osdu.core.aws.ssm.SSMConfig;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.aws.sqs.AmazonSQSConfig;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,31 +36,34 @@ import java.util.Map;
 @Component
 public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
-    private AmazonSNS snsClient;
+    private static final int INITIAL_RETRY_DELAY_SECONDS = 5;
+    private static final int MAX_RETRY_DELAY_SECONDS = 900; // 15 minutes (900 seconds) is the hard limit SQS sets of message delays
+
+    private AmazonSQS sqsClient;
 
     private ParameterStorePropertySource ssm;
 
-    private String amazonSNSTopic;
+    private String amazonSQSQueueUrl;
 
-    private String retryString = "retry";
+    private final String retryString = "retry";
 
     private Gson gson;
 
     @Value("${aws.region}")
     private String region;
 
-    @Value("${aws.storage.sns.topic.arn}")
-    String parameter;
+    @Value("${aws.storage.sqs.queue.url}")
+    String sqsStorageQueueParameter;
 
 
     @Inject
     public void init() {
-        AmazonSNSConfig config = new AmazonSNSConfig(region);
-        snsClient = config.AmazonSNS();
+        AmazonSQSConfig config = new AmazonSQSConfig(region);
+        sqsClient = config.AmazonSQS();
         gson =new Gson();
         SSMConfig ssmConfig = new SSMConfig();
         ssm = ssmConfig.amazonSSM();
-        amazonSNSTopic = ssm.getProperty(parameter).toString();
+        amazonSQSQueueUrl = ssm.getProperty(sqsStorageQueueParameter).toString();
     }
 
     @Override
@@ -97,20 +97,45 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
                 .withStringValue(headers.getAuthorization()));
 
         RecordChangedMessages message = gson.fromJson(payload, RecordChangedMessages.class);
+
         int retryCount;
-        if(message.getAttributes().containsKey(retryString)){
+        int retryDelay;
+        if (message.getAttributes().containsKey(retryString)) {
             retryCount = Integer.parseInt(message.getAttributes().get(retryString));
             retryCount++;
+            retryDelay = Math.min(getWaitTimeExp(retryCount), MAX_RETRY_DELAY_SECONDS);
         } else {
+            // This will be the first retry; initialize the retry counter and set the delay to the initial constant value
             retryCount = 1;
+            retryDelay = INITIAL_RETRY_DELAY_SECONDS;
         }
+        System.out.println("Re-queuing for retry attempt #: " + retryCount);
+        System.out.println("Delay (in seconds) before next retry: " + retryDelay);
+
+        // Append the retry count to the message attributes
         messageAttributes.put(retryString, new MessageAttributeValue()
                 .withDataType("String")
-                .withStringValue(String.valueOf(retryCount)));
+                .withStringValue(String.valueOf(retryCount))
+        );
 
-        PublishRequest publishRequest = new PublishRequest(amazonSNSTopic, message.getData())
+        // Send a message with an attribute and a delay
+        final SendMessageRequest sendMessageRequest = new SendMessageRequest()
+                .withQueueUrl(amazonSQSQueueUrl)
+                .withMessageBody(message.getData())
+                .withDelaySeconds(new Integer(retryDelay))
                 .withMessageAttributes(messageAttributes);
+        sqsClient.sendMessage(sendMessageRequest);
+    }
 
-        snsClient.publish(publishRequest);
+    /*
+     * Returns the next wait interval based on the current number of retries,
+     * in seconds, using an exponential backoff algorithm.
+     */
+    public static int getWaitTimeExp(int retryCount) {
+        if (0 == retryCount) {
+            return 0;
+        }
+
+        return ((int) Math.pow(2, retryCount) * 4);
     }
 }
