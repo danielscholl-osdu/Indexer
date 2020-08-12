@@ -1,8 +1,8 @@
 package org.opengroup.osdu.indexer.di;
 
 import org.opengroup.osdu.core.common.logging.ILogger;
-import org.opengroup.osdu.core.gcp.logging.logger.AppEngineLoggingProvider;
 
+import org.opengroup.osdu.core.gcp.logging.logger.appengine.AppEngineLoggingProvider;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
