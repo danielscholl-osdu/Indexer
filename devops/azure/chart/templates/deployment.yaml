@@ -129,3 +129,5 @@ spec:
           value: http://storage/api/storage/v2/query/records:batch
         - name: STORAGE_QUERY_RECORD_HOST
           value: http://storage/api/storage/v2/records
+        - name: azure_istioauth_enabled
+          value: "true"
