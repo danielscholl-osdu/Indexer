@@ -46,5 +46,5 @@ include:
   - project: "osdu/platform/ci-cd-pipelines"
     file: "publishing/pages.yml"
 
-aws-test:
+aws-test-java:
   tags: ['aws-internal-test']
