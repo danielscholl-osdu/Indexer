@@ -237,6 +237,7 @@ The following software have components provided under the terms of this license:
 - Google HTTP Client Library for Java (from https://github.com/google/google-http-java-client.git)
 - Google OAuth Client Library for Java (from )
 - Gson (from https://github.com/google/gson)
+- Gson (from https://github.com/google/gson)
 - Guava InternalFutureFailureAccess and InternalFutures (from )
 - Guava ListenableFuture only (from )
 - Guava: Google Core Libraries for Java (from https://github.com/google/guava.git)
@@ -317,10 +318,10 @@ The following software have components provided under the terms of this license:
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Logback Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Mockito (from http://mockito.org)
+- Microsoft Azure Netty HTTP Client Library (from https://github.com/Azure/azure-sdk-for-java)
 - Mockito (from http://mockito.org)
 - Mockito (from http://www.mockito.org)
+- Mockito (from http://mockito.org)
 - Mockito (from http://mockito.org)
 - Mojo's Maven plugin for Cobertura (from http://mojo.codehaus.org/cobertura-maven-plugin/)
 - Netty Reactive Streams Implementation (from )
@@ -395,6 +396,7 @@ The following software have components provided under the terms of this license:
 - Spring Context (from https://github.com/spring-projects/spring-framework)
 - Spring Core (from https://github.com/spring-projects/spring-framework)
 - Spring Data Core (from )
+- Spring Data Core (from )
 - Spring Expression Language (SpEL) (from https://github.com/spring-projects/spring-framework)
 - Spring JMS (from https://github.com/spring-projects/spring-framework)
 - Spring Messaging (from https://github.com/spring-projects/spring-framework)
@@ -461,9 +463,6 @@ The following software have components provided under the terms of this license:
 - org.xmlunit:xmlunit-core (from http://www.xmlunit.org/)
 - oro (from )
 - parent-join (from https://github.com/elastic/elasticsearch)
-- powermock-api-mockito (from )
-- powermock-api-mockito-common (from )
-- powermock-api-support (from )
 - powermock-api-support (from )
 - powermock-core (from http://www.powermock.org)
 - powermock-module-junit4 (from http://www.powermock.org)
@@ -518,6 +517,7 @@ The following software have components provided under the terms of this license:
 - Plexus :: Default Container (from )
 - Plexus Common Utilities (from http://plexus.codehaus.org/plexus-utils)
 - StAX (from http://stax.codehaus.org/)
+- Stax2 API (from http://github.com/FasterXML/stax2-api)
 - jersey-ext-bean-validation (from )
 - jersey-spring4 (from )
 - oro (from )
@@ -553,7 +553,6 @@ The following software have components provided under the terms of this license:
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Logback Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Mockito (from http://www.mockito.org)
 - NanoHttpd-Core (from )
 - Netty/Codec/HTTP (from )
@@ -599,7 +598,6 @@ The following software have components provided under the terms of this license:
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Logback Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 
 ========================================================================
 CC0-1.0
@@ -674,7 +672,6 @@ The following software have components provided under the terms of this license:
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Logback Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - SnakeYAML (from http://www.snakeyaml.org)
 - jts-core (from )
 - jts-io-common (from )
@@ -768,6 +765,7 @@ The following software have components provided under the terms of this license:
 
 - OSGi resource locator (from )
 - Project Lombok (from https://projectlombok.org)
+- Project Lombok (from https://projectlombok.org)
 - SnakeYAML (from http://www.snakeyaml.org)
 - javax.ws.rs-api (from http://jax-rs-spec.java.net)
 
@@ -796,7 +794,6 @@ The following software have components provided under the terms of this license:
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Logback Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - SpotBugs Annotations (from https://spotbugs.github.io/)
 - java-getopt (from )
 
@@ -848,7 +845,6 @@ The following software have components provided under the terms of this license:
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Logback Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Azure Java Core Library (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure Netty HTTP Client Library (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure SDK annotations (from https://github.com/Microsoft/java-api-annotations)
@@ -868,12 +864,13 @@ The following software have components provided under the terms of this license:
 - Plexus :: Default Container (from )
 - Plexus Default Interactivity Handler (from )
 - Project Lombok (from https://projectlombok.org)
+- Project Lombok (from https://projectlombok.org)
 - SLF4J API Module (from http://www.slf4j.org)
 - Spring Data for Azure Cosmos DB SQL API (from https://github.com/Microsoft/spring-data-cosmosdb)
 - adal4j (from https://github.com/AzureAD/azure-activedirectory-library-for-java)
 - azure-documentdb (from https://azure.microsoft.com/en-us/services/cosmos-db/)
+- micrometer-core (from https://github.com/micrometer-metrics/micrometer)
 - msal4j (from https://github.com/AzureAD/microsoft-authentication-library-for-java)
-- powermock-api-mockito (from )
 - spring-security-core (from http://spring.io/spring-security)
 
 ========================================================================
@@ -905,7 +902,6 @@ The following software have components provided under the terms of this license:
 - jersey-core-common (from )
 - jersey-core-server (from git://java.net/jersey~code/jersey-server)
 - jts-core (from )
-- reactive-streams (from http://www.reactive-streams.org/)
 - xml-apis (from )
 
 ========================================================================
@@ -959,8 +955,10 @@ The following software have components provided under the terms of this license:
 - Microsoft Azure SDK for SQL API of Azure Cosmos DB Service (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure client library for Blob Storage (from https://github.com/Azure/azure-sdk-for-java)
 - Project Lombok (from https://projectlombok.org)
+- Project Lombok (from https://projectlombok.org)
 - Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
 - Spring Web (from https://github.com/spring-projects/spring-framework)
+- reactive-streams (from http://www.reactive-streams.org/)
 
 ========================================================================
 unknown
