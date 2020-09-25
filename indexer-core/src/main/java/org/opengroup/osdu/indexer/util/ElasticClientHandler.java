@@ -35,7 +35,7 @@ public class ElasticClientHandler {
   private static final int REST_CLIENT_SOCKET_TIMEOUT = 60000;
   private static final int REST_CLIENT_RETRY_TIMEOUT = 60000;
 
-  @Value("#{new Boolean('${security.https.certificate.trust:false}')}")
+  @Value("#{new Boolean('${security.https.certificate.trust}')}")
   private Boolean isSecurityHttpsCertificateTrust;
 
   @Autowired
