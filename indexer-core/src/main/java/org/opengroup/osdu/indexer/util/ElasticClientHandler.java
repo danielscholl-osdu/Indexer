@@ -4,7 +4,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.Objects;
 import javax.net.ssl.SSLContext;
 import lombok.extern.java.Log;
 import org.apache.http.Header;
@@ -35,7 +34,7 @@ public class ElasticClientHandler {
   private static final int REST_CLIENT_SOCKET_TIMEOUT = 60000;
   private static final int REST_CLIENT_RETRY_TIMEOUT = 60000;
 
-  @Value("#{new Boolean('${security.https.certificate.trust}')}")
+  @Value("#{new Boolean('${security.https.certificate.trust:false}')}")
   private Boolean isSecurityHttpsCertificateTrust;
 
   @Autowired
