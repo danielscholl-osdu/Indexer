@@ -55,7 +55,7 @@
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-test-core</artifactId>
-            <version>0.0.2-SNAPSHOT</version>
+            <version>1.0.6-SNAPSHOT</version>
         </dependency>
 
         <!-- AWS specific packages -->
