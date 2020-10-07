@@ -140,19 +140,14 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-cosmosdb-spring-boot-starter</artifactId>
-            <version>${azure.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>os-core-common</artifactId>
+            <version>0.3.12</version>
         </dependency>
-
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-lib-azure</artifactId>
-            <version>0.0.28</version>
+            <version>0.0.33</version>
         </dependency>
 
         <dependency>

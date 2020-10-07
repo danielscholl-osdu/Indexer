@@ -40,3 +40,4 @@ provider/indexer-gcp/bin/*
 
 # Environment configuration
 *.env
+.envrc
