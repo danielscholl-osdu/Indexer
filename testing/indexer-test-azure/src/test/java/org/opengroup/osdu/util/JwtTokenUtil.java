@@ -14,6 +14,8 @@
 
 package org.opengroup.osdu.util;
 
+import org.opengroup.osdu.azure.util.AzureServicePrincipal;
+
 class JwtTokenUtil {
     static public String getAccessToken() throws Exception {
 
@@ -23,7 +25,7 @@ class JwtTokenUtil {
         String sp_secret = System.getProperty("AZURE_TESTER_SERVICEPRINCIPAL_SECRET", System.getenv("AZURE_TESTER_SERVICEPRINCIPAL_SECRET"));
         String tenant_id = System.getProperty("AZURE_AD_TENANT_ID", System.getenv("AZURE_AD_TENANT_ID"));
         String app_resource_id = System.getProperty("AZURE_AD_APP_RESOURCE_ID", System.getenv("AZURE_AD_APP_RESOURCE_ID"));
-        token = AzureServicePrincipal.getIdToken(sp_id, sp_secret, tenant_id, app_resource_id);
+        token = new AzureServicePrincipal().getIdToken(sp_id, sp_secret, tenant_id, app_resource_id);
 
         return token;
     }

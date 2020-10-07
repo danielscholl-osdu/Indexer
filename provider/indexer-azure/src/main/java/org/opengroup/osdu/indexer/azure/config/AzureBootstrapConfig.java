@@ -25,17 +25,11 @@ import javax.inject.Named;
 @Component
 public class AzureBootstrapConfig {
 
-    @Value("${aad.oboApi}")
-    private String aadOboAPI;
-
     @Value("${azure.keyvault.url}")
     private String keyVaultURL;
 
     @Value("${azure.servicebus.topic-name}")
     private String serviceBusTopicName;
-
-    @Value("${azure.servicebus.namespace-name}")
-    private String serviceBusNamespaceName;
 
     @Value("${ELASTIC_CACHE_EXPIRATION}")
     private Integer elasticCacheExpiration;
@@ -45,14 +39,8 @@ public class AzureBootstrapConfig {
 
     @Bean
     @Named("KEY_VAULT_URL")
-    public String getKeyVaultURL(){
+    public String getKeyVaultURL() {
         return keyVaultURL;
-    }
-
-    @Bean
-    @Named("SERVICE_BUS_NAMESPACE")
-    public String serviceBusNamespaceName() {
-        return serviceBusNamespaceName;
     }
 
     @Bean
@@ -64,22 +52,13 @@ public class AzureBootstrapConfig {
     @Bean
     @Named("ELASTIC_CACHE_EXPIRATION")
     public Integer getElasticCacheExpiration() {
-        return  elasticCacheExpiration;
+        return elasticCacheExpiration;
     }
 
     @Bean
     @Named("MAX_CACHE_VALUE_SIZE")
     public Integer getMaxCacheValueSize() {
-        return  maxCacheValueSize;
-    }
-
-    private String authority;
-    private String secretKey;
-
-    @Bean
-    @Named("AAD_OBO_API")
-    public String aadClientID() {
-        return aadOboAPI;
+        return maxCacheValueSize;
     }
 
     @Bean

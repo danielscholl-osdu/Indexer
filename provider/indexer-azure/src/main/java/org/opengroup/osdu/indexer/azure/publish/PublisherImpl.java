@@ -21,7 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
 import com.microsoft.azure.servicebus.Message;
-import com.microsoft.azure.servicebus.TopicClient;
+import org.opengroup.osdu.azure.servicebus.ITopicClientFactory;
 import org.elasticsearch.common.Strings;
 
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -46,10 +47,15 @@ public class PublisherImpl implements IPublisher {
 
 
     @Inject
-    private TopicClient topicClient;
+    private ITopicClientFactory topicClientFactory;
 
     @Inject
     private JaxRsDpsLog logger;
+
+    @Inject
+    @Named("SERVICE_BUS_TOPIC")
+    private String serviceBusTopic;
+
 
     @Override
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception {
@@ -68,7 +74,7 @@ public class PublisherImpl implements IPublisher {
 
         try {
             logger.info("Indexer publishes message " + headers.getCorrelationId());
-            topicClient.send(message);
+            topicClientFactory.getClient(headers.getPartitionId(), serviceBusTopic).send(message);
         }
         catch (Exception e)
         {
