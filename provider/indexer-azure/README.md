@@ -44,18 +44,17 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | `STORAGE_SCHEMA_HOST` | `${storage_service_url}/schemas` | Endpoint of schema API | no | - |
 | `STORAGE_QUERY_RECORD_HOST` | `${storage_service_url}/query/records` | Endpoint of records API | no | - |
 | `STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST` | `${storage_service_url}/query/records:batch` | Endpoint of records batch API | no | - |
-| `servicebus_namespace_name` | ex `foo-sb-namespace` | . | . | . |
 | `KEYVAULT_URI` | ex `https://foo-kv.vault.azure.net/` | . | . | . |
 | `appinsights_key` | `********` | App Insights key | yes | output of infrastructure deployments |
 | `aad_client_id` | `********` | AAD client application ID | yes | output of infrastructure deployment |
-| `cosmosdb_account` | ex `devintosdur2cosmosacct` | Cosmos account name | no | output of infrastructure deployment |
-| `cosmosdb_key` | `********` | Key for CosmosDB | yes | output of infrastructure deployments |
 | `cosmosdb_database` | ex `dev-osdu-r2-db` | Cosmos database for documents | no | output of infrastructure deployment |
 | `servicebus_topic_name` | `recordstopic` | Service Bus topic name | no | output of infrastructure deployments |
 | `entitlements_service_endpoint` | ex `https://entitlements.azurewebsites.net` | Entitlements service endpoint | no | Service Bus topic name |
 | `AZURE_CLIENT_ID` | `********` | Identity to run the service locally. This enables access to Azure resources. You only need this if running locally | yes | keyvault secret: `$KEYVAULT_URI/secrets/app-dev-sp-username` |
 | `AZURE_TENANT_ID` | `********` | AD tenant to authenticate users from | yes | keyvault secret: `$KEYVAULT_URI/secrets/app-dev-sp-tenant-id` |
 | `AZURE_CLIENT_SECRET` | `********` | Secret for `$AZURE_CLIENT_ID` | yes | keyvault secret: `$KEYVAULT_URI/secrets/app-dev-sp-password` |
+| `partition_service_endpoint` | ex `https://foo-partition.azurewebsites.net` | Partition Service API endpoint | no | output of infrastructure deployment |
+| `azure.activedirectory.app-resource-id` | `********` | AAD client application ID | yes | output of infrastructure deployment |
 | `azure_istioauth_enabled` | `true` | Flag to Disable AAD auth | no | -- |
 
 **Required to run integration tests**
@@ -88,25 +87,6 @@ Apache Maven 3.6.0
 Maven home: /usr/share/maven
 Java version: 1.8.0_212, vendor: AdoptOpenJDK, runtime: /usr/lib/jvm/jdk8u212-b04/jre
 ...
-```
-
-You may need to configure access to the remote maven repository that holds the OSDU dependencies. This file should live within `~/.m2/settings.xml`:
-```bash
-$ cat ~/.m2/settings.xml
-<?xml version="1.0" encoding="UTF-8"?>
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
-    <servers>
-        <server>
-            <id>os-core</id>
-            <username>mvn-pat</username>
-            <!-- Treat this auth token like a password. Do not share it with anyone, including Microsoft support. -->
-            <!-- The generated token expires on or before 11/14/2019 -->
-            <password>$PERSONAL_ACCESS_TOKEN_GOES_HERE</password>
-        </server>
-    </servers>
-</settings>
 ```
 
 ### Build and run the application
