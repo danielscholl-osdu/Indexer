@@ -63,60 +63,35 @@ spec:
             configMapKeyRef:
               name: osdu-svc-properties
               key: ENV_KEYVAULT
-        - name: AZURE_TENANT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: osdu-svc-properties
-              key: ENV_TENANT_ID
         - name: AZURE_CLIENT_ID
           valueFrom:
             secretKeyRef:
-              name: clientid
-              key: clientid
+              name: active-directory
+              key: principal-clientid
         - name: AZURE_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              name: clientpassword
-              key: clientpassword
+              name: active-directory
+              key: principal-clientpassword
+        - name: AZURE_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: active-directory
+              key: tenantid
         - name: aad_client_id
           valueFrom:
             secretKeyRef:
-              name: appid
-              key: appid
+              name: active-directory
+              key: application-appid
         - name: appinsights_key
           valueFrom:
             secretKeyRef:
-              name: appinsights
+              name: central-logging
               key: appinsights
-        - name: cosmosdb_account
-          valueFrom:
-            configMapKeyRef:
-              name: osdu-svc-properties
-              key: ENV_COSMOSDB_HOST
-        - name: cosmosdb_key
-          valueFrom:
-            secretKeyRef:
-              name: cosmos
-              key: cosmos
         - name: cosmosdb_database
           value: osdu-db
-        - name: servicebus_namespace_name
-          valueFrom:
-            configMapKeyRef:
-              name: osdu-svc-properties
-              key: ENV_SERVICEBUS_NAMESPACE
-        - name: servicebus_connection_string
-          valueFrom:
-            secretKeyRef:
-              name: servicebus
-              key: servicebus
         - name: servicebus_topic_name
           value: recordstopic
-        - name: storage_account
-          valueFrom:
-            configMapKeyRef:
-              name: osdu-svc-properties
-              key: ENV_STORAGE_ACCOUNT
         - name: entitlements_service_endpoint
           value: http://entitlements-azure/entitlements/v1
         - name: entitlements_service_api_key
@@ -129,5 +104,9 @@ spec:
           value: http://storage/api/storage/v2/query/records:batch
         - name: STORAGE_QUERY_RECORD_HOST
           value: http://storage/api/storage/v2/records
+        - name: partition_service_endpoint
+          value: http://partition/api/partition/v1
         - name: azure_istioauth_enabled
           value: "true"
+        - name: azure_activedirectory_AppIdUri
+          value: "api://$(aad_client_id)"
