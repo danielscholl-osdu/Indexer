@@ -23,3 +23,11 @@ variables:
     -  name: Azure
        environments: ['dev']
 ```
+
+4. Disable AAD filer and use externalized Auth form Istio: remove following two settings if they are present from 'devops/azure/chart/templates/deployment.yaml'
+```
+ - name: azure_activedirectory_session_stateless
+   value: "true"
+ - name: azure_activedirectory_AppIdUri
+   value: "api://$(aad_client_id)" 
+```

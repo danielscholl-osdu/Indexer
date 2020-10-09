@@ -108,5 +108,3 @@ spec:
           value: http://partition/api/partition/v1
         - name: azure_istioauth_enabled
           value: "true"
-        - name: azure_activedirectory_AppIdUri
-          value: "api://$(aad_client_id)"
