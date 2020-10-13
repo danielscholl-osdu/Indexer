@@ -62,6 +62,7 @@ public abstract class HTTPClient {
             Client client = getClient();
             client.setReadTimeout(180000);
             client.setConnectTimeout(10000);
+            log.info("URL: = " + url);
             WebResource webResource = client.resource(url);
             response = this.getClientResponse(httpMethod, payLoad, webResource, headers, token);
         } catch (Exception e) {
