@@ -35,6 +35,9 @@ resources:
     - repository: TemplateRepo
       type: git
       name: r3-infra-azure-provisioning
+    - repository: security-templates
+      type: git
+      name: osdu-delfi/security-infrastructure
 
 variables:
   - group: 'R3MVP - Azure - OSDU'

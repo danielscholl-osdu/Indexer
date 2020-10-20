@@ -9,6 +9,9 @@ resources:
   - repository: TemplateRepo
     type: git
     name: r3-infra-azure-provisioning
+  - repository: security-templates
+    type: git
+    name: osdu-delfi/security-infrastructure
 ```
 2. Update the variable groups in the `devops/azure/pipeline.yml` file:
 
