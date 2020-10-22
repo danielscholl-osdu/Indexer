@@ -153,6 +153,33 @@ public class IndexerServiceImpl implements IndexerService {
         return jobStatus;
     }
 
+    @Override
+    public void processSchemaMessages(List<RecordInfo> recordInfos) throws IOException {
+        Map<String, OperationType> schemaMsgs = RecordInfo.getSchemaMsgs(recordInfos);
+        if (schemaMsgs != null && !schemaMsgs.isEmpty()) {
+            try (RestHighLevelClient restClient = elasticClientHandler.createRestClient()) {
+                schemaMsgs.entrySet().forEach(msg -> {
+                    try {
+                        processSchemaEvents(restClient, msg);
+                    } catch (IOException | ElasticsearchStatusException e) {
+                        throw new AppException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR.value(), "unable to process schema delete", e.getMessage());
+                    }
+                });
+            }
+        }
+    }
+
+    private void processSchemaEvents(RestHighLevelClient restClient,
+                                     Map.Entry<String, OperationType> msg) throws IOException, ElasticsearchStatusException {
+        String kind = msg.getKey();
+        String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
+
+        boolean indexExist = indicesService.isIndexExist(restClient, index);
+        if (indexExist && msg.getValue() == OperationType.purge_schema) {
+            indicesService.deleteIndex(restClient, index);
+        }
+    }
+
     private List<String> processUpsertRecords(Map<String, Map<String, OperationType>> upsertRecordMap) throws Exception {
         // get schema for kind
         Map<String, IndexSchema> schemas = this.getSchema(upsertRecordMap);
