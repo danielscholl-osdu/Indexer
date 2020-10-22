@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
@@ -23,5 +24,7 @@ import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 public interface IndexerService {
 
     JobStatus processRecordChangedMessages(RecordChangedMessages recordChangedMessages, List<RecordInfo> recordInfos) throws Exception;
+
+    void processSchemaMessages(List<RecordInfo> recordInfos) throws IOException;
 
 }
