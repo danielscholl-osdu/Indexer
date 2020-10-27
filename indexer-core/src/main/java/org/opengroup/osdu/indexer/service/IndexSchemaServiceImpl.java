@@ -63,6 +63,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private IndicesService indicesService;
     @Inject
     private ISchemaCache schemaCache;
+    @Inject
+    private SchemaService schemaService;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
@@ -129,7 +131,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             String schema = (String) this.schemaCache.get(kind);
             if (Strings.isNullOrEmpty(schema)) {
                 // get from storage
-                schema = this.storageService.getStorageSchema(kind);
+                schema = this.schemaService.getSchema(kind);
                 if (Strings.isNullOrEmpty(schema)) {
                     Schema basicSchema = Schema.builder().kind(kind).build();
                     return normalizeSchema(gson.toJson(basicSchema));

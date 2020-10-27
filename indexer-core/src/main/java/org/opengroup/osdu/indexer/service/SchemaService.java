@@ -14,18 +14,19 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
-import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
-import org.opengroup.osdu.core.common.model.indexer.Records;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
-import java.util.List;
 
-public interface StorageService {
-
-    Records getStorageRecords(List<String> ids) throws AppException, URISyntaxException;
-
-    RecordQueryResponse getRecordsByKind(RecordReindexRequest request) throws URISyntaxException;
+/**
+ * Interface to retriew schemas from the Schema Service
+ */
+public interface SchemaService {
+    /**
+     *
+     * @param kind key to retrieve schema
+     * @return obtained schema
+     * @throws URISyntaxException
+     * @throws UnsupportedEncodingException
+     */
+    String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException;
 }
