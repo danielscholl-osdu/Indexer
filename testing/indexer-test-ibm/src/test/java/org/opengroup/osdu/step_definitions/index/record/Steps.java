@@ -1,7 +1,24 @@
 package org.opengroup.osdu.step_definitions.index.record;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 import org.opengroup.osdu.common.RecordSteps;
+import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.http.HttpClient;
+import org.opengroup.osdu.core.common.http.HttpRequest;
+import org.opengroup.osdu.core.common.http.HttpResponse;
+import org.opengroup.osdu.core.common.model.http.AppError;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.ibm.util.Config;
 import org.opengroup.osdu.util.IBMHTTPClient;
+
+import com.google.gson.Gson;
 
 import cucumber.api.DataTable;
 import cucumber.api.Scenario;
@@ -48,5 +65,46 @@ public class Steps extends RecordSteps {
     public void iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(int expectedCount, String index, String skippedAttributes) throws Throwable {
         super.iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(expectedCount, index, skippedAttributes);
     }
-
+    
+    @When("^I pass api key$")
+    public void i_pass_the_api_key() {
+    }
+    
+    @Then("^compare with key configured in properties file$")
+    public void compare_with_key_configured_in_propertiesFile() throws Throwable {
+    	
+    	final String CORRELATION_ID = "1234";
+        final String OPENDES = "opendes";
+    	final Gson gson = new Gson();
+    	
+    	String INDEXER_API_KEY = Config.getEnvironmentVariable("INDEXER_API_KEY");
+    	String INDEXER_HOST_URL = Config.getEnvironmentVariable("INDEXER_HOST_URL");
+    	
+    	RecordChangedMessages recordChangeMessage = new RecordChangedMessages();
+    	
+    	String data = "[{\"id\":\"opendes:doc:1234\",\"kind\":\"opendes:test:test:1.0.0\",\"op\":\"create\"}]";
+    	
+    	Map<String, String> attributes = new HashMap<>();
+    	attributes.put("correlation-id", CORRELATION_ID);
+    	attributes.put("data-partition-id", OPENDES);
+    	recordChangeMessage.setAttributes(attributes);
+    	recordChangeMessage.setData(data);
+    	
+    	String url = StringUtils.join(INDEXER_HOST_URL, Constants.WORKER_RELATIVE_URL);
+		HttpClient httpClient = new HttpClient();
+		DpsHeaders dpsHeaders = new DpsHeaders();
+		dpsHeaders.put("x-api-key", INDEXER_API_KEY);
+		dpsHeaders.put("correlation-id", CORRELATION_ID);
+		dpsHeaders.put("data-partition-id", OPENDES);
+		
+		HttpRequest rq = HttpRequest.post(recordChangeMessage).url(url).headers(dpsHeaders.getHeaders()).build();
+		HttpResponse result = httpClient.send(rq);
+		if(result.hasException().equals(false) && result.getResponseCode() == 500) {
+			assertTrue(result.getResponseCode() == 500);
+		} else {
+			AppError error = gson.fromJson(result.getBody(), AppError.class);
+			assertFalse("Token is mismatched", error.getCode() == 401);
+		}
+		
+    }
 }
