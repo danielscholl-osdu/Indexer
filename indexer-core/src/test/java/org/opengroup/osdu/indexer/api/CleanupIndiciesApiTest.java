@@ -10,15 +10,11 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.http.HeadersUtil;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.search.Config;
-import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.service.IndexerService;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -34,23 +30,11 @@ public class CleanupIndiciesApiTest {
   private final String messageWithEmptyData = "{\"data\":\"[]\",\"attributes\":{\"account-id\":\"opendes\",\"correlation-id\":\"b5a281bd-f59d-4db2-9939-b2d85036fc7e\"},\"messageId\":\"75328163778221\",\"publishTime\":\"2018-05-08T21:48:56.131Z\"}";
   private final String messageWithIncorrectJsonFormat = "{\"data\":\"[{}}]\",\"attributes\":{\"account-id\":\"opendes\",\"correlation-id\":\"b5a281bd-f59d-4db2-9939-b2d85036fc7e\"},\"messageId\":\"75328163778221\",\"publishTime\":\"2018-05-08T21:48:56.131Z\"}";
 
-  private final String ACCOUNT_ID = "any-account";
-  private final String DATA_PARTITION_ID = "opendes";
-
   @InjectMocks
   private CleanupIndiciesApi sut;
 
   @Mock
-  private JaxRsDpsLog log;
-
-  @Mock
-  private ElasticClientHandler elasticClientHandler;
-
-  @Mock
-  private ElasticIndexNameResolver elasticIndexNameResolver;
-
-  @Mock
-  private IndicesService indicesService;
+  private IndexerService indexerService;
 
   @Before
   public void setup() {
@@ -58,12 +42,12 @@ public class CleanupIndiciesApiTest {
   }
 
   @Test
-  public void should_return200_given_validMessage_indexCleanupTest() throws Exception {
+  public void should_return200_given_validMessage_indexCleanupTest() {
     should_return200_indexerWorkerTest(messageValid);
   }
 
   @Test
-  public void should_return200_given_emptyData_indexCleanupTest() throws Exception {
+  public void should_return200_given_emptyData_indexCleanupTest() {
     should_return200_indexerWorkerTest(messageWithEmptyData);
   }
 
@@ -77,7 +61,7 @@ public class CleanupIndiciesApiTest {
     should_return400_indexerWorkerTest(messageWithIncorrectJsonFormat, "Unable to parse request payload.");
   }
 
-  private void should_return200_indexerWorkerTest(String message) throws Exception {
+  private void should_return200_indexerWorkerTest(String message) {
     ResponseEntity response = this.sut.cleanupIndices(createRecordChangedMessage(message));
     Assert.assertEquals(HttpStatus.OK.value(), response.getStatusCodeValue());
   }

@@ -53,10 +53,14 @@ public class RequestInfoImpl implements IRequestInfo {
 
     @Inject
     private TenantInfo tenantInfo;
-
+    
     @Value("${DEPLOYMENT_ENVIRONMENT}")
     private String DEPLOYMENT_ENVIRONMENT;
 
+    private static final String INDEXER_API_KEY_HEADER="x-api-key";
+    
+    @Value("${INDEXER_API_KEY}")
+    private String tokenFromProperty;
 
     @Override
     public DpsHeaders getHeaders() {
@@ -65,9 +69,19 @@ public class RequestInfoImpl implements IRequestInfo {
             // throw to prevent null reference exception below
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Invalid Headers", "Headers Map DpsHeaders is null");
         }
-        DpsHeaders headers = this.getCoreServiceHeaders(headersMap.getHeaders());
-        return headers;
-    }
+		DpsHeaders headers = this.getCoreServiceHeaders(headersMap.getHeaders());
+
+		if (headers.getHeaders().containsKey(INDEXER_API_KEY_HEADER)) {
+			String apiToken = headers.getHeaders().get(INDEXER_API_KEY_HEADER);
+			if (!apiToken.equals(tokenFromProperty)) {
+				logger.error("Indexer API Token in header is mismatched");
+				throw new AppException(HttpStatus.SC_UNAUTHORIZED, "Indexer API Token in header mismatched.", "Indexer API Token in header mismatched.");
+			}
+		} else {
+			throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Missing Header", "The headers "+ INDEXER_API_KEY_HEADER + "  is missing!");
+		}
+		return headers;
+	}
 
     @Override
     public String getPartitionId() {
@@ -95,7 +109,8 @@ public class RequestInfoImpl implements IRequestInfo {
 
     @Override
     public boolean isTaskQueueRequest() {
-        //if (!this.dpsHeaders.getHeaders().containsKey(INDEXER_QUEUE_KEY)) return false;
+        //if (!this.dpsHeaders.getHeaders().containsKey(INDEXER_API_KEY_HEADER)) return false;
+    	
 
 //        String queueId = this.headersInfo.getHeadersMap().get(AppEngineHeaders.TASK_QUEUE_NAME);
 //        return queueId.endsWith(Constants.INDEXER_QUEUE_IDENTIFIER);

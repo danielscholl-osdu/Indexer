@@ -1,27 +1,34 @@
+// Copyright 2017-2019, Schlumberger
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package org.opengroup.osdu.indexer.api;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.extern.java.Log;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
-import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.SwaggerDoc;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.indexer.service.IndexerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,37 +44,31 @@ import org.springframework.web.context.annotation.RequestScope;
 public class CleanupIndiciesApi {
 
   @Autowired
-  private ElasticClientHandler elasticClientHandler;
-
-  @Autowired
-  private ElasticIndexNameResolver elasticIndexNameResolver;
-
-  @Autowired
-  private IndicesService indicesService;
+  private IndexerService indexerService;
 
   @PostMapping(path = "/index-cleanup", consumes = "application/json")
-  @PreAuthorize("@authorizationFilter.hasRole('" + SearchServiceRole.ADMIN + "')")
+  @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
   public ResponseEntity cleanupIndices(@NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
-                                         @Valid @RequestBody RecordChangedMessages recordChangedMessages) throws Exception {
+                                         @Valid @RequestBody RecordChangedMessages message) {
+    if (message == null) {
+      throw new AppException(HttpStatus.BAD_REQUEST.value(), "Request body is null",
+          SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY);
+    }
 
-    if (recordChangedMessages.missingAccountId()) {
-      throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Invalid tenant",
+    if (message.missingAccountId()) {
+      throw new AppException(HttpStatus.BAD_REQUEST.value(), "Invalid tenant",
           String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
     }
     try {
-      if (recordChangedMessages == null) {
-        log.info("record change messages is null");
-      }
-
       Type listType = new TypeToken<List<RecordInfo>>() {
       }.getType();
-      List<RecordInfo> recordInfos = new Gson().fromJson(recordChangedMessages.getData(), listType);
+      List<RecordInfo> recordInfos = new Gson().fromJson(message.getData(), listType);
 
-      if (recordInfos.size() == 0) {
+      if (recordInfos.isEmpty()) {
         log.info("none of record-change message can be deserialized");
         return new ResponseEntity(HttpStatus.OK);
       }
-      processSchemaMessages(recordChangedMessages, recordInfos);
+      indexerService.processSchemaMessages(recordInfos);
       return new ResponseEntity(HttpStatus.OK);
     } catch (AppException e) {
       throw e;
@@ -75,36 +76,6 @@ public class CleanupIndiciesApi {
       throw new AppException(HttpStatus.BAD_REQUEST.value(), "Request payload parsing error", "Unable to parse request payload.", e);
     } catch (Exception e) {
       throw new AppException(HttpStatus.BAD_REQUEST.value(), "Unknown error", "An unknown error has occurred.", e);
-    }
-  }
-
-  private void processSchemaMessages(RecordChangedMessages message, List<RecordInfo> recordInfos) throws Exception {
-    Map<String, OperationType> schemaMsgs = RecordInfo.getSchemaMsgs(recordInfos);
-    if (schemaMsgs != null && !schemaMsgs.isEmpty()) {
-      try (RestHighLevelClient restClient = elasticClientHandler.createRestClient()) {
-        schemaMsgs.entrySet().forEach(msg -> {
-          try {
-            processSchemaEvents(restClient, msg);
-          } catch (IOException | ElasticsearchStatusException e) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "unable to process schema delete", e.getMessage());
-          }
-        });
-      }
-    }
-  }
-
-  private void processSchemaEvents(RestHighLevelClient restClient,
-                                   Map.Entry<String, OperationType> msg) throws IOException, ElasticsearchStatusException {
-    String kind = msg.getKey();
-    String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
-
-    boolean indexExist = indicesService.isIndexExist(restClient, index);
-    if (msg.getValue() == OperationType.purge_schema) {
-      if (indexExist) {
-        indicesService.deleteIndex(restClient, index);
-      } else {
-        log.warning(String.format("Kind: %s not found", kind));
-      }
     }
   }
 }
