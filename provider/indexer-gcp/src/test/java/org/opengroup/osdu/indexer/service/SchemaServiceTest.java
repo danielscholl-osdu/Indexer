@@ -21,7 +21,6 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.service.impl.SchemaServiceImpl;
@@ -47,7 +46,6 @@ public class SchemaServiceTest {
     @Before
     public void setup() {
         when(this.requestInfo.getHeadersMap()).thenReturn(new HashMap<>());
-        when(this.requestInfo.getHeaders()).thenReturn(new DpsHeaders());
     }
 
     @Test

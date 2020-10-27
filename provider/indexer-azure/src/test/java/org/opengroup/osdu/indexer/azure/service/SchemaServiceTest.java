@@ -14,7 +14,6 @@
 
 package org.opengroup.osdu.indexer.azure.service;
 
-import com.google.gson.reflect.TypeToken;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,15 +22,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
-import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.service.impl.SchemaServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
-import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -49,13 +45,7 @@ public class SchemaServiceTest {
 
     @Before
     public void setup() {
-
-        String recordChangedMessages = "[{\"id\":\"tenant1:doc:1dbf528e0e0549cab7a08f29fbfc8465\",\"kind\":\"tenant1:testindexer1528919679710:well:1.0.0\",\"op\":\"purge\"}," +
-                "{\"id\":\"tenant1:doc:15e790a69beb4d789b1f979e2af2e813\",\"kind\":\"tenant1:testindexer1528919679710:well:1.0.0\",\"op\":\"create\"}]";
-
         when(this.requestInfo.getHeadersMap()).thenReturn(new HashMap<>());
-
-        Type listType = new TypeToken<List<RecordInfo>>() {}.getType();
     }
 
     @Test

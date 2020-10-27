@@ -44,10 +44,6 @@ public class SchemaServiceTest {
 
     @Before
     public void setup() {
-
-        String recordChangedMessages = "[{\"id\":\"tenant1:doc:1dbf528e0e0549cab7a08f29fbfc8465\",\"kind\":\"tenant1:testindexer1528919679710:well:1.0.0\",\"op\":\"purge\"}," +
-                "{\"id\":\"tenant1:doc:15e790a69beb4d789b1f979e2af2e813\",\"kind\":\"tenant1:testindexer1528919679710:well:1.0.0\",\"op\":\"create\"}]";
-
         when(this.requestInfo.getHeadersMap()).thenReturn(new HashMap<>());
     }
 
