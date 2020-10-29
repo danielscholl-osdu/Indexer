@@ -43,7 +43,27 @@
         <nimbus-jose-jwt.version>8.2</nimbus-jose-jwt.version>
         <indexer-core.version>1.0.6-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
+        <osdu.azurecore.version>0.0.37</osdu.azurecore.version>
+        <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Override version defined in parent's POM -->
+            <dependency>
+                <groupId>io.projectreactor.netty</groupId>
+                <artifactId>reactor-netty</artifactId>
+                <version>${reactor-netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opengroup.osdu</groupId>
+                <artifactId>core-lib-azure</artifactId>
+                <version>${osdu.azurecore.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -97,7 +117,12 @@
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure-active-directory-spring-boot-starter</artifactId>
-            <version>${azure.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -147,13 +172,12 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-lib-azure</artifactId>
-            <version>0.0.33</version>
+            <version>${osdu.azurecore.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>msal4j</artifactId>
-            <version>0.5.0-preview</version>
         </dependency>
 
         <dependency>
