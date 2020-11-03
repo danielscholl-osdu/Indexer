@@ -55,6 +55,7 @@
                 <artifactId>reactor-netty</artifactId>
                 <version>${reactor-netty.version}</version>
             </dependency>
+            <!-- Inherit managed dependencies from core-lib-azure -->
             <dependency>
                 <groupId>org.opengroup.osdu</groupId>
                 <artifactId>core-lib-azure</artifactId>
