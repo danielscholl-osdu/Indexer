@@ -53,27 +53,24 @@ class PropertiesProcessor {
     }};
 
     Definitions definitions;
-    String prefix;
-    String formattedPrefix;
+    String pathPrefix;
+    String pathPrefixWithDot;
 
     public PropertiesProcessor(Definitions definitions) {
         this(definitions, null);
     }
 
-    public PropertiesProcessor(Definitions definitions, String prefix) {
+    public PropertiesProcessor(Definitions definitions, String pathPrefix) {
         this.definitions = definitions;
-        this.prefix = prefix;
-        this.formattedPrefix = prefix == null || prefix.isEmpty() ? "" : prefix + ".";
+        this.pathPrefix = pathPrefix;
+        this.pathPrefixWithDot = pathPrefix == null || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
     }
 
     protected Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
         String ref = allOfItem.getRef();
 
-        if (ref != null) {
-            return processRef(ref);
-        }
-
-        return allOfItem.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
+        return ref != null ? processRef(ref) :
+            allOfItem.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
     }
 
     public Stream<Map<String, Object>> processRef(String ref) {
@@ -88,7 +85,7 @@ class PropertiesProcessor {
         }
 
         if (DONT_EXPAND_DEFINITIONS.contains(definitionSubRef)) {
-            return storageSchemaEntry(SPEC_DEFINITION_TYPES.get(definitionSubRef), prefix);
+            return storageSchemaEntry(SPEC_DEFINITION_TYPES.get(definitionSubRef), pathPrefix);
         }
 
         return definition.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
@@ -103,18 +100,18 @@ class PropertiesProcessor {
 
         if ("array".equals(entry.getValue().getType())) {
             if (ARRAY_SUPPORTED_SIMPLE_TYPES.contains(entry.getValue().getItems().getType())) {
-                return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), formattedPrefix + entry.getKey());
+                return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
             }
 
             return Stream.empty();
         }
 
         if (entry.getValue().getRef() != null) {
-            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, formattedPrefix + entry.getKey());
-            return propertiesProcessor.processRef(entry.getValue().getRef());
+            return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey())
+                    .processRef(entry.getValue().getRef());
         }
 
-        return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), formattedPrefix + entry.getKey());
+        return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
     }
 
     protected Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {

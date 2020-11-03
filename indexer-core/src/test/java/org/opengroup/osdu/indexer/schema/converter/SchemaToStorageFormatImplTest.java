@@ -31,7 +31,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-
 @SpringBootTest
 public class SchemaToStorageFormatImplTest {
 
