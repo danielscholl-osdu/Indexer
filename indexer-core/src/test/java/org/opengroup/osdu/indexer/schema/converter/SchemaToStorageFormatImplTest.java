@@ -67,8 +67,7 @@ public class SchemaToStorageFormatImplTest {
 
     private String getSchemaFromSchemaService(String s) throws IOException, URISyntaxException {
         return new String(Files.readAllBytes(
-                Paths.get(ClassLoader.getSystemResource(s).toURI()))
-                , StandardCharsets.UTF_8);
+                Paths.get(ClassLoader.getSystemResource(s).toURI())), StandardCharsets.UTF_8);
     }
 
     private void compareSchemas(Map<String, Object> expected, Map<String, Object> converted) {

@@ -30,10 +30,6 @@ class PropertiesProcessor {
 
     static Set<String> SKIP_DEFINITIONS = new HashSet<>(Collections.singletonList("AbstractAnyCrsFeatureCollection.1.0.0"));
 
-    static Set<String> DONT_EXPAND_DEFINITIONS = new HashSet<>(
-            Arrays.asList("AbstractFeatureCollection.1.0.0", "AbstractAnyCrsFeatureCollection.1.0.0",
-                    "geoJsonFeatureCollection", "core_dl_geopoint", "AbstractAnyCrsFeatureCollection.1.0.0"));
-
     static Set<String> ARRAY_SUPPORTED_SIMPLE_TYPES = new HashSet<>(
             Arrays.asList("number", "string", "integer", "boolean"));
 
@@ -63,38 +59,37 @@ class PropertiesProcessor {
     public PropertiesProcessor(Definitions definitions, String pathPrefix) {
         this.definitions = definitions;
         this.pathPrefix = pathPrefix;
-        this.pathPrefixWithDot = pathPrefix == null || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
+        this.pathPrefixWithDot = Objects.isNull(pathPrefix)  || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
     }
 
     protected Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
         String ref = allOfItem.getRef();
 
-        return ref != null ? processRef(ref) :
-            allOfItem.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
+        return Objects.isNull(ref) ?
+            allOfItem.getProperties().entrySet().stream().flatMap(this::processPropertyEntry) : processRef(ref);
     }
 
     public Stream<Map<String, Object>> processRef(String ref) {
         String definitionSubRef = ref.substring(DEF_PREFIX.length());
-        Definition definition = definitions.getDefinition(
-                Optional.of(definitionSubRef)
-                        .orElseThrow(() -> new RuntimeException("Unknown reference")));
-        Optional.ofNullable(definition).orElseThrow(() -> new RuntimeException("Failed to find definition"));
 
         if (SKIP_DEFINITIONS.contains(definitionSubRef)) {
             return Stream.empty();
         }
 
-        if (DONT_EXPAND_DEFINITIONS.contains(definitionSubRef)) {
+        if (!Objects.isNull(SPEC_DEFINITION_TYPES.get(definitionSubRef))) {
             return storageSchemaEntry(SPEC_DEFINITION_TYPES.get(definitionSubRef), pathPrefix);
         }
+
+        Definition definition = definitions.getDefinition(definitionSubRef);
+        Optional.ofNullable(definition).orElseThrow(() -> new RuntimeException("Failed to find definition"));
 
         return definition.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
     }
 
     protected Stream<Map<String, Object>> processPropertyEntry(Map.Entry<String, TypeProperty> entry) {
         if ("object".equals(entry.getValue().getType())
-                && entry.getValue().getItems() == null
-                && entry.getValue().getRef() == null) {
+                && Objects.isNull(entry.getValue().getItems())
+                && Objects.isNull(entry.getValue().getRef())) {
             return Stream.empty();
         }
 
@@ -106,7 +101,7 @@ class PropertiesProcessor {
             return Stream.empty();
         }
 
-        if (entry.getValue().getRef() != null) {
+        if (!Objects.isNull(entry.getValue().getRef())) {
             return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey())
                     .processRef(entry.getValue().getRef());
         }
@@ -127,9 +122,9 @@ class PropertiesProcessor {
         String type = definitionProperty.getType();
         String itemsType = definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null;
 
-        return pattern != null && pattern.startsWith("^srn") ? "link" :
-                format != null ? PRIMITIVE_TYPES_MAP.getOrDefault(format, format) :
-                        itemsType != null ? PRIMITIVE_TYPES_MAP.getOrDefault(itemsType, itemsType) :
+        return !Objects.isNull(pattern) && pattern.startsWith("^srn") ? "link" :
+                !Objects.isNull(format)  ? PRIMITIVE_TYPES_MAP.getOrDefault(format, format) :
+                        !Objects.isNull(itemsType) ? PRIMITIVE_TYPES_MAP.getOrDefault(itemsType, itemsType) :
                                 PRIMITIVE_TYPES_MAP.getOrDefault(type, type);
     }
 }

@@ -43,12 +43,16 @@ public class SchemaToStorageFormatImpl {
 
     public String convertToString(final String schemaServiceFormat, String kind) {
         assert schemaServiceFormat!= null;
+        assert kind!= null;
+        assert !kind.isEmpty();
 
         return saveJsonToString(convert(parserJsonString(schemaServiceFormat), kind));
     }
 
     public Map<String, Object> convertToMap(final String schemaServiceFormat, String kind) {
         assert schemaServiceFormat!= null;
+        assert kind!= null;
+        assert !kind.isEmpty();
 
         return convert(parserJsonString(schemaServiceFormat), kind);
     }
@@ -71,6 +75,8 @@ public class SchemaToStorageFormatImpl {
 
     public Map<String, Object> convert(SchemaRoot schemaServiceSchema, String kind) {
         assert schemaServiceSchema!= null;
+        assert kind!= null;
+        assert !kind.isEmpty();
 
         PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions());
 
