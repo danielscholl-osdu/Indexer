@@ -28,7 +28,8 @@ import java.util.stream.Stream;
 class PropertiesProcessor {
     static String DEF_PREFIX = "#/definitions/";
 
-    static Set<String> SKIP_DEFINITIONS = new HashSet<>(Collections.singletonList("AbstractAnyCrsFeatureCollection.1.0.0"));
+    static Set<String> SKIP_DEFINITIONS = new HashSet<>(
+            Arrays.asList("AbstractAnyCrsFeatureCollection.1.0.0", "anyCrsGeoJsonFeatureCollection"));
 
     static Set<String> ARRAY_SUPPORTED_SIMPLE_TYPES = new HashSet<>(
             Arrays.asList("number", "string", "integer", "boolean"));
