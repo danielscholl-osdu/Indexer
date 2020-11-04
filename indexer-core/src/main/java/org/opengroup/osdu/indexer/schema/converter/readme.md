@@ -9,7 +9,7 @@ Schema Service format to the Storage Service format.
 
 Storage Service schema has the following JSON format
 ----------------------------------------------------
-
+``` json
 {
   "kind": "<kind>",
   "schema": [
@@ -24,7 +24,7 @@ Storage Service schema has the following JSON format
 	…
 }
 
-
+```
 
 Where \<kind\> - id of a kind, \<type\> - type of the described entity
 (for instance link, string,datetime, \[\]string, etc.), \<path\> -
