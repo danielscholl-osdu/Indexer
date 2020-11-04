@@ -9,7 +9,7 @@ Schema Service format to the Storage Service format.
 
 Storage Service schema has the following JSON format
 ----------------------------------------------------
-```json
+``` json
 {
   "kind": "<kind>",
   "schema": [
