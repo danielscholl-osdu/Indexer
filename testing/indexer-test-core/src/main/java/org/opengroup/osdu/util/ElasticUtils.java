@@ -11,6 +11,7 @@ import org.elasticsearch.action.admin.indices.close.CloseIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
@@ -297,5 +298,17 @@ public class ElasticUtils {
         return builder;
     }
 
-
+    public boolean isIndexExist(String index) throws IOException {
+        boolean exists = false;
+        try {
+            try (RestHighLevelClient client = this.createClient(username, password, host)) {
+                GetIndexRequest request = new GetIndexRequest();
+                request.indices(index);
+                exists = client.indices().exists(request, RequestOptions.DEFAULT);
+            }
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Error getting index: %s status", index));
+        }
+        return exists;
+    }
 }
