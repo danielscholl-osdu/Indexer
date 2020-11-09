@@ -13,7 +13,7 @@
 
         <repo.releases.url>https://community.opengroup.org/api/v4/groups/17/-/packages/maven</repo.releases.url>
         <publish.snapshots.url>https://community.opengroup.org/api/v4/projects/25/packages/maven</publish.snapshots.url>
-        <publish.releases.url>https://community.opengroup.org/api/v4/projects/25packages/maven</publish.releases.url>
+        <publish.releases.url>https://community.opengroup.org/api/v4/projects/25/packages/maven</publish.releases.url>
       </properties>
     </profile>
 
