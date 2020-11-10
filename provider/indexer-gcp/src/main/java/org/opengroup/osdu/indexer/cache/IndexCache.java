@@ -1,7 +1,10 @@
 package org.opengroup.osdu.indexer.cache;
 
+import javax.inject.Inject;
 import org.opengroup.osdu.core.common.cache.RedisCache;
+import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -9,11 +12,10 @@ import org.springframework.stereotype.Component;
 public class IndexCache implements IIndexCache<String, Boolean>, AutoCloseable {
     private RedisCache<String, Boolean> cache;
 
-    public IndexCache(@Value("${REDIS_SEARCH_HOST}") final String REDIS_SEARCH_HOST,
-                      @Value("${REDIS_SEARCH_PORT}") final String REDIS_SEARCH_PORT,
-                      @Value("${INDEX_CACHE_EXPIRATION}") final String INDEX_CACHE_EXPIRATION) {
-        cache = new RedisCache<>(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT),
-                Integer.parseInt(INDEX_CACHE_EXPIRATION) * 60, String.class, Boolean.class);
+    @Inject
+    public IndexCache(final IndexerConfigurationProperties properties) {
+        cache = new RedisCache<>(properties.getRedisSearchHost(), Integer.parseInt(properties.getRedisSearchPort()),
+                properties.getElasticCacheExpiration() * 60, String.class, Boolean.class);
     }
 
     @Override

@@ -8,6 +8,7 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.http.ResponseHeaders;
 import org.opengroup.osdu.core.common.model.search.DeploymentEnvironment;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
@@ -31,8 +32,8 @@ public class IndexFilter implements Filter {
     @Inject
     private IRequestInfo requestInfo;
 
-    @Value("${DEPLOYMENT_ENVIRONMENT}")
-    private String DEPLOYMENT_ENVIRONMENT;
+    @Inject
+    private IndexerConfigurationProperties properties;
 
     private FilterConfig filterConfig;
 
@@ -51,7 +52,7 @@ public class IndexFilter implements Filter {
         String uri = httpRequest.getRequestURI().toLowerCase();
 
         if (httpRequest.getMethod().equalsIgnoreCase(HttpMethod.POST.name()) && uri.contains(PATH_TASK_HANDLERS)) {
-            if (DeploymentEnvironment.valueOf(DEPLOYMENT_ENVIRONMENT) != DeploymentEnvironment.LOCAL) {
+            if (properties.getDeploymentEnvironment() != DeploymentEnvironment.LOCAL) {
                 checkWorkerApiAccess(requestInfo);
             }
         }

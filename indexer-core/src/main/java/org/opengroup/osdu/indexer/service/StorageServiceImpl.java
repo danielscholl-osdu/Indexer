@@ -21,7 +21,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
-import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
@@ -34,7 +33,7 @@ import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.apache.http.HttpStatus;
-import org.opengroup.osdu.core.common.search.Config;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -67,18 +66,8 @@ public class StorageServiceImpl implements StorageService {
     private IRequestInfo requestInfo;
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
-
-    @Value("${STORAGE_SCHEMA_HOST}")
-    private String STORAGE_SCHEMA_HOST;
-
-    @Value("${STORAGE_QUERY_RECORD_HOST}")
-    private String STORAGE_QUERY_RECORD_HOST;
-
-    @Value("${STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST}")
-    private String STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST;
-
-    @Value("${STORAGE_RECORDS_BATCH_SIZE}")
-    private String STORAGE_RECORDS_BATCH_SIZE;
+    @Inject
+    private IndexerConfigurationProperties configurationProperties;
 
     @Override
     public Records getStorageRecords(List<String> ids) throws AppException, URISyntaxException {
@@ -87,7 +76,7 @@ public class StorageServiceImpl implements StorageService {
         List<ConversionStatus> conversionStatuses = new ArrayList<>();
         List<String> missingRetryRecordIds = new ArrayList<>();
 
-        List<List<String>> batch = Lists.partition(ids, Integer.parseInt(STORAGE_RECORDS_BATCH_SIZE));
+        List<List<String>> batch = Lists.partition(ids, configurationProperties.getStorageRecordsBatchSize());
         for (List<String> recordsBatch : batch) {
             Records storageOut = this.getRecords(recordsBatch);
             valid.addAll(storageOut.getRecords());
@@ -108,7 +97,7 @@ public class StorageServiceImpl implements StorageService {
         FetchServiceHttpRequest request = FetchServiceHttpRequest
                 .builder()
                 .httpMethod(HttpMethods.POST)
-                .url(STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST)
+                .url(configurationProperties.getStorageQueryRecordForConversionHost())
                 .headers(headers)
                 .body(body).build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
@@ -191,7 +180,7 @@ public class StorageServiceImpl implements StorageService {
     public RecordQueryResponse getRecordsByKind(RecordReindexRequest reindexRequest) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(RecordMetaAttribute.KIND.getValue(), reindexRequest.getKind());
-        queryParams.put("limit", STORAGE_RECORDS_BATCH_SIZE);
+        queryParams.put("limit", configurationProperties.getStorageRecordsBatchSize().toString());
         if (!Strings.isNullOrEmpty(reindexRequest.getCursor())) {
             queryParams.put("cursor", reindexRequest.getCursor());
         }
@@ -202,7 +191,7 @@ public class StorageServiceImpl implements StorageService {
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)
                 .headers(this.requestInfo.getHeadersMap())
-                .url(STORAGE_QUERY_RECORD_HOST)
+                .url(configurationProperties.getStorageQueryRecordHost())
                 .queryParams(queryParams)
                 .build();
 
@@ -212,7 +201,7 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public String getStorageSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        String url = String.format("%s/%s", STORAGE_SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
+        String url = String.format("%s/%s", configurationProperties.getStorageSchemaHost(), URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)
                 .headers(this.requestInfo.getHeadersMap())

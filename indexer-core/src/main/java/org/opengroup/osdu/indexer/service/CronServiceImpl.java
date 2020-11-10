@@ -23,6 +23,7 @@ import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.IndicesService;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -44,16 +45,12 @@ public class CronServiceImpl implements CronService{
         private IndicesService indicesService;
         @Inject
         private JaxRsDpsLog log;
-
-        @Value("${CRON_INDEX_CLEANUP_THRESHOLD_DAYS}")
-        private String CRON_INDEX_CLEANUP_THRESHOLD_DAYS;
-
-        @Value("${CRON_EMPTY_INDEX_CLEANUP_THRESHOLD_DAYS}")
-        private String CRON_EMPTY_INDEX_CLEANUP_THRESHOLD_DAYS;
+        @Inject
+        private IndexerConfigurationProperties configurationProperties;
 
         @Override
         public boolean cleanupIndices(String indexPattern) throws IOException {
-            long threshHoldTime = Instant.now().minus(Integer.parseInt(CRON_INDEX_CLEANUP_THRESHOLD_DAYS), ChronoUnit.DAYS).toEpochMilli();
+            long threshHoldTime = Instant.now().minus(configurationProperties.getCronIndexCleanupThresholdDays(), ChronoUnit.DAYS).toEpochMilli();
 
             try {
                 try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
@@ -73,7 +70,7 @@ public class CronServiceImpl implements CronService{
 
         @Override
         public boolean cleanupEmptyStaleIndices() throws IOException {
-            long threshHoldTime = Instant.now().minus(Integer.parseInt(CRON_EMPTY_INDEX_CLEANUP_THRESHOLD_DAYS), ChronoUnit.DAYS).toEpochMilli();
+            long threshHoldTime = Instant.now().minus(configurationProperties.getCronEmptyIndexCleanupThresholdDays(), ChronoUnit.DAYS).toEpochMilli();
 
             try {
                 try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
