@@ -17,6 +17,8 @@ package org.opengroup.osdu.indexer.di;
 import org.opengroup.osdu.core.common.entitlements.EntitlementsAPIConfig;
 import org.opengroup.osdu.core.common.entitlements.EntitlementsFactory;
 import org.opengroup.osdu.core.common.entitlements.IEntitlementsFactory;
+import org.opengroup.osdu.core.common.http.json.HttpResponseBodyMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 import org.springframework.context.annotation.Lazy;
@@ -34,6 +36,9 @@ public class EntitlementsClientFactory extends AbstractFactoryBean<IEntitlements
 	@Value("${AUTHORIZE_API_KEY:}")
 	private String AUTHORIZE_API_KEY;
 
+	@Autowired
+	private HttpResponseBodyMapper mapper;
+
 	@Override
 	protected IEntitlementsFactory createInstance() throws Exception {
 
@@ -41,7 +46,8 @@ public class EntitlementsClientFactory extends AbstractFactoryBean<IEntitlements
 				.builder()
 				.rootUrl(AUTHORIZE_API)
 				.apiKey(AUTHORIZE_API_KEY)
-				.build());
+				.build(),
+				mapper);
 	}
 
 	@Override
