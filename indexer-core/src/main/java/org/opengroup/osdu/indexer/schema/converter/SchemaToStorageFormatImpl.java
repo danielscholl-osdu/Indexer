@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.*;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
  */
 @Component
 @FieldDefaults(makeFinal=true, level= AccessLevel.PRIVATE)
-public class SchemaToStorageFormatImpl {
+public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
     ObjectMapper objectMapper;
 
@@ -41,6 +42,7 @@ public class SchemaToStorageFormatImpl {
         this.objectMapper = objectMapper;
     }
 
+    @Override
     public String convertToString(final String schemaServiceFormat, String kind) {
         assert schemaServiceFormat!= null;
         assert kind!= null;

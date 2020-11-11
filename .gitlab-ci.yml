@@ -19,7 +19,7 @@ variables:
   OSDU_GCP_APPLICATION_NAME: os-indexer
   OSDU_GCP_PROJECT: nice-etching-277309
   OSDU_GCP_TENANT_NAME: osdu
-  OSDU_GCP_STORAGE_SCHEMA_HOST: https://os-storage-dot-nice-etching-277309.uc.r.appspot.com/api/storage/v2/schemas
+  OSDU_GCP_SCHEMA_HOST: https://os-schema-dot-nice-etching-277309.uc.r.appspot.com/api/schema-service/v1/schema
   OSDU_SECURITY_HTTPS_CERTIFICATE_TRUST: 'true'
 
   IBM_BUILD_SUBDIR: provider/indexer-ibm

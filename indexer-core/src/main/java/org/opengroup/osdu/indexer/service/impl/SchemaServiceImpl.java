@@ -20,6 +20,7 @@ import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.service.SchemaService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -31,29 +32,32 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Provides implementation of the Service that retrieves schemas from the Schema Service
+ * Provides implementation of the client service that retrieves schemas from the Schema Service
  */
 @Component
 public class SchemaServiceImpl implements SchemaService {
     @Inject
     private IUrlFetchService urlFetchService;
 
-    @Value("${STORAGE_SCHEMA_HOST}")
-    private String STORAGE_SCHEMA_HOST;
+    @Value("${SCHEMA_HOST}")
+    private String SCHEMA_HOST;
 
     @Inject
     private IRequestInfo requestInfo;
 
+    @Inject
+    private SchemaToStorageFormat schemaToStorageFormat;
+
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        // this is temporary implementation that still uses storage service
-        String url = String.format("%s/%s", STORAGE_SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
+        String url = String.format("%s/%s", SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)
                 .headers(this.requestInfo.getHeadersMap())
                 .url(url)
                 .build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
-        return response.getResponseCode() != HttpStatus.SC_OK ? null : response.getBody();
+        return response.getResponseCode() != HttpStatus.SC_OK ? null :
+                schemaToStorageFormat.convertToString(response.getBody(), kind);
     }
 }

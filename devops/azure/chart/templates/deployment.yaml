@@ -96,10 +96,12 @@ spec:
           value: http://entitlements-azure/entitlements/v1
         - name: entitlements_service_api_key
           value: "OBSOLETE"
+        - name: schema_service_url
+          value: http://storage/api/schema-service/v1
+        - name: SCHEMA_HOST
+          value: http://schema/api/schema-service/v1/schema
         - name: storage_service_url
           value: http://storage/api/storage/v2
-        - name: STORAGE_SCHEMA_HOST
-          value: http://storage/api/storage/v2/schemas
         - name: STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST
           value: http://storage/api/storage/v2/query/records:batch
         - name: STORAGE_QUERY_RECORD_HOST
