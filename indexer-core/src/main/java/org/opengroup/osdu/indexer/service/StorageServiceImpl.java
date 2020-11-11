@@ -199,7 +199,7 @@ public class StorageServiceImpl implements StorageService {
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)
                 .headers(this.requestInfo.getHeadersMap())
-                .url(Config.getStorageQueryRecordHostUrl())
+                .url(STORAGE_QUERY_RECORD_HOST)
                 .queryParams(queryParams)
                 .build();
 
