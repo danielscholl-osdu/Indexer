@@ -1,0 +1,148 @@
+{
+  "x-osdu-license": "Copyright 2020, The Open Group \\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 . Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.",
+  "$id": "https://schema.osdu.opengroup.org/json/master-data/Seismic3DInterpretationSurvey.1.0.0.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Seismic3DInterpretationSurvey",
+  "description": "A seismic 3D interpretation survey is a collection of trace datasets with a common bin grid that are important for interpretation.  It does not comprise all of the datasets with a common bin grid, nor all of the datasets from a processing project, nor all of the datasets from an acquisition project, because some are not suitable for interpretation.  An interpretation survey may include datasets from more than one acquisition or processing project.  Consequently, it is not an acquisition survey nor a processing survey.  It is not an application project, which is a collection of all the various objects an application and user care about for some analysis (seismic, wells, etc.).  It inherits properties shared by project entities because it can serve to capture the archiving of a master or authorized project activity. Interpretation objects (horizons) are hung from an interpretation survey to give context and to derive spatial location based on the common bin grid.  Trace datasets and seismic horizons are associated through LineageAssertion, although a master collection of trace datasets and horizons are explicitly related through a child relationship property.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Previously called ResourceID or SRN which identifies this OSDU resource object without version.",
+      "title": "Entity ID",
+      "type": "string",
+      "pattern": "^srn:<namespace>:master-data\\/Seismic3DInterpretationSurvey:[^:]+$",
+      "example": "srn:<namespace>:master-data/Seismic3DInterpretationSurvey:deea1101-cfb6-5da9-a26d-50aa5e726eb7"
+    },
+    "kind": {
+      "description": "The schema identification for the OSDU resource object following the pattern <Namespace>:<Source>:<Type>:<VersionMajor>.<VersionMinor>.<VersionPatch>. The versioning scheme follows the semantic versioning, https://semver.org/.",
+      "title": "Entity Kind",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[0-9]+.[0-9]+.[0-9]+$",
+      "example": "namespace:osdu:Seismic3DInterpretationSurvey:2.7.112"
+    },
+    "groupType": {
+      "description": "The OSDU group-type assigned to this resource object.",
+      "title": "Group Type",
+      "const": "master-data"
+    },
+    "version": {
+      "description": "The version number of this OSDU resource; set by the framework.",
+      "title": "Version Number",
+      "type": "integer",
+      "format": "int64",
+      "example": 1562066009929332
+    },
+    "acl": {
+      "description": "The access control tags associated with this entity.",
+      "title": "Access Control List",
+      "$ref": "../abstract/AbstractAccessControlList.1.0.0.json"
+    },
+    "legal": {
+      "description": "The entity's legal tags and compliance status. The actual contents associated with the legal tags is managed by the Compliance Service.",
+      "title": "Legal Tags",
+      "$ref": "../abstract/AbstractLegalTags.1.0.0.json"
+    },
+    "resourceHomeRegionID": {
+      "description": "The name of the home [cloud environment] region for this OSDU resource object.",
+      "title": "Resource Home Region ID",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/OSDURegion:[^:]+:[0-9]*$"
+    },
+    "resourceHostRegionIDs": {
+      "description": "The name of the host [cloud environment] region(s) for this OSDU resource object.",
+      "title": "Resource Host Region ID",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^srn:<namespace>:reference-data\\/OSDURegion:[^:]+:[0-9]*$"
+      }
+    },
+    "resourceObjectCreationDateTime": {
+      "description": "Timestamp of the time at which Version 1 of this OSDU resource object was originated.",
+      "title": "Resource Object Creation DateTime",
+      "type": "string",
+      "format": "date-time"
+    },
+    "resourceVersionCreationDateTime": {
+      "description": "Timestamp of the time when the current version of this resource entered the OSDU.",
+      "title": "Resource Version Creation DateTime",
+      "type": "string",
+      "format": "date-time"
+    },
+    "resourceCurationStatus": {
+      "description": "Describes the current Curation status.",
+      "title": "Resource Curation Status",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceCurationStatus:[^:]+:[0-9]*$"
+    },
+    "resourceLifecycleStatus": {
+      "description": "Describes the current Resource Lifecycle status.",
+      "title": "Resource Lifecycle Status",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceLifecycleStatus:[^:]+:[0-9]*$"
+    },
+    "resourceSecurityClassification": {
+      "description": "Classifies the security level of the resource.",
+      "title": "Resource Security Classification",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceSecurityClassification:[^:]+:[0-9]*$"
+    },
+    "ancestry": {
+      "description": "The links to data, which constitute the inputs.",
+      "title": "Ancestry",
+      "$ref": "../abstract/AbstractLegalParentList.1.0.0.json"
+    },
+    "meta": {
+      "description": "The Frame of Reference meta data section linking the named properties to self-contained definitions.",
+      "title": "Frame of Reference Meta Data",
+      "type": "array",
+      "items": {
+        "$ref": "../abstract/AbstractMetaItem.1.0.0.json"
+      }
+    },
+    "source": {
+      "description": "The entity that produced the record, or from which it is received; could be an organization, agency, system, internal team, or individual. For informational purposes only, the list of sources is not governed.",
+      "title": "Data Source",
+      "type": "string"
+    },
+    "existenceKind": {
+      "description": "Where does this data resource sit in the cradle-to-grave span of its existence?",
+      "title": "Existence Kind",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ExistenceKind:[^:]+:[0-9]*$"
+    },
+    "data": {
+      "allOf": [
+        {
+          "$ref": "../abstract/AbstractProject.1.0.0.json"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "SeismicBinGridID": {
+              "description": "A reference to the Bin Grid that all the associated traces and horizons are based on.",
+              "type": "string",
+              "pattern": "^srn:<namespace>:work-product-component\\/SeismicBinGrid:[^:]+:[0-9]*$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ExtensionProperties": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      ]
+    }
+  },
+  "required": [
+    "kind",
+    "acl",
+    "groupType",
+    "legal"
+  ],
+  "additionalProperties": false
+}

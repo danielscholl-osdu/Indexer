@@ -1,0 +1,198 @@
+{
+  "x-osdu-license": "Copyright 2020, The Open Group \\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 . Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.",
+  "$id": "https://schema.osdu.opengroup.org/json/reference-data/UnitOfMeasure.1.0.0.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UnitOfMeasure",
+  "description": "Used to describe the unit of measures.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Previously called ResourceID or SRN which identifies this OSDU resource object without version.",
+      "title": "Entity ID",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/UnitOfMeasure:[^:]+$",
+      "example": "srn:<namespace>:reference-data/UnitOfMeasure:b4fc5db8-7310-5cdb-8192-5bef4ded8cd3"
+    },
+    "kind": {
+      "description": "The schema identification for the OSDU resource object following the pattern <Namespace>:<Source>:<Type>:<VersionMajor>.<VersionMinor>.<VersionPatch>. The versioning scheme follows the semantic versioning, https://semver.org/.",
+      "title": "Entity Kind",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[0-9]+.[0-9]+.[0-9]+$",
+      "example": "namespace:osdu:UnitOfMeasure:2.7.112"
+    },
+    "groupType": {
+      "description": "The OSDU group-type assigned to this resource object.",
+      "title": "Group Type",
+      "const": "reference-data"
+    },
+    "version": {
+      "description": "The version number of this OSDU resource; set by the framework.",
+      "title": "Version Number",
+      "type": "integer",
+      "format": "int64",
+      "example": 1562066009929332
+    },
+    "acl": {
+      "description": "The access control tags associated with this entity.",
+      "title": "Access Control List",
+      "$ref": "../abstract/AbstractAccessControlList.1.0.0.json"
+    },
+    "legal": {
+      "description": "The entity's legal tags and compliance status. The actual contents associated with the legal tags is managed by the Compliance Service.",
+      "title": "Legal Tags",
+      "$ref": "../abstract/AbstractLegalTags.1.0.0.json"
+    },
+    "resourceHomeRegionID": {
+      "description": "The name of the home [cloud environment] region for this OSDU resource object.",
+      "title": "Resource Home Region ID",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/OSDURegion:[^:]+:[0-9]*$"
+    },
+    "resourceHostRegionIDs": {
+      "description": "The name of the host [cloud environment] region(s) for this OSDU resource object.",
+      "title": "Resource Host Region ID",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^srn:<namespace>:reference-data\\/OSDURegion:[^:]+:[0-9]*$"
+      }
+    },
+    "resourceObjectCreationDateTime": {
+      "description": "Timestamp of the time at which Version 1 of this OSDU resource object was originated.",
+      "title": "Resource Object Creation DateTime",
+      "type": "string",
+      "format": "date-time"
+    },
+    "resourceVersionCreationDateTime": {
+      "description": "Timestamp of the time when the current version of this resource entered the OSDU.",
+      "title": "Resource Version Creation DateTime",
+      "type": "string",
+      "format": "date-time"
+    },
+    "resourceCurationStatus": {
+      "description": "Describes the current Curation status.",
+      "title": "Resource Curation Status",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceCurationStatus:[^:]+:[0-9]*$"
+    },
+    "resourceLifecycleStatus": {
+      "description": "Describes the current Resource Lifecycle status.",
+      "title": "Resource Lifecycle Status",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceLifecycleStatus:[^:]+:[0-9]*$"
+    },
+    "resourceSecurityClassification": {
+      "description": "Classifies the security level of the resource.",
+      "title": "Resource Security Classification",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceSecurityClassification:[^:]+:[0-9]*$"
+    },
+    "ancestry": {
+      "description": "The links to data, which constitute the inputs.",
+      "title": "Ancestry",
+      "$ref": "../abstract/AbstractLegalParentList.1.0.0.json"
+    },
+    "meta": {
+      "description": "The Frame of Reference meta data section linking the named properties to self-contained definitions.",
+      "title": "Frame of Reference Meta Data",
+      "type": "array",
+      "items": {
+        "$ref": "../abstract/AbstractMetaItem.1.0.0.json"
+      }
+    },
+    "source": {
+      "description": "The entity that produced the record, or from which it is received; could be an organization, agency, system, internal team, or individual. For informational purposes only, the list of sources is not governed.",
+      "title": "Data Source",
+      "type": "string"
+    },
+    "existenceKind": {
+      "description": "Where does this data resource sit in the cradle-to-grave span of its existence?",
+      "title": "Existence Kind",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ExistenceKind:[^:]+:[0-9]*$"
+    },
+    "data": {
+      "allOf": [
+        {
+          "$ref": "../abstract/AbstractReferenceType.1.0.0.json"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "UnitQuantityID": {
+              "description": "Unit Quantity is a semantic description of the quantity the UoM is describing ('length' for instance)",
+              "type": "string",
+              "pattern": "^srn:<namespace>:reference-data\\/UnitQuantity:[^:]+:[0-9]+$"
+            },
+            "UnitDimensionCode": {
+              "description": "The dimensionality using the symbols for dimension as defined in https://www.bipm.org/utils/common/documents/jcgm/JCGM_200_2012.pdf, i.e. L for length, M for mass, T for time, I for electric current, N for amount of substance, J for luminous intensity; except \u0398 for thermodynamic temperature, which is replaced by the symbol K, the additional symbol D for temperature difference and the additional symbol 0 for no dimension.",
+              "type": "string",
+              "example": "K"
+            },
+            "IsBaseUnit": {
+              "title": "Base Unit Flag",
+              "description": "True if the unit is a base unit for the unit quantity. If the property is absent, it means the unit is not a base unit.",
+              "type": "string",
+              "example": false
+            },
+            "UnitDimensionName": {
+              "description": "The name of the unit dimension concept.",
+              "type": "string",
+              "example": "thermodynamic temperature"
+            },
+            "CoefficientA": {
+              "type": "number",
+              "title": "A",
+              "example": "2298.35",
+              "description": "The A parameter; formula: y = (A+B*x)/(C+D*x)"
+            },
+            "CoefficientB": {
+              "type": "number",
+              "title": "B",
+              "example": "5.0",
+              "description": "The B parameter; formula: y = (A+B*x)/(C+D*x)"
+            },
+            "CoefficientC": {
+              "type": "number",
+              "title": "C",
+              "example": "9.0",
+              "description": "The C parameter; formula: y = (A+B*x)/(C+D*x)"
+            },
+            "CoefficientD": {
+              "type": "number",
+              "title": "D",
+              "example": "0.0",
+              "description": "The D parameter; formula: y = (A+B*x)/(C+D*x)"
+            },
+            "PersistableReference": {
+              "title": "Persistable Reference",
+              "description": "The self-contained, stringified JSON reference for the unit. This value can be attached to data values and data records and carry the unit reference independent of a UnitOfRecord instance.",
+              "type": "string",
+              "example": "{\"abcd\":{\"a\":2298.35,\"b\":5.0,\"c\":9.0,\"d\":0.0},\"symbol\":\"degF\",\"baseMeasurement\":{\"ancestry\":\"K\",\"type\":\"UM\"},\"type\":\"UAD\"}"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ExtensionProperties": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      ]
+    }
+  },
+  "required": [
+    "kind",
+    "acl",
+    "groupType",
+    "legal"
+  ],
+  "additionalProperties": false,
+  "x-osdu-governance-authorities": [
+    "srn:<namespace>:reference-data/OrganisationType:Energistics"
+  ],
+  "x-osdu-governance-model": "OPEN"
+}
