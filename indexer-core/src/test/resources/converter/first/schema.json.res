@@ -26,8 +26,8 @@
       "path": "WellID"
     },
     {
-      "kind": "int",
-      "path": "SequenceNumber"
+      "path" : "SequenceNumber",
+      "kind" : "int"
     },
     {
       "kind": "link",

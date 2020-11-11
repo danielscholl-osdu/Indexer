@@ -22,4 +22,5 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level= AccessLevel.PRIVATE)
 public class Items {
     String type;
+    String pattern;
 }

@@ -30,55 +30,6 @@
       "format": "int64",
       "example": 1562066009929332
     },
-    "acl": {
-      "description": "The access control tags associated with this entity.",
-      "title": "Access Control List",
-      "$ref": "#/definitions/AbstractAccessControlList.1.0.0"
-    },
-    "legal": {
-      "description": "The entity's legal tags and compliance status. The actual contents associated with the legal tags is managed by the Compliance Service.",
-      "title": "Legal Tags",
-      "$ref": "#/definitions/AbstractLegalTags.1.0.0"
-    },
-    "resourceHomeRegionID": {
-      "description": "The name of the home [cloud environment] region for this OSDU resource object.",
-      "title": "Resource Home Region ID",
-      "type": "string",
-      "pattern": "^srn:<namespace>:reference-data\\/OSDURegion:[^:]+:[0-9]*$"
-    },
-    "resourceHostRegionIDs": {
-      "description": "The name of the host [cloud environment] region(s) for this OSDU resource object.",
-      "title": "Resource Host Region ID",
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^srn:<namespace>:reference-data\\/OSDURegion:[^:]+:[0-9]*$"
-      }
-    },
-    "resourceObjectCreationDateTime": {
-      "description": "Timestamp of the time at which Version 1 of this OSDU resource object was originated.",
-      "title": "Resource Object Creation DateTime",
-      "type": "string",
-      "format": "date-time"
-    },
-    "resourceVersionCreationDateTime": {
-      "description": "Timestamp of the time when the current version of this resource entered the OSDU.",
-      "title": "Resource Version Creation DateTime",
-      "type": "string",
-      "format": "date-time"
-    },
-    "resourceCurationStatus": {
-      "description": "Describes the current Curation status.",
-      "title": "Resource Curation Status",
-      "type": "string",
-      "pattern": "^srn:<namespace>:reference-data\\/ResourceCurationStatus:[^:]+:[0-9]*$"
-    },
-    "resourceLifecycleStatus": {
-      "description": "Describes the current Resource Lifecycle status.",
-      "title": "Resource Lifecycle Status",
-      "type": "string",
-      "pattern": "^srn:<namespace>:reference-data\\/ResourceLifecycleStatus:[^:]+:[0-9]*$"
-    },
     "resourceSecurityClassification": {
       "description": "Classifies the security level of the resource.",
       "title": "Resource Security Classification",
@@ -123,7 +74,7 @@
             },
             "SequenceNumber": {
               "description": "A number that indicates the order in which wellbores were drilled.",
-              "type": "integer"
+              "type": "int"
             },
             "VerticalMeasurements": {
               "description": "List of all depths and elevations pertaining to the wellbore, like, plug back measured depth, total measured depth, KB elevation",
@@ -1826,7 +1777,7 @@
         },
         "FacilitySpecificationIndicator": {
           "description": "The actual indicator value of the parameter.",
-          "type": "boolean"
+          "type": "bool"
         },
         "FacilitySpecificationText": {
           "description": "The actual text value of the parameter.",

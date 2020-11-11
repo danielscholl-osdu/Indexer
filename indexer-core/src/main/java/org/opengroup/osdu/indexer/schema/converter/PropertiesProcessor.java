@@ -29,24 +29,27 @@ class PropertiesProcessor {
     static String DEF_PREFIX = "#/definitions/";
 
     static Set<String> SKIP_DEFINITIONS = new HashSet<>(
-            Arrays.asList("AbstractAnyCrsFeatureCollection.1.0.0", "anyCrsGeoJsonFeatureCollection"));
+            Arrays.asList("AbstractAnyCrsFeatureCollection.1.0.0",
+                          "anyCrsGeoJsonFeatureCollection"));
 
     static Set<String> ARRAY_SUPPORTED_SIMPLE_TYPES = new HashSet<>(
-            Arrays.asList("number", "string", "integer", "boolean"));
+            Arrays.asList("boolean", "integer", "number", "string"));
 
     static Map<String, String> SPEC_DEFINITION_TYPES = new HashMap<String, String>() {{
         put("AbstractFeatureCollection.1.0.0", "core:dl:geoshape:1.0.0");
-        put("geoJsonFeatureCollection", "core:dl:geoshape:1.0.0");
         put("core_dl_geopoint", "core:dl:geopoint:1.0.0");
+        put("geoJsonFeatureCollection", "core:dl:geoshape:1.0.0");
     }};
 
     static Map<String, String> PRIMITIVE_TYPES_MAP = new HashMap<String, String>() {{
+        put("boolean", "bool");
+        put("number", "double");
         put("date-time", "datetime");
         put("date", "datetime");
-        put("int64", "long");
-        put("number", "double");
-        put("boolean", "bool");
+        put("time", "datetime");
+        put("int32", "int");
         put("integer", "int");
+        put("int64", "long");
     }};
 
     Definitions definitions;
@@ -64,6 +67,8 @@ class PropertiesProcessor {
     }
 
     protected Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
+        assert allOfItem!= null;
+
         String ref = allOfItem.getRef();
 
         return Objects.isNull(ref) ?
@@ -71,6 +76,12 @@ class PropertiesProcessor {
     }
 
     public Stream<Map<String, Object>> processRef(String ref) {
+        assert ref!= null;
+
+        if (!ref.contains(DEF_PREFIX)) {
+            return Stream.empty();
+        }
+
         String definitionSubRef = ref.substring(DEF_PREFIX.length());
 
         if (SKIP_DEFINITIONS.contains(definitionSubRef)) {
@@ -88,9 +99,12 @@ class PropertiesProcessor {
     }
 
     protected Stream<Map<String, Object>> processPropertyEntry(Map.Entry<String, TypeProperty> entry) {
+        assert entry!= null;
+
         if ("object".equals(entry.getValue().getType())
                 && Objects.isNull(entry.getValue().getItems())
-                && Objects.isNull(entry.getValue().getRef())) {
+                && Objects.isNull(entry.getValue().getRef())
+                && Objects.isNull(entry.getValue().getProperties())) {
             return Stream.empty();
         }
 
@@ -102,6 +116,11 @@ class PropertiesProcessor {
             return Stream.empty();
         }
 
+        if (!Objects.isNull(entry.getValue().getProperties())) {
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey());
+            return entry.getValue().getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
+        }
+
         if (!Objects.isNull(entry.getValue().getRef())) {
             return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey())
                     .processRef(entry.getValue().getRef());
@@ -111,6 +130,9 @@ class PropertiesProcessor {
     }
 
     protected Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {
+        assert kind!= null;
+        assert path!= null;
+
         Map<String, Object> map = new HashMap<>();
         map.put("kind", kind);
         map.put("path", path);
@@ -118,12 +140,16 @@ class PropertiesProcessor {
     }
 
     protected String getTypeByDefinitionProperty(TypeProperty definitionProperty) {
+        assert definitionProperty!= null;
+
         String pattern = definitionProperty.getPattern();
         String format = definitionProperty.getFormat();
         String type = definitionProperty.getType();
         String itemsType = definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null;
+        String itemsPattern = definitionProperty.getItems() != null ? definitionProperty.getItems().getPattern() : null;
 
         return !Objects.isNull(pattern) && pattern.startsWith("^srn") ? "link" :
+                !Objects.isNull(itemsPattern) && itemsPattern.startsWith("^srn") ? "link" :
                 !Objects.isNull(format)  ? PRIMITIVE_TYPES_MAP.getOrDefault(format, format) :
                         !Objects.isNull(itemsType) ? PRIMITIVE_TYPES_MAP.getOrDefault(itemsType, itemsType) :
                                 PRIMITIVE_TYPES_MAP.getOrDefault(type, type);

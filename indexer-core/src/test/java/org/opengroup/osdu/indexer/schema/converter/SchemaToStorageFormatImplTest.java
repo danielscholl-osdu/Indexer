@@ -24,12 +24,14 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 @SpringBootTest
 public class SchemaToStorageFormatImplTest {
@@ -39,55 +41,76 @@ public class SchemaToStorageFormatImplTest {
     private SchemaToStorageFormatImpl schemaToStorageFormatImpl = new SchemaToStorageFormatImpl(objectMapper);
 
     @Test
-    public void firstSchemaPassed() throws IOException, URISyntaxException {
-        String json = getSchemaFromSchemaService("converter/first/schema.json");
-        Map<String, Object> expected = getStorageSchema("converter/first/de-schema.json");
-
-        Map<String, Object> converted = schemaToStorageFormatImpl.convertToMap(json, "osdu:osdu:Wellbore:1.0.0");
-
-        compareSchemas(expected, converted);
+    public void firstSchemaPassed() {
+        testSingleFile("converter/first/schema.json", "osdu:osdu:Wellbore:1.0.0");
     }
 
     @Test
-    public void wkeSchemaPassed() throws IOException, URISyntaxException {
-        String json = getSchemaFromSchemaService("converter/wks/slb_wke_wellbore.json");
-        Map<String, Object> expected = getStorageSchema("converter/wks/de-slb_wke_wellbore.json");
-
-        Map<String, Object> converted = schemaToStorageFormatImpl.convertToMap(json, "slb:wks:wellbore:1.0.6");
-
-        compareSchemas(expected, converted);
+    public void wkeSchemaPassed() {
+        testSingleFile("converter/wks/slb_wke_wellbore.json", "slb:wks:wellbore:1.0.6");
     }
 
-    private Map<String, Object> getStorageSchema(String s) throws IOException {
+    @Test
+    public void folderPassed() throws URISyntaxException, IOException {
+        String folder = "converter/R3-json-schema";
+        Path path = Paths.get(ClassLoader.getSystemResource(folder).toURI());
+        Files.walk(path)
+                .filter(Files::isRegularFile)
+                .filter(f -> f.toString().endsWith(".json"))
+                .forEach( f -> testSingleFile(f.toString().substring(f.toString().indexOf(folder)), "osdu:osdu:Wellbore:1.0.0"));
+    }
+
+    private void testSingleFile(String filename, String kind) {
+        String json = getSchemaFromSchemaService(filename);
+        Map<String, Object> expected = getStorageSchema( filename + ".res");
+
+        Map<String, Object> converted = schemaToStorageFormatImpl.convertToMap(json, kind);
+
+        compareSchemas(expected, converted, filename);
+    }
+
+    private Map<String, Object> getStorageSchema(String s)  {
+
         TypeReference<Map<String, Object>> typeRef
                 = new TypeReference<Map<String, Object>>() {
         };
-        return objectMapper.readValue(ClassLoader.getSystemResource(s), typeRef);
+        try {
+            return objectMapper.readValue(ClassLoader.getSystemResource(s), typeRef);
+        } catch (IOException | IllegalArgumentException e) {
+            fail("Failed to load schema from file:" + s);
+        }
+
+        return null;
     }
 
-    private String getSchemaFromSchemaService(String s) throws IOException, URISyntaxException {
-        return new String(Files.readAllBytes(
-                Paths.get(ClassLoader.getSystemResource(s).toURI())), StandardCharsets.UTF_8);
+    private String getSchemaFromSchemaService(String s) {
+        try {
+            return new String(Files.readAllBytes(
+                    Paths.get(ClassLoader.getSystemResource(s).toURI())), StandardCharsets.UTF_8);
+        } catch (IOException | URISyntaxException e) {
+            fail("Failed to read file:" + s);
+        }
+        return null;
     }
 
-    private void compareSchemas(Map<String, Object> expected, Map<String, Object> converted) {
-        assertEquals(expected.size(), converted.size());
-        assertEquals(expected.get("kind"), converted.get("kind"));
+    private void compareSchemas(Map<String, Object> expected, Map<String, Object> converted, String filename) {
+        assertEquals("File:" + filename, expected.size(), converted.size());
+        assertEquals("File:" + filename, expected.get("kind"), converted.get("kind"));
         ArrayList<Map<String, String>> conv = (ArrayList<Map<String, String>>) converted.get("schema");
         ArrayList<Map<String, String>> exp = (ArrayList<Map<String, String>>) expected.get("schema");
 
-        checkSchemaIteamsAreEqual(exp, conv);
+        checkSchemaIteamsAreEqual(exp, conv, filename);
     }
 
-    private void checkSchemaIteamsAreEqual(ArrayList<Map<String, String>> exp, List<Map<String, String>> conv) {
-        assertEquals(exp.size(), conv.size());
-        conv.forEach((c) -> checkItemIn(c, exp));
+    private void checkSchemaIteamsAreEqual(ArrayList<Map<String, String>> exp, List<Map<String, String>> conv, String filename) {
+        assertEquals("File:" + filename, exp.size(), conv.size());
+        conv.forEach((c) -> checkItemIn(c, exp, filename));
     }
 
-    private void checkItemIn(Map<String, String> item, List<Map<String, String>> exp) {
+    private void checkItemIn(Map<String, String> item, List<Map<String, String>> exp, String filename) {
         String itemPath = item.get("path");
-        assertEquals(itemPath + " is missed(or too many) see count", exp.stream().filter(e->itemPath.equals(e.get("path"))).count(), 1L);
+        assertEquals("File:" + filename + ", " + itemPath + " is missed(or too many) see count", exp.stream().filter(e->itemPath.equals(e.get("path"))).count(), 1L);
         Map<String, String> found =  exp.stream().filter(e->item.get("path").equals(e.get("path"))).findAny().get();
-        assertEquals("In " + itemPath, found.get("kind"), item.get("kind"));
+        assertEquals("File:" + filename + ", in " + itemPath, found.get("kind"), item.get("kind"));
     }
 }

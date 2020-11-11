@@ -967,7 +967,7 @@
           "description": "True (\"true\" of \"1\") indicates that the wellbore has acheieved total depth. That is, drilling has completed. False (\"false\" or \"0\") indicates otherwise. Not given indicates that it is not known whether total depth has been reached.",
           "example": true,
           "title": "Has Total Depth Been Achieved Flag",
-          "type": "boolean",
+          "type": "bool",
           "x-slb-aliasProperties": [
             "witsml:AchievedTD"
           ]
@@ -976,7 +976,7 @@
           "description": "True (=\"1\" or \"true\") indicates that the wellbore is active. False (=\"0\" or \"false\") indicates otherwise. It is the servers responsibility to set this value based on its available internal data (e.g., what objects are changing).",
           "example": true,
           "title": "Is Active Flag",
-          "type": "boolean",
+          "type": "bool",
           "x-slb-aliasProperties": [
             "witsml:IsActive"
           ]

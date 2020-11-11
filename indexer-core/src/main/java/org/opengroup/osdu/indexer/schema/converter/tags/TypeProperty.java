@@ -19,6 +19,8 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Map;
+
 @Data
 @FieldDefaults(level= AccessLevel.PRIVATE)
 public class TypeProperty {
@@ -28,4 +30,5 @@ public class TypeProperty {
     @JsonProperty("$ref")
     String ref;
     Items items;
+    Map<String, TypeProperty> properties;
 }

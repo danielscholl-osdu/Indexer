@@ -1,0 +1,230 @@
+{
+  "x-osdu-license": "Copyright 2020, The Open Group \\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 . Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.",
+  "$id": "https://schema.osdu.opengroup.org/json/master-data/SeismicAcquisitionProject.1.0.0.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SeismicAcquisitionProject",
+  "description": "A seismic acquisition project is a type of business project that deploys resources to the field to record seismic data.  It may be referred to as a field survey, acquisition survey, or field program.  It is not the same as the geometry of the deployed equipment (nav), which is a work product component.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Previously called ResourceID or SRN which identifies this OSDU resource object without version.",
+      "title": "Entity ID",
+      "type": "string",
+      "pattern": "^srn:<namespace>:master-data\\/SeismicAcquisitionProject:[^:]+$",
+      "example": "srn:<namespace>:master-data/SeismicAcquisitionProject:569dfc39-1e2a-5ee9-bc17-ad1b019817aa"
+    },
+    "kind": {
+      "description": "The schema identification for the OSDU resource object following the pattern <Namespace>:<Source>:<Type>:<VersionMajor>.<VersionMinor>.<VersionPatch>. The versioning scheme follows the semantic versioning, https://semver.org/.",
+      "title": "Entity Kind",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[0-9]+.[0-9]+.[0-9]+$",
+      "example": "namespace:osdu:SeismicAcquisitionProject:2.7.112"
+    },
+    "groupType": {
+      "description": "The OSDU group-type assigned to this resource object.",
+      "title": "Group Type",
+      "const": "master-data"
+    },
+    "version": {
+      "description": "The version number of this OSDU resource; set by the framework.",
+      "title": "Version Number",
+      "type": "integer",
+      "format": "int64",
+      "example": 1562066009929332
+    },
+    "acl": {
+      "description": "The access control tags associated with this entity.",
+      "title": "Access Control List",
+      "$ref": "../abstract/AbstractAccessControlList.1.0.0.json"
+    },
+    "legal": {
+      "description": "The entity's legal tags and compliance status. The actual contents associated with the legal tags is managed by the Compliance Service.",
+      "title": "Legal Tags",
+      "$ref": "../abstract/AbstractLegalTags.1.0.0.json"
+    },
+    "resourceHomeRegionID": {
+      "description": "The name of the home [cloud environment] region for this OSDU resource object.",
+      "title": "Resource Home Region ID",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/OSDURegion:[^:]+:[0-9]*$"
+    },
+    "resourceHostRegionIDs": {
+      "description": "The name of the host [cloud environment] region(s) for this OSDU resource object.",
+      "title": "Resource Host Region ID",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^srn:<namespace>:reference-data\\/OSDURegion:[^:]+:[0-9]*$"
+      }
+    },
+    "resourceObjectCreationDateTime": {
+      "description": "Timestamp of the time at which Version 1 of this OSDU resource object was originated.",
+      "title": "Resource Object Creation DateTime",
+      "type": "string",
+      "format": "date-time"
+    },
+    "resourceVersionCreationDateTime": {
+      "description": "Timestamp of the time when the current version of this resource entered the OSDU.",
+      "title": "Resource Version Creation DateTime",
+      "type": "string",
+      "format": "date-time"
+    },
+    "resourceCurationStatus": {
+      "description": "Describes the current Curation status.",
+      "title": "Resource Curation Status",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceCurationStatus:[^:]+:[0-9]*$"
+    },
+    "resourceLifecycleStatus": {
+      "description": "Describes the current Resource Lifecycle status.",
+      "title": "Resource Lifecycle Status",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceLifecycleStatus:[^:]+:[0-9]*$"
+    },
+    "resourceSecurityClassification": {
+      "description": "Classifies the security level of the resource.",
+      "title": "Resource Security Classification",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ResourceSecurityClassification:[^:]+:[0-9]*$"
+    },
+    "ancestry": {
+      "description": "The links to data, which constitute the inputs.",
+      "title": "Ancestry",
+      "$ref": "../abstract/AbstractLegalParentList.1.0.0.json"
+    },
+    "meta": {
+      "description": "The Frame of Reference meta data section linking the named properties to self-contained definitions.",
+      "title": "Frame of Reference Meta Data",
+      "type": "array",
+      "items": {
+        "$ref": "../abstract/AbstractMetaItem.1.0.0.json"
+      }
+    },
+    "source": {
+      "description": "The entity that produced the record, or from which it is received; could be an organization, agency, system, internal team, or individual. For informational purposes only, the list of sources is not governed.",
+      "title": "Data Source",
+      "type": "string"
+    },
+    "existenceKind": {
+      "description": "Where does this data resource sit in the cradle-to-grave span of its existence?",
+      "title": "Existence Kind",
+      "type": "string",
+      "pattern": "^srn:<namespace>:reference-data\\/ExistenceKind:[^:]+:[0-9]*$"
+    },
+    "data": {
+      "allOf": [
+        {
+          "$ref": "../abstract/AbstractProject.1.0.0.json"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "SeismicGeometryTypeID": {
+              "description": "Reference to the standard values for the general layout of the acquisition.  This is an hierarchical value.  The top value is like 2D, 3D, 4D, Borehole, Passive.  The second value is like NATS, WATS, Brick, Crosswell.  Nodes are separated by forward slash.",
+              "type": "string",
+              "pattern": "^srn:<namespace>:reference-data\\/SeismicGeometryType:[^:]+:[0-9]*$"
+            },
+            "OperatingEnvironmentID": {
+              "description": "Identifies the setting of acquisition (land, marine, transition zone).",
+              "type": "string",
+              "pattern": "^srn:<namespace>:reference-data\\/OperatingEnvironment:[^:]+:[0-9]*$"
+            },
+            "AreaCalculated": {
+              "description": "The calculated are covered by the survey. This value is calculated during the loading of the survey.",
+              "type": "number"
+            },
+            "AreaNominal": {
+              "description": "The nominal area covered by the survey. This value is usually entered by the end user.",
+              "type": "number"
+            },
+            "ShotpointIncrementDistance": {
+              "type": "number",
+              "description": "Horizontal distance between shotpoint locations",
+              "x-osdu-frame-of-reference": "UOM:length"
+            },
+            "EnergySourceTypeID": {
+              "type": "string",
+              "description": "Seismic Source type. E.g.: Airgun, Vibroseis, Dynamite,Watergun",
+              "pattern": "^srn:<namespace>:reference-data\\/SeismicEnergySourceType:[^:]+:[0-9]*$"
+            },
+            "SourceArrayCount": {
+              "type": "integer",
+              "description": "Number of energy sources"
+            },
+            "SourceArraySeparationDistance": {
+              "type": "number",
+              "description": "Distance between energy Sources",
+              "x-osdu-frame-of-reference": "UOM:length"
+            },
+            "SampleInterval": {
+              "type": "number",
+              "description": "Vertical sampling interval of data at time of acquisition",
+              "x-osdu-frame-of-reference": "UOM:time"
+            },
+            "RecordLength": {
+              "type": "number",
+              "description": "Length of record at time of acquisition",
+              "x-osdu-frame-of-reference": "UOM:time"
+            },
+            "ShootingAzimuthAngle": {
+              "type": "number",
+              "description": "Orientation of plane between source and receivers.",
+              "x-osdu-frame-of-reference": "UOM:plane angle"
+            },
+            "CableCount": {
+              "type": "integer",
+              "description": "Number of receiver arrays (lines)"
+            },
+            "CableLength": {
+              "type": "number",
+              "description": "Total length of receiver array",
+              "x-osdu-frame-of-reference": "UOM:length"
+            },
+            "CableSpacingDistance": {
+              "type": "number",
+              "description": "Horizontal distance between receiver arrays",
+              "x-osdu-frame-of-reference": "UOM:length"
+            },
+            "MinOffsetDistance": {
+              "type": "number",
+              "description": "Horizontal distance between source and first receiver",
+              "x-osdu-frame-of-reference": "UOM:length"
+            },
+            "MaxOffsetDistance": {
+              "type": "number",
+              "description": "Horizontal distance between source and last receiver",
+              "x-osdu-frame-of-reference": "UOM:length"
+            },
+            "FoldCount": {
+              "type": "integer",
+              "description": "The number of times a point in the subsurface is sampled.  It measures of the redundancy of common midpoint seismic data"
+            },
+            "VesselNames": {
+              "type": "array",
+              "description": "List of names of the seismic acquisition (source and streamer) vessels used (marine environment only).",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ExtensionProperties": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      ]
+    }
+  },
+  "required": [
+    "kind",
+    "acl",
+    "groupType",
+    "legal"
+  ],
+  "additionalProperties": false
+}

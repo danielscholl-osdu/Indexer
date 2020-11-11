@@ -81,21 +81,27 @@ public class SchemaToStorageFormatImpl {
         PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions());
 
         final List<Map<String, Object>> storageSchemaItems = new ArrayList<>();
-        PropertiesData schemaData = schemaServiceSchema.getProperties().getData();
-        if (schemaData.getAllOf() != null) {
-            storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAllOf().stream()
-                    .flatMap(propertiesProcessor::processItem)
-                    .collect(Collectors.toList()));
-        }
+        if (schemaServiceSchema.getProperties() != null) {
+            PropertiesData schemaData = schemaServiceSchema.getProperties().getData();
+            if (!Objects.isNull(schemaData)) {
 
-        if (schemaData.getRef() != null) {
-            storageSchemaItems.addAll(propertiesProcessor.processRef(schemaData.getRef())
-                    .collect(Collectors.toList()));
+                if (schemaData.getAllOf() != null) {
+                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAllOf().stream()
+                            .flatMap(propertiesProcessor::processItem)
+                            .collect(Collectors.toList()));
+                }
+
+                if (schemaData.getRef() != null) {
+                    storageSchemaItems.addAll(propertiesProcessor.processRef(schemaData.getRef())
+                            .collect(Collectors.toList()));
+                }
+            }
         }
 
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("kind", kind);
         result.put("schema", storageSchemaItems);
+
         return result;
     }
 
