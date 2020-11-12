@@ -14,17 +14,21 @@
 
 package org.opengroup.osdu.indexer.azure.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
 import org.opengroup.osdu.indexer.service.impl.SchemaServiceImpl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
@@ -36,6 +40,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(SpringRunner.class)
 public class SchemaServiceTest {
 
+    private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
+
+    @Spy
+    private SchemaToStorageFormatImpl schemaToStorageFormatImpl = new SchemaToStorageFormatImpl(objectMapper);
     @Mock
     private IUrlFetchService urlFetchService;
     @Mock

@@ -39,6 +39,8 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,8 +65,6 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private IndicesService indicesService;
     @Inject
     private ISchemaCache schemaCache;
-    @Inject
-    private SchemaService schemaService;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
@@ -131,7 +131,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             String schema = (String) this.schemaCache.get(kind);
             if (Strings.isNullOrEmpty(schema)) {
                 // get from storage
-                schema = this.schemaService.getSchema(kind);
+                schema = getSchema(kind);
                 if (Strings.isNullOrEmpty(schema)) {
                     Schema basicSchema = Schema.builder().kind(kind).build();
                     return normalizeSchema(gson.toJson(basicSchema));
@@ -159,6 +159,10 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         } catch (Exception e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Schema parse/read error", "Error while reading schema via storage service.", e);
         }
+    }
+
+    protected String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
+        return this.storageService.getStorageSchema(kind);
     }
 
     public void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException {

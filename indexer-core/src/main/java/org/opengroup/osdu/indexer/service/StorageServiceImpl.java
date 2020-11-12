@@ -68,6 +68,9 @@ public class StorageServiceImpl implements StorageService {
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
 
+    @Value("${STORAGE_SCHEMA_HOST}")
+    private String STORAGE_SCHEMA_HOST;
+
     @Value("${STORAGE_QUERY_RECORD_HOST}")
     private String STORAGE_QUERY_RECORD_HOST;
 
@@ -207,4 +210,15 @@ public class StorageServiceImpl implements StorageService {
         return this.gson.fromJson(response.getBody(), RecordQueryResponse.class);
     }
 
+    @Override
+    public String getStorageSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
+        String url = String.format("%s/%s", STORAGE_SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
+        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
+                .httpMethod(HttpMethods.GET)
+                .headers(this.requestInfo.getHeadersMap())
+                .url(url)
+                .build();
+        HttpResponse response = this.urlFetchService.sendRequest(request);
+        return response.getResponseCode() != HttpStatus.SC_OK ? null : response.getBody();
+    }
 }
