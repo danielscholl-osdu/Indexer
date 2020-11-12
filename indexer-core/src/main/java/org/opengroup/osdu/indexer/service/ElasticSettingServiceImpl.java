@@ -22,7 +22,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCache;
 import org.opengroup.osdu.core.common.model.indexer.IElasticSettingService;
-import org.springframework.beans.factory.annotation.Value;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 
@@ -38,14 +38,13 @@ public class ElasticSettingServiceImpl implements IElasticSettingService {
     private IElasticCredentialsCache elasticCredentialCache;
     @Inject
     private JaxRsDpsLog log;
-
-    @Value("${GAE_SERVICE}")
-    public String GAE_SERVICE;
+    @Inject
+    private IndexerConfigurationProperties configurationProperties;
 
     @Override
     public ClusterSettings getElasticClusterInformation() {
 
-        String cacheKey = String.format("%s-%s", GAE_SERVICE, tenantInfo.getName());
+        String cacheKey = String.format("%s-%s", configurationProperties.getGaeService(), tenantInfo.getName());
         ClusterSettings clusterInfo = (ClusterSettings) this.elasticCredentialCache.get(cacheKey);
         if (clusterInfo != null) {
             return clusterInfo;

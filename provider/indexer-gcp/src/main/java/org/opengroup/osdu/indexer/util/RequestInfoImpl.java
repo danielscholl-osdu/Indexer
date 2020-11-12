@@ -18,6 +18,7 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.DeploymentEnvironment;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.core.gcp.model.CloudTaskHeaders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -43,8 +44,8 @@ public class RequestInfoImpl implements IRequestInfo {
     @Inject
     private TenantInfo tenantInfo;
 
-    @Value("${DEPLOYMENT_ENVIRONMENT}")
-    private String DEPLOYMENT_ENVIRONMENT;
+    @Inject
+    private IndexerConfigurationProperties properties;
 
     @Value("${indexer.que.service.mail}")
     private String indexerQueServiceMail;
@@ -132,7 +133,7 @@ public class RequestInfoImpl implements IRequestInfo {
     }
 
     public String checkOrGetAuthorizationHeader() {
-        if (DeploymentEnvironment.valueOf(DEPLOYMENT_ENVIRONMENT) == DeploymentEnvironment.LOCAL) {
+        if (properties.getDeploymentEnvironment() == DeploymentEnvironment.LOCAL) {
             String authHeader = this.dpsHeaders.getAuthorization();
             if (Strings.isNullOrEmpty(authHeader)) {
                 throw new AppException(HttpStatus.SC_UNAUTHORIZED, "Invalid authorization header", "Authorization token cannot be empty");

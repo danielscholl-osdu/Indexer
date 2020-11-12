@@ -14,8 +14,11 @@
 
 package org.opengroup.osdu.indexer.cache;
 
+import javax.inject.Inject;
 import org.opengroup.osdu.core.common.cache.RedisCache;
+import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.provider.interfaces.IAttributesCache;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.util.Set;
@@ -25,12 +28,10 @@ public class AttributesCache implements IAttributesCache<String,Set>, AutoClosea
 
     private RedisCache<String, Set> cache;
 
-    public AttributesCache(@Value("${REDIS_SEARCH_HOST}") final String REDIS_SEARCH_HOST,
-                           @Value("${REDIS_SEARCH_PORT}") final String REDIS_SEARCH_PORT,
-                           @Value("${INDEX_CACHE_EXPIRATION}") final String INDEX_CACHE_EXPIRATION) {
-
-        cache = new RedisCache(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT),
-                Integer.parseInt(INDEX_CACHE_EXPIRATION) * 60, String.class, Boolean.class);
+    @Inject
+    public AttributesCache(final IndexerConfigurationProperties properties) {
+        cache = new RedisCache(properties.getRedisSearchHost(), Integer.parseInt(properties.getRedisSearchPort()),
+                properties.getElasticCacheExpiration() * 60, String.class, Boolean.class);
     }
 
     @Override

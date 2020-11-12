@@ -23,7 +23,7 @@ import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.search.Config;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 @Component
 public class ReindexServiceImpl implements ReindexService {
 
+    @Inject
+    private IndexerConfigurationProperties configurationProperties;
     @Inject
     private StorageService storageService;
     @Inject
@@ -81,7 +83,7 @@ public class ReindexServiceImpl implements ReindexService {
 
                 // don't call reindex-worker endpoint if it's the last batch
                 // previous storage query result size will be less then requested (limit param)
-                if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == Config.getStorageRecordsBatchSize()) {
+                if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageRecordsBatchSize()) {
                     String newPayLoad = gson.toJson(RecordReindexRequest.builder().cursor(recordQueryResponse.getCursor()).kind(recordReindexRequest.getKind()).build());
                     this.indexerQueueTaskBuilder.createReIndexTask(newPayLoad, initialDelayMillis, headers);
                     return newPayLoad;

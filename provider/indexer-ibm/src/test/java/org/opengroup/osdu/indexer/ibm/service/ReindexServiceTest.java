@@ -26,7 +26,7 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.search.Config;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.service.ReindexServiceImpl;
 import org.opengroup.osdu.indexer.service.StorageService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
@@ -46,12 +46,15 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @Ignore
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(SpringRunner.class)
-@PrepareForTest({Config.class})
+@PrepareForTest({IndexerConfigurationProperties.class})
 public class ReindexServiceTest {
 
     private final String cursor = "100";
 
     private final String correlationId = UUID.randomUUID().toString();
+
+    @Mock
+    private IndexerConfigurationProperties indexerConfigurationProperties;
 
     @Mock
     private StorageService storageService;
@@ -123,8 +126,7 @@ public class ReindexServiceTest {
             results.add("test1");
             recordQueryResponse.setResults(results);
 
-            mockStatic(Config.class);
-            when(Config.getStorageRecordsBatchSize()).thenReturn(1);
+            when(indexerConfigurationProperties.getStorageRecordsBatchSize()).thenReturn(1);
 
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 

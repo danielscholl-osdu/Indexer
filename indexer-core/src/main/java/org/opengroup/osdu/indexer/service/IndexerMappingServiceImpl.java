@@ -46,15 +46,16 @@ import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 
-import static org.opengroup.osdu.core.common.search.Config.isPreDemo;
-
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IndexerMappingService {
 
+    @Inject
+    private IndexerConfigurationProperties configurationProperties;
     @Inject
     private JaxRsDpsLog log;
     @Inject
@@ -126,7 +127,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         if (schema.getDataSchema() != null) {
             for (Map.Entry<String, String> entry : schema.getDataSchema().entrySet()) {
                 // Apply de_indexer_analyzer and de_search_analyzer to TEXT field
-                if (isPreDemo() && ElasticType.TEXT.getValue().equalsIgnoreCase(entry.getValue())) {
+                if (configurationProperties.isPreDemo() && ElasticType.TEXT.getValue().equalsIgnoreCase(entry.getValue())) {
                     log.info(String.format("indexing %s with custom analyzer", entry.getKey()));
                     dataMapping.put(entry.getKey(), Records.Analyzer.builder().type(entry.getValue()).analyzer(DEAnalyzerType.INDEXER_ANALYZER.getValue()).search_analyzer(DEAnalyzerType.SEARCH_ANALYZER.getValue()).build());
                 } else {
