@@ -26,10 +26,10 @@ import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.IndicesService;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -49,6 +49,8 @@ public class CronServiceImplTest {
     @Mock
     private ElasticClientHandler elasticClientHandler;
     @Mock
+    private IndexerConfigurationProperties configurationProperties;
+    @Mock
     private IRequestInfo requestInfo;
     @Mock
     private JaxRsDpsLog log;
@@ -63,8 +65,8 @@ public class CronServiceImplTest {
 
         when(this.requestInfo.getHeaders()).thenReturn(dpsHeaders);
 
-        ReflectionTestUtils.setField(this.sut, "CRON_INDEX_CLEANUP_THRESHOLD_DAYS", "3");
-        ReflectionTestUtils.setField(this.sut, "CRON_EMPTY_INDEX_CLEANUP_THRESHOLD_DAYS", "7");
+        when(configurationProperties.getCronIndexCleanupThresholdDays()).thenReturn(3);
+        when(configurationProperties.getCronEmptyIndexCleanupThresholdDays()).thenReturn(3);
     }
 
     @Test
