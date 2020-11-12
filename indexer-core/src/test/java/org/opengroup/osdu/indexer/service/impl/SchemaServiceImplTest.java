@@ -41,14 +41,14 @@ public class SchemaServiceImplTest {
 
     private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
 
+    @Spy
+    private SchemaToStorageFormatImpl schemaToStorageFormat = new SchemaToStorageFormatImpl(objectMapper);
+
     @Mock
     private IUrlFetchService urlFetchService;
 
     @Mock
     private IRequestInfo requestInfo;
-
-    @Spy
-    private SchemaToStorageFormatImpl schemaToStorageFormat = new SchemaToStorageFormatImpl(objectMapper);
 
     @InjectMocks
     private SchemaServiceImpl sut;

@@ -51,25 +51,26 @@ public class SchemaServiceTest {
     @Test
     public void should_returnValidResponse_givenValidKind_getSchemaByKind() throws Exception {
 
-        String validSchemaFromStorage = "{" +
-                "  \"kind\": \"tenant:test:test:1.0.0\"," +
-                "  \"schema\": [" +
-                "    {" +
-                "      \"path\": \"msg\"," +
-                "      \"kind\": \"string\"" +
-                "    }," +
-                "    {" +
-                "      \"path\": \"references.entity\"," +
-                "      \"kind\": \"string\"" +
-                "    }" +
-                "  ]," +
-                "  \"ext\": null" +
+        String validSchemaFromSchemaService = "{\n" +
+                "   \"data\":{\n" +
+                "      \"allOf\":[\n" +
+                "         {\n" +
+                "            \"type\":\"object\",\n" +
+                "            \"properties\":{\n" +
+                "               \"WellID\":{\n" +
+                "                  \"type\":\"string\",\n" +
+                "                  \"pattern\":\"^srn:<namespace>:master-data\\\\/Well:[^:]+:[0-9]*$\"\n" +
+                "               }\n" +
+                "            }\n" +
+                "         }\n" +
+                "      ]\n" +
+                "   }\n" +
                 "}";
         String kind = "tenant:test:test:1.0.0";
 
         HttpResponse httpResponse = new HttpResponse();
         httpResponse.setResponseCode(HttpStatus.OK.value());
-        httpResponse.setBody(validSchemaFromStorage);
+        httpResponse.setBody(validSchemaFromSchemaService);
 
         when(this.urlFetchService.sendRequest(ArgumentMatchers.any())).thenReturn(httpResponse);
 

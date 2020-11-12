@@ -42,18 +42,19 @@ public class SchemaToStorageFormatImplTest {
 
     @Test
     public void firstSchemaPassed() {
-        testSingleFile("converter/first/schema.json", "osdu:osdu:Wellbore:1.0.0");
+        testSingleFile("/converter/first/schema.json", "osdu:osdu:Wellbore:1.0.0");
     }
 
     @Test
     public void wkeSchemaPassed() {
-        testSingleFile("converter/wks/slb_wke_wellbore.json", "slb:wks:wellbore:1.0.6");
+        testSingleFile("/converter/wks/slb_wke_wellbore.json", "slb:wks:wellbore:1.0.6");
     }
 
     @Test
     public void folderPassed() throws URISyntaxException, IOException {
-        String folder = "converter/R3-json-schema";
-        Path path = Paths.get(ClassLoader.getSystemResource(folder).toURI());
+
+        String folder = "/converter/R3-json-schema";
+        Path path = Paths.get(this.getClass().getResource(folder).toURI());
         Files.walk(path)
                 .filter(Files::isRegularFile)
                 .filter(f -> f.toString().endsWith(".json"))
@@ -63,7 +64,6 @@ public class SchemaToStorageFormatImplTest {
     private void testSingleFile(String filename, String kind) {
         String json = getSchemaFromSchemaService(filename);
         Map<String, Object> expected = getStorageSchema( filename + ".res");
-
         Map<String, Object> converted = schemaToStorageFormatImpl.convertToMap(json, kind);
 
         compareSchemas(expected, converted, filename);
@@ -75,7 +75,7 @@ public class SchemaToStorageFormatImplTest {
                 = new TypeReference<Map<String, Object>>() {
         };
         try {
-            return objectMapper.readValue(ClassLoader.getSystemResource(s), typeRef);
+            return objectMapper.readValue(this.getClass().getResource(s), typeRef);
         } catch (IOException | IllegalArgumentException e) {
             fail("Failed to load schema from file:" + s);
         }
@@ -86,8 +86,8 @@ public class SchemaToStorageFormatImplTest {
     private String getSchemaFromSchemaService(String s) {
         try {
             return new String(Files.readAllBytes(
-                    Paths.get(ClassLoader.getSystemResource(s).toURI())), StandardCharsets.UTF_8);
-        } catch (IOException | URISyntaxException e) {
+                    Paths.get(this.getClass().getResource(s).toURI())), StandardCharsets.UTF_8);
+        } catch (Throwable e) {
             fail("Failed to read file:" + s);
         }
         return null;
