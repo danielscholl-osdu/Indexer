@@ -26,7 +26,7 @@ In order to run the service locally or remotely, you will need to have the follo
 | `INDEXER_QUEUE_HOST` | ex `https://os-indexer-queue-dot-opendes.appspot.com/_dps/task-handlers/enqueue` | Indexer-Queue API endpoint | no | output of infrastructure deployment |
 | `CRS_API` | ex `https://crs-converter-gae-dot-opendes.appspot.com/api/crs/v1` | CRS API endpoint | no | https://console.cloud.google.com/memorystore/redis/instances |
 | `STORAGE_HOSTNAME` | ex `os-storage-dot-opendes.appspot.com` | Storage Host | no | output of infrastructure deployment |
-| `SCHEMA_HOST` | ex `https://os-schema-dot-opendes.appspot.com/api/schema-service/v1/schema` | Storage API endpoint 'schemas' | no | https://console.cloud.google.com/apis/credentials |
+| `STORAGE_SCHEMA_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/schemas` | Storage API endpoint 'schemas' | no | https://console.cloud.google.com/apis/credentials |
 | `STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/query/records:batch` | Storage API endpoint 'records'  | no | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `REDIS_SEARCH_HOST` | ex `127.0.0.1` | Redis host for search | no | https://console.cloud.google.com/memorystore/redis/instances |
 | `REDIS_GROUP_HOST` | ex `127.0.0.1` | Redis host for groups | no | https://console.cloud.google.com/memorystore/redis/instances |
