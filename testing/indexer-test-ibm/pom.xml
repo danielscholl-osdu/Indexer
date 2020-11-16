@@ -5,6 +5,13 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.opengroup.osdu</groupId>
+        <artifactId>indexer-test</artifactId>
+        <version>0.0.5-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
     <groupId>org.opengroup.osdu.indexer</groupId>
     <artifactId>indexer-test-ibm</artifactId>
     <version>0.0.2</version>
@@ -134,23 +141,5 @@
             <version>27.1-jre</version>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>${gitlab-server}</id>
-            <url>https://community.opengroup.org/api/v4/groups/17/-/packages/maven</url>
-        </repository>
-    </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>${gitlab-server}</id>
-            <url>https://community.opengroup.org/api/v4/projects/25/packages/maven</url>
-        </repository>
-        <snapshotRepository>
-            <id>${gitlab-server}</id>
-            <url>https://community.opengroup.org/api/v4/projects/25/packages/maven</url>
-        </snapshotRepository>
-    </distributionManagement>
 
 </project>
