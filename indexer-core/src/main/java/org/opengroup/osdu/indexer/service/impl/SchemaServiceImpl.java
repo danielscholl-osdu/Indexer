@@ -22,6 +22,7 @@ import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.service.SchemaService;
+import org.opengroup.osdu.indexer.service.StorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +49,9 @@ public class SchemaServiceImpl implements SchemaService {
     @Inject
     private SchemaToStorageFormat schemaToStorageFormat;
 
+    @Inject
+    private StorageService storageService;
+
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
         String url = String.format("%s/%s", SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
@@ -57,6 +61,11 @@ public class SchemaServiceImpl implements SchemaService {
                 .url(url)
                 .build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
+
+        if (response.getResponseCode() == HttpStatus.SC_NOT_FOUND) {
+            return storageService.getStorageSchema(kind);
+        }
+
         return response.getResponseCode() != HttpStatus.SC_OK ? null :
                 schemaToStorageFormat.convertToString(response.getBody(), kind);
     }

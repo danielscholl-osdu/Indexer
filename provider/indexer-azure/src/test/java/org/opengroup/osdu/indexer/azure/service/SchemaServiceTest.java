@@ -26,11 +26,13 @@ import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
+import org.opengroup.osdu.indexer.service.StorageService;
 import org.opengroup.osdu.indexer.service.impl.SchemaServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertNotNull;
@@ -48,6 +50,8 @@ public class SchemaServiceTest {
     private IUrlFetchService urlFetchService;
     @Mock
     private IRequestInfo requestInfo;
+    @Mock
+    private StorageService storageService;
     @InjectMocks
     private SchemaServiceImpl sut;
 
