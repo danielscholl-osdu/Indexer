@@ -15,6 +15,7 @@ import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.FileHandler;
 import org.opengroup.osdu.util.HTTPClient;
+import org.springframework.util.CollectionUtils;
 
 import javax.ws.rs.HttpMethod;
 import java.io.IOException;
@@ -51,7 +52,8 @@ public class RecordSteps extends TestsBase {
             testIndex.cleanupIndex();
             testIndex.deleteSchema(kind);
         }
-        if (records != null && records.size() > 0) {
+
+        if (!CollectionUtils.isEmpty(records)) {
             for (Map<String, Object> testRecord : records) {
                 String id = testRecord.get("id").toString();
                 httpClient.send(HttpMethod.DELETE, getStorageBaseURL() + "records/" + id, null, headers, httpClient.getAccessToken());
@@ -74,11 +76,7 @@ public class RecordSteps extends TestsBase {
 
         /******************One time setup for whole feature**************/
         if (!shutDownHookAdded) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    tearDown();
-                }
-            });
+            Runtime.getRuntime().addShutdownHook(new Thread(this::tearDown));
             shutDownHookAdded = true;
             for (String kind : inputIndexMap.keySet()) {
                 TestIndex testIndex = inputIndexMap.get(kind);

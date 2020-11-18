@@ -22,15 +22,25 @@ import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.opengroup.osdu.azure.AzureTestIndex;
 import org.opengroup.osdu.common.RecordSteps;
+import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.AzureHTTPClient;
 import org.opengroup.osdu.util.ElasticUtils;
 
 @Log
 public class Steps extends RecordSteps {
 
+    private final TestIndex testIndex;
+
     public Steps() {
         super(new AzureHTTPClient(), new ElasticUtils());
+        this.testIndex = new AzureTestIndex(super.elasticUtils);
+    }
+
+    @Override
+    protected TestIndex getTextIndex() {
+        return testIndex;
     }
 
     @Before

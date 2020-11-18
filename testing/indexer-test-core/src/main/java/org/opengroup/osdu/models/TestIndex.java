@@ -117,7 +117,7 @@ public class TestIndex {
         }
     }
 
-    private String getStorageSchemaFromJson() {
+    protected String getStorageSchemaFromJson() {
         try {
             String fileContent = FileHandler.readFile(getSchemaFile());
             fileContent = fileContent.replaceAll("KIND_VAL", this.kind);
