@@ -46,6 +46,7 @@ import org.opengroup.osdu.core.common.model.search.IdToken;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.provider.interfaces.IJwtCache;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -75,12 +76,8 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
     private JaxRsDpsLog log;
     @Inject
     private DpsHeaders dpsHeaders;
-
-    @Value("${GOOGLE_AUDIENCES}")
-    public String GOOGLE_AUDIENCES;
-
-    @Value("${INDEXER_HOST}")
-    public String INDEXER_HOST;
+    @Inject
+    private IndexerConfigurationProperties properties;
 
     public String getIdToken(String tenantName) {
         this.log.info("Tenant name received for auth token is: " + tenantName);
@@ -161,7 +158,7 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
 
             // Create IAM API object associated with the authenticated transport.
             this.iam = new Iam.Builder(httpTransport, JSON_FACTORY, credential)
-                    .setApplicationName(INDEXER_HOST)
+                    .setApplicationName(properties.getIndexerHost())
                     .build();
         }
 
@@ -171,7 +168,7 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
     private Map<String, Object> getJWTCreationPayload(TenantInfo tenantInfo) {
 
         Map<String, Object> payload = new HashMap<>();
-        String googleAudience = GOOGLE_AUDIENCES;
+        String googleAudience = properties.getGoogleAudiences();
         if (googleAudience.contains(",")) {
             googleAudience = googleAudience.split(",")[0];
         }

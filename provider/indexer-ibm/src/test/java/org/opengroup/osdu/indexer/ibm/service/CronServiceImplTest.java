@@ -24,11 +24,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.service.CronServiceImpl;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.IndicesService;
-import org.opengroup.osdu.core.common.search.Config;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -39,7 +39,6 @@ import java.time.temporal.ChronoUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 
 @Ignore
@@ -47,6 +46,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 @PrepareForTest({RestHighLevelClient.class})
 public class CronServiceImplTest {
 
+    @Mock
+    private IndexerConfigurationProperties configurationProperties;
     @Mock
     private RestHighLevelClient restHighLevelClient;
     @Mock
@@ -65,12 +66,10 @@ public class CronServiceImplTest {
 
     @Before
     public void setup() {
-        mockStatic(Config.class);
-
         when(this.requestInfo.getHeaders()).thenReturn(dpsHeaders);
 
-        when(Config.getIndexCleanupThresholdDays()).thenReturn(3);
-        when(Config.getEmptyIndexCleanupThresholdDays()).thenReturn(7);
+        when(configurationProperties.getCronIndexCleanupThresholdDays()).thenReturn(3);
+        when(configurationProperties.getCronEmptyIndexCleanupThresholdDays()).thenReturn(7);
     }
 
     @Test

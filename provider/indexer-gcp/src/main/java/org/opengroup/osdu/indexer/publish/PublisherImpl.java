@@ -33,6 +33,7 @@ import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.core.common.model.indexer.RecordStatus;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.core.gcp.PubSub.PubSubExtensions;
 import org.opengroup.osdu.core.common.model.search.DeploymentEnvironment;
@@ -64,14 +65,14 @@ public class PublisherImpl implements IPublisher {
     @Inject
     private PubSubExtensions pubSubExtensions;
 
-    @Value("${DEPLOYMENT_ENVIRONMENT}")
-    private String DEPLOYMENT_ENVIRONMENT;
+    @Inject
+    private IndexerConfigurationProperties properties;
 
     @Override
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception {
 
         // Don't publish to pubsub when testing locally
-        if (DeploymentEnvironment.valueOf(DEPLOYMENT_ENVIRONMENT) == DeploymentEnvironment.LOCAL) {
+        if (properties.getDeploymentEnvironment() == DeploymentEnvironment.LOCAL) {
             return;
         }
 

@@ -26,10 +26,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.search.Config;
 import org.opengroup.osdu.core.common.model.indexer.IElasticSettingService;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.model.search.DeploymentEnvironment;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -39,9 +39,11 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 @Ignore
 @RunWith(SpringRunner.class)
-@PrepareForTest({Config.class, RestClientBuilder.class, RestClient.class, RestHighLevelClient.class})
+@PrepareForTest({RestClientBuilder.class, RestClient.class, RestHighLevelClient.class})
 public class ElasticClientHandlerTest {
 
+    @Mock
+    private IndexerConfigurationProperties configurationProperties;
     @Mock
     private IElasticSettingService elasticSettingService;
 
@@ -60,14 +62,13 @@ public class ElasticClientHandlerTest {
     public void setup() {
         initMocks(this);
 
-//        mockStatic(Config.class);
 //        mockStatic(RestClient.class);
     }
 
     @Test
     public void createRestClient_when_deployment_env_is_saas() {
         ClusterSettings clusterSettings = new ClusterSettings("H", 1, "U:P");
-        when(Config.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
+        when(configurationProperties.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
         when(elasticSettingService.getElasticClusterInformation()).thenReturn(clusterSettings);
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenReturn(builder);
         when(builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000).setSocketTimeout(60000))).thenReturn(builder);
@@ -81,7 +82,7 @@ public class ElasticClientHandlerTest {
     @Test(expected = AppException.class)
     public void failed_createRestClientForSaaS_when_restclient_is_null() {
         ClusterSettings clusterSettings = new ClusterSettings("H", 1, "U:P");
-        when(Config.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
+        when(configurationProperties.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
         when(elasticSettingService.getElasticClusterInformation()).thenReturn(clusterSettings);
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenReturn(builder);
         when(builder.build()).thenReturn(null);
@@ -91,7 +92,7 @@ public class ElasticClientHandlerTest {
 
     @Test(expected = AppException.class)
     public void failed_createRestClientForSaaS_when_getcluster_info_throws_exception() {
-        when(Config.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
+        when(configurationProperties.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
         when(elasticSettingService.getElasticClusterInformation()).thenThrow(new AppException(1, "", ""));
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenReturn(builder);
 
