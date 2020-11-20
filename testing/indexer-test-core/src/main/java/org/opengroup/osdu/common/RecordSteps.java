@@ -69,7 +69,7 @@ public class RecordSteps extends TestsBase {
             TestIndex testIndex = getTextIndex();
             testIndex.setHttpClient(httpClient);
             testIndex.setIndex(generateActualName(input.getIndex(), timeStamp));
-            testIndex.setKind(generateActualName(input.getKind(), timeStamp));
+            updateKind(input, testIndex);
             testIndex.setSchemaFile(input.getSchemaFile());
             inputIndexMap.put(testIndex.getKind(), testIndex);
         }
@@ -83,6 +83,10 @@ public class RecordSteps extends TestsBase {
                 testIndex.setupSchema();
             }
         }
+    }
+
+    protected void updateKind(Setup input, TestIndex testIndex) {
+        testIndex.setKind(generateActualName(input.getKind(), timeStamp));
     }
 
     public void i_ingest_records_with_the_for_a_given(String record, String dataGroup, String kind) {

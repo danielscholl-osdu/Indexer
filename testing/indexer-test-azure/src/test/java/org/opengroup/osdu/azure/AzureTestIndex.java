@@ -1,20 +1,19 @@
 package org.opengroup.osdu.azure;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.ElasticUtils;
+import org.opengroup.osdu.util.FileHandler;
 
-import javax.ws.rs.HttpMethod;
-
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.assertEquals;
-import static org.opengroup.osdu.util.Config.getSchemaBaseURL;
-import static org.opengroup.osdu.util.Config.getStorageBaseURL;
 
 public class AzureTestIndex extends TestIndex {
 
     private static final Logger LOGGER = Logger.getLogger(AzureTestIndex.class.getName());
+    private static final SchemaServiceClient schemaServiceClient = new SchemaServiceClient();
 
     public AzureTestIndex(ElasticUtils elasticUtils) {
         super(elasticUtils);
@@ -22,16 +21,22 @@ public class AzureTestIndex extends TestIndex {
 
     @Override
     public void setupSchema() {
-        ClientResponse clientResponse = super.getHttpClient().send(HttpMethod.POST, getSchemaBaseURL() + "schemas", super.getStorageSchemaFromJson(), super.getHeaders(), super.getHttpClient().getAccessToken());
-        if (clientResponse.getType() != null)
-            LOGGER.info(String.format("Response status: %s, type: %s", clientResponse.getStatus(), clientResponse.getType().toString()));
+        SchemaTestModel schema = readSchemaFromJson();
+        LOGGER.log(Level.INFO, "Setting up the schema={0}", schema.getSchemaIdentity());
+        schemaServiceClient.createIfNotExist(schema);
+        LOGGER.log(Level.INFO, "Finished setting up the schema={0}", schema.getSchemaIdentity());
     }
 
     @Override
     public void deleteSchema(String kind) {
-        ClientResponse clientResponse = super.getHttpClient().send(HttpMethod.DELETE, getStorageBaseURL() + "schemas/" + kind, null, super.getHeaders(), super.getHttpClient().getAccessToken());
-        assertEquals(204, clientResponse.getStatus());
-        if (clientResponse.getType() != null)
-            LOGGER.info(String.format("Response status: %s, type: %s", clientResponse.getStatus(), clientResponse.getType().toString()));
+        // do nothing
+    }
+
+    private SchemaTestModel readSchemaFromJson(){
+        try {
+            return FileHandler.readFile(getSchemaFile(), SchemaTestModel.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

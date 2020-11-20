@@ -56,7 +56,7 @@ public class TestIndex {
     }
 
     public void setupSchema() {
-        ClientResponse clientResponse = this.httpClient.send(HttpMethod.POST, getStorageBaseURL() + "schemas", this.getStorageSchemaFromJson(), headers, httpClient.getAccessToken());
+        ClientResponse clientResponse = this.httpClient.send(HttpMethod.POST, getStorageBaseURL() + "schemas", this.getSchema(), headers, httpClient.getAccessToken());
         if (clientResponse.getType() != null)
             LOGGER.info(String.format("Response status: %s, type: %s", clientResponse.getStatus(), clientResponse.getType().toString()));
     }
@@ -84,7 +84,7 @@ public class TestIndex {
         return String.format("%s.mapping", this.mappingFile);
     }
 
-    private String getSchemaFile() {
+    protected String getSchemaFile() {
         return String.format("%s.schema", this.schemaFile);
     }
 
@@ -117,7 +117,7 @@ public class TestIndex {
         }
     }
 
-    protected String getStorageSchemaFromJson() {
+    protected String getSchema() {
         try {
             String fileContent = FileHandler.readFile(getSchemaFile());
             fileContent = fileContent.replaceAll("KIND_VAL", this.kind);

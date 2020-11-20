@@ -24,6 +24,7 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.opengroup.osdu.azure.AzureTestIndex;
 import org.opengroup.osdu.common.RecordSteps;
+import org.opengroup.osdu.models.Setup;
 import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.AzureHTTPClient;
 import org.opengroup.osdu.util.ElasticUtils;
@@ -32,6 +33,7 @@ import org.opengroup.osdu.util.ElasticUtils;
 public class Steps extends RecordSteps {
 
     private final TestIndex testIndex;
+    private static final String SCHEMA_KIND = "";
 
     public Steps() {
         super(new AzureHTTPClient(), new ElasticUtils());
@@ -47,6 +49,13 @@ public class Steps extends RecordSteps {
     public void before(Scenario scenario) {
         this.scenario = scenario;
         this.httpClient = new AzureHTTPClient();
+    }
+
+
+    @Override
+    protected void updateKind(Setup input, TestIndex testIndex) {
+        testIndex.setKind(input.getKind());
+        super.updateKind(input, testIndex);
     }
 
     @Given("^the schema is created with the following kind$")
