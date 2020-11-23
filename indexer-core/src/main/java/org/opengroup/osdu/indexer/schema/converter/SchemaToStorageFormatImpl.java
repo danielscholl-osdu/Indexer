@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.*;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  */
 @Component
 @FieldDefaults(makeFinal=true, level= AccessLevel.PRIVATE)
+@Log
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
     ObjectMapper objectMapper;
@@ -96,6 +98,8 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                             .collect(Collectors.toList()));
                 }
             }
+        } else {
+            log.warning("Schema doesn't have properties, kind:" + kind);
         }
 
         final Map<String, Object> result = new LinkedHashMap<>();

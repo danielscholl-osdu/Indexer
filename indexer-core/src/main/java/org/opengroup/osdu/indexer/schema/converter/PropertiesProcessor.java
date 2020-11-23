@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
@@ -26,6 +27,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Log
 class PropertiesProcessor {
     static String DEF_PREFIX = "#/definitions/";
 
@@ -80,6 +82,7 @@ class PropertiesProcessor {
         Preconditions.checkNotNull(ref, "allOfItem cannot be null");
 
         if (!ref.contains(DEF_PREFIX)) {
+            log.warning("Unknown definition:" + ref);
             return Stream.empty();
         }
 
