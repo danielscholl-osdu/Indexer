@@ -1,3 +1,20 @@
+/*
+  Copyright 2020 Google LLC
+  Copyright 2020 EPAM Systems, Inc
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ */
+
 package org.opengroup.osdu.step_definitions.index.cleanup;
 
 import cucumber.api.DataTable;
@@ -25,42 +42,42 @@ public class Steps extends CleanupIndiciesSteps {
     }
 
     @Given("^the schema is created with the following kind$")
-    public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
-        super.the_schema_is_created_with_the_following_kind(dataTable);
+    public void theSchemaIsCreatedWithTheFollowingKind(DataTable dataTable) {
+        super.theSchemaIsCreatedWithTheFollowingKind(dataTable);
     }
 
     @When("^I ingest records with the \"(.*?)\" with \"(.*?)\" for a given \"(.*?)\"$")
-    public void i_ingest_records_with_the_for_a_given(String record, String dataGroup, String kind) {
-        super.i_ingest_records_with_the_for_a_given(record, dataGroup, kind);
+    public void iIngestRecordsWithTheforAGiven(String record, String dataGroup, String kind) {
+        super.iIngestRecordsWithTheforAGiven(record, dataGroup, kind);
     }
 
     @Then("^I check that the index for \"(.*?)\" has been created$")
-    public void i_check_that_the_index_for_has_been_created(String kind) throws IOException, InterruptedException {
-        super.i_check_that_the_index_for_has_been_created(kind);
+    public void iCheckThatTheIndexForHasBeenCreated(String kind) throws IOException, InterruptedException {
+        super.iCheckThatTheIndexForHasBeenCreated(kind);
     }
 
     @Then("^I should delete the records I created earlier$")
-    public void i_should_delete_the_records_for_i_created_earlier() {
-        super.i_should_delete_the_records_for_i_created_earlier();
+    public void iShouldDeleteTheRecordsForICreatedEarlier() {
+        super.iShouldDeleteTheRecordsForICreatedEarlier();
     }
 
     @Then("^I should delete the schema for \"(.*?)\" I created earlier$")
-    public void i_should_delete_the_schema_for_i_created_earlier(String kind) {
-        super.i_should_delete_the_schema_for_i_created_earlier(kind);
+    public void iShouldDeleteTheSchemaForICreatedEarlier(String kind) {
+        super.iShouldDeleteTheSchemaForICreatedEarlier(kind);
     }
 
     @Then("^I should check that the index for \"(.*?)\" has not been deleted$")
-    public void i_should_check_that_the_index_for_has_not_been_deleted(String kind) throws IOException, InterruptedException {
-        super.i_should_check_that_the_index_for_has_not_been_deleted(kind);
+    public void iShouldCheckThetTheIndexforHasNotBeenDeleted(String kind) throws IOException, InterruptedException {
+        super.iShouldCheckThetTheIndexforHasNotBeenDeleted(kind);
     }
 
     @Then("^I should to run cleanup of indexes for \"(.*?)\" and \"(.*?)\"$")
-    public void i_should_to_run_cleanup_of_indexes_for_and(String kind, String message) {
-        super.i_should_to_run_cleanup_of_indexes_for_and(kind, message);
+    public void iShouldToRunCleanupOfIndexesForAnd(String kind, String message) {
+        super.iShouldToRunCleanupOfIndexesForAnd(kind, message);
     }
 
     @Then("^I should check that the index for \"(.*?)\" has been deleted$")
-    public void i_should_check_that_the_index_for_has_been_deleted(String kind) throws IOException, InterruptedException {
-        super.i_should_check_that_the_index_for_has_been_deleted(kind);
+    public void iShouldCheckThatTheIndexForHasBeenDeleted(String kind) throws IOException, InterruptedException {
+        super.iShouldCheckThatTheIndexForHasBeenDeleted(kind);
     }
 }

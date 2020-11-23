@@ -1,16 +1,19 @@
-/* Copyright 2017-2019, Schlumberger
+/*
+  Copyright 2020 Google LLC
+  Copyright 2020 EPAM Systems, Inc
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.*/
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ */
 
 package org.opengroup.osdu.common;
 
@@ -52,7 +55,7 @@ public class CleanupIndiciesSteps extends TestsBase {
     super(httpClient);
   }
 
-  public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
+  public void theSchemaIsCreatedWithTheFollowingKind(DataTable dataTable) {
     List<Setup> inputList = dataTable.asList(Setup.class);
     for (Setup input : inputList) {
       TestIndex testIndex = getTextIndex();
@@ -71,7 +74,7 @@ public class CleanupIndiciesSteps extends TestsBase {
     }
   }
 
-  public void i_ingest_records_with_the_for_a_given(String record, String dataGroup, String kind) {
+  public void iIngestRecordsWithTheforAGiven(String record, String dataGroup, String kind) {
     String actualKind = generateActualName(kind, timeStamp);
     try {
       String fileContent = FileHandler.readFile(String.format("%s.%s", record, "json"));
@@ -93,11 +96,11 @@ public class CleanupIndiciesSteps extends TestsBase {
     }
   }
 
-  public void i_check_that_the_index_for_has_been_created(String kind) throws IOException, InterruptedException {
+  public void iCheckThatTheIndexForHasBeenCreated(String kind) throws IOException, InterruptedException {
     assertTrue(isNewIndexCreated(generateActualName(kind, timeStamp)));
   }
 
-  public void i_should_delete_the_records_for_i_created_earlier() {
+  public void iShouldDeleteTheRecordsForICreatedEarlier() {
     List<Map<String, Object>> deletedRecords = new ArrayList<>();
     if (records != null && !records.isEmpty()) {
       for (Map<String, Object> testRecord : records) {
@@ -113,25 +116,27 @@ public class CleanupIndiciesSteps extends TestsBase {
     }
   }
 
-  public void i_should_delete_the_schema_for_i_created_earlier(String kind) {
+  public void iShouldDeleteTheSchemaForICreatedEarlier(String kind) {
     ClientResponse response = httpClient.send(HttpMethod.DELETE,
         String.format("%sschemas%s", getStorageBaseURL(), "/" + generateActualName(kind, timeStamp)),null,
-          headers, httpClient.getAccessToken());
+        headers, httpClient.getAccessToken());
     assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatus());
   }
 
-  public void i_should_check_that_the_index_for_has_not_been_deleted(String kind) throws IOException, InterruptedException {
+  public void iShouldCheckThetTheIndexforHasNotBeenDeleted(String kind) throws IOException, InterruptedException {
     assertTrue(isNewIndexExist(generateActualName(kind, timeStamp)));
   }
 
-  public void i_should_to_run_cleanup_of_indexes_for_and(String kind, String message) {
+  public void iShouldToRunCleanupOfIndexesForAnd(String kind, String message) {
 
-    ClientResponse response = httpClient.send(HttpMethod.POST, String.format("%sindex-cleanup", getIndexerBaseURL()),
+    String url = getIndexerBaseURL() + "index-cleanup";
+    log.info("URL: " + url);
+    ClientResponse response = httpClient.send(HttpMethod.POST, url,
         convertMessageIntoJson(kind, message), headers, httpClient.getAccessToken());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
   }
 
-  public void i_should_check_that_the_index_for_has_been_deleted(String kind) throws IOException, InterruptedException {
+  public void iShouldCheckThatTheIndexForHasBeenDeleted(String kind) throws IOException, InterruptedException {
     assertFalse(isNewIndexExist(generateActualName(kind, timeStamp)));
   }
 
