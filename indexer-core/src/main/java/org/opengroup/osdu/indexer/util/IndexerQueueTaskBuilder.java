@@ -23,6 +23,7 @@ import org.opengroup.osdu.core.common.model.search.CloudTaskRequest;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -43,9 +44,8 @@ import static org.opengroup.osdu.core.common.Constants.WORKER_RELATIVE_URL;
     private IUrlFetchService urlFetchService;
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
-
-    @Value("${INDEXER_QUEUE_HOST}")
-    private String INDEXER_QUEUE_HOST;
+    @Inject
+    private IndexerConfigurationProperties configurationProperties;
 
     public void createWorkerTask(String payload, DpsHeaders headers) {
         createTask(WORKER_RELATIVE_URL, payload, 0l, headers);
@@ -72,7 +72,7 @@ import static org.opengroup.osdu.core.common.Constants.WORKER_RELATIVE_URL;
 
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.POST)
-                .url(INDEXER_QUEUE_HOST)
+                .url(configurationProperties.getIndexerQueueHost())
                 .body(new Gson().toJson(cloudTaskRequest))
                 .headers(headers)
                 .build();

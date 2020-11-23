@@ -1,8 +1,10 @@
 package org.opengroup.osdu.indexer.cache;
 
+import javax.inject.Inject;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.core.common.model.search.IdToken;
 import org.opengroup.osdu.core.common.provider.interfaces.IJwtCache;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -10,11 +12,12 @@ import org.springframework.stereotype.Component;
 public class JwtCache implements IJwtCache<String, IdToken>, AutoCloseable {
     RedisCache<String, IdToken> cache;
 
+
     // google service account id_token can be requested only for 1 hr
     private final static int EXPIRED_AFTER = 59;
-
-    public JwtCache(@Value("${REDIS_SEARCH_HOST}") final String REDIS_SEARCH_HOST, @Value("${REDIS_SEARCH_PORT}") final String REDIS_SEARCH_PORT) {
-        cache = new RedisCache<>(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT),
+    @Inject
+    public JwtCache(final IndexerConfigurationProperties properties) {
+        cache = new RedisCache<>(properties.getRedisSearchHost(), Integer.parseInt(properties.getRedisSearchPort()),
                 EXPIRED_AFTER * 60, String.class, IdToken.class);
     }
 

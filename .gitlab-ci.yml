@@ -43,22 +43,22 @@ include:
   - project: "osdu/platform/ci-cd-pipelines"
     file: "scanners/gitlab-ultimate.yml"
 
-  # - project: "osdu/platform/ci-cd-pipelines"
-  #   file: "cloud-providers/aws.yml"
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/aws.yml"
 
-  # - project: "osdu/platform/ci-cd-pipelines"
-  #   file: "cloud-providers/azure.yml"
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/azure.yml"
 
-  # - project: "osdu/platform/ci-cd-pipelines"
-  #   file: "cloud-providers/ibm.yml"
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/ibm.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "publishing/pages.yml"
 
   - project: 'osdu/platform/ci-cd-pipelines'
-    ref: "osdu-gcp-add-vars-for-indexer"
+    ref: "master"
     file: 'cloud-providers/osdu-gcp-cloudrun.yml'
 
 
-# aws-test-java:
-  # tags: ['aws-internal-test']
+aws-test-java:
+  tags: ['aws-internal-test']
