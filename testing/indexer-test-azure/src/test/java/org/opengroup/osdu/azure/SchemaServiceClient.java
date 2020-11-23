@@ -1,6 +1,7 @@
 package org.opengroup.osdu.azure;
 
 import org.opengroup.osdu.util.Config;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,10 +14,17 @@ import java.util.logging.Logger;
 
 public class SchemaServiceClient {
 
-    private static final Logger LOGGER = Logger.getLogger(AzureTestIndex.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(SchemaServiceClient.class.getName());
 
-    private final RestTemplate template = new RestTemplate();
-    private final String SCHEMA_BASE_URL = Config.getSchemaBaseURL();
+    private final RestTemplate template;
+    private final String SCHEMA_BASE_URL;
+
+    public SchemaServiceClient() {
+        template = new RestTemplateBuilder()
+                .errorHandler(new NotFoundIgnoringResponseErrorHandler())
+                .build();
+        SCHEMA_BASE_URL = Config.getSchemaBaseURL();
+    }
 
     public boolean exists(SchemaIdentity identity) {
         String uri = buildSchemaUri(identity.getId());
@@ -26,15 +34,15 @@ public class SchemaServiceClient {
         return response.getStatusCode() == HttpStatus.OK;
     }
 
-    public void create(SchemaTestModel schema) {
-        String uri = buildSchemaUri(schema.getSchemaIdentity().getId());
+    public void create(SchemaModel schema) {
+        String uri = buildSchemaUri(schema.getSchemaInfo().getSchemaIdentity().getId());
         LOGGER.log(Level.INFO, "Creating the schema={0}", schema);
         template.put(uri, schema);
         LOGGER.log(Level.INFO, "Finished creating the schema={0}", schema);
     }
 
-    public void createIfNotExist(SchemaTestModel schema) {
-        if (!exists(schema.getSchemaIdentity())) {
+    public void createIfNotExist(SchemaModel schema) {
+        if (!exists(schema.getSchemaInfo().getSchemaIdentity())) {
             create(schema);
         }
     }
@@ -42,8 +50,7 @@ public class SchemaServiceClient {
     private String buildSchemaUri(String id) {
         return UriComponentsBuilder.fromHttpUrl(SCHEMA_BASE_URL)
                 .path("/v1/schema/{schema-id}")
-                .build().expand(id).encode()
-                .toUriString();
+                .encode().buildAndExpand(id).toUriString();
     }
 
 }

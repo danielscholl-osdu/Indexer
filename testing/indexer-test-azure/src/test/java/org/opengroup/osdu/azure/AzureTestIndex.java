@@ -14,6 +14,7 @@ public class AzureTestIndex extends TestIndex {
 
     private static final Logger LOGGER = Logger.getLogger(AzureTestIndex.class.getName());
     private static final SchemaServiceClient schemaServiceClient = new SchemaServiceClient();
+    private SchemaModel schemaModel;
 
     public AzureTestIndex(ElasticUtils elasticUtils) {
         super(elasticUtils);
@@ -21,22 +22,35 @@ public class AzureTestIndex extends TestIndex {
 
     @Override
     public void setupSchema() {
-        SchemaTestModel schema = readSchemaFromJson();
-        LOGGER.log(Level.INFO, "Setting up the schema={0}", schema.getSchemaIdentity());
-        schemaServiceClient.createIfNotExist(schema);
-        LOGGER.log(Level.INFO, "Finished setting up the schema={0}", schema.getSchemaIdentity());
+        this.schemaModel = readSchemaFromJson();
+        SchemaIdentity schemaIdentity = schemaModel.getSchemaInfo().getSchemaIdentity();
+        LOGGER.log(Level.INFO, "Setting up the schema={0}", schemaIdentity);
+        schemaServiceClient.createIfNotExist(schemaModel);
+        LOGGER.log(Level.INFO, "Finished setting up the schema={0}", schemaIdentity);
     }
 
     @Override
     public void deleteSchema(String kind) {
-        // do nothing
+        // The DELETE API is not supported in the Schema service.
+        // In order not to overwhelm a DB with a lots of test schemas
+        // the integration tests create/update a schema per schema file if the schema does not exists
+        // If a developer updates the schema manually, the developer is supposed to update its version as well
     }
 
-    private SchemaTestModel readSchemaFromJson(){
+    private SchemaModel readSchemaFromJson(){
         try {
-            return FileHandler.readFile(getSchemaFile(), SchemaTestModel.class);
+            return FileHandler.readFile(getSchemaFile(), SchemaModel.class);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public SchemaModel getSchemaModel() {
+        return schemaModel;
+    }
+
+    @Override
+    protected String getSchemaFile() {
+        return super.getSchemaFile() + ".json";
     }
 }

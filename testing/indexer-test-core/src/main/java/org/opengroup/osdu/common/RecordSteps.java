@@ -69,24 +69,19 @@ public class RecordSteps extends TestsBase {
             TestIndex testIndex = getTextIndex();
             testIndex.setHttpClient(httpClient);
             testIndex.setIndex(generateActualName(input.getIndex(), timeStamp));
-            updateKind(input, testIndex);
+            testIndex.setKind(generateActualName(input.getKind(), timeStamp));
             testIndex.setSchemaFile(input.getSchemaFile());
             inputIndexMap.put(testIndex.getKind(), testIndex);
         }
 
         /******************One time setup for whole feature**************/
         if (!shutDownHookAdded) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::tearDown));
-            shutDownHookAdded = true;
             for (String kind : inputIndexMap.keySet()) {
                 TestIndex testIndex = inputIndexMap.get(kind);
                 testIndex.setupSchema();
             }
         }
-    }
-
-    protected void updateKind(Setup input, TestIndex testIndex) {
-        testIndex.setKind(generateActualName(input.getKind(), timeStamp));
+        addShutDownHook();
     }
 
     public void i_ingest_records_with_the_for_a_given(String record, String dataGroup, String kind) {
@@ -184,4 +179,18 @@ public class RecordSteps extends TestsBase {
         return null;
     }
 
+    public Map<String, TestIndex> getInputIndexMap() {
+        return inputIndexMap;
+    }
+
+    public String getTimeStamp() {
+        return timeStamp;
+    }
+
+    protected void addShutDownHook() {
+        if (!shutDownHookAdded) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::tearDown));
+            shutDownHookAdded = true;
+        }
+    }
 }

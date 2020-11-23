@@ -1,60 +1,81 @@
 package org.opengroup.osdu.azure;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.StringJoiner;
 
 public class SchemaIdentity {
-    @JsonProperty("authority")
-    public final String AUTHORITY = "INDEXER-SERVICE";
-    @JsonProperty("source")
-    public final String SOURCE = "INTEGRATION-TEST";
-    @JsonProperty("entityType")
-    public final String ENTITY_TYPE = "SCHEMA";
-    private String versionPatch;
-    private String versionMinor;
-    private String versionMajor;
 
-    public String getVersionPatch() {
-        return versionPatch;
+    public String authority;
+    public String source;
+    public String entityType;
+    private String schemaVersionMajor;
+    private String schemaVersionMinor;
+    private String schemaVersionPatch;
+
+    public String getAuthority() {
+        return authority;
     }
 
-    public void setVersionPatch(String versionPatch) {
-        this.versionPatch = versionPatch;
+    public void setAuthority(String authority) {
+        this.authority = authority;
     }
 
-    public String getVersionMinor() {
-        return versionMinor;
+    public String getSource() {
+        return source;
     }
 
-    public void setVersionMinor(String versionMinor) {
-        this.versionMinor = versionMinor;
+    public void setSource(String source) {
+        this.source = source;
     }
 
-    public String getVersionMajor() {
-        return versionMajor;
+    public String getEntityType() {
+        return entityType;
     }
 
-    public void setVersionMajor(String versionMajor) {
-        this.versionMajor = versionMajor;
+    public void setEntityType(String entityType) {
+        this.entityType = entityType;
+    }
+
+    public String getSchemaVersionMajor() {
+        return schemaVersionMajor;
+    }
+
+    public void setSchemaVersionMajor(String schemaVersionMajor) {
+        this.schemaVersionMajor = schemaVersionMajor;
+    }
+
+    public String getSchemaVersionMinor() {
+        return schemaVersionMinor;
+    }
+
+    public void setSchemaVersionMinor(String schemaVersionMinor) {
+        this.schemaVersionMinor = schemaVersionMinor;
+    }
+
+    public String getSchemaVersionPatch() {
+        return schemaVersionPatch;
+    }
+
+    public void setSchemaVersionPatch(String schemaVersionPatch) {
+        this.schemaVersionPatch = schemaVersionPatch;
     }
 
     @JsonIgnore
     public String getId() {
-        return AUTHORITY + ":" + SOURCE + ":" + ENTITY_TYPE + ":" +
-                versionMajor + "." + versionMinor + "." + versionPatch;
+        return authority + ":" + source + ":" + entityType + ":" +
+                schemaVersionMajor + "." + schemaVersionMinor + "." + schemaVersionPatch;
     }
 
     @Override
     public String toString() {
         return new StringJoiner(", ", SchemaIdentity.class.getSimpleName() + "[", "]")
-                .add("AUTHORITY='" + AUTHORITY + "'")
-                .add("SOURCE='" + SOURCE + "'")
-                .add("ENTITY_TYPE='" + ENTITY_TYPE + "'")
-                .add("versionPatch='" + versionPatch + "'")
-                .add("versionMinor='" + versionMinor + "'")
-                .add("versionMajor='" + versionMajor + "'")
+                .add("AUTHORITY='" + authority + "'")
+                .add("SOURCE='" + source + "'")
+                .add("ENTITY_TYPE='" + entityType + "'")
+                .add("schemaVersionMajor='" + schemaVersionMajor + "'")
+                .add("schemaVersionMinor='" + schemaVersionMinor + "'")
+                .add("schemaVersionPatch='" + schemaVersionPatch + "'")
                 .toString();
     }
 }

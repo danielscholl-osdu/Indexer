@@ -1,0 +1,39 @@
+{
+  "schemaInfo": {
+    "schemaIdentity": {
+      "authority": "tenant1",
+      "source": "INDEXER-INTEGRATION-TEST",
+      "entityType": "SAMPLE-SCHEMA-3",
+      "schemaVersionMajor": "1",
+      "schemaVersionMinor": "0",
+      "schemaVersionPatch": "0"
+    },
+    "status": "DEVELOPMENT"
+  },
+  "schema": {
+    "properties": {
+      "data": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "GeoShape": {
+                "$ref": "#/definitions/geoJsonFeatureCollection",
+                "description": "The wellbore's position .",
+                "format": "core:dl:geopoint:1.0.0",
+                "title": "WGS 84 Position",
+                "type": "object",
+                "x-slb-aliasProperties": [
+                  "witsml:GeographicLocationWGS84"
+                ]
+              },
+              "WellName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

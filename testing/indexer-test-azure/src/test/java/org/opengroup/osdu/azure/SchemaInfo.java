@@ -2,10 +2,10 @@ package org.opengroup.osdu.azure;
 
 import java.util.StringJoiner;
 
-public class SchemaTestModel {
+public class SchemaInfo {
 
     private SchemaIdentity schemaIdentity;
-    private Object schema;
+    private SchemaStatus status;
 
     public SchemaIdentity getSchemaIdentity() {
         return schemaIdentity;
@@ -15,19 +15,23 @@ public class SchemaTestModel {
         this.schemaIdentity = schemaIdentity;
     }
 
-    public Object getSchema() {
-        return schema;
+    public SchemaStatus getStatus() {
+        return status;
     }
 
-    public void setSchema(Object schema) {
-        this.schema = schema;
+    public void setStatus(SchemaStatus status) {
+        this.status = status;
     }
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", SchemaTestModel.class.getSimpleName() + "[", "]")
+        return new StringJoiner(", ", SchemaInfo.class.getSimpleName() + "[", "]")
                 .add("schemaIdentity=" + schemaIdentity)
-                .add("schema=" + schema)
+                .add("status=" + status)
                 .toString();
+    }
+
+    public enum SchemaStatus {
+        PUBLISHED, OBSOLETE, DEVELOPMENT
     }
 }
