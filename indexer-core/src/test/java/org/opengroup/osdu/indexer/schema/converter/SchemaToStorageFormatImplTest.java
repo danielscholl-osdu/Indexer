@@ -47,7 +47,7 @@ public class SchemaToStorageFormatImplTest {
 
     @Test
     public void integrationTestSchema1() {
-        testSingleFile("/converter/integration-tests/index_records_1.json", "KIND_VAL");
+        testSingleFile("/converter/integration-tests/index_records_1.schema", "KIND_VAL");
     }
 
     @Test
