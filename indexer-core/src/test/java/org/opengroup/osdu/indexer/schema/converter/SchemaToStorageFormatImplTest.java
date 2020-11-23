@@ -51,6 +51,16 @@ public class SchemaToStorageFormatImplTest {
     }
 
     @Test
+    public void integrationTestSchema2() {
+        testSingleFile("/converter/integration-tests/index_records_2.schema", "KIND_VAL");
+    }
+
+    @Test
+    public void integrationTestSchema3() {
+        testSingleFile("/converter/integration-tests/index_records_3.schema", "KIND_VAL");
+    }
+
+    @Test
     public void wkeSchemaPassed() {
         testSingleFile("/converter/wks/slb_wke_wellbore.json", "slb:wks:wellbore:1.0.6");
     }
