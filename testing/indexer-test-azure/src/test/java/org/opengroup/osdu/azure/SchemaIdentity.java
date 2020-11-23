@@ -6,9 +6,9 @@ import java.util.StringJoiner;
 
 public class SchemaIdentity {
 
-    public String authority;
-    public String source;
-    public String entityType;
+    private  String authority;
+    private  String source;
+    private  String entityType;
     private String schemaVersionMajor;
     private String schemaVersionMinor;
     private String schemaVersionPatch;
