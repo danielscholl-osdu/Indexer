@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.*;
 import org.springframework.stereotype.Component;
@@ -37,24 +38,22 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
     @Inject
     public SchemaToStorageFormatImpl(ObjectMapper objectMapper) {
-        assert objectMapper!= null;
+        Preconditions.checkNotNull(objectMapper, "objectMapper cannot be null");
 
         this.objectMapper = objectMapper;
     }
 
     @Override
     public String convertToString(final String schemaServiceFormat, String kind) {
-        assert schemaServiceFormat!= null;
-        assert kind!= null;
-        assert !kind.isEmpty();
+        Preconditions.checkNotNullOrEmpty(schemaServiceFormat, "schemaServiceFormat cannot be null or empty");
+        Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 
         return saveJsonToString(convert(parserJsonString(schemaServiceFormat), kind));
     }
 
     public Map<String, Object> convertToMap(final String schemaServiceFormat, String kind) {
-        assert schemaServiceFormat!= null;
-        assert kind!= null;
-        assert !kind.isEmpty();
+        Preconditions.checkNotNullOrEmpty(schemaServiceFormat, "schemaServiceFormat cannot be null or empty");
+        Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 
         return convert(parserJsonString(schemaServiceFormat), kind);
     }
@@ -76,9 +75,8 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
     }
 
     public Map<String, Object> convert(SchemaRoot schemaServiceSchema, String kind) {
-        assert schemaServiceSchema!= null;
-        assert kind!= null;
-        assert !kind.isEmpty();
+        Preconditions.checkNotNull(objectMapper, "schemaServiceSchema cannot be null");
+        Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 
         PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions());
 

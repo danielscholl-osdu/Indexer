@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
@@ -67,7 +68,7 @@ class PropertiesProcessor {
     }
 
     protected Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
-        assert allOfItem!= null;
+        Preconditions.checkNotNull(allOfItem, "ref cannot be null");
 
         String ref = allOfItem.getRef();
 
@@ -76,7 +77,7 @@ class PropertiesProcessor {
     }
 
     public Stream<Map<String, Object>> processRef(String ref) {
-        assert ref!= null;
+        Preconditions.checkNotNull(ref, "allOfItem cannot be null");
 
         if (!ref.contains(DEF_PREFIX)) {
             return Stream.empty();
@@ -99,7 +100,7 @@ class PropertiesProcessor {
     }
 
     protected Stream<Map<String, Object>> processPropertyEntry(Map.Entry<String, TypeProperty> entry) {
-        assert entry!= null;
+        Preconditions.checkNotNull(entry, "entry cannot be null");
 
         if ("object".equals(entry.getValue().getType())
                 && Objects.isNull(entry.getValue().getItems())
@@ -130,8 +131,8 @@ class PropertiesProcessor {
     }
 
     protected Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {
-        assert kind!= null;
-        assert path!= null;
+        Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
+        Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
 
         Map<String, Object> map = new HashMap<>();
         map.put("kind", kind);
@@ -140,7 +141,7 @@ class PropertiesProcessor {
     }
 
     protected String getTypeByDefinitionProperty(TypeProperty definitionProperty) {
-        assert definitionProperty!= null;
+        Preconditions.checkNotNull(definitionProperty, "definitionProperty cannot be null");
 
         String pattern = definitionProperty.getPattern();
         String format = definitionProperty.getFormat();
