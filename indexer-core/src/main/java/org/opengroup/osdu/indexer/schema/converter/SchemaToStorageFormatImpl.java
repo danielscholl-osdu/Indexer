@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.java.Log;
+import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.*;
@@ -64,7 +66,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         try {
             return objectMapper.readValue(schemaServiceFormat, SchemaRoot.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to load schema", e);
+            throw new AppException(HttpStatus.SC_BAD_REQUEST, "Loading shchem error", "Failed to load schema", e);
         }
     }
 
@@ -72,7 +74,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         try {
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(schemaServiceFormat);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to save JSON file", e);
+            throw new AppException(HttpStatus.SC_UNPROCESSABLE_ENTITY, "Saving JSON error", "Failed to save a JSON file", e);
         }
     }
 
