@@ -15,6 +15,7 @@
 package org.opengroup.osdu.indexer.service.impl;
 
 import com.google.api.client.http.HttpMethods;
+import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
@@ -36,6 +37,7 @@ import java.nio.charset.StandardCharsets;
  * Provides implementation of the client service that retrieves schemas from the Schema Service
  */
 @Component
+@Log
 public class SchemaServiceImpl implements SchemaService {
     @Inject
     private IUrlFetchService urlFetchService;
@@ -63,8 +65,11 @@ public class SchemaServiceImpl implements SchemaService {
         HttpResponse response = this.urlFetchService.sendRequest(request);
 
         if (response.getResponseCode() == HttpStatus.SC_NOT_FOUND) {
+            log.info("Schema is not found on Schema Service:" + kind);
             return storageService.getStorageSchema(kind);
         }
+
+        log.info("Schema is found on the Schema Service:" + kind);
 
         return response.getResponseCode() != HttpStatus.SC_OK ? null :
                 schemaToStorageFormat.convertToString(response.getBody(), kind);

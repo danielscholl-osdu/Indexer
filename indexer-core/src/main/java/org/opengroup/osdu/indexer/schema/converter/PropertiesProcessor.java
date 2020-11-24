@@ -17,6 +17,8 @@ package org.opengroup.osdu.indexer.schema.converter;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.java.Log;
+import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
@@ -97,7 +99,9 @@ class PropertiesProcessor {
         }
 
         Definition definition = definitions.getDefinition(definitionSubRef);
-        Optional.ofNullable(definition).orElseThrow(() -> new RuntimeException("Failed to find definition"));
+        Optional.ofNullable(definition).orElseThrow(() ->
+         new AppException(HttpStatus.SC_NOT_FOUND, "Failed to find definition:" + definitionSubRef,
+                 "Unknown definition:" + definitionSubRef));
 
         return definition.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
     }
