@@ -23,10 +23,8 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.opengroup.osdu.azure.AzureTestIndex;
-import org.opengroup.osdu.azure.SchemaModel;
 import org.opengroup.osdu.common.RecordSteps;
 import org.opengroup.osdu.models.Setup;
-import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.AzureHTTPClient;
 import org.opengroup.osdu.util.ElasticUtils;
 
@@ -59,9 +57,10 @@ public class Steps extends RecordSteps {
     }
 
     private void createSchema(Setup input) {
-        AzureTestIndex testIndex = new AzureTestIndex(super.elasticUtils);
+        AzureTestIndex testIndex = new AzureTestIndex(super.elasticUtils, super.httpClient);
         testIndex.setIndex(generateActualName(input.getIndex(), super.getTimeStamp()));
         testIndex.setSchemaFile(input.getSchemaFile());
+        testIndex.setHttpClient(super.httpClient);
         testIndex.setupSchema();
         testIndex.setKind(testIndex.getSchemaModel().getSchemaInfo().getSchemaIdentity().getId());
         this.kindMappings.put(input.getKind(), testIndex.getKind());

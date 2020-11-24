@@ -3,6 +3,7 @@ package org.opengroup.osdu.azure;
 import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.FileHandler;
+import org.opengroup.osdu.util.HTTPClient;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,11 +14,12 @@ import java.util.logging.Logger;
 public class AzureTestIndex extends TestIndex {
 
     private static final Logger LOGGER = Logger.getLogger(AzureTestIndex.class.getName());
-    private static final SchemaServiceClient schemaServiceClient = new SchemaServiceClient();
+    private final SchemaServiceClient schemaServiceClient;
     private SchemaModel schemaModel;
 
-    public AzureTestIndex(ElasticUtils elasticUtils) {
+    public AzureTestIndex(ElasticUtils elasticUtils, HTTPClient client) {
         super(elasticUtils);
+        this.schemaServiceClient = new SchemaServiceClient(client);
     }
 
     @Override

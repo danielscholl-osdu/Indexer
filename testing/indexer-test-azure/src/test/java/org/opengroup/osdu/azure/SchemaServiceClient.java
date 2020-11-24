@@ -1,6 +1,8 @@
 package org.opengroup.osdu.azure;
 
+import org.apache.http.HttpHeaders;
 import org.opengroup.osdu.util.Config;
+import org.opengroup.osdu.util.HTTPClient;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -19,9 +21,13 @@ public class SchemaServiceClient {
     private final RestTemplate template;
     private final String SCHEMA_BASE_URL;
 
-    public SchemaServiceClient() {
+    public SchemaServiceClient(HTTPClient client) {
         template = new RestTemplateBuilder()
                 .errorHandler(new NotFoundIgnoringResponseErrorHandler())
+                .additionalInterceptors((request, body, execution) -> {
+                    request.getHeaders().add(HttpHeaders.AUTHORIZATION, client.getAccessToken());
+                    return execution.execute(request, body);
+                })
                 .build();
         SCHEMA_BASE_URL = Config.getSchemaBaseURL();
     }
