@@ -56,7 +56,7 @@ public class SchemaServiceClient {
     private String buildSchemaUri(String id) {
         return UriComponentsBuilder.fromHttpUrl(SCHEMA_BASE_URL)
                 .path("/v1/schema/{schema-id}")
-                .encode().buildAndExpand(id).toUriString();
+                .buildAndExpand(id).toUriString();
     }
 
 }
