@@ -26,6 +26,7 @@ public class SchemaServiceClient {
                 .errorHandler(new NotFoundIgnoringResponseErrorHandler())
                 .additionalInterceptors((request, body, execution) -> {
                     request.getHeaders().add(HttpHeaders.AUTHORIZATION, client.getAccessToken());
+                    request.getHeaders().add("data-partition-id", Config.getDataPartitionDefaultTenant());
                     return execution.execute(request, body);
                 })
                 .build();
