@@ -42,7 +42,7 @@ public class SchemaServiceClient {
     }
 
     public void create(SchemaModel schema) {
-        String uri = buildSchemaUri(schema.getSchemaInfo().getSchemaIdentity().getId());
+        String uri = buildSchemaUri();
         LOGGER.log(Level.INFO, "Creating the schema={0}", schema);
         template.put(uri, schema);
         LOGGER.log(Level.INFO, "Finished creating the schema={0}", schema);
@@ -58,6 +58,12 @@ public class SchemaServiceClient {
         return UriComponentsBuilder.fromHttpUrl(SCHEMA_BASE_URL)
                 .path("/v1/schema/{schema-id}")
                 .buildAndExpand(id).toUriString();
+    }
+
+    private String buildSchemaUri() {
+        return UriComponentsBuilder.fromHttpUrl(SCHEMA_BASE_URL)
+                .path("/v1/schema/")
+                .build().toUriString();
     }
 
 }
