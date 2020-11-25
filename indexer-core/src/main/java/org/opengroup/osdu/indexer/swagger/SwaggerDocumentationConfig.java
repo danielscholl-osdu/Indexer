@@ -1,5 +1,6 @@
 package org.opengroup.osdu.indexer.swagger;
 
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ParameterBuilder;
@@ -29,7 +30,7 @@ public class SwaggerDocumentationConfig {
     public Docket api() {
         ParameterBuilder builder = new ParameterBuilder();
         List<Parameter> parameters = new ArrayList<>();
-        builder.name("slb-data-partition-id")
+        builder.name(DpsHeaders.DATA_PARTITION_ID)
                 .description("tenant")
                 .defaultValue("common")
                 .modelRef(new ModelRef("string"))
@@ -48,7 +49,7 @@ public class SwaggerDocumentationConfig {
         return new Docket(DocumentationType.SWAGGER_2)
                 .globalOperationParameters(parameters)
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com.slb.storage.api"))
+                .apis(RequestHandlerSelectors.basePackage("org.opengroup.osdu.indexer.api"))
                 .build()
                 .securityContexts(Collections.singletonList(securityContext()))
                 .securitySchemes(Collections.singletonList(apiKey()));
