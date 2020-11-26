@@ -14,6 +14,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.util.Collections.singletonList;
+
 
 public class SchemaServiceClient {
 
@@ -27,7 +29,7 @@ public class SchemaServiceClient {
                 .errorHandler(new NotFoundIgnoringResponseErrorHandler())
                 .additionalInterceptors((request, body, execution) -> {
                     request.getHeaders().add(HttpHeaders.AUTHORIZATION, client.getAccessToken());
-                    request.getHeaders().add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+                    request.getHeaders().put(HttpHeaders.ACCEPT, singletonList(MediaType.APPLICATION_JSON_VALUE));
                     request.getHeaders().add("data-partition-id", Config.getDataPartitionIdTenant1());
                     return execution.execute(request, body);
                 })
