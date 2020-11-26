@@ -30,6 +30,7 @@ public class SchemaServiceClient {
                 .additionalInterceptors((request, body, execution) -> {
                     request.getHeaders().add(HttpHeaders.AUTHORIZATION, client.getAccessToken());
                     request.getHeaders().put(HttpHeaders.ACCEPT, singletonList(MediaType.APPLICATION_JSON_VALUE));
+                    request.getHeaders().put(HttpHeaders.CONTENT_TYPE, singletonList(MediaType.APPLICATION_JSON_VALUE));
                     request.getHeaders().add("data-partition-id", Config.getDataPartitionIdTenant1());
                     return execution.execute(request, body);
                 })
