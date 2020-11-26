@@ -15,7 +15,6 @@ public class Config {
     private static final String DEFAULT_DATA_PARTITION_ID_TENANT1 = "";
     private static final String DEFAULT_DATA_PARTITION_ID_TENANT2 = "";
     private static final String DEFAULT_SEARCH_INTEGRATION_TESTER = "";
-    private static final String DEFAULT_TENANT = "";
 
     private static final String DEFAULT_TARGET_AUDIENCE = "";
 
@@ -43,10 +42,6 @@ public class Config {
 
     public static String getKeyValue() {
         return getEnvironmentVariableOrDefaultValue("SEARCH_INTEGRATION_TESTER", DEFAULT_SEARCH_INTEGRATION_TESTER);
-    }
-
-    public static String getDataPartitionDefaultTenant() {
-        return getEnvironmentVariableOrDefaultValue("DEFAULT_TENANT", DEFAULT_TENANT);
     }
 
     public static String getDataPartitionIdTenant1() {
