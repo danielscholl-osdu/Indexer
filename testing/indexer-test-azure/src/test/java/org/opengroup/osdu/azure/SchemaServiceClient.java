@@ -1,13 +1,9 @@
 package org.opengroup.osdu.azure;
 
-import org.apache.http.HttpHeaders;
 import org.opengroup.osdu.util.Config;
 import org.opengroup.osdu.util.HTTPClient;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -30,7 +26,6 @@ public class SchemaServiceClient {
                 .additionalInterceptors((request, body, execution) -> {
                     request.getHeaders().add(HttpHeaders.AUTHORIZATION, client.getAccessToken());
                     request.getHeaders().put(HttpHeaders.ACCEPT, singletonList(MediaType.APPLICATION_JSON_VALUE));
-                    request.getHeaders().put(HttpHeaders.CONTENT_TYPE, singletonList(MediaType.APPLICATION_JSON_VALUE));
                     request.getHeaders().add("data-partition-id", Config.getDataPartitionIdTenant1());
                     return execution.execute(request, body);
                 })
@@ -49,7 +44,10 @@ public class SchemaServiceClient {
     public void create(SchemaModel schema) {
         String uri = buildSchemaUri();
         LOGGER.log(Level.INFO, "Creating the schema={0}", schema);
-        template.put(uri, schema);
+        HttpHeaders headers = new HttpHeaders();
+        headers.put(HttpHeaders.CONTENT_TYPE, singletonList(MediaType.APPLICATION_JSON_VALUE));
+        HttpEntity<SchemaModel> httpEntity = new HttpEntity<>(schema, headers);
+        template.exchange(uri, HttpMethod.PUT, httpEntity, Object.class);
         LOGGER.log(Level.INFO, "Finished creating the schema={0}", schema);
     }
 
