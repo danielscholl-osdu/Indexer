@@ -6,6 +6,7 @@ import org.opengroup.osdu.util.HTTPClient;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -26,6 +27,7 @@ public class SchemaServiceClient {
                 .errorHandler(new NotFoundIgnoringResponseErrorHandler())
                 .additionalInterceptors((request, body, execution) -> {
                     request.getHeaders().add(HttpHeaders.AUTHORIZATION, client.getAccessToken());
+                    request.getHeaders().add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
                     request.getHeaders().add("data-partition-id", Config.getDataPartitionIdTenant1());
                     return execution.execute(request, body);
                 })
