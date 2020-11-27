@@ -1,7 +1,7 @@
 {
   "schemaInfo": {
     "schemaIdentity": {
-      "authority": "tenant1",
+      "authority": "opendes",
       "source": "INDEXER-INTEGRATION-TEST",
       "entityType": "SAMPLE-SCHEMA-1",
       "schemaVersionMajor": "1",
