@@ -99,7 +99,7 @@ spec:
         - name: schema_service_url
           value: http://storage/api/schema-service/v1
         - name: SCHEMA_HOST
-          value: http://schema/api/schema-service/v1/schema
+          value: http://schema-service/api/schema-service/v1/schema
         - name: storage_service_url
           value: http://storage/api/storage/v2
         - name: STORAGE_SCHEMA_HOST
