@@ -23,6 +23,8 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.opengroup.osdu.azure.AzureTestIndex;
+import org.opengroup.osdu.azure.SchemaIdentity;
+import org.opengroup.osdu.azure.SchemaModel;
 import org.opengroup.osdu.common.RecordSteps;
 import org.opengroup.osdu.models.Setup;
 import org.opengroup.osdu.util.AzureHTTPClient;
@@ -36,7 +38,7 @@ import java.util.Map;
 public class Steps extends RecordSteps {
 
     // the mappings in format (kind from feature file : kind from json file)
-    private Map<String, String> kindMappings = new HashMap<>();
+    private Map<Setup, AzureTestIndex> indexMappings = new HashMap<>();
 
     public Steps() {
         super(new AzureHTTPClient(), new ElasticUtils());
@@ -56,6 +58,16 @@ public class Steps extends RecordSteps {
 
     }
 
+    private String calculateIndex(String commonIndex) {
+        SchemaModel schemaModel = indexMappings.entrySet().stream()
+                .filter(p -> p.getKey().getIndex().equalsIgnoreCase(commonIndex))
+                .findFirst().orElseThrow(RuntimeException::new)
+                .getValue().getSchemaModel();
+        SchemaIdentity schemaIdentity = schemaModel.getSchemaInfo().getSchemaIdentity();
+        return schemaIdentity.getAuthority() + "-testindex" + super.getTimeStamp() + "-" + schemaIdentity.getEntityType() + "-"
+                + schemaIdentity.getSchemaVersionMajor() + "." + schemaIdentity.getSchemaVersionMinor() + "." + schemaIdentity.getSchemaVersionPatch();
+    }
+
     private void createSchema(Setup input) {
         AzureTestIndex testIndex = new AzureTestIndex(super.elasticUtils, super.httpClient);
         testIndex.setIndex(generateActualName(input.getIndex(), super.getTimeStamp()));
@@ -63,18 +75,30 @@ public class Steps extends RecordSteps {
         testIndex.setHttpClient(super.httpClient);
         testIndex.setupSchema();
         testIndex.setKind(testIndex.getSchemaModel().getSchemaInfo().getSchemaIdentity().getId());
-        this.kindMappings.put(input.getKind(), testIndex.getKind());
+
+        this.indexMappings.put(input, testIndex);
         super.getInputIndexMap().put(testIndex.getKind(), testIndex);
+    }
+
+
+    protected String generateRecordId(Map<String, Object> testRecord) {
+        String tenant = testRecord.get("id").toString().replaceFirst("tenant1", "opendes");
+        return generateActualName(tenant, super.getTimeStamp());
     }
 
     @When("^I ingest records with the \"(.*?)\" with \"(.*?)\" for a given \"(.*?)\"$")
     public void i_ingest_records_with_the_for_a_given(String record, String dataGroup, String kind) {
-        super.i_ingest_records_with_the_for_a_given(record, dataGroup, kindMappings.get(kind));
+        Map.Entry<Setup, AzureTestIndex> setup = indexMappings.entrySet().stream()
+                .filter(p -> p.getKey().getKind().equals(kind))
+                .findFirst().orElseThrow(RuntimeException::new);
+        String id = setup.getValue().getSchemaModel().getSchemaInfo().getSchemaIdentity().getId();
+        super.i_ingest_records_with_the_for_a_given(record, dataGroup, id);
     }
 
     @Then("^I should get the (\\d+) documents for the \"([^\"]*)\" in the Elastic Search$")
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search(int expectedCount, String index) throws Throwable {
-        super.i_should_get_the_documents_for_the_in_the_Elastic_Search(expectedCount, index);
+        String actualIndex = calculateIndex(index);
+        super.i_should_get_the_documents_for_the_in_the_Elastic_Search(expectedCount, actualIndex);
     }
 
     @Then("^I should get the elastic \"(.*?)\" for the \"([^\"]*)\" and \"([^\"]*)\" in the Elastic Search$")
