@@ -23,6 +23,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import static org.junit.Assert.*;
 import static org.opengroup.osdu.util.Config.getEntitlementsDomain;
@@ -92,7 +93,7 @@ public class RecordSteps extends TestsBase {
             records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
 
             for (Map<String, Object> testRecord : records) {
-                testRecord.put("id", generateActualName(testRecord.get("id").toString(), timeStamp));
+                testRecord.put("id", generateRecordId(testRecord));
                 testRecord.put("kind", actualKind);
                 testRecord.put("legal", generateLegalTag());
                 String[] x_acl = {generateActualName(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
@@ -100,11 +101,16 @@ public class RecordSteps extends TestsBase {
                 testRecord.put("acl", acl);
             }
             String payLoad = new Gson().toJson(records);
+            log.log(Level.INFO, "Start ingesting records={0}", payLoad);
             ClientResponse clientResponse = httpClient.send(HttpMethod.PUT, getStorageBaseURL() + "records", payLoad, headers, httpClient.getAccessToken());
             assertEquals(201, clientResponse.getStatus());
         } catch (Exception ex) {
             throw new AssertionError(ex.getMessage());
         }
+    }
+
+    protected String generateRecordId(Map<String, Object> testRecord) {
+        return generateActualName(testRecord.get("id").toString(), timeStamp);
     }
 
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search(int expectedCount, String index) throws Throwable {

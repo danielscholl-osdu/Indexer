@@ -29,6 +29,7 @@ import org.opengroup.osdu.util.ElasticUtilsAws;
 import org.opengroup.osdu.util.LegalTagUtilsAws;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.opengroup.osdu.util.Config.getLegalTag;
@@ -69,6 +70,11 @@ public class Steps extends RecordSteps {
         otherRelevantCountries.add(getOtherRelevantDataCountries());
         legal.setOtherRelevantDataCountries(otherRelevantCountries);
         return legal;
+    }
+
+    protected String generateRecordId(Map<String, Object> testRecord) {
+        String tenant = testRecord.get("id").toString().replaceFirst("tenant1", "opendes");
+        return generateActualName(tenant, super.getTimeStamp());
     }
 
     @Given("^the schema is created with the following kind$")
