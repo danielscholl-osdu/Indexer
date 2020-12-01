@@ -6,6 +6,7 @@
 		<groupId>org.opengroup.osdu.indexer</groupId>
 		<artifactId>indexer-service</artifactId>
 		<version>1.0.4-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>indexer-core</artifactId>
@@ -197,7 +198,6 @@
 			<scope>test</scope>
 		</dependency>
 
-
 		<!-- swagger dependencies -->
 		<dependency>
 			<groupId>io.springfox</groupId>
@@ -212,23 +212,6 @@
 
 	</dependencies>
 
-	<repositories>
-		<repository>
-			<id>${gitlab-server}</id>
-			<url>https://community.opengroup.org/api/v4/groups/17/-/packages/maven</url>
-		</repository>
-	</repositories>
-
-	<distributionManagement>
-		<repository>
-			<id>${gitlab-server}</id>
-			<url>https://community.opengroup.org/api/v4/projects/25/packages/maven</url>
-		</repository>
-		<snapshotRepository>
-			<id>${gitlab-server}</id>
-			<url>https://community.opengroup.org/api/v4/projects/25/packages/maven</url>
-		</snapshotRepository>
-	</distributionManagement>
     <build>
         <defaultGoal>test</defaultGoal>
         <plugins>

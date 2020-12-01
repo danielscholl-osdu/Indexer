@@ -41,6 +41,11 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 80
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "500m"
         readinessProbe:
           httpGet:
             path: /api/indexer/v2/swagger-ui.html
@@ -88,6 +93,11 @@ spec:
             secretKeyRef:
               name: central-logging
               key: appinsights
+        - name: REDIS_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: redis-configmap
+              key: indexer-service
         - name: cosmosdb_database
           value: osdu-db
         - name: servicebus_topic_name
