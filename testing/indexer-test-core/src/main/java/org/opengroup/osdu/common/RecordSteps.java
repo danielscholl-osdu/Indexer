@@ -15,6 +15,7 @@ import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.FileHandler;
 import org.opengroup.osdu.util.HTTPClient;
+import org.springframework.util.CollectionUtils;
 
 import javax.ws.rs.HttpMethod;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import static org.junit.Assert.*;
 import static org.opengroup.osdu.util.Config.getEntitlementsDomain;
@@ -51,12 +53,17 @@ public class RecordSteps extends TestsBase {
             testIndex.cleanupIndex();
             testIndex.deleteSchema(kind);
         }
-        if (records != null && records.size() > 0) {
-            for (Map<String, Object> testRecord : records) {
-                String id = testRecord.get("id").toString();
-                httpClient.send(HttpMethod.DELETE, getStorageBaseURL() + "records/" + id, null, headers, httpClient.getAccessToken());
-                log.info("Deleted the records");
-            }
+
+        if (!CollectionUtils.isEmpty(records)) {
+            cleanupRecords();
+        }
+    }
+
+    protected void cleanupRecords() {
+        for (Map<String, Object> testRecord : records) {
+            String id = testRecord.get("id").toString();
+            httpClient.send(HttpMethod.DELETE, getStorageBaseURL() + "records/" + id, null, headers, httpClient.getAccessToken());
+            log.info("Deleted the records");
         }
     }
 
@@ -66,43 +73,39 @@ public class RecordSteps extends TestsBase {
         for (Setup input : inputList) {
             TestIndex testIndex = getTextIndex();
             testIndex.setHttpClient(httpClient);
-            testIndex.setIndex(generateActualName(input.getIndex(), timeStamp));
-            testIndex.setKind(generateActualName(input.getKind(), timeStamp));
+            testIndex.setIndex(generateActualNameWithTS(input.getIndex(), timeStamp));
+            testIndex.setKind(generateActualNameWithTS(input.getKind(), timeStamp));
             testIndex.setSchemaFile(input.getSchemaFile());
             inputIndexMap.put(testIndex.getKind(), testIndex);
         }
 
         /******************One time setup for whole feature**************/
         if (!shutDownHookAdded) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    tearDown();
-                }
-            });
-            shutDownHookAdded = true;
             for (String kind : inputIndexMap.keySet()) {
                 TestIndex testIndex = inputIndexMap.get(kind);
                 testIndex.setupSchema();
             }
         }
+        addShutDownHook();
     }
 
     public void i_ingest_records_with_the_for_a_given(String record, String dataGroup, String kind) {
 
-        String actualKind = generateActualName(kind, timeStamp);
+        String actualKind = generateActualNameWithTS(kind, timeStamp);
         try {
             String fileContent = FileHandler.readFile(String.format("%s.%s", record, "json"));
             records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
 
             for (Map<String, Object> testRecord : records) {
-                testRecord.put("id", generateActualName(testRecord.get("id").toString(), timeStamp));
+                testRecord.put("id", generateRecordId(testRecord));
                 testRecord.put("kind", actualKind);
                 testRecord.put("legal", generateLegalTag());
-                String[] x_acl = {generateActualName(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
+                String[] x_acl = {generateActualNameWithTS(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
                 Acl acl = Acl.builder().viewers(x_acl).owners(x_acl).build();
                 testRecord.put("acl", acl);
             }
             String payLoad = new Gson().toJson(records);
+            log.log(Level.INFO, "Start ingesting records={0}", payLoad);
             ClientResponse clientResponse = httpClient.send(HttpMethod.PUT, getStorageBaseURL() + "records", payLoad, headers, httpClient.getAccessToken());
             assertEquals(201, clientResponse.getStatus());
         } catch (Exception ex) {
@@ -110,14 +113,18 @@ public class RecordSteps extends TestsBase {
         }
     }
 
+    protected String generateRecordId(Map<String, Object> testRecord) {
+        return generateActualNameWithTS(testRecord.get("id").toString(), timeStamp);
+    }
+
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search(int expectedCount, String index) throws Throwable {
-        index = generateActualName(index, timeStamp);
+        index = generateActualNameWithTS(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
         assertEquals(expectedCount, numOfIndexedDocuments);
     }
 
     public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String type, String index) throws Throwable {
-        index = generateActualName(index, timeStamp);
+        index = generateActualNameWithTS(index, timeStamp);
         ImmutableOpenMap<String, MappingMetaData> elasticMapping = elasticUtils.getMapping(index);
         assertNotNull(elasticMapping);
 
@@ -128,7 +135,7 @@ public class RecordSteps extends TestsBase {
     }
 
     public void iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(int expectedCount, String index, String skippedAttributes) throws Throwable {
-        index = generateActualName(index, timeStamp);
+        index = generateActualNameWithTS(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
         long documentCountByQuery = elasticUtils.fetchRecordsByExistQuery(index, skippedAttributes);
         assertEquals(expectedCount, documentCountByQuery);
@@ -182,4 +189,18 @@ public class RecordSteps extends TestsBase {
         return null;
     }
 
+    public Map<String, TestIndex> getInputIndexMap() {
+        return inputIndexMap;
+    }
+
+    public String getTimeStamp() {
+        return timeStamp;
+    }
+
+    protected void addShutDownHook() {
+        if (!shutDownHookAdded) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::tearDown));
+            shutDownHookAdded = true;
+        }
+    }
 }

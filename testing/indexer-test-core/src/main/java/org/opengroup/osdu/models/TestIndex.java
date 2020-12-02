@@ -84,7 +84,7 @@ public class TestIndex {
         return String.format("%s.mapping", this.mappingFile);
     }
 
-    private String getSchemaFile() {
+    protected String getSchemaFile() {
         return String.format("%s.schema", this.schemaFile);
     }
 
