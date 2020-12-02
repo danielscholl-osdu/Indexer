@@ -156,6 +156,8 @@ spec:
           value: http://storage/api/storage/v2
         - name: SCHEMA_HOST
           value: http://schema/api/schema-service/v1/schema
+        - name: STORAGE_SCHEMA_HOST
+          value: http://storage/api/storage/v2/schemas
         - name: STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST
           value: http://storage/api/storage/v2/query/records:batch
         - name: STORAGE_QUERY_RECORD_HOST

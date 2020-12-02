@@ -56,6 +56,14 @@ public class SchemaServiceImpl implements SchemaService {
 
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
+        String schemaFromStorageService = storageService.getStorageSchema(kind);
+
+        if (schemaFromStorageService != null) {
+            return schemaFromStorageService;
+        }
+
+        log.warning("Schema is not found on the Storage Service:" + kind);
+
         String url = String.format("%s/%s", SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)
@@ -65,11 +73,9 @@ public class SchemaServiceImpl implements SchemaService {
         HttpResponse response = this.urlFetchService.sendRequest(request);
 
         if (response.getResponseCode() == HttpStatus.SC_NOT_FOUND) {
-            log.info("Schema is not found on Schema Service:" + kind);
-            return storageService.getStorageSchema(kind);
+            log.warning("Schema is not found on the Schema Service:" + kind);
+            return null;
         }
-
-        log.info("Schema is found on the Schema Service:" + kind);
 
         return response.getResponseCode() != HttpStatus.SC_OK ? null :
                 schemaToStorageFormat.convertToString(response.getBody(), kind);
