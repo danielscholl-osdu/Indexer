@@ -43,7 +43,7 @@ public class SchemaToStorageFormatImplTest {
 
     @Test
     public void firstSchemaPassed() {
-        testSingleFile("/converter/first/schema.json", "osdu:osdu:Wellbore:1.0.0");
+        testSingleFile("/converter/basic/schema.json", "osdu:osdu:Wellbore:1.0.0");
     }
 
     @Test
