@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -73,7 +74,7 @@ public class SchemaToStorageFormatImplTest {
         Files.walk(path)
                 .filter(Files::isRegularFile)
                 .filter(f -> f.toString().endsWith(".json"))
-                .forEach( f -> testSingleFile(f.toString().substring(f.toString().indexOf(folder)), "osdu:osdu:Wellbore:1.0.0"));
+                .forEach( f -> testSingleFile(f.toString().replaceAll("\\\\", "/").substring(f.toString().replaceAll("\\\\", "/").indexOf(folder)), "osdu:osdu:Wellbore:1.0.0"));
     }
 
     private void testSingleFile(String filename, String kind) {

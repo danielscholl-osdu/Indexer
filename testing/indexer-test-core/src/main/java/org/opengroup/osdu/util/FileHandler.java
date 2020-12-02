@@ -33,6 +33,6 @@ public class FileHandler {
     }
 
     private static InputStream getFileStream(String fileName) {
-        return FileHandler.class.getClass().getResourceAsStream(String.format("/testData/%s", fileName));
+        return FileHandler.class.getResourceAsStream(String.format("/testData/%s", fileName));
     }
 }

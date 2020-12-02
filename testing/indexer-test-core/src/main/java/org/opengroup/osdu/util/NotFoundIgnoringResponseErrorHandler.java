@@ -1,4 +1,4 @@
-package org.opengroup.osdu.azure;
+package org.opengroup.osdu.util;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;

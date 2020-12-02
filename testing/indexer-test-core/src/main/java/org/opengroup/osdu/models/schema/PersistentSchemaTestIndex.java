@@ -1,9 +1,11 @@
-package org.opengroup.osdu.azure;
+package org.opengroup.osdu.models.schema;
 
+import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.FileHandler;
 import org.opengroup.osdu.util.HTTPClient;
+import org.opengroup.osdu.util.SchemaServiceClient;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -11,22 +13,26 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class AzureTestIndex extends TestIndex {
+public class PersistentSchemaTestIndex extends TestIndex {
 
-    private static final Logger LOGGER = Logger.getLogger(AzureTestIndex.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PersistentSchemaTestIndex.class.getName());
     private final SchemaServiceClient schemaServiceClient;
+    private final SchemaServiceRecordSteps recordSteps;
     private SchemaModel schemaModel;
 
-    public AzureTestIndex(ElasticUtils elasticUtils, HTTPClient client) {
+    public PersistentSchemaTestIndex(ElasticUtils elasticUtils, HTTPClient client, SchemaServiceRecordSteps recordSteps) {
         super(elasticUtils);
         this.schemaServiceClient = new SchemaServiceClient(client);
+        this.recordSteps = recordSteps;
     }
 
     @Override
     public void setupSchema() {
         this.schemaModel = readSchemaFromJson();
         SchemaIdentity schemaIdentity = schemaModel.getSchemaInfo().getSchemaIdentity();
-        LOGGER.log(Level.INFO, "Setting up the schema={0}", schemaIdentity);
+        LOGGER.log(Level.INFO, "Read the schema={0}", schemaIdentity);
+        schemaIdentity.setAuthority(recordSteps.generateActualName(schemaIdentity.getAuthority()));
+        LOGGER.log(Level.INFO, "Updated the schema={0}", schemaIdentity);
         schemaServiceClient.createIfNotExist(schemaModel);
         LOGGER.log(Level.INFO, "Finished setting up the schema={0}", schemaIdentity);
     }

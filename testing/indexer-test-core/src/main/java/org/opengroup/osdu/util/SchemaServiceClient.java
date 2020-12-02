@@ -1,7 +1,7 @@
-package org.opengroup.osdu.azure;
+package org.opengroup.osdu.util;
 
-import org.opengroup.osdu.util.Config;
-import org.opengroup.osdu.util.HTTPClient;
+import org.opengroup.osdu.models.schema.SchemaIdentity;
+import org.opengroup.osdu.models.schema.SchemaModel;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
@@ -18,7 +18,7 @@ public class SchemaServiceClient {
     private static final Logger LOGGER = Logger.getLogger(SchemaServiceClient.class.getName());
 
     private final RestTemplate template;
-    private final String SCHEMA_BASE_URL;
+    private final String schemaBaseUrl;
 
     public SchemaServiceClient(HTTPClient client) {
         template = new RestTemplateBuilder()
@@ -30,7 +30,7 @@ public class SchemaServiceClient {
                     return execution.execute(request, body);
                 })
                 .build();
-        SCHEMA_BASE_URL = Config.getSchemaBaseURL();
+        schemaBaseUrl = Config.getSchemaBaseURL();
     }
 
     public boolean exists(SchemaIdentity identity) {
@@ -58,13 +58,13 @@ public class SchemaServiceClient {
     }
 
     private String buildSchemaUri(String id) {
-        return UriComponentsBuilder.fromHttpUrl(SCHEMA_BASE_URL)
+        return UriComponentsBuilder.fromHttpUrl(schemaBaseUrl)
                 .path("/v1/schema/{schema-id}")
                 .buildAndExpand(id).toUriString();
     }
 
     private String buildSchemaUri() {
-        return UriComponentsBuilder.fromHttpUrl(SCHEMA_BASE_URL)
+        return UriComponentsBuilder.fromHttpUrl(schemaBaseUrl)
                 .path("/v1/schema/")
                 .build().toUriString();
     }

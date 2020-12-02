@@ -1,4 +1,4 @@
-package org.opengroup.osdu.azure;
+package org.opengroup.osdu.models.schema;
 
 import java.util.StringJoiner;
 

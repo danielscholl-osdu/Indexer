@@ -1,4 +1,4 @@
-package org.opengroup.osdu.azure;
+package org.opengroup.osdu.models.schema;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

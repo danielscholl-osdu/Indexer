@@ -1,12 +1,12 @@
 {
   "schemaInfo": {
     "schemaIdentity": {
-      "authority": "opendes",
-      "source": "INDEXER-INTEGRATION-TEST",
-      "entityType": "SAMPLE-SCHEMA-3",
+      "authority": "tenant1",
+      "source": "indexer-int-test",
+      "entityType": "sample-schema-3",
       "schemaVersionMajor": "1",
       "schemaVersionMinor": "0",
-      "schemaVersionPatch": "1"
+      "schemaVersionPatch": "4"
     },
     "status": "DEVELOPMENT"
   },
