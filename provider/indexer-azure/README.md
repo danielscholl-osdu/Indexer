@@ -74,6 +74,7 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | `DEFAULT_DATA_PARTITION_ID_TENANT1` | ex `opendes` | Primary data partition for queries | no | Data in search index |
 | `DEFAULT_DATA_PARTITION_ID_TENANT2` | ex `common` | Secondary data partition for queries | no | Data in search index |
 | `STORAGE_HOST` | ex `https://storage.azurewebsites.net/` | Storage service endpoint | no | output of infrastructure deployment |
+| `SCHEMA_HOST` | `${schema_service_url}/api/schema-service/v1/schema` | Endpoint of schema API | no | - |
 | `ENVIRONMENT` | `CLOUD` | Deployment environment | no | - |
 | `ENTITLEMENTS_DOMAIN` | `contoso.com` | OSDU R2 service domain | no | - |
 | `LEGAL_TAG` | `opendes-public-usa-dataset-7643990` | Legal tag used for test records | no | Needs to be in DB. The referenced tag should already exist. |
