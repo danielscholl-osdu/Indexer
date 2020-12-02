@@ -130,6 +130,7 @@
         <module>provider/indexer-azure</module>
         <module>provider/indexer-gcp</module>
         <module>provider/indexer-ibm</module>
+        <module>provider/indexer-reference</module>
     </modules>
 
     <repositories>
