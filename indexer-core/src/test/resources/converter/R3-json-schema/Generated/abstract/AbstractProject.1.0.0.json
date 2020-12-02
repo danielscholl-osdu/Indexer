@@ -1,0 +1,209 @@
+{
+  "x-osdu-license": "Copyright 2020, The Open Group \\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 . Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.",
+  "$id": "https://schema.osdu.opengroup.org/json/abstract/AbstractProject.1.0.0.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AbstractProject",
+  "description": "A Project is a business activity that consumes financial and human resources and produces (digital) work products.",
+  "type": "object",
+  "properties": {
+    "ProjectID": {
+      "description": "A system-specified unique identifier of a Project.",
+      "type": "string"
+    },
+    "ProjectName": {
+      "description": "The common or preferred name of a Project.",
+      "x-osdu-natural-key": 0,
+      "type": "string"
+    },
+    "ProjectNames": {
+      "description": "The history of Project names, codes, and other business identifiers.",
+      "type": "array",
+      "items": {
+        "$ref": "AbstractAliasNames.1.0.0.json"
+      }
+    },
+    "Purpose": {
+      "description": "Description of the objectives of a Project.",
+      "type": "string"
+    },
+    "ProjectBeginDate": {
+      "description": "The date and time when the Project was initiated.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "ProjectEndDate": {
+      "description": "The date and time when the Project was completed.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "FundsAuthorization": {
+      "description": "The history of expenditure approvals.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "AuthorizationID": {
+            "description": "Internal Company control number which identifies the allocation of funds to the Project.",
+            "type": "string"
+          },
+          "EffectiveDateTime": {
+            "description": "The date and time when the funds were approved.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "FundsAmount": {
+            "description": "The level of expenditure approved.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "CurrencyID": {
+            "description": "Type of currency for the authorized expenditure.",
+            "type": "string",
+            "pattern": "^srn:<namespace>:reference-data\\/Currency:[^:]+:[0-9]*$"
+          }
+        }
+      }
+    },
+    "ContractIDs": {
+      "description": "References to applicable agreements in external contract database system of record.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^srn:<namespace>:master-data\\/Agreement:[^:]+:[0-9]*$"
+      }
+    },
+    "Operator": {
+      "description": "The organisation which controlled the conduct of the project.",
+      "type": "string",
+      "pattern": "^srn:<namespace>:master-data\\/Organisation:[^:]+:[0-9]*$"
+    },
+    "Contractors": {
+      "description": "References to organisations which supplied services to the Project.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ContractorOrganisationID": {
+            "description": "Reference to a company that provided services.",
+            "type": "string",
+            "pattern": "^srn:<namespace>:master-data\\/Organisation:[^:]+:[0-9]*$"
+          },
+          "ContractorCrew": {
+            "description": "Name of the team, unit, crew, party, or other subdivision of the Contractor that provided services.",
+            "type": "string"
+          },
+          "ContractorTypeID": {
+            "description": "The identifier of a reference value for the role of a contractor providing services, such as Recording, Line Clearing, Positioning, Data Processing.",
+            "type": "string",
+            "pattern": "^srn:<namespace>:reference-data\\/ContractorType:[^:]+:[0-9]*$"
+          }
+        }
+      }
+    },
+    "Personnel": {
+      "description": "List of key individuals supporting the Project.  This could be Abstracted for re-use, and could reference a separate Persons master data object.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "PersonName": {
+            "description": "Name of an individual supporting the Project.",
+            "type": "string"
+          },
+          "CompanyOrganisationID": {
+            "description": "Reference to the company which employs Personnel.",
+            "type": "string",
+            "pattern": "^srn:<namespace>:master-data\\/Organisation:[^:]+:[0-9]*$"
+          },
+          "ProjectRoleID": {
+            "description": "The identifier of a reference value for the role of an individual supporting a Project, such as Project Manager, Party Chief, Client Representative, Senior Observer.",
+            "type": "string",
+            "pattern": "^srn:<namespace>:reference-data\\/ProjectRole:[^:]+:[0-9]*$"
+          }
+        }
+      }
+    },
+    "SpatialLocation": {
+      "description": "A spatial geometry object that indicates the area of operation or interest for a Project.",
+      "$ref": "AbstractSpatialLocation.1.0.0.json"
+    },
+    "GeoContexts": {
+      "description": "List of geographic entities which provide context to the project.  This may include multiple types or multiple values of the same type.",
+      "type": "array",
+      "items": {
+        "$ref": "AbstractGeoContext.1.0.0.json"
+      }
+    },
+    "ProjectSpecification": {
+      "description": "General parameters defining the configuration of the Project.  In the case of a seismic acquisition project it is like receiver interval, source depth, source type.  In the case of a processing project, it is like replacement velocity, reference datum above mean sea level.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "EffectiveDateTime": {
+            "description": "The date and time at which a ProjectSpecification becomes effective.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "TerminationDateTime": {
+            "description": "The date and time at which a ProjectSpecification is no longer in effect.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "ProjectSpecificationQuantity": {
+            "description": "The value for the specified parameter type.",
+            "type": "number",
+            "x-osdu-frame-of-reference": "UOM_via_property:UnitOfMeasureID"
+          },
+          "ProjectSpecificationDateTime": {
+            "description": "The actual date and time value of the parameter.  ISO format permits specification of time or date only.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "ProjectSpecificationIndicator": {
+            "description": "The actual indicator value of the parameter.",
+            "type": "boolean"
+          },
+          "ProjectSpecificationText": {
+            "description": "The actual text value of the parameter.",
+            "type": "string"
+          },
+          "UnitOfMeasureID": {
+            "description": "The unit for the quantity parameter if overriding the default for this ParameterType, like metre (m in SI units system) for quantity Length.",
+            "type": "string",
+            "pattern": "^srn:<namespace>:reference-data\\/UnitOfMeasure:[^:]+:[0-9]*$"
+          },
+          "ParameterTypeID": {
+            "description": "Parameter type of property or characteristic.",
+            "type": "string",
+            "pattern": "^srn:<namespace>:reference-data\\/ParameterType:[^:]+:[0-9]*$"
+          }
+        }
+      }
+    },
+    "ProjectState": {
+      "description": "The history of life cycle states that the Project has been through..",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "EffectiveDateTime": {
+            "description": "The date and time at which the state becomes effective.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "TerminationDateTime": {
+            "description": "The date and time at which the state is no longer in effect.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "ProjectStateTypeID": {
+            "description": "The Project life cycle state from planning to completion.",
+            "type": "string",
+            "pattern": "^srn:<namespace>:reference-data\\/ProjectStateType:[^:]+:[0-9]*$"
+          }
+        }
+      }
+    }
+  }
+}

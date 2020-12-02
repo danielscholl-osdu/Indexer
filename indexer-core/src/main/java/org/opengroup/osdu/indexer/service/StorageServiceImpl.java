@@ -33,7 +33,7 @@ import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.apache.http.HttpStatus;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.core.common.search.Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -66,8 +66,18 @@ public class StorageServiceImpl implements StorageService {
     private IRequestInfo requestInfo;
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
-    @Inject
-    private IndexerConfigurationProperties configurationProperties;
+
+    @Value("${STORAGE_SCHEMA_HOST}")
+    private String STORAGE_SCHEMA_HOST;
+
+    @Value("${STORAGE_QUERY_RECORD_HOST}")
+    private String STORAGE_QUERY_RECORD_HOST;
+
+    @Value("${STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST}")
+    private String STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST;
+
+    @Value("${STORAGE_RECORDS_BATCH_SIZE}")
+    private String STORAGE_RECORDS_BATCH_SIZE;
 
     @Override
     public Records getStorageRecords(List<String> ids) throws AppException, URISyntaxException {
@@ -76,7 +86,7 @@ public class StorageServiceImpl implements StorageService {
         List<ConversionStatus> conversionStatuses = new ArrayList<>();
         List<String> missingRetryRecordIds = new ArrayList<>();
 
-        List<List<String>> batch = Lists.partition(ids, configurationProperties.getStorageRecordsBatchSize());
+        List<List<String>> batch = Lists.partition(ids, Integer.parseInt(STORAGE_RECORDS_BATCH_SIZE));
         for (List<String> recordsBatch : batch) {
             Records storageOut = this.getRecords(recordsBatch);
             valid.addAll(storageOut.getRecords());
@@ -97,7 +107,7 @@ public class StorageServiceImpl implements StorageService {
         FetchServiceHttpRequest request = FetchServiceHttpRequest
                 .builder()
                 .httpMethod(HttpMethods.POST)
-                .url(configurationProperties.getStorageQueryRecordForConversionHost())
+                .url(STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST)
                 .headers(headers)
                 .body(body).build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
@@ -180,7 +190,7 @@ public class StorageServiceImpl implements StorageService {
     public RecordQueryResponse getRecordsByKind(RecordReindexRequest reindexRequest) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(RecordMetaAttribute.KIND.getValue(), reindexRequest.getKind());
-        queryParams.put("limit", configurationProperties.getStorageRecordsBatchSize().toString());
+        queryParams.put("limit", STORAGE_RECORDS_BATCH_SIZE);
         if (!Strings.isNullOrEmpty(reindexRequest.getCursor())) {
             queryParams.put("cursor", reindexRequest.getCursor());
         }
@@ -191,7 +201,7 @@ public class StorageServiceImpl implements StorageService {
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)
                 .headers(this.requestInfo.getHeadersMap())
-                .url(configurationProperties.getStorageQueryRecordHost())
+                .url(Config.getStorageQueryRecordHostUrl())
                 .queryParams(queryParams)
                 .build();
 
@@ -201,7 +211,7 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public String getStorageSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        String url = String.format("%s/%s", configurationProperties.getStorageSchemaHost(), URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
+        String url = String.format("%s/%s", STORAGE_SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)
                 .headers(this.requestInfo.getHeadersMap())

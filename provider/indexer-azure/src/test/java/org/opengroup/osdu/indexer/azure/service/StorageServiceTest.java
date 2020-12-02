@@ -170,51 +170,6 @@ public class StorageServiceTest {
     }
 
     @Test
-    public void should_returnValidResponse_givenValidKind_getSchemaByKind() throws Exception {
-
-        String validSchemaFromStorage = "{" +
-                "  \"kind\": \"tenant:test:test:1.0.0\"," +
-                "  \"schema\": [" +
-                "    {" +
-                "      \"path\": \"msg\"," +
-                "      \"kind\": \"string\"" +
-                "    }," +
-                "    {" +
-                "      \"path\": \"references.entity\"," +
-                "      \"kind\": \"string\"" +
-                "    }" +
-                "  ]," +
-                "  \"ext\": null" +
-                "}";
-        String kind = "tenant:test:test:1.0.0";
-
-        HttpResponse httpResponse = new HttpResponse();
-        httpResponse.setResponseCode(HttpStatus.OK.value());
-        httpResponse.setBody(validSchemaFromStorage);
-
-        when(this.urlFetchService.sendRequest(ArgumentMatchers.any())).thenReturn(httpResponse);
-
-        String recordSchemaResponse = this.sut.getStorageSchema(kind);
-
-        assertNotNull(recordSchemaResponse);
-    }
-
-    @Test
-    public void should_returnNullResponse_givenAbsentKind_getSchemaByKind() throws Exception {
-
-        String kind = "tenant:test:test:1.0.0";
-
-        HttpResponse httpResponse = new HttpResponse();
-        httpResponse.setResponseCode(HttpStatus.NOT_FOUND.value());
-
-        when(this.urlFetchService.sendRequest(ArgumentMatchers.any())).thenReturn(httpResponse);
-
-        String recordSchemaResponse = this.sut.getStorageSchema(kind);
-
-        assertNull(recordSchemaResponse);
-    }
-
-    @Test
     public void should_returnOneValidRecords_givenValidData_getValidStorageRecordsWithInvalidConversionTest() throws URISyntaxException {
 
         String validDataFromStorage = "{\"records\":[{\"id\":\"testid\", \"version\":1, \"kind\":\"tenant:test:test:1.0.0\"}],\"notFound\":[\"invalid1\"],\"conversionStatuses\": [{\"id\":\"testid\",\"status\":\"ERROR\",\"errors\":[\"conversion error occurred\"] } ]}";

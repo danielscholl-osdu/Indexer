@@ -31,7 +31,6 @@ import org.opengroup.osdu.util.LegalTagUtilsAws;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.opengroup.osdu.util.Config.getLegalTag;
 import static org.opengroup.osdu.util.Config.getOtherRelevantDataCountries;
 
 @Log

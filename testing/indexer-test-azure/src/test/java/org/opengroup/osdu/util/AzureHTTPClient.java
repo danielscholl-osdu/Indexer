@@ -17,7 +17,6 @@ package org.opengroup.osdu.util;
 import lombok.ToString;
 import lombok.extern.java.Log;
 
-import java.io.IOException;
 
 @Log
 @ToString
