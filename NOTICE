@@ -561,7 +561,6 @@ The following software have components provided under the terms of this license:
 - Stax2 API (from http://github.com/FasterXML/stax2-api)
 - jersey-ext-bean-validation (from )
 - jersey-spring4 (from )
-- oro (from )
 
 ========================================================================
 BSD-3-Clause
@@ -625,12 +624,6 @@ CC-BY-2.5
 The following software have components provided under the terms of this license:
 
 - Checker Qual (from https://checkerframework.org)
-
-========================================================================
-CC-BY-3.0
-========================================================================
-The following software have components provided under the terms of this license:
-
 - FindBugs-jsr305 (from http://findbugs.sourceforge.net/)
 
 ========================================================================
@@ -665,7 +658,6 @@ The following software have components provided under the terms of this license:
 - HK2 core module (from )
 - HK2 module of HK2 itself (from )
 - JavaBeans Activation Framework API jar (from )
-- JavaBeans(TM) Activation Framework (from http://java.sun.com/javase/technologies/desktop/javabeans/jaf/index.jsp)
 - Run Level Service (from )
 - ServiceLocator Default Implementation (from git://java.net/hk2~git/hk2-locator)
 - Servlet Specification 2.5 API (from )
@@ -690,6 +682,7 @@ The following software have components provided under the terms of this license:
 - Java Architecture For XML Binding (from )
 - Java Servlet API (from http://servlet-spec.java.net)
 - JavaBeans Activation Framework (from )
+- JavaBeans(TM) Activation Framework (from http://java.sun.com/javase/technologies/desktop/javabeans/jaf/index.jsp)
 - JavaMail API (from )
 - OSGi resource locator (from )
 - jersey-ext-bean-validation (from )
@@ -834,7 +827,6 @@ LGPL-2.1-or-later
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Java Native Access (from https://github.com/java-native-access/jna)
 - Java Native Access Platform (from https://github.com/java-native-access/jna)
 - Javassist (from http://www.javassist.org/)
 - SnakeYAML (from http://www.snakeyaml.org)
@@ -944,7 +936,6 @@ The following software have components provided under the terms of this license:
 - jersey-core-common (from )
 - jersey-core-server (from git://java.net/jersey~code/jersey-server)
 - jts-core (from )
-- xml-apis (from )
 
 ========================================================================
 SISSL-1.2
@@ -1002,8 +993,10 @@ The following software have components provided under the terms of this license:
 - Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
 - Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
 - Spring Web (from https://github.com/spring-projects/spring-framework)
+- StAX API (from http://stax.codehaus.org/)
 - msal4j (from https://github.com/AzureAD/microsoft-authentication-library-for-java)
 - reactive-streams (from http://www.reactive-streams.org/)
+- xml-apis (from )
 
 ========================================================================
 unknown
