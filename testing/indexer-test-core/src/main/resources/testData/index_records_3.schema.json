@@ -22,10 +22,7 @@
                 "description": "The wellbore's position .",
                 "format": "core:dl:geopoint:1.0.0",
                 "title": "WGS 84 Position",
-                "type": "object",
-                "x-slb-aliasProperties": [
-                  "witsml:GeographicLocationWGS84"
-                ]
+                "type": "object"
               },
               "WellName": {
                 "type": "string"
