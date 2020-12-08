@@ -43,6 +43,7 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | `schema_service_url` | ex `https://schema.azurewebsites.net` | Endpoint of schema service | no | output of infrastructure deployments |
 | `SCHEMA_HOST` | `${schema_service_url}/api/schema-service/v1/schema` | Endpoint of schema API | no | - |
 | `storage_service_url` | ex `https://storage.azurewebsites.net` | Endpoint of storage service | no | output of infrastructure deployments |
+| `STORAGE_SCHEMA_HOST` | `${storage_service_url}/schemas` | Endpoint of schema API | no | - |
 | `STORAGE_QUERY_RECORD_HOST` | `${storage_service_url}/query/records` | Endpoint of records API | no | - |
 | `STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST` | `${storage_service_url}/query/records:batch` | Endpoint of records batch API | no | - |
 | `KEYVAULT_URI` | ex `https://foo-kv.vault.azure.net/` | . | . | . |
