@@ -82,7 +82,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         Preconditions.checkNotNull(objectMapper, "schemaServiceSchema cannot be null");
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 
-        PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions());
+        PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), log);
 
         final List<Map<String, Object>> storageSchemaItems = new ArrayList<>();
         if (schemaServiceSchema.getProperties() != null) {

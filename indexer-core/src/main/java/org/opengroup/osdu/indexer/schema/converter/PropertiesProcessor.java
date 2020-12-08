@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
@@ -23,11 +24,15 @@ import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
 import org.opengroup.osdu.indexer.schema.converter.tags.TypeProperty;
 
+import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Stream;
 
-@Log
+
 class PropertiesProcessor {
+    @Inject
+    private JaxRsDpsLog log;
+
     private static final String DEF_PREFIX = "#/definitions/";
 
     private static final Set<String> SKIP_DEFINITIONS = new HashSet<>(
@@ -58,11 +63,13 @@ class PropertiesProcessor {
     private final String pathPrefix;
     private final String pathPrefixWithDot;
 
-    public PropertiesProcessor(Definitions definitions) {
-        this(definitions, null);
+
+    public PropertiesProcessor(Definitions definitions, JaxRsDpsLog log) {
+        this(definitions, null, log);
     }
 
-    public PropertiesProcessor(Definitions definitions, String pathPrefix) {
+    public PropertiesProcessor(Definitions definitions, String pathPrefix, JaxRsDpsLog log) {
+        this.log = log;
         this.definitions = definitions;
         this.pathPrefix = pathPrefix;
         this.pathPrefixWithDot = Objects.isNull(pathPrefix)  || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
@@ -122,12 +129,12 @@ class PropertiesProcessor {
         }
 
         if (!Objects.isNull(entry.getValue().getProperties())) {
-            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey());
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey(), log);
             return entry.getValue().getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
         }
 
         if (!Objects.isNull(entry.getValue().getRef())) {
-            return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey())
+            return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey(), log)
                     .processRef(entry.getValue().getRef());
         }
 

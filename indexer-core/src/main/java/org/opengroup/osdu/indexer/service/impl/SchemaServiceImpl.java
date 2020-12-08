@@ -19,6 +19,7 @@ import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
@@ -37,8 +38,10 @@ import java.nio.charset.StandardCharsets;
  * Provides implementation of the client service that retrieves schemas from the Schema Service
  */
 @Component
-@Log
 public class SchemaServiceImpl implements SchemaService {
+    @Inject
+    private JaxRsDpsLog log;
+
     @Inject
     private IUrlFetchService urlFetchService;
 
