@@ -14,13 +14,10 @@
 
 package org.opengroup.osdu.indexer.schema.converter.tags;
 
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.experimental.FieldDefaults;
 
 @Data
-@FieldDefaults(level= AccessLevel.PRIVATE)
 public class SchemaRoot {
-    Definitions definitions;
-    Properties properties;
+    private Definitions definitions;
+    private Properties properties;
 }

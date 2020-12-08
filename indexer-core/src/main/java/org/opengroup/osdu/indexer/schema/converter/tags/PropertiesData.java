@@ -15,16 +15,13 @@
 package org.opengroup.osdu.indexer.schema.converter.tags;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
 @Data
-@FieldDefaults(level= AccessLevel.PRIVATE)
 public class PropertiesData {
-    List<AllOfItem> allOf;
+    private List<AllOfItem> allOf;
     @JsonProperty("$ref")
-    String ref;
+    private String ref;
 }

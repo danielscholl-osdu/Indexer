@@ -14,8 +14,6 @@
 
 package org.opengroup.osdu.indexer.schema.converter;
 
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -28,25 +26,24 @@ import org.opengroup.osdu.indexer.schema.converter.tags.TypeProperty;
 import java.util.*;
 import java.util.stream.Stream;
 
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Log
 class PropertiesProcessor {
-    static String DEF_PREFIX = "#/definitions/";
+    private static final String DEF_PREFIX = "#/definitions/";
 
-    static Set<String> SKIP_DEFINITIONS = new HashSet<>(
+    private static final Set<String> SKIP_DEFINITIONS = new HashSet<>(
             Arrays.asList("AbstractAnyCrsFeatureCollection.1.0.0",
                           "anyCrsGeoJsonFeatureCollection"));
 
-    static Set<String> ARRAY_SUPPORTED_SIMPLE_TYPES = new HashSet<>(
+    private static final Set<String> ARRAY_SUPPORTED_SIMPLE_TYPES = new HashSet<>(
             Arrays.asList("boolean", "integer", "number", "string"));
 
-    static Map<String, String> SPEC_DEFINITION_TYPES = new HashMap<String, String>() {{
+    private static final Map<String, String> SPEC_DEFINITION_TYPES = new HashMap<String, String>() {{
         put("AbstractFeatureCollection.1.0.0", "core:dl:geoshape:1.0.0");
         put("core_dl_geopoint", "core:dl:geopoint:1.0.0");
         put("geoJsonFeatureCollection", "core:dl:geoshape:1.0.0");
     }};
 
-    static Map<String, String> PRIMITIVE_TYPES_MAP = new HashMap<String, String>() {{
+    private static final Map<String, String> PRIMITIVE_TYPES_MAP = new HashMap<String, String>() {{
         put("boolean", "bool");
         put("number", "double");
         put("date-time", "datetime");
@@ -57,9 +54,9 @@ class PropertiesProcessor {
         put("int64", "long");
     }};
 
-    Definitions definitions;
-    String pathPrefix;
-    String pathPrefixWithDot;
+    private final Definitions definitions;
+    private final String pathPrefix;
+    private final String pathPrefixWithDot;
 
     public PropertiesProcessor(Definitions definitions) {
         this(definitions, null);

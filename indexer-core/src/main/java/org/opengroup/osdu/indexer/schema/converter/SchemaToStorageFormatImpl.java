@@ -16,14 +16,13 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
-import org.opengroup.osdu.indexer.schema.converter.tags.*;
+import org.opengroup.osdu.indexer.schema.converter.tags.PropertiesData;
+import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -34,11 +33,10 @@ import java.util.stream.Collectors;
  * Converts schema from Schema Service format to Storage Service format
  */
 @Component
-@FieldDefaults(makeFinal=true, level= AccessLevel.PRIVATE)
 @Log
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     @Inject
     public SchemaToStorageFormatImpl(ObjectMapper objectMapper) {
