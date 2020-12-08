@@ -202,7 +202,7 @@ types are supported
 "number", "string", "integer", "boolean"
 ```
 
-Following primitive types are converted to the Storage Service Schema types:
+Following primitive types are converted to the Storage Service Schema types (all other types like string are used as is):
 ----------------------------------------------------------------------------
 
 ```json
