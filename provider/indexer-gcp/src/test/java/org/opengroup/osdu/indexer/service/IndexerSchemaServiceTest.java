@@ -229,9 +229,9 @@ public class IndexerSchemaServiceTest {
         try {
             this.sut.processSchemaMessages(schemaMessages);
         } catch (AppException e) {
-            assertEquals(e.getError().getCode(), RequestStatus.SCHEMA_CONFLICT);
-            assertEquals(e.getError().getMessage(), "error creating or merging index mapping");
-            assertEquals(e.getError().getReason(), reason);
+            assertEquals(RequestStatus.SCHEMA_CONFLICT, e.getError().getCode());
+            assertEquals("error creating or merging index mapping", e.getError().getMessage());
+            assertEquals(reason, e.getError().getReason());
         } catch (Exception e) {
             fail("Should not throw this exception " + e.getMessage());
         }
@@ -262,9 +262,9 @@ public class IndexerSchemaServiceTest {
         try {
             this.sut.processSchemaMessages(schemaMessages);
         } catch (AppException e) {
-            assertEquals(e.getError().getCode(), HttpStatus.SC_FORBIDDEN);
-            assertEquals(e.getError().getMessage(), "blah");
-            assertEquals(e.getError().getReason(), reason);
+            assertEquals(HttpStatus.SC_FORBIDDEN, e.getError().getCode());
+            assertEquals("blah", e.getError().getMessage());
+            assertEquals(reason, e.getError().getReason());
         } catch (Exception e) {
             fail("Should not throw this exception " + e.getMessage());
         }
@@ -358,9 +358,9 @@ public class IndexerSchemaServiceTest {
         try {
             this.sut.syncIndexMappingWithStorageSchema(kind);
         } catch (AppException e) {
-            assertEquals(e.getError().getCode(), HttpStatus.SC_CONFLICT);
-            assertEquals(e.getError().getMessage(), "blah");
-            assertEquals(e.getError().getReason(), "Index deletion error");
+            assertEquals(HttpStatus.SC_CONFLICT, e.getError().getCode());
+            assertEquals("blah", e.getError().getMessage());
+            assertEquals("Index deletion error", e.getError().getReason());
         } catch (Exception e) {
             fail("Should not throw this exception " + e.getMessage());
         }
