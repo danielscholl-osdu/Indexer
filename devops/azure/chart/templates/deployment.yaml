@@ -107,7 +107,7 @@ spec:
         - name: entitlements_service_api_key
           value: "OBSOLETE"
         - name: schema_service_url
-          value: http://storage/api/schema-service/v1
+          value: http://schema-service/api/schema-service/v1
         - name: SCHEMA_HOST
           value: http://schema-service/api/schema-service/v1/schema
         - name: storage_service_url
