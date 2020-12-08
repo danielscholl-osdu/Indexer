@@ -56,21 +56,17 @@ public class SchemaServiceImpl implements SchemaService {
 
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        String schemaFromStorageService = storageService.getStorageSchema(kind);
+        String schemaFromStorageService = getFromStorageService(kind);
 
         if (schemaFromStorageService != null) {
             return schemaFromStorageService;
         }
 
-        log.warning("Schema is not found on the Storage Service:" + kind);
+        return getFromSchemaService(kind);
+    }
 
-        String url = String.format("%s/%s", SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
-        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
-                .httpMethod(HttpMethods.GET)
-                .headers(this.requestInfo.getHeadersMap())
-                .url(url)
-                .build();
-        HttpResponse response = this.urlFetchService.sendRequest(request);
+    private String getFromSchemaService(String kind) throws UnsupportedEncodingException, URISyntaxException {
+        HttpResponse response = getSchemaServiceResponse(kind);
 
         if (response.getResponseCode() == HttpStatus.SC_NOT_FOUND) {
             log.warning("Schema is not found on the Schema Service:" + kind);
@@ -80,4 +76,28 @@ public class SchemaServiceImpl implements SchemaService {
         return response.getResponseCode() != HttpStatus.SC_OK ? null :
                 schemaToStorageFormat.convertToString(response.getBody(), kind);
     }
+
+    private String getFromStorageService(String kind) throws URISyntaxException, UnsupportedEncodingException {
+        String schemaFromStorageService = storageService.getStorageSchema(kind);
+
+        if (schemaFromStorageService != null) {
+            return schemaFromStorageService;
+        }
+
+        log.warning("Schema is not found on the Storage Service:" + kind);
+
+        return null;
+    }
+
+    private HttpResponse getSchemaServiceResponse(String kind) throws UnsupportedEncodingException, URISyntaxException {
+        String url = String.format("%s/%s", SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
+        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
+                .httpMethod(HttpMethods.GET)
+                .headers(this.requestInfo.getHeadersMap())
+                .url(url)
+                .build();
+        
+        return this.urlFetchService.sendRequest(request);
+    }
+
 }
