@@ -18,11 +18,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
@@ -43,9 +41,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class SchemaServiceTest {
 
     private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
+    private JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
 
     @Spy
-    private SchemaToStorageFormatImpl schemaToStorageFormatImpl = new SchemaToStorageFormatImpl(objectMapper);
+    private SchemaToStorageFormatImpl schemaToStorageFormatImpl = new SchemaToStorageFormatImpl(objectMapper, log);
     @Mock
     private IUrlFetchService urlFetchService;
     @Mock

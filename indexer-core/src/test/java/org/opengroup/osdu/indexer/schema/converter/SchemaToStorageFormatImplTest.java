@@ -17,6 +17,8 @@ package org.opengroup.osdu.indexer.schema.converter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
@@ -38,8 +40,10 @@ import static org.junit.Assert.fail;
 public class SchemaToStorageFormatImplTest {
 
     private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
+    private JaxRsDpsLog jaxRsDpsLog = Mockito.mock(JaxRsDpsLog.class);
 
-    private SchemaToStorageFormatImpl schemaToStorageFormatImpl = new SchemaToStorageFormatImpl(objectMapper);
+    private SchemaToStorageFormatImpl schemaToStorageFormatImpl
+            = new SchemaToStorageFormatImpl(objectMapper, jaxRsDpsLog);
 
     @Test
     public void firstSchemaPassed() {

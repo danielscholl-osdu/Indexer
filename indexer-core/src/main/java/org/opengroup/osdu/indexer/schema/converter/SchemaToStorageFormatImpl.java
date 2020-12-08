@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
@@ -33,16 +34,18 @@ import java.util.stream.Collectors;
  * Converts schema from Schema Service format to Storage Service format
  */
 @Component
-@Log
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
     private ObjectMapper objectMapper;
 
+    private JaxRsDpsLog log;
+
     @Inject
-    public SchemaToStorageFormatImpl(ObjectMapper objectMapper) {
+    public SchemaToStorageFormatImpl(ObjectMapper objectMapper, JaxRsDpsLog log) {
         Preconditions.checkNotNull(objectMapper, "objectMapper cannot be null");
 
         this.objectMapper = objectMapper;
+        this.log = log;
     }
 
     @Override
