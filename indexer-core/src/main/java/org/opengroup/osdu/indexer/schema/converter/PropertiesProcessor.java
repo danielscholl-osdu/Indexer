@@ -38,26 +38,30 @@ public class PropertiesProcessor {
     private static final Set<String> ARRAY_SUPPORTED_SIMPLE_TYPES = new HashSet<>(
             Arrays.asList("boolean", "integer", "number", "string"));
 
-    private static final Map<String, String> SPEC_DEFINITION_TYPES = new HashMap<String, String>() {{
-        put("AbstractFeatureCollection.1.0.0", "core:dl:geoshape:1.0.0");
-        put("core_dl_geopoint", "core:dl:geopoint:1.0.0");
-        put("geoJsonFeatureCollection", "core:dl:geoshape:1.0.0");
-    }};
+    private static final Map<String, String> SPEC_DEFINITION_TYPES = new HashMap<>();
 
-    private static final Map<String, String> PRIMITIVE_TYPES_MAP = new HashMap<String, String>() {{
-        put("boolean", "bool");
-        put("number", "double");
-        put("date-time", "datetime");
-        put("date", "datetime");
-        put("time", "datetime");
-        put("int32", "int");
-        put("integer", "int");
-        put("int64", "long");
-    }};
+    private static final Map<String, String> PRIMITIVE_TYPES_MAP = new HashMap<>();
 
     private final Definitions definitions;
     private final String pathPrefix;
     private final String pathPrefixWithDot;
+
+    static {
+        SPEC_DEFINITION_TYPES.put("AbstractFeatureCollection.1.0.0", "core:dl:geoshape:1.0.0");
+        SPEC_DEFINITION_TYPES.put("core_dl_geopoint", "core:dl:geopoint:1.0.0");
+        SPEC_DEFINITION_TYPES.put("geoJsonFeatureCollection", "core:dl:geoshape:1.0.0");
+    }
+
+    static {
+        PRIMITIVE_TYPES_MAP.put("boolean", "bool");
+        PRIMITIVE_TYPES_MAP.put("number", "double");
+        PRIMITIVE_TYPES_MAP.put("date-time", "datetime");
+        PRIMITIVE_TYPES_MAP.put("date", "datetime");
+        PRIMITIVE_TYPES_MAP.put("time", "datetime");
+        PRIMITIVE_TYPES_MAP.put("int32", "int");
+        PRIMITIVE_TYPES_MAP.put("integer", "int");
+        PRIMITIVE_TYPES_MAP.put("int64", "long");
+    }
 
     public PropertiesProcessor(Definitions definitions, JaxRsDpsLog log) {
         this(definitions, null, log);
