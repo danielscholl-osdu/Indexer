@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.azure.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,9 +33,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.util.HashMap;
+import java.util.Map;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(SpringRunner.class)
@@ -51,6 +54,7 @@ public class SchemaServiceTest {
     private IRequestInfo requestInfo;
     @Mock
     private StorageService storageService;
+
     @InjectMocks
     private SchemaServiceImpl sut;
 
@@ -60,9 +64,10 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void should_returnValidResponse_givenValidKind_getSchemaByKind() throws Exception {
+    public void should_returnValidResponse_givenValidSchema() throws Exception {
 
         String validSchemaFromSchemaService = "{\n" +
+                "\"properties\": {" +
                 "   \"data\":{\n" +
                 "      \"allOf\":[\n" +
                 "         {\n" +
@@ -76,6 +81,7 @@ public class SchemaServiceTest {
                 "         }\n" +
                 "      ]\n" +
                 "   }\n" +
+                "   }\n" +
                 "}";
         String kind = "tenant:test:test:1.0.0";
 
@@ -83,9 +89,15 @@ public class SchemaServiceTest {
         httpResponse.setResponseCode(HttpStatus.OK.value());
         httpResponse.setBody(validSchemaFromSchemaService);
 
-        when(this.urlFetchService.sendRequest(ArgumentMatchers.any())).thenReturn(httpResponse);
+        when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
 
         String recordSchemaResponse = this.sut.getSchema(kind);
+
+        Map<String, Object> result = objectMapper.readValue(recordSchemaResponse,
+                new TypeReference<Map<String,Object>>(){});
+        assertEquals("Schema must have two root items", 2, result.size());
+        assertEquals("Wrong kind", "tenant:test:test:1.0.0", result.get("kind"));
+        assertEquals("Wrong schema attributes", "[{path=WellID, kind=link}]", result.get("schema").toString());
 
         assertNotNull(recordSchemaResponse);
     }
@@ -98,11 +110,49 @@ public class SchemaServiceTest {
         HttpResponse httpResponse = new HttpResponse();
         httpResponse.setResponseCode(HttpStatus.NOT_FOUND.value());
 
-        when(this.urlFetchService.sendRequest(ArgumentMatchers.any())).thenReturn(httpResponse);
+        when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
 
         String recordSchemaResponse = this.sut.getSchema(kind);
 
         assertNull(recordSchemaResponse);
     }
 
+    @Test
+    public void should_call_Storage_then_Schema() throws Exception {
+        String kind = "tenant:test:test:1.0.0";
+
+        SchemaServiceImpl schemaService = Mockito.mock(SchemaServiceImpl.class);
+        when(schemaService.getSchema(any())).thenCallRealMethod();
+
+        InOrder inOrder = inOrder(schemaService);
+
+        String recordSchemaResponse = schemaService.getSchema(kind);
+        assertNull(recordSchemaResponse);
+
+        inOrder.verify(schemaService).getSchema(any());
+        inOrder.verify(schemaService).getFromStorageService(any());
+        inOrder.verify(schemaService).getFromSchemaService(any());
+        verify(schemaService, times(1)).getFromStorageService(any());
+        verify(schemaService, times(1)).getFromSchemaService(any());
+    }
+
+    @Test
+    public void should_call_only_Storage_if_it_returns_result() throws Exception {
+        String kind = "tenant:test:test:1.0.0";
+
+        SchemaServiceImpl schemaService = Mockito.mock(SchemaServiceImpl.class);
+        when(schemaService.getSchema(any())).thenCallRealMethod();
+        String someSchema = "some schema";
+        when(schemaService.getFromStorageService(any())).thenReturn(someSchema);
+
+        InOrder inOrder = inOrder(schemaService);
+
+        String recordSchemaResponse = schemaService.getSchema(kind);
+        assertEquals(recordSchemaResponse, someSchema);
+
+        inOrder.verify(schemaService).getSchema(any());
+        inOrder.verify(schemaService).getFromStorageService(any());
+        verify(schemaService, times(0)).getFromSchemaService(any());
+        verify(schemaService, times(1)).getFromStorageService(any());
+    }
 }
