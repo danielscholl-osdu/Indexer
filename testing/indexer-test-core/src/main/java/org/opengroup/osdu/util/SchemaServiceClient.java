@@ -59,13 +59,13 @@ public class SchemaServiceClient {
 
     private String buildSchemaUri(String id) {
         return UriComponentsBuilder.fromHttpUrl(schemaBaseUrl)
-                .path("/v1/schema/{schema-id}")
+                .path("/schema/{schema-id}")
                 .buildAndExpand(id).toUriString();
     }
 
     private String buildSchemaUri() {
         return UriComponentsBuilder.fromHttpUrl(schemaBaseUrl)
-                .path("/v1/schema/")
+                .path("/schema/")
                 .build().toUriString();
     }
 
