@@ -13,7 +13,6 @@
 // limitations under the License.
 
 package org.opengroup.osdu.indexer.schema.converter;
-
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -23,10 +22,8 @@ import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
 import org.opengroup.osdu.indexer.schema.converter.tags.TypeProperty;
 
-import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Stream;
-
 
 public class PropertiesProcessor {
 
@@ -61,7 +58,6 @@ public class PropertiesProcessor {
     private final Definitions definitions;
     private final String pathPrefix;
     private final String pathPrefixWithDot;
-
 
     public PropertiesProcessor(Definitions definitions, JaxRsDpsLog log) {
         this(definitions, null, log);
