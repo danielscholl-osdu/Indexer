@@ -14,7 +14,6 @@
 
 package org.opengroup.osdu.indexer.schema.converter;
 
-import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -29,8 +28,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 
-class PropertiesProcessor {
-    @Inject
+public class PropertiesProcessor {
+
     private JaxRsDpsLog log;
 
     private static final String DEF_PREFIX = "#/definitions/";
