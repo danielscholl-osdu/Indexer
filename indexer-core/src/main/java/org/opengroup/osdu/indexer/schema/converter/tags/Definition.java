@@ -20,6 +20,5 @@ import java.util.Map;
 
 @Data
 public class Definition {
-    private String type;
     private Map<String, TypeProperty> properties;
 }

@@ -74,8 +74,8 @@ public class PropertiesProcessor {
         this.pathPrefixWithDot = Objects.isNull(pathPrefix)  || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
     }
 
-    protected Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
-        Preconditions.checkNotNull(allOfItem, "ref cannot be null");
+    public Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
+        Preconditions.checkNotNull(allOfItem, "allOfItem cannot be null");
 
         String ref = allOfItem.getRef();
 
@@ -84,7 +84,7 @@ public class PropertiesProcessor {
     }
 
     public Stream<Map<String, Object>> processRef(String ref) {
-        Preconditions.checkNotNull(ref, "allOfItem cannot be null");
+        Preconditions.checkNotNull(ref, "reference cannot be null");
 
         if (!ref.contains(DEF_PREFIX)) {
             log.warning("Unknown definition:" + ref);
