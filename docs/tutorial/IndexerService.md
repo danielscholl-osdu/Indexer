@@ -253,9 +253,10 @@ API will respond with status of task.
 
 ##Shema Service adoption <a name="schema-service-adoption"></a>
 
-Indexer service is being migrated to use schemas from the Schema service instead of Storage Service.
-Aure implementation has been extended with an additional call to schema service if a schema is not found on Storage service.
-Later call to the Storage Service will be deprecated and then removed(after the end of the deprecation period).
+Indexer service is in adaptation process to use schemas from the Schema service instead of Storage Service.
+The Indexer Service retrieves a schema from the Schema Service if the schema is not found on the Storage Service.
+Change affects only Azure implementation so far.
+Later call to the Storage Service will be deprecated and then removed (after the end of the deprecation period).
 
 [Back to table of contents](#TOC)
 
