@@ -26,6 +26,7 @@ import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFor
 import org.opengroup.osdu.indexer.service.SchemaService;
 import org.opengroup.osdu.indexer.service.StorageService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -38,6 +39,7 @@ import java.nio.charset.StandardCharsets;
  * Provides implementation of the client service that retrieves schemas from the Schema Service
  */
 @Component
+@Lazy
 public class SchemaServiceImpl implements SchemaService {
     @Inject
     private JaxRsDpsLog log;
