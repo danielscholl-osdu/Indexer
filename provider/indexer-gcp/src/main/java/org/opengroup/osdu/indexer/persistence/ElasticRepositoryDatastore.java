@@ -20,16 +20,16 @@ import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.provider.interfaces.IKmsClient;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
+import org.opengroup.osdu.core.common.provider.interfaces.IKmsClient;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.core.gcp.multitenancy.DatastoreFactory;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import javax.inject.Inject;
 
 @Log

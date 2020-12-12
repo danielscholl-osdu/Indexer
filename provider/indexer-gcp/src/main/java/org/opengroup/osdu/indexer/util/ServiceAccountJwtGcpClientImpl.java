@@ -38,16 +38,15 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
-import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.search.IdToken;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.model.search.IdToken;
+import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IJwtCache;
+import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -64,7 +63,7 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
     private static final String JWT_AUDIENCE = "https://www.googleapis.com/oauth2/v4/token";
     private static final String SERVICE_ACCOUNT_NAME_FORMAT = "projects/%s/serviceAccounts/%s";
 
-    private final JsonFactory JSON_FACTORY = new JacksonFactory();
+    private final JsonFactory jsonFactory = new JacksonFactory();
 
     private Iam iam;
 
@@ -100,7 +99,7 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
             Map<String, Object> signJwtPayload = this.getJWTCreationPayload(tenant);
 
             SignJwtRequest signJwtRequest = new SignJwtRequest();
-            signJwtRequest.setPayload(JSON_FACTORY.toString(signJwtPayload));
+            signJwtRequest.setPayload(jsonFactory.toString(signJwtPayload));
 
             String serviceAccountName = String.format(SERVICE_ACCOUNT_NAME_FORMAT, tenant.getProjectId(), tenant.getServiceAccount());
 
@@ -157,7 +156,7 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
             }
 
             // Create IAM API object associated with the authenticated transport.
-            this.iam = new Iam.Builder(httpTransport, JSON_FACTORY, credential)
+            this.iam = new Iam.Builder(httpTransport, jsonFactory, credential)
                     .setApplicationName(properties.getIndexerHost())
                     .build();
         }
