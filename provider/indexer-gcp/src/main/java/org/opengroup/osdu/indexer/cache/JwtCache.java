@@ -1,12 +1,29 @@
+/*
+  Copyright 2020 Google LLC
+  Copyright 2020 EPAM Systems, Inc
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ */
+
 package org.opengroup.osdu.indexer.cache;
 
-import javax.inject.Inject;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.core.common.model.search.IdToken;
 import org.opengroup.osdu.core.common.provider.interfaces.IJwtCache;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 
 @Component
 public class JwtCache implements IJwtCache<String, IdToken>, AutoCloseable {
@@ -14,7 +31,7 @@ public class JwtCache implements IJwtCache<String, IdToken>, AutoCloseable {
 
 
     // google service account id_token can be requested only for 1 hr
-    private final static int EXPIRED_AFTER = 59;
+    private static final int EXPIRED_AFTER = 59;
     @Inject
     public JwtCache(final IndexerConfigurationProperties properties) {
         cache = new RedisCache<>(properties.getRedisSearchHost(), Integer.parseInt(properties.getRedisSearchPort()),
