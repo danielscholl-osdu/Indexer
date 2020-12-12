@@ -1,15 +1,31 @@
+/*
+  Copyright 2020 Google LLC
+  Copyright 2020 EPAM Systems, Inc
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ */
+
 package org.opengroup.osdu.indexer.middleware;
 
 import com.google.common.base.Strings;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.http.ResponseHeaders;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.DeploymentEnvironment;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
@@ -35,14 +51,11 @@ public class IndexFilter implements Filter {
     @Inject
     private IndexerConfigurationProperties properties;
 
-    private FilterConfig filterConfig;
-
-    private static final String PATH_SWAGGER = "/swagger.json";
     private static final String PATH_TASK_HANDLERS = "task-handlers";
     private static final String PATH_CRON_HANDLERS = "cron-handlers";
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
+    public void init(FilterConfig filterConfig) {
     }
 
     @Override
@@ -60,10 +73,6 @@ public class IndexFilter implements Filter {
         if (httpRequest.getMethod().equalsIgnoreCase(HttpMethod.GET.name()) && uri.contains(PATH_CRON_HANDLERS)) {
             checkWorkerApiAccess(requestInfo);
         }
-
-//        if (!httpRequest.isSecure()) {
-//            throw new AppException(302, "Redirect", "HTTP is not supported. Use HTTPS.");
-//        }
 
         filterChain.doFilter(servletRequest, servletResponse);
 

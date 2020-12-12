@@ -14,13 +14,12 @@
 
 package org.opengroup.osdu.indexer.cache;
 
-import javax.inject.Inject;
 import org.opengroup.osdu.core.common.cache.RedisCache;
-import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.provider.interfaces.IAttributesCache;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 import java.util.Set;
 
 @Component
