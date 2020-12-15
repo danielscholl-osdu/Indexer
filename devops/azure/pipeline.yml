@@ -50,14 +50,16 @@ variables:
     value: $[ resources.repositories['FluxRepo'].name ]
   - name: SKIP_TESTS
     value: 'false'
+  - name: 'MAVEN_CACHE_FOLDER'
+    value: $(Pipeline.Workspace)/.m2/repository
 
 stages:
   - template: /devops/build-stage.yml@TemplateRepo
     parameters:
       mavenGoal: 'package'
       mavenPublishJUnitResults: true
-      serviceCoreMavenOptions: '-P indexer-core'
-      mavenOptions: '-P indexer-azure'
+      serviceCoreMavenOptions: '-P indexer-core --settings .mvn/community-maven.settings.xml -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+      mavenOptions: '-P indexer-azure --settings .mvn/community-maven.settings.xml -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
       copyFileContents: |
         pom.xml
         provider/indexer-azure/maven/settings.xml
