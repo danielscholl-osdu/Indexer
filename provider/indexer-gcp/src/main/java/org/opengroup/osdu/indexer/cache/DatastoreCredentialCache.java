@@ -18,14 +18,13 @@ import com.google.auth.oauth2.AccessToken;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DatastoreCredentialCache extends RedisCache<String, AccessToken> {
 
-	@Autowired
-	public DatastoreCredentialCache(final IndexerConfigurationProperties configurationProperties) {
-		super(configurationProperties.getRedisSearchHost(), Integer.parseInt(configurationProperties.getRedisSearchPort()), 58 * 60, String.class, AccessToken.class);
-	}
+    @Autowired
+    public DatastoreCredentialCache(final IndexerConfigurationProperties configurationProperties) {
+        super(configurationProperties.getRedisSearchHost(), Integer.parseInt(configurationProperties.getRedisSearchPort()), 58 * 60, String.class, AccessToken.class);
+    }
 }

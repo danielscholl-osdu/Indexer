@@ -1,4 +1,4 @@
-// Copyright 2017-2019, Schlumberger
+// Copyright © Amazon Web Services
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.di;
+
+package org.opengroup.osdu.indexer.aws.di;
 
 import org.opengroup.osdu.core.common.entitlements.EntitlementsAPIConfig;
 import org.opengroup.osdu.core.common.entitlements.EntitlementsFactory;
@@ -31,10 +32,10 @@ import org.springframework.web.context.annotation.RequestScope;
 public class EntitlementsClientFactory extends AbstractFactoryBean<IEntitlementsFactory> {
 
 	@Value("${AUTHORIZE_API}")
-	private String authorizeApi;
+	private String AUTHORIZE_API;
 
 	@Value("${AUTHORIZE_API_KEY:}")
-	private String authorizeApiKey;
+	private String AUTHORIZE_API_KEY;
 
 	@Autowired
 	private HttpResponseBodyMapper mapper;
@@ -44,8 +45,8 @@ public class EntitlementsClientFactory extends AbstractFactoryBean<IEntitlements
 
 		return new EntitlementsFactory(EntitlementsAPIConfig
 				.builder()
-				.rootUrl(authorizeApi)
-				.apiKey(authorizeApiKey)
+				.rootUrl(AUTHORIZE_API)
+				.apiKey(AUTHORIZE_API_KEY)
 				.build(),
 				mapper);
 	}

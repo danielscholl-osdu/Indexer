@@ -42,6 +42,7 @@ import org.opengroup.osdu.models.Setup;
 import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.util.FileHandler;
 import org.opengroup.osdu.util.HTTPClient;
+import org.opengroup.osdu.util.ElasticUtils;
 
 @Log
 public class CleanupIndiciesSteps extends TestsBase {
@@ -54,6 +55,11 @@ public class CleanupIndiciesSteps extends TestsBase {
   public CleanupIndiciesSteps(HTTPClient httpClient) {
     super(httpClient);
   }
+
+  public CleanupIndiciesSteps(HTTPClient httpClient, ElasticUtils elasticUtils) {
+    super(httpClient, elasticUtils);
+  }
+
 
   public void theSchemaIsCreatedWithTheFollowingKind(DataTable dataTable) {
     List<Setup> inputList = dataTable.asList(Setup.class);
