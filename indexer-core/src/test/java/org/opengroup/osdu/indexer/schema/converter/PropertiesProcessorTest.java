@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
@@ -38,14 +39,15 @@ public class PropertiesProcessorTest {
     public void should_fail_on_unknown_reference_definition() {
         JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
 
-        new PropertiesProcessor(Mockito.mock(Definitions.class), log).processRef(DEFINITIONS_PREFIX + "unknownDefinition");
+        new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+                .processRef(DEFINITIONS_PREFIX + "unknownDefinition");
     }
 
     @Test
     public void should_not_process_special_reference() {
         JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
 
-        assertFalse(new PropertiesProcessor(null, log)
+        assertFalse(new PropertiesProcessor(null, log, new SchemaConverterPropertiesConfig())
                 .processRef(DEFINITIONS_PREFIX + "anyCrsGeoJsonFeatureCollection").findAny().isPresent());
     }
 
@@ -53,7 +55,7 @@ public class PropertiesProcessorTest {
     public void should_return_special_type() {
         JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
 
-        String res = new PropertiesProcessor(null, PATH, log)
+        String res = new PropertiesProcessor(null, PATH, log, new SchemaConverterPropertiesConfig())
                 .processRef(DEFINITIONS_PREFIX + "core_dl_geopoint").map(Object::toString).reduce("", String::concat);
         assertEquals("{path=" + PATH + ", kind=core:dl:geopoint:1.0.0}", res);
     }
@@ -77,7 +79,7 @@ public class PropertiesProcessorTest {
         String defName = "defName";
         definitions.add(defName, definition);
 
-        String res = new PropertiesProcessor(definitions, PATH, log)
+        String res = new PropertiesProcessor(definitions, PATH, log, new SchemaConverterPropertiesConfig())
                 .processRef(DEFINITIONS_PREFIX + defName).map(Object::toString).reduce("", String::concat);
         assertEquals(res, "{path="+ PATH + "." + propertyName + ", kind=string}");
     }
@@ -95,7 +97,7 @@ public class PropertiesProcessorTest {
         properties.put(PATH, property);
         allOfItem.setProperties(properties);
 
-        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log)
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
                 .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
         assertEquals("{path=" + PATH + ", kind=int}", res);
     }

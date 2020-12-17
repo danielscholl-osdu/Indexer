@@ -20,6 +20,7 @@ import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
+import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.PropertiesData;
 import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
@@ -36,15 +37,16 @@ import java.util.stream.Collectors;
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
     private ObjectMapper objectMapper;
-
     private JaxRsDpsLog log;
+    private SchemaConverterConfig schemaConverterConfig;
 
     @Inject
-    public SchemaToStorageFormatImpl(ObjectMapper objectMapper, JaxRsDpsLog log) {
+    public SchemaToStorageFormatImpl(ObjectMapper objectMapper, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {
         Preconditions.checkNotNull(objectMapper, "objectMapper cannot be null");
 
         this.objectMapper = objectMapper;
         this.log = log;
+        this.schemaConverterConfig = schemaConverterConfig;
     }
 
     @Override
@@ -82,7 +84,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         Preconditions.checkNotNull(objectMapper, "schemaServiceSchema cannot be null");
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 
-        PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), log);
+        PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), log, schemaConverterConfig);
 
         final List<Map<String, Object>> storageSchemaItems = new ArrayList<>();
         if (schemaServiceSchema.getProperties() != null) {

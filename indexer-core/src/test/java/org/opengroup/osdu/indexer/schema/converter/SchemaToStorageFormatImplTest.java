@@ -17,14 +17,12 @@ package org.opengroup.osdu.indexer.schema.converter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -46,7 +44,8 @@ public class SchemaToStorageFormatImplTest {
     private JaxRsDpsLog jaxRsDpsLog = Mockito.mock(JaxRsDpsLog.class);
     
     private SchemaToStorageFormatImpl schemaToStorageFormatImpl
-            = new SchemaToStorageFormatImpl(objectMapper, jaxRsDpsLog);
+            = new SchemaToStorageFormatImpl(objectMapper, jaxRsDpsLog
+                    , new SchemaConverterPropertiesConfig());
 
     @Test
     public void firstSchemaPassed() {

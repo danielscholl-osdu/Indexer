@@ -47,7 +47,7 @@ public class SchemaServiceTest {
     private JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
 
     @Spy
-    private SchemaToStorageFormatImpl schemaToStorageFormatImpl = new SchemaToStorageFormatImpl(objectMapper, log);
+    private SchemaToStorageFormatImpl schemaToStorageFormatImpl = new SchemaToStorageFormatImpl(objectMapper, log, null);
     @Mock
     private IUrlFetchService urlFetchService;
     @Mock

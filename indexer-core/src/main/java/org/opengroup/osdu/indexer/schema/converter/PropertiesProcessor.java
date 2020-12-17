@@ -17,6 +17,8 @@ import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
+import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
+import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
@@ -28,50 +30,24 @@ import java.util.stream.Stream;
 public class PropertiesProcessor {
 
     private JaxRsDpsLog log;
+    private SchemaConverterConfig schemaConverterConfig;
 
     private static final String DEF_PREFIX = "#/definitions/";
-
-    private static final Set<String> SKIP_DEFINITIONS = new HashSet<>(
-            Arrays.asList("AbstractAnyCrsFeatureCollection.1.0.0",
-                          "anyCrsGeoJsonFeatureCollection"));
-
-    private static final Set<String> ARRAY_SUPPORTED_SIMPLE_TYPES = new HashSet<>(
-            Arrays.asList("boolean", "integer", "number", "string"));
-
-    private static final Map<String, String> SPEC_DEFINITION_TYPES = new HashMap<>();
-
-    private static final Map<String, String> PRIMITIVE_TYPES_MAP = new HashMap<>();
 
     private final Definitions definitions;
     private final String pathPrefix;
     private final String pathPrefixWithDot;
 
-    static {
-        SPEC_DEFINITION_TYPES.put("AbstractFeatureCollection.1.0.0", "core:dl:geoshape:1.0.0");
-        SPEC_DEFINITION_TYPES.put("core_dl_geopoint", "core:dl:geopoint:1.0.0");
-        SPEC_DEFINITION_TYPES.put("geoJsonFeatureCollection", "core:dl:geoshape:1.0.0");
+    public PropertiesProcessor(Definitions definitions, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {
+        this(definitions, null, log, schemaConverterConfig);
     }
 
-    static {
-        PRIMITIVE_TYPES_MAP.put("boolean", "bool");
-        PRIMITIVE_TYPES_MAP.put("number", "double");
-        PRIMITIVE_TYPES_MAP.put("date-time", "datetime");
-        PRIMITIVE_TYPES_MAP.put("date", "datetime");
-        PRIMITIVE_TYPES_MAP.put("time", "datetime");
-        PRIMITIVE_TYPES_MAP.put("int32", "int");
-        PRIMITIVE_TYPES_MAP.put("integer", "int");
-        PRIMITIVE_TYPES_MAP.put("int64", "long");
-    }
-
-    public PropertiesProcessor(Definitions definitions, JaxRsDpsLog log) {
-        this(definitions, null, log);
-    }
-
-    public PropertiesProcessor(Definitions definitions, String pathPrefix, JaxRsDpsLog log) {
+    public PropertiesProcessor(Definitions definitions, String pathPrefix, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {
         this.log = log;
         this.definitions = definitions;
         this.pathPrefix = pathPrefix;
         this.pathPrefixWithDot = Objects.isNull(pathPrefix)  || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
+        this.schemaConverterConfig = schemaConverterConfig;
     }
 
     public Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
@@ -93,12 +69,12 @@ public class PropertiesProcessor {
 
         String definitionSubRef = ref.substring(DEF_PREFIX.length());
 
-        if (SKIP_DEFINITIONS.contains(definitionSubRef)) {
+        if (schemaConverterConfig.getSkippedDefinitions().contains(definitionSubRef)) {
             return Stream.empty();
         }
 
-        if (!Objects.isNull(SPEC_DEFINITION_TYPES.get(definitionSubRef))) {
-            return storageSchemaEntry(SPEC_DEFINITION_TYPES.get(definitionSubRef), pathPrefix);
+        if (!Objects.isNull(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionSubRef))) {
+            return storageSchemaEntry(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionSubRef), pathPrefix);
         }
 
         Definition definition = definitions.getDefinition(definitionSubRef);
@@ -120,7 +96,7 @@ public class PropertiesProcessor {
         }
 
         if ("array".equals(entry.getValue().getType())) {
-            if (ARRAY_SUPPORTED_SIMPLE_TYPES.contains(entry.getValue().getItems().getType())) {
+            if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType())) {
                 return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
             }
 
@@ -128,12 +104,13 @@ public class PropertiesProcessor {
         }
 
         if (!Objects.isNull(entry.getValue().getProperties())) {
-            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey(), log);
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
+                    , log, new SchemaConverterPropertiesConfig());
             return entry.getValue().getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
         }
 
         if (!Objects.isNull(entry.getValue().getRef())) {
-            return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey(), log)
+            return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey(), log, new SchemaConverterPropertiesConfig())
                     .processRef(entry.getValue().getRef());
         }
 
@@ -161,8 +138,8 @@ public class PropertiesProcessor {
 
         return !Objects.isNull(pattern) && pattern.startsWith("^srn") ? "link" :
                 !Objects.isNull(itemsPattern) && itemsPattern.startsWith("^srn") ? "link" :
-                !Objects.isNull(format)  ? PRIMITIVE_TYPES_MAP.getOrDefault(format, format) :
-                        !Objects.isNull(itemsType) ? PRIMITIVE_TYPES_MAP.getOrDefault(itemsType, itemsType) :
-                                PRIMITIVE_TYPES_MAP.getOrDefault(type, type);
+                !Objects.isNull(format)  ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(format, format) :
+                        !Objects.isNull(itemsType) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(itemsType, itemsType) :
+                                schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(type, type);
     }
 }
