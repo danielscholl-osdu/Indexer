@@ -14,17 +14,17 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
+import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse.FieldMappingMetaData;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Request;
@@ -35,21 +35,18 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.UpdateByQueryRequest;
-
-import com.google.gson.Gson;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.DEAnalyzerType;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
-import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
-import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.Records;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
+import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.stereotype.Service;
-import javax.inject.Inject;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IndexerMappingService {
@@ -165,7 +162,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
     
     private boolean updateMappingToEnableKeywordIndexingForField(RestHighLevelClient client, Set<String> indicesSet, String fieldName) throws IOException {
         String[] indices = indicesSet.toArray(new String[indicesSet.size()]);
-        Map<String, Map<String, Map<String, FieldMappingMetaData>>> indexMappingMap = getIndexFieldMap(new String[]{"data."+fieldName}, client, indices);
+        Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> indexMappingMap = getIndexFieldMap(new String[]{"data."+fieldName}, client, indices);
         boolean failure = false;
         for (String index : indicesSet) {
             if (indexMappingMap.get(index)!=null && updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(client, index, indexMappingMap.get(index), fieldName)) {
@@ -178,18 +175,18 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         return !failure;
     }
 
-    private Map<String, Map<String, Map<String, FieldMappingMetaData>>> getIndexFieldMap(String[] fieldNames, RestHighLevelClient client, String[] indices) throws IOException  {
-        Map<String, Map<String, Map<String, FieldMappingMetaData>>> indexMappingMap = new HashMap<>();
+    private Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> getIndexFieldMap(String[] fieldNames, RestHighLevelClient client, String[] indices) throws IOException  {
+        Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> indexMappingMap = new HashMap<>();
         GetFieldMappingsRequest request = new GetFieldMappingsRequest();
         request.indices(indices);
         request.fields(fieldNames);
         try {
             GetFieldMappingsResponse response = client.indices().getFieldMapping(request, RequestOptions.DEFAULT);
             if (response != null && !response.mappings().isEmpty()) {
-                final Map<String, Map<String, Map<String, FieldMappingMetaData>>> mappings = response.mappings();
+                final Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> mappings = response.mappings();
                 for (String index : indices) {
                     //extract mapping of each index
-                    final Map<String, Map<String, FieldMappingMetaData>> indexMapping = mappings.get(index);
+                    final Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping = mappings.get(index);
                     if (indexMapping != null && !indexMapping.isEmpty()) {
                         indexMappingMap.put(index, indexMapping);
                     }
@@ -203,7 +200,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         }
     }
     
-    private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(RestHighLevelClient client, String index, Map<String, Map<String, FieldMappingMetaData>> indexMapping, String fieldName) throws IOException {
+    private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(RestHighLevelClient client, String index, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping, String fieldName) throws IOException {
         PutMappingRequest request = new PutMappingRequest(index);
         String type = indexMapping.keySet().iterator().next();
         if(type.isEmpty()) {
@@ -213,13 +210,13 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         
         request.type(type);
         request.timeout(REQUEST_TIMEOUT);
-        Map<String, FieldMappingMetaData> metaData = indexMapping.get(type);
+        Map<String, GetFieldMappingsResponse.FieldMappingMetadata> metaData = indexMapping.get(type);
         if(metaData==null || metaData.get("data." + fieldName)==null) {
             log.error(String.format("Could not find field: %s in the mapping of index: %s.", fieldName, index));
             return false;
         }
 
-        FieldMappingMetaData fieldMetaData = metaData.get("data." + fieldName);
+        GetFieldMappingsResponse.FieldMappingMetadata fieldMetaData = metaData.get("data." + fieldName);
         Map<String, Object> source = fieldMetaData.sourceAsMap();
         if(!source.containsKey(fieldName)){
             log.error(String.format("Could not find field: %s in the mapping of index: %s.", fieldName, index));
