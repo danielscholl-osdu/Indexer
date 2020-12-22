@@ -23,14 +23,14 @@ import java.util.Set;
 import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsRequest;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.GetFieldMappingsRequest;
+import org.elasticsearch.client.indices.GetFieldMappingsResponse;
+import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -183,12 +183,10 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         try {
             GetFieldMappingsResponse response = client.indices().getFieldMapping(request, RequestOptions.DEFAULT);
             if (response != null && !response.mappings().isEmpty()) {
-                final Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> mappings = response.mappings();
+                final Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> mappings = response.mappings();
                 for (String index : indices) {
-                    //extract mapping of each index
-                    final Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping = mappings.get(index);
-                    if (indexMapping != null && !indexMapping.isEmpty()) {
-                        indexMappingMap.put(index, indexMapping);
+                    if (mappings != null && !mappings.isEmpty()) {
+                        indexMappingMap.put(index, mappings);
                     }
                 }
             }
@@ -207,9 +205,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         	log.error(String.format("Could not find type of the mappings for index: %s.", index));
             return false;
         }
-        
-        request.type(type);
-        request.timeout(REQUEST_TIMEOUT);
+
+        request.setTimeout(REQUEST_TIMEOUT);
         Map<String, GetFieldMappingsResponse.FieldMappingMetadata> metaData = indexMapping.get(type);
         if(metaData==null || metaData.get("data." + fieldName)==null) {
             log.error(String.format("Could not find field: %s in the mapping of index: %s.", fieldName, index));
@@ -316,9 +313,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         try {
             if (mapping != null) {
                 PutMappingRequest request = new PutMappingRequest(index);
-                request.type(type);
                 request.source(mapping, XContentType.JSON);
-                request.timeout(REQUEST_TIMEOUT);
+                request.setTimeout(REQUEST_TIMEOUT);
                 AcknowledgedResponse response = client.indices().putMapping(request, RequestOptions.DEFAULT);
                 return response.isAcknowledged();
             }

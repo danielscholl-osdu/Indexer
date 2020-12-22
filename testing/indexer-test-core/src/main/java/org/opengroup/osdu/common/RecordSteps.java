@@ -8,7 +8,6 @@ import com.sun.jersey.api.client.ClientResponse;
 import cucumber.api.DataTable;
 import lombok.extern.java.Log;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.models.Setup;
 import org.opengroup.osdu.models.TestIndex;
@@ -118,7 +117,7 @@ public class RecordSteps extends TestsBase {
 
     public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String type, String index) throws Throwable {
         index = generateActualName(index, timeStamp);
-        ImmutableOpenMap<String, MappingMetadata> elasticMapping = elasticUtils.getMapping(index);
+        Map<String, MappingMetadata> elasticMapping = elasticUtils.getMapping(index);
         assertNotNull(elasticMapping);
 
         MappingMetadata typeMapping = elasticMapping.get(type);
