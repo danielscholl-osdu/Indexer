@@ -22,6 +22,7 @@ import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.service.SchemaService;
 import org.opengroup.osdu.indexer.service.StorageService;
@@ -47,8 +48,8 @@ public class SchemaServiceImpl implements SchemaService {
     @Inject
     private IUrlFetchService urlFetchService;
 
-    @Value("${SCHEMA_HOST}")
-    private String SCHEMA_HOST;
+    @Inject
+    private IndexerConfigurationProperties configurationProperties;
 
     @Inject
     private IRequestInfo requestInfo;
@@ -95,7 +96,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     protected HttpResponse getSchemaServiceResponse(String kind) throws UnsupportedEncodingException, URISyntaxException {
-        String url = String.format("%s/%s", SCHEMA_HOST, URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
+        String url = String.format("%s/%s", configurationProperties.getSchemaHost(), URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)
                 .headers(this.requestInfo.getHeadersMap())

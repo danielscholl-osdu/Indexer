@@ -24,6 +24,7 @@ import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
 import org.opengroup.osdu.indexer.service.StorageService;
 import org.opengroup.osdu.indexer.service.impl.SchemaServiceImpl;
@@ -54,6 +55,8 @@ public class SchemaServiceTest {
     private IRequestInfo requestInfo;
     @Mock
     private StorageService storageService;
+    @Mock
+    private IndexerConfigurationProperties configurationProperties;
 
     @InjectMocks
     private SchemaServiceImpl sut;
