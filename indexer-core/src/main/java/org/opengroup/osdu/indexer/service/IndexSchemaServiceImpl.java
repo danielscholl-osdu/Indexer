@@ -22,6 +22,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.indexer.service.impl.SchemaProviderImpl;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.IndicesService;
@@ -54,7 +55,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private JaxRsDpsLog log;
     @Inject
-    private StorageService storageService;
+    private SchemaProviderImpl schemaProvider;
     @Inject
     private ElasticClientHandler elasticClientHandler;
     @Inject
@@ -162,7 +163,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     }
 
     protected String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        return this.storageService.getStorageSchema(kind);
+        return this.schemaProvider.getSchema(kind);
     }
 
     public void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException {

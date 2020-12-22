@@ -15,7 +15,6 @@
 package org.opengroup.osdu.indexer.service.impl;
 
 import com.google.api.client.http.HttpMethods;
-import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
@@ -26,7 +25,6 @@ import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.service.SchemaService;
 import org.opengroup.osdu.indexer.service.StorageService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +39,7 @@ import java.nio.charset.StandardCharsets;
  */
 @Component
 @Lazy
-public class SchemaServiceImpl implements SchemaService {
+public class SchemaProviderImpl implements SchemaService {
     @Inject
     private JaxRsDpsLog log;
 

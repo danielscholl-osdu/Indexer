@@ -27,7 +27,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
 import org.opengroup.osdu.indexer.service.StorageService;
-import org.opengroup.osdu.indexer.service.impl.SchemaServiceImpl;
+import org.opengroup.osdu.indexer.service.impl.SchemaProviderImpl;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
-public class SchemaServiceImplTest {
+public class SchemaProviderImplTest {
 
     private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
     private JaxRsDpsLog jaxRsDpsLog = Mockito.mock(JaxRsDpsLog.class);
@@ -60,7 +60,7 @@ public class SchemaServiceImplTest {
     private IndexerConfigurationProperties configurationProperties;
 
     @InjectMocks
-    private SchemaServiceImpl sut;
+    private SchemaProviderImpl sut;
 
     @Test
     public void test_empty_schema() throws UnsupportedEncodingException, URISyntaxException {

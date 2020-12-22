@@ -27,12 +27,11 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
 import org.opengroup.osdu.indexer.service.StorageService;
-import org.opengroup.osdu.indexer.service.impl.SchemaServiceImpl;
+import org.opengroup.osdu.indexer.service.impl.SchemaProviderImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,7 +41,7 @@ import static org.mockito.Mockito.*;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(SpringRunner.class)
-public class SchemaServiceTest {
+public class SchemaProviderTest {
 
     private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
     private JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
@@ -59,7 +58,7 @@ public class SchemaServiceTest {
     private IndexerConfigurationProperties configurationProperties;
 
     @InjectMocks
-    private SchemaServiceImpl sut;
+    private SchemaProviderImpl sut;
 
     @Before
     public void setup() {
@@ -124,7 +123,7 @@ public class SchemaServiceTest {
     public void should_call_Storage_then_Schema() throws Exception {
         String kind = "tenant:test:test:1.0.0";
 
-        SchemaServiceImpl schemaService = Mockito.mock(SchemaServiceImpl.class);
+        SchemaProviderImpl schemaService = Mockito.mock(SchemaProviderImpl.class);
         when(schemaService.getSchema(any())).thenCallRealMethod();
 
         InOrder inOrder = inOrder(schemaService);
@@ -143,7 +142,7 @@ public class SchemaServiceTest {
     public void should_call_only_Storage_if_it_returns_result() throws Exception {
         String kind = "tenant:test:test:1.0.0";
 
-        SchemaServiceImpl schemaService = Mockito.mock(SchemaServiceImpl.class);
+        SchemaProviderImpl schemaService = Mockito.mock(SchemaProviderImpl.class);
         when(schemaService.getSchema(any())).thenCallRealMethod();
         String someSchema = "some schema";
         when(schemaService.getFromStorageService(any())).thenReturn(someSchema);
