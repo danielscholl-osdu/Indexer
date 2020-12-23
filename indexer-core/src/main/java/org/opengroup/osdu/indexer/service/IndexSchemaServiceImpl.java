@@ -55,7 +55,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private JaxRsDpsLog log;
     @Inject
-    private SchemaProviderImpl schemaProvider;
+    private SchemaService schemaProvider;
     @Inject
     private ElasticClientHandler elasticClientHandler;
     @Inject
