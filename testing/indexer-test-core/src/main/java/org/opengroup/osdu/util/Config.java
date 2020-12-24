@@ -81,7 +81,7 @@ public class Config {
     }
 
     public static String getSchemaBaseURL() {
-        return getEnvironmentVariableOrDefaultValue("SCHEMA_HOST", DEFAULT_SCHEMA_HOST);
+        return getEnvironmentVariableOrDefaultValue("HOST", DEFAULT_SCHEMA_HOST) + "/api/schema-service/v1";
     }
 
     public static String getEntitlementsDomain() {
