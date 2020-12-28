@@ -38,7 +38,6 @@ import java.nio.charset.StandardCharsets;
  * Provides implementation of the client service that retrieves schemas from the Schema Service
  */
 @Component
-@Lazy
 public class SchemaProviderImpl implements SchemaService {
     @Inject
     private JaxRsDpsLog log;

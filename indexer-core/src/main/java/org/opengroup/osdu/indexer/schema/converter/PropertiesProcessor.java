@@ -73,7 +73,7 @@ public class PropertiesProcessor {
             return Stream.empty();
         }
 
-        if (!Objects.isNull(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionSubRef))) {
+        if (Objects.nonNull(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionSubRef))) {
             return storageSchemaEntry(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionSubRef), pathPrefix);
         }
 
@@ -103,13 +103,13 @@ public class PropertiesProcessor {
             return Stream.empty();
         }
 
-        if (!Objects.isNull(entry.getValue().getProperties())) {
+        if (Objects.nonNull(entry.getValue().getProperties())) {
             PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
                     , log, new SchemaConverterPropertiesConfig());
             return entry.getValue().getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
         }
 
-        if (!Objects.isNull(entry.getValue().getRef())) {
+        if (Objects.nonNull(entry.getValue().getRef())) {
             return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey(), log, new SchemaConverterPropertiesConfig())
                     .processRef(entry.getValue().getRef());
         }
@@ -131,15 +131,15 @@ public class PropertiesProcessor {
         Preconditions.checkNotNull(definitionProperty, "definitionProperty cannot be null");
 
         String pattern = definitionProperty.getPattern();
-        String format = definitionProperty.getFormat();
-        String type = definitionProperty.getType();
-        String itemsType = definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null;
         String itemsPattern = definitionProperty.getItems() != null ? definitionProperty.getItems().getPattern() : null;
+        String format = definitionProperty.getFormat();
+        String itemsType = definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null;
+        String type = definitionProperty.getType();
 
-        return !Objects.isNull(pattern) && pattern.startsWith("^srn") ? "link" :
-                !Objects.isNull(itemsPattern) && itemsPattern.startsWith("^srn") ? "link" :
-                !Objects.isNull(format)  ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(format, format) :
-                        !Objects.isNull(itemsType) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(itemsType, itemsType) :
+        return Objects.nonNull(pattern) && pattern.startsWith("^srn") ? "link" :
+                Objects.nonNull(itemsPattern) && itemsPattern.startsWith("^srn") ? "link" :
+                Objects.nonNull(format)  ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(format, format) :
+                        Objects.nonNull(itemsType) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(itemsType, itemsType) :
                                 schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(type, type);
     }
 }
