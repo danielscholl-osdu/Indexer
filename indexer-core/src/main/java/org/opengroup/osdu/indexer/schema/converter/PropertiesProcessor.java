@@ -25,6 +25,7 @@ import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
 import org.opengroup.osdu.indexer.schema.converter.tags.TypeProperty;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class PropertiesProcessor {
@@ -33,6 +34,8 @@ public class PropertiesProcessor {
     private SchemaConverterConfig schemaConverterConfig;
 
     private static final String DEF_PREFIX = "#/definitions/";
+    private static final String LINK_PREFIX = "^srn";
+    private static final String LINK_TYPE = "link";
 
     private final Definitions definitions;
     private final String pathPrefix;
@@ -46,7 +49,7 @@ public class PropertiesProcessor {
         this.log = log;
         this.definitions = definitions;
         this.pathPrefix = pathPrefix;
-        this.pathPrefixWithDot = Objects.isNull(pathPrefix)  || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
+        this.pathPrefixWithDot = Objects.isNull(pathPrefix) || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
         this.schemaConverterConfig = schemaConverterConfig;
     }
 
@@ -56,7 +59,7 @@ public class PropertiesProcessor {
         String ref = allOfItem.getRef();
 
         return Objects.isNull(ref) ?
-            allOfItem.getProperties().entrySet().stream().flatMap(this::processPropertyEntry) : processRef(ref);
+                allOfItem.getProperties().entrySet().stream().flatMap(this::processPropertyEntry) : processRef(ref);
     }
 
     public Stream<Map<String, Object>> processRef(String ref) {
@@ -79,8 +82,8 @@ public class PropertiesProcessor {
 
         Definition definition = definitions.getDefinition(definitionSubRef);
         Optional.ofNullable(definition).orElseThrow(() ->
-         new AppException(HttpStatus.SC_NOT_FOUND, "Failed to find definition:" + definitionSubRef,
-                 "Unknown definition:" + definitionSubRef));
+                new AppException(HttpStatus.SC_NOT_FOUND, "Failed to find definition:" + definitionSubRef,
+                        "Unknown definition:" + definitionSubRef));
 
         return definition.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
     }
@@ -130,16 +133,46 @@ public class PropertiesProcessor {
     protected String getTypeByDefinitionProperty(TypeProperty definitionProperty) {
         Preconditions.checkNotNull(definitionProperty, "definitionProperty cannot be null");
 
-        String pattern = definitionProperty.getPattern();
-        String itemsPattern = definitionProperty.getItems() != null ? definitionProperty.getItems().getPattern() : null;
-        String format = definitionProperty.getFormat();
-        String itemsType = definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null;
-        String type = definitionProperty.getType();
-
-        return Objects.nonNull(pattern) && pattern.startsWith("^srn") ? "link" :
-                Objects.nonNull(itemsPattern) && itemsPattern.startsWith("^srn") ? "link" :
-                Objects.nonNull(format)  ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(format, format) :
-                        Objects.nonNull(itemsType) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(itemsType, itemsType) :
-                                schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(type, type);
+        return Stream.of(
+                getFromPattern(definitionProperty.getPattern()),
+                getFromItemsPattern(() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getPattern() : null),
+                getFromFormat(definitionProperty::getFormat),
+                getFromItemsType (() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null))
+                .filter(x -> x.get() != null)
+                .findFirst()
+                .orElse(getFromType(definitionProperty::getType)).get();
     }
+
+    protected Supplier<String> getFromPattern(String pattern) {
+        return () -> Objects.nonNull(pattern) && pattern.startsWith(LINK_PREFIX) ? LINK_TYPE : null;
+    }
+
+    protected Supplier<String> getFromItemsPattern(Supplier<String> itemsPatternSupplier) {
+        return () -> {
+                String itemsPattern = itemsPatternSupplier.get();
+                return Objects.nonNull(itemsPattern) && itemsPattern.startsWith(LINK_PREFIX) ? LINK_TYPE : null;
+            };
+    }
+
+    protected Supplier<String> getFromType(Supplier<String> typeSupplier) {
+        return  () -> {
+            String type = typeSupplier.get();
+            return schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(type, type);
+        };
+    }
+
+    protected Supplier<String> getFromFormat(Supplier<String> formatSupplier){
+        return  () -> {
+            String format = formatSupplier.get();;
+            return Objects.nonNull(format) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(format, format) : null;
+        };
+    }
+
+    protected Supplier<String> getFromItemsType(Supplier<String> itemsTypeSupplier) {
+        return () -> {
+            String itemsType = itemsTypeSupplier.get();
+            return Objects.nonNull(itemsType) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(itemsType, itemsType) : null;
+        };
+    }
+
 }
