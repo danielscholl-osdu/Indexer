@@ -15,6 +15,7 @@
 package org.opengroup.osdu.indexer.service;
 
 import com.google.gson.internal.LinkedTreeMap;
+import java.util.Optional;
 import org.opengroup.osdu.core.common.Constants;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
@@ -76,10 +77,10 @@ public class GeometryConversionService {
 
         try {
             Map<String, Double> position = new HashMap<>();
-            double lon = new Double(DECIMAL_FORMAT.format(positionMap.get("longitude")));
+            double lon = new Double(DECIMAL_FORMAT.format(Optional.ofNullable(positionMap.get("longitude")).orElse(positionMap.get("lon"))));
             if (lon > 180 && lon < -180)
                 throw new IllegalArgumentException("'longitude' value is out of the range [-180, 180]");
-            double lat = new Double(DECIMAL_FORMAT.format(positionMap.get("latitude")));
+            double lat = new Double(DECIMAL_FORMAT.format(Optional.ofNullable(positionMap.get("latitude")).orElse(positionMap.get("lat"))));
             if (lat > 90 && lat < -90)
                 throw new IllegalArgumentException("'latitude' value is out of the range [-90, 90]");
             position.put("lon", lon);

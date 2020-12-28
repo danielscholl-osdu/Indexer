@@ -103,7 +103,7 @@ public class RecordSteps extends TestsBase {
             }
             String payLoad = new Gson().toJson(records);
             ClientResponse clientResponse = httpClient.send(HttpMethod.PUT, getStorageBaseURL() + "records", payLoad, headers, httpClient.getAccessToken());
-            //assertEquals(201, clientResponse.getStatus());
+            assertEquals(201, clientResponse.getStatus());
         } catch (Exception ex) {
             throw new AssertionError(ex.getMessage());
         }
@@ -112,7 +112,7 @@ public class RecordSteps extends TestsBase {
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search(int expectedCount, String index) throws Throwable {
         index = generateActualName(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
-        //assertEquals(expectedCount, numOfIndexedDocuments);
+        assertEquals(expectedCount, numOfIndexedDocuments);
     }
 
     public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String type, String index) throws Throwable {
@@ -120,7 +120,7 @@ public class RecordSteps extends TestsBase {
         Map<String, MappingMetadata> elasticMapping = elasticUtils.getMapping(index);
         assertNotNull(elasticMapping);
 
-        MappingMetadata typeMapping = elasticMapping.get(type);
+        MappingMetadata typeMapping = elasticMapping.get(index);
         Map<String, Object> mapping = typeMapping.sourceAsMap();
         assertNotNull(mapping);
         assertTrue(areJsonEqual(expectedMapping, mapping.toString()));
