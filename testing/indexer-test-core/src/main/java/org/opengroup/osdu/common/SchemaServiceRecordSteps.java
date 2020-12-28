@@ -18,13 +18,13 @@ public class SchemaServiceRecordSteps extends RecordSteps {
     public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
         List<Setup> inputList = dataTable.asList(Setup.class);
         inputList.forEach(this::createSchema);
-        inputList.forEach(s -> deleteIndex(generateActualName(s.getIndex())));
+        inputList.forEach(s -> deleteIndex(generateActualNameWithoutTs(s.getIndex())));
         super.addShutDownHook();
     }
 
     private void createSchema(Setup input) {
         PersistentSchemaTestIndex testIndex = new PersistentSchemaTestIndex(super.elasticUtils, super.httpClient, this);
-        testIndex.setIndex(generateActualNameWithTS(input.getIndex(), super.getTimeStamp()));
+        testIndex.setIndex(generateActualName(input.getIndex(), super.getTimeStamp()));
         testIndex.setSchemaFile(input.getSchemaFile());
         testIndex.setHttpClient(super.httpClient);
         testIndex.setupSchema();
@@ -39,7 +39,7 @@ public class SchemaServiceRecordSteps extends RecordSteps {
 
     @Override
     protected String generateRecordId(Map<String, Object> testRecord) {
-        return generateActualName(testRecord.get("id").toString());
+        return generateActualNameWithoutTs(testRecord.get("id").toString());
     }
 
     @Override

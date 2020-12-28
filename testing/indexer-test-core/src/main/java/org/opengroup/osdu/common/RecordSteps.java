@@ -73,8 +73,8 @@ public class RecordSteps extends TestsBase {
         for (Setup input : inputList) {
             TestIndex testIndex = getTextIndex();
             testIndex.setHttpClient(httpClient);
-            testIndex.setIndex(generateActualNameWithTS(input.getIndex(), timeStamp));
-            testIndex.setKind(generateActualNameWithTS(input.getKind(), timeStamp));
+            testIndex.setIndex(generateActualName(input.getIndex(), timeStamp));
+            testIndex.setKind(generateActualName(input.getKind(), timeStamp));
             testIndex.setSchemaFile(input.getSchemaFile());
             inputIndexMap.put(testIndex.getKind(), testIndex);
         }
@@ -91,7 +91,7 @@ public class RecordSteps extends TestsBase {
 
     public void i_ingest_records_with_the_for_a_given(String record, String dataGroup, String kind) {
 
-        String actualKind = generateActualNameWithTS(kind, timeStamp);
+        String actualKind = generateActualName(kind, timeStamp);
         try {
             String fileContent = FileHandler.readFile(String.format("%s.%s", record, "json"));
             records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
@@ -100,7 +100,7 @@ public class RecordSteps extends TestsBase {
                 testRecord.put("id", generateRecordId(testRecord));
                 testRecord.put("kind", actualKind);
                 testRecord.put("legal", generateLegalTag());
-                String[] x_acl = {generateActualNameWithTS(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
+                String[] x_acl = {generateActualName(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
                 Acl acl = Acl.builder().viewers(x_acl).owners(x_acl).build();
                 testRecord.put("acl", acl);
             }
@@ -114,17 +114,17 @@ public class RecordSteps extends TestsBase {
     }
 
     protected String generateRecordId(Map<String, Object> testRecord) {
-        return generateActualNameWithTS(testRecord.get("id").toString(), timeStamp);
+        return generateActualName(testRecord.get("id").toString(), timeStamp);
     }
 
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search(int expectedCount, String index) throws Throwable {
-        index = generateActualNameWithTS(index, timeStamp);
+        index = generateActualName(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
         assertEquals(expectedCount, numOfIndexedDocuments);
     }
 
     public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String type, String index) throws Throwable {
-        index = generateActualNameWithTS(index, timeStamp);
+        index = generateActualName(index, timeStamp);
         ImmutableOpenMap<String, MappingMetaData> elasticMapping = elasticUtils.getMapping(index);
         assertNotNull(elasticMapping);
 
@@ -135,7 +135,7 @@ public class RecordSteps extends TestsBase {
     }
 
     public void iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(int expectedCount, String index, String skippedAttributes) throws Throwable {
-        index = generateActualNameWithTS(index, timeStamp);
+        index = generateActualName(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
         long documentCountByQuery = elasticUtils.fetchRecordsByExistQuery(index, skippedAttributes);
         assertEquals(expectedCount, documentCountByQuery);

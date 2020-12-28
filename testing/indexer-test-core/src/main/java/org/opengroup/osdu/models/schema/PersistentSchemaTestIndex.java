@@ -31,7 +31,7 @@ public class PersistentSchemaTestIndex extends TestIndex {
         this.schemaModel = readSchemaFromJson();
         SchemaIdentity schemaIdentity = schemaModel.getSchemaInfo().getSchemaIdentity();
         LOGGER.log(Level.INFO, "Read the schema={0}", schemaIdentity);
-        schemaIdentity.setAuthority(recordSteps.generateActualName(schemaIdentity.getAuthority()));
+        schemaIdentity.setAuthority(recordSteps.generateActualNameWithoutTs(schemaIdentity.getAuthority()));
         LOGGER.log(Level.INFO, "Updated the schema={0}", schemaIdentity);
         schemaServiceClient.createIfNotExist(schemaModel);
         LOGGER.log(Level.INFO, "Finished setting up the schema={0}", schemaIdentity);

@@ -66,8 +66,8 @@ public class CleanupIndiciesSteps extends TestsBase {
     for (Setup input : inputList) {
       TestIndex testIndex = getTextIndex();
       testIndex.setHttpClient(httpClient);
-      testIndex.setIndex(generateActualNameWithTS(input.getIndex(), timeStamp));
-      testIndex.setKind(generateActualNameWithTS(input.getKind(), timeStamp));
+      testIndex.setIndex(generateActualName(input.getIndex(), timeStamp));
+      testIndex.setKind(generateActualName(input.getKind(), timeStamp));
       testIndex.setSchemaFile(input.getSchemaFile());
       inputIndexMap.put(testIndex.getKind(), testIndex);
     }
@@ -81,16 +81,16 @@ public class CleanupIndiciesSteps extends TestsBase {
   }
 
   public void iIngestRecordsWithTheforAGiven(String record, String dataGroup, String kind) {
-    String actualKind = generateActualNameWithTS(kind, timeStamp);
+    String actualKind = generateActualName(kind, timeStamp);
     try {
       String fileContent = FileHandler.readFile(String.format("%s.%s", record, "json"));
       records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
 
       for (Map<String, Object> testRecord : records) {
-        testRecord.put("id", generateActualNameWithTS(testRecord.get("id").toString(), timeStamp));
+        testRecord.put("id", generateActualName(testRecord.get("id").toString(), timeStamp));
         testRecord.put("kind", actualKind);
         testRecord.put("legal", generateLegalTag());
-        String[] x_acl = {generateActualNameWithTS(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
+        String[] x_acl = {generateActualName(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
         Acl acl = Acl.builder().viewers(x_acl).owners(x_acl).build();
         testRecord.put("acl", acl);
       }
@@ -103,7 +103,7 @@ public class CleanupIndiciesSteps extends TestsBase {
   }
 
   public void iCheckThatTheIndexForHasBeenCreated(String kind) throws IOException, InterruptedException {
-    assertTrue(isNewIndexCreated(generateActualNameWithTS(kind, timeStamp)));
+    assertTrue(isNewIndexCreated(generateActualName(kind, timeStamp)));
   }
 
   public void iShouldDeleteTheRecordsForICreatedEarlier() {
@@ -124,13 +124,13 @@ public class CleanupIndiciesSteps extends TestsBase {
 
   public void iShouldDeleteTheSchemaForICreatedEarlier(String kind) {
     ClientResponse response = httpClient.send(HttpMethod.DELETE,
-        String.format("%sschemas%s", getStorageBaseURL(), "/" + generateActualNameWithTS(kind, timeStamp)),null,
+        String.format("%sschemas%s", getStorageBaseURL(), "/" + generateActualName(kind, timeStamp)),null,
         headers, httpClient.getAccessToken());
     assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatus());
   }
 
   public void iShouldCheckThetTheIndexforHasNotBeenDeleted(String kind) throws IOException, InterruptedException {
-    assertTrue(isNewIndexExist(generateActualNameWithTS(kind, timeStamp)));
+    assertTrue(isNewIndexExist(generateActualName(kind, timeStamp)));
   }
 
   public void iShouldToRunCleanupOfIndexesForAnd(String kind, String message) {
@@ -143,11 +143,11 @@ public class CleanupIndiciesSteps extends TestsBase {
   }
 
   public void iShouldCheckThatTheIndexForHasBeenDeleted(String kind) throws IOException, InterruptedException {
-    assertFalse(isNewIndexExist(generateActualNameWithTS(kind, timeStamp)));
+    assertFalse(isNewIndexExist(generateActualName(kind, timeStamp)));
   }
 
   private String convertMessageIntoJson(String kind, String message) {
-    String actualKind = generateActualNameWithTS(kind, timeStamp);
+    String actualKind = generateActualName(kind, timeStamp);
     RecordChangedMessages recordChangedMessages = (new Gson()).fromJson(String.format(message,
         actualKind, actualKind, timeStamp), RecordChangedMessages.class);
     return new Gson().toJson(recordChangedMessages);

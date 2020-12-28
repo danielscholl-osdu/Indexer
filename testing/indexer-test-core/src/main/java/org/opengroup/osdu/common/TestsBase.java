@@ -54,19 +54,19 @@ public abstract class TestsBase {
         for (Setup input : inputList) {
             TestIndex testIndex = getTextIndex();
             testIndex.setHttpClient(httpClient);
-            testIndex.setIndex(generateActualNameWithTS(input.getIndex(), timeStamp));
-            testIndex.setKind(generateActualNameWithTS(input.getKind(), timeStamp));
+            testIndex.setIndex(generateActualName(input.getIndex(), timeStamp));
+            testIndex.setKind(generateActualName(input.getKind(), timeStamp));
             testIndex.setMappingFile(input.getMappingFile());
             testIndex.setRecordFile(input.getRecordFile());
             List<String> dataGroup = new ArrayList<>();
             String[] viewerGroup = input.getViewerGroup().split(",");
             for (int i = 0; i < viewerGroup.length; i++) {
-                viewerGroup[i] = generateActualNameWithTS(viewerGroup[i], timeStamp) + "." + getEntitlementsDomain();
+                viewerGroup[i] = generateActualName(viewerGroup[i], timeStamp) + "." + getEntitlementsDomain();
                 dataGroup.add(viewerGroup[i]);
             }
             String[] ownerGroup = input.getOwnerGroup().split(",");
             for (int i = 0; i < ownerGroup.length; i ++) {
-                ownerGroup[i] = generateActualNameWithTS(ownerGroup[i], timeStamp) + "." + getEntitlementsDomain();
+                ownerGroup[i] = generateActualName(ownerGroup[i], timeStamp) + "." + getEntitlementsDomain();
                 if (dataGroup.indexOf(ownerGroup[i]) > 0) {
                     dataGroup.add(ownerGroup[i]);
                 }
@@ -123,18 +123,18 @@ public abstract class TestsBase {
         log.info(String.format("Scenario Name: %s, Correlation-Id: %s", scenario.getId(), headers.get("correlation-id")));
     }
 
-    public String generateActualName(String rawName) {
-        for (Map.Entry<String, String> tenant : tenantMap.entrySet()) {
-            rawName = rawName.replaceAll(tenant.getKey(), tenant.getValue());
-        }
-        return rawName.replaceAll("<timestamp>", "");
-    }
-
-    protected String generateActualNameWithTS(String rawName, String timeStamp) {
+    protected String generateActualName(String rawName, String timeStamp) {
         for (Map.Entry<String, String> tenant : tenantMap.entrySet()) {
             rawName = rawName.replaceAll(tenant.getKey(), tenant.getValue());
         }
         return rawName.replaceAll("<timestamp>", timeStamp);
+    }
+
+    public String generateActualNameWithoutTs(String rawName) {
+        for (Map.Entry<String, String> tenant : tenantMap.entrySet()) {
+            rawName = rawName.replaceAll(tenant.getKey(), tenant.getValue());
+        }
+        return rawName.replaceAll("<timestamp>", "");
     }
 
     protected Legal generateLegalTag() {
