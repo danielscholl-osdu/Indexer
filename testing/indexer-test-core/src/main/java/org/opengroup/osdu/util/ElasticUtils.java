@@ -319,7 +319,13 @@ public class ElasticUtils {
                 new BasicHeader("Authorization", String.format("Basic %s", Base64.getEncoder().encodeToString(usernameAndPassword.getBytes()))),
             };
 
-        if ("https".equals(scheme) && true) {
+        boolean isSecurityHttpsCertificateTrust = Config.isSecurityHttpsCertificateTrust();
+        log.info(String.format(
+            "Elastic client connection uses protocolScheme = %s with a flag "
+                + "'security.https.certificate.trust' = %s",
+            scheme, isSecurityHttpsCertificateTrust));
+
+        if ("https".equals(scheme) && isSecurityHttpsCertificateTrust) {
             log.warning("Elastic client connection uses TrustSelfSignedStrategy()");
             SSLContext sslContext = createSSLContext();
             builder.setHttpClientConfigCallback(httpClientBuilder ->

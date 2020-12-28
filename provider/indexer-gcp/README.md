@@ -147,6 +147,8 @@ You will need to have the following environment variables defined.
 | `SEARCH_INTEGRATION_TESTER` | `********` | Service account for API calls. Note: this user must have entitlements configured already | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `SEARCH_HOST` | ex `http://localhost:8080/api/search/v2/` | Endpoint of search service | no | - |
 | `STORAGE_HOST` | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/schemas` | Storage API endpoint | Storage Host | no | output of infrastructure deployment |
+| `security.https.certificate.trust` | ex `false` | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false | output of infrastructure deployment |
+
 
 **Entitlements configuration for integration accounts**
 
