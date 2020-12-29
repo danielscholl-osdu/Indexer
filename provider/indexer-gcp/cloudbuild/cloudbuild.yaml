@@ -27,4 +27,5 @@ steps:
     ]
 
 images:
-  - 'gcr.io/$PROJECT_ID/${_APPLICATION_NAME}/${_GCP_SERVICE}-${_PROVIDER_NAME}'
+  - 'gcr.io/$PROJECT_ID/os-indexer/indexer-${_PROVIDER_NAME}'
+
