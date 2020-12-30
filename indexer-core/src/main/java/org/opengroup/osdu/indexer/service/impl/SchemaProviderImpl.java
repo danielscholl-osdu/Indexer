@@ -67,7 +67,7 @@ public class SchemaProviderImpl implements SchemaService {
         return getFromSchemaService(kind);
     }
 
-    public String getFromSchemaService(String kind) throws UnsupportedEncodingException, URISyntaxException {
+    protected String getFromSchemaService(String kind) throws UnsupportedEncodingException, URISyntaxException {
         HttpResponse response = getSchemaServiceResponse(kind);
 
         if (response.getResponseCode() == HttpStatus.SC_NOT_FOUND) {
@@ -79,7 +79,7 @@ public class SchemaProviderImpl implements SchemaService {
                 schemaToStorageFormat.convertToString(response.getBody(), kind);
     }
 
-    public String getFromStorageService(String kind) throws URISyntaxException, UnsupportedEncodingException {
+    protected String getFromStorageService(String kind) throws URISyntaxException, UnsupportedEncodingException {
         String schemaFromStorageService = storageService.getStorageSchema(kind);
 
         if (schemaFromStorageService != null) {
@@ -91,7 +91,7 @@ public class SchemaProviderImpl implements SchemaService {
         return null;
     }
 
-    protected HttpResponse getSchemaServiceResponse(String kind) throws UnsupportedEncodingException, URISyntaxException {
+    private HttpResponse getSchemaServiceResponse(String kind) throws UnsupportedEncodingException, URISyntaxException {
         String url = String.format("%s/%s", configurationProperties.getSchemaHost(), URLEncoder.encode(kind, StandardCharsets.UTF_8.toString()));
         FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
                 .httpMethod(HttpMethods.GET)

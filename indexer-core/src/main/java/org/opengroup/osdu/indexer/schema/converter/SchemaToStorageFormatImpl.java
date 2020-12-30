@@ -64,7 +64,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         return convert(parserJsonString(schemaServiceFormat), kind);
     }
 
-    protected SchemaRoot parserJsonString(final String schemaServiceFormat) {
+    private SchemaRoot parserJsonString(final String schemaServiceFormat) {
         try {
             return objectMapper.readValue(schemaServiceFormat, SchemaRoot.class);
         } catch (JsonProcessingException e) {
@@ -72,7 +72,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         }
     }
 
-    protected String saveJsonToString(final Map<String, Object> schemaServiceFormat) {
+    private String saveJsonToString(final Map<String, Object> schemaServiceFormat) {
         try {
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(schemaServiceFormat);
         } catch (JsonProcessingException e) {
@@ -80,7 +80,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         }
     }
 
-    public Map<String, Object> convert(SchemaRoot schemaServiceSchema, String kind) {
+    private Map<String, Object> convert(SchemaRoot schemaServiceSchema, String kind) {
         Preconditions.checkNotNull(objectMapper, "schemaServiceSchema cannot be null");
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 

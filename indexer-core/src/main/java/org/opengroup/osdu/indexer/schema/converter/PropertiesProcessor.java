@@ -88,7 +88,7 @@ public class PropertiesProcessor {
         return definition.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
     }
 
-    protected Stream<Map<String, Object>> processPropertyEntry(Map.Entry<String, TypeProperty> entry) {
+    private Stream<Map<String, Object>> processPropertyEntry(Map.Entry<String, TypeProperty> entry) {
         Preconditions.checkNotNull(entry, "entry cannot be null");
 
         if ("object".equals(entry.getValue().getType())
@@ -120,7 +120,7 @@ public class PropertiesProcessor {
         return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
     }
 
-    protected Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {
+    private Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
         Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
 
@@ -130,7 +130,7 @@ public class PropertiesProcessor {
         return Stream.of(map);
     }
 
-    protected String getTypeByDefinitionProperty(TypeProperty definitionProperty) {
+    private String getTypeByDefinitionProperty(TypeProperty definitionProperty) {
         Preconditions.checkNotNull(definitionProperty, "definitionProperty cannot be null");
 
         return Stream.of(
@@ -143,32 +143,32 @@ public class PropertiesProcessor {
                 .orElse(getFromType(definitionProperty::getType)).get();
     }
 
-    protected Supplier<String> getFromPattern(String pattern) {
+    private Supplier<String> getFromPattern(String pattern) {
         return () -> Objects.nonNull(pattern) && pattern.startsWith(LINK_PREFIX) ? LINK_TYPE : null;
     }
 
-    protected Supplier<String> getFromItemsPattern(Supplier<String> itemsPatternSupplier) {
+    private Supplier<String> getFromItemsPattern(Supplier<String> itemsPatternSupplier) {
         return () -> {
                 String itemsPattern = itemsPatternSupplier.get();
                 return Objects.nonNull(itemsPattern) && itemsPattern.startsWith(LINK_PREFIX) ? LINK_TYPE : null;
             };
     }
 
-    protected Supplier<String> getFromType(Supplier<String> typeSupplier) {
+    private Supplier<String> getFromType(Supplier<String> typeSupplier) {
         return  () -> {
             String type = typeSupplier.get();
             return schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(type, type);
         };
     }
 
-    protected Supplier<String> getFromFormat(Supplier<String> formatSupplier){
+    private Supplier<String> getFromFormat(Supplier<String> formatSupplier){
         return  () -> {
             String format = formatSupplier.get();;
             return Objects.nonNull(format) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(format, format) : null;
         };
     }
 
-    protected Supplier<String> getFromItemsType(Supplier<String> itemsTypeSupplier) {
+    private Supplier<String> getFromItemsType(Supplier<String> itemsTypeSupplier) {
         return () -> {
             String itemsType = itemsTypeSupplier.get();
             return Objects.nonNull(itemsType) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(itemsType, itemsType) : null;

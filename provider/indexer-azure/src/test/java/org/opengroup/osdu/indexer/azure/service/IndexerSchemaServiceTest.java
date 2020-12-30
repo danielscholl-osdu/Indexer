@@ -23,19 +23,18 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.service.IndexSchemaServiceImpl;
 import org.opengroup.osdu.indexer.service.IndexerMappingService;
 import org.opengroup.osdu.indexer.service.SchemaService;
-import org.opengroup.osdu.indexer.service.StorageService;
-import org.opengroup.osdu.core.common.model.http.RequestStatus;
-import org.opengroup.osdu.core.common.search.IndicesService;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -62,8 +61,6 @@ public class IndexerSchemaServiceTest {
 
     @Mock
     private JaxRsDpsLog log;
-    @Mock
-    private StorageService storageService;
     @Mock
     private ElasticClientHandler elasticClientHandler;
     @Mock

@@ -160,7 +160,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         }
     }
 
-    protected String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
+    private String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
         return this.schemaProvider.getSchema(kind);
     }
 
