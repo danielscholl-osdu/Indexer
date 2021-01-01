@@ -14,20 +14,21 @@
 
 package org.opengroup.osdu.step_definitions.index.record;
 
-import lombok.extern.java.Log;
-
 import cucumber.api.Scenario;
 import cucumber.api.java.Before;
+import lombok.extern.java.Log;
+
 import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import org.opengroup.osdu.common.RecordSteps;
+import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 import org.opengroup.osdu.util.AzureHTTPClient;
 import org.opengroup.osdu.util.ElasticUtils;
 
+
 @Log
-public class Steps extends RecordSteps {
+public class Steps extends SchemaServiceRecordSteps {
 
     public Steps() {
         super(new AzureHTTPClient(), new ElasticUtils());
@@ -36,7 +37,6 @@ public class Steps extends RecordSteps {
     @Before
     public void before(Scenario scenario) {
         this.scenario = scenario;
-        this.httpClient = new AzureHTTPClient();
     }
 
     @Given("^the schema is created with the following kind$")
