@@ -40,6 +40,8 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | name | value | description | sensitive? | source |
 | ---  | ---   | ---         | ---        | ---    |
 | `server.servlet.contextPath` | `/api/indexer/v2/` | Servlet context path | no | - |
+| `schema_service_url` | ex `https://schema.azurewebsites.net` | Endpoint of schema service | no | output of infrastructure deployments |
+| `SCHEMA_HOST` | `${schema_service_url}/schema` | Endpoint of schema API | no | - |
 | `storage_service_url` | ex `https://storage.azurewebsites.net` | Endpoint of storage service | no | output of infrastructure deployments |
 | `STORAGE_SCHEMA_HOST` | `${storage_service_url}/schemas` | Endpoint of schema API | no | - |
 | `STORAGE_QUERY_RECORD_HOST` | `${storage_service_url}/query/records` | Endpoint of records API | no | - |
@@ -73,6 +75,7 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | `DEFAULT_DATA_PARTITION_ID_TENANT1` | ex `opendes` | Primary data partition for queries | no | Data in search index |
 | `DEFAULT_DATA_PARTITION_ID_TENANT2` | ex `common` | Secondary data partition for queries | no | Data in search index |
 | `STORAGE_HOST` | ex `https://storage.azurewebsites.net/` | Storage service endpoint | no | output of infrastructure deployment |
+| `SCHEMA_HOST` | ex `https://schema.azurewebsites.net/` | Endpoint of schema API | no | - |
 | `ENVIRONMENT` | `CLOUD` | Deployment environment | no | - |
 | `ENTITLEMENTS_DOMAIN` | `contoso.com` | OSDU R2 service domain | no | - |
 | `LEGAL_TAG` | `opendes-public-usa-dataset-7643990` | Legal tag used for test records | no | Needs to be in DB. The referenced tag should already exist. |

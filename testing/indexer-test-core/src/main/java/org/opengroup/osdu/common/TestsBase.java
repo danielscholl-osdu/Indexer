@@ -123,18 +123,18 @@ public abstract class TestsBase {
         log.info(String.format("Scenario Name: %s, Correlation-Id: %s", scenario.getId(), headers.get("correlation-id")));
     }
 
-    protected String getTenantMapping(String tenant) {
-        if (tenantMap.containsKey(tenant)) {
-            return tenantMap.get(tenant);
-        }
-        return null;
-    }
-
     protected String generateActualName(String rawName, String timeStamp) {
-        for (String tenant : tenantMap.keySet()) {
-            rawName = rawName.replaceAll(tenant, getTenantMapping(tenant));
+        for (Map.Entry<String, String> tenant : tenantMap.entrySet()) {
+            rawName = rawName.replaceAll(tenant.getKey(), tenant.getValue());
         }
         return rawName.replaceAll("<timestamp>", timeStamp);
+    }
+
+    public String generateActualNameWithoutTs(String rawName) {
+        for (Map.Entry<String, String> tenant : tenantMap.entrySet()) {
+            rawName = rawName.replaceAll(tenant.getKey(), tenant.getValue());
+        }
+        return rawName.replaceAll("<timestamp>", "");
     }
 
     protected Legal generateLegalTag() {
