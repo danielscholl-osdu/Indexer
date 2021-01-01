@@ -29,6 +29,7 @@ import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.search.IndicesService;
+import org.opengroup.osdu.indexer.service.impl.SchemaProviderImpl;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -56,7 +57,7 @@ public class IndexerSchemaServiceTest {
     @Mock
     private JaxRsDpsLog log;
     @Mock
-    private StorageService storageService;
+    private SchemaProviderImpl schemaProvider;
     @Mock
     private ElasticClientHandler elasticClientHandler;
     @Mock
@@ -79,7 +80,7 @@ public class IndexerSchemaServiceTest {
 
     @Test
     public void should_returnNull_givenEmptySchema_getIndexerInputSchemaSchemaTest() throws Exception {
-        when(storageService.getStorageSchema(any())).thenReturn(emptySchema);
+        when(schemaProvider.getSchema(any())).thenReturn(emptySchema);
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
@@ -88,7 +89,7 @@ public class IndexerSchemaServiceTest {
 
     @Test
     public void should_returnValidResponse_givenValidSchema_getIndexerInputSchemaTest() throws Exception {
-        when(storageService.getStorageSchema(any())).thenReturn(someSchema);
+        when(schemaProvider.getSchema(any())).thenReturn(someSchema);
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
@@ -97,7 +98,7 @@ public class IndexerSchemaServiceTest {
 
     @Test
     public void should_returnValidResponse_givenValidSchemaWithCacheHit_getIndexerInputSchemaTest() throws Exception {
-        when(storageService.getStorageSchema(any())).thenReturn(someSchema);
+        when(schemaProvider.getSchema(any())).thenReturn(someSchema);
         when(this.schemaCache.get(kind + "_flattened")).thenReturn(someSchema);
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
@@ -109,7 +110,7 @@ public class IndexerSchemaServiceTest {
     public void should_throw500_givenInvalidSchemaCacheHit_getIndexerInputSchemaTest() {
         try {
             String invalidSchema = "{}}";
-            when(storageService.getStorageSchema(any())).thenReturn(invalidSchema);
+            when(schemaProvider.getSchema(any())).thenReturn(invalidSchema);
 
             this.sut.getIndexerInputSchema(kind, false);
             fail("Should throw exception");
@@ -164,7 +165,7 @@ public class IndexerSchemaServiceTest {
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(false);
-        when(this.storageService.getStorageSchema(kind)).thenReturn(storageSchema);
+        when(this.schemaProvider.getSchema(kind)).thenReturn(storageSchema);
 
         this.sut.processSchemaMessages(schemaMessages);
 
@@ -195,7 +196,7 @@ public class IndexerSchemaServiceTest {
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
-        when(this.storageService.getStorageSchema(kind)).thenReturn(storageSchema);
+        when(this.schemaProvider.getSchema(kind)).thenReturn(storageSchema);
 
         this.sut.processSchemaMessages(schemaMessages);
 
@@ -223,7 +224,7 @@ public class IndexerSchemaServiceTest {
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
-        when(this.storageService.getStorageSchema(kind)).thenReturn(storageSchema);
+        when(this.schemaProvider.getSchema(kind)).thenReturn(storageSchema);
         when(this.mappingService.createMapping(any(), any(), any(), anyBoolean())).thenThrow(new AppException(HttpStatus.SC_BAD_REQUEST, reason, ""));
 
         try {
@@ -256,7 +257,7 @@ public class IndexerSchemaServiceTest {
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
-        when(this.storageService.getStorageSchema(kind)).thenReturn(storageSchema);
+        when(this.schemaProvider.getSchema(kind)).thenReturn(storageSchema);
         when(this.mappingService.createMapping(any(), any(), any(), anyBoolean())).thenThrow(new AppException(HttpStatus.SC_FORBIDDEN, reason, "blah"));
 
         try {
@@ -282,7 +283,7 @@ public class IndexerSchemaServiceTest {
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
-        when(this.storageService.getStorageSchema(kind)).thenReturn(storageSchema);
+        when(this.schemaProvider.getSchema(kind)).thenReturn(storageSchema);
 
         this.sut.processSchemaMessages(schemaMessages);
 
@@ -336,7 +337,7 @@ public class IndexerSchemaServiceTest {
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
         when(this.indicesService.deleteIndex(any(), any())).thenReturn(true);
-        when(this.storageService.getStorageSchema(kind)).thenReturn(storageSchema);
+        when(this.schemaProvider.getSchema(kind)).thenReturn(storageSchema);
 
         this.sut.syncIndexMappingWithStorageSchema(kind);
 

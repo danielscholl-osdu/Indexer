@@ -7,6 +7,7 @@
 - [Reindex <a name="reindex"></a>](#reindex)
 - [Copy Index <a name="copy-index"></a>](#copy-index)
 - [Get task status <a name="get-task-status"></a>](#get-task-status)
+- [Schema Service adoption <a name="schema-service-adoption"></a>](#schema-service-adoption)
 
 
 ##Introduction <a name="introduction"></a>
@@ -247,6 +248,15 @@ API will respond with status of task.
     }
 }
 ``` 
+
+[Back to table of contents](#TOC)
+
+##Shema Service adoption <a name="schema-service-adoption"></a>
+
+Indexer service is in adaptation process to use schemas from the Schema service instead of Storage Service.
+The Indexer Service retrieves a schema from the Schema Service if the schema is not found on the Storage Service.
+Change affects only Azure implementation so far.
+Later call to the Storage Service will be deprecated and then removed (after the end of the deprecation period).
 
 [Back to table of contents](#TOC)
 

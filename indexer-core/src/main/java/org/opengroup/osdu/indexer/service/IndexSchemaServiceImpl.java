@@ -16,29 +16,30 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.opengroup.osdu.core.common.model.storage.SchemaItem;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
-import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
-import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
-import org.opengroup.osdu.indexer.util.TypeMapper;
-import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
-import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.model.storage.Schema;
+import org.opengroup.osdu.core.common.model.storage.SchemaItem;
+import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.core.common.search.IndicesService;
+import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
+import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,7 +53,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private JaxRsDpsLog log;
     @Inject
-    private StorageService storageService;
+    private SchemaService schemaProvider;
     @Inject
     private ElasticClientHandler elasticClientHandler;
     @Inject
@@ -129,7 +130,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             String schema = (String) this.schemaCache.get(kind);
             if (Strings.isNullOrEmpty(schema)) {
                 // get from storage
-                schema = this.storageService.getStorageSchema(kind);
+                schema = getSchema(kind);
                 if (Strings.isNullOrEmpty(schema)) {
                     Schema basicSchema = Schema.builder().kind(kind).build();
                     return normalizeSchema(gson.toJson(basicSchema));
@@ -157,6 +158,10 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         } catch (Exception e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Schema parse/read error", "Error while reading schema via storage service.", e);
         }
+    }
+
+    private String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
+        return this.schemaProvider.getSchema(kind);
     }
 
     public void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException {
