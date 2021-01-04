@@ -30,7 +30,7 @@ export STORAGE_HOST=$STORAGE_URL
 
 #### RUN INTEGRATION TEST #########################################################################
 
-mvn test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml"
+mvn -ntp test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml"
 TEST_EXIT_CODE=$?
 
 #### COPY TEST REPORTS #########################################################################
