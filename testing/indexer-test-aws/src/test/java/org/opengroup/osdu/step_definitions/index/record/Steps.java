@@ -15,7 +15,6 @@
 package org.opengroup.osdu.step_definitions.index.record;
 
 import lombok.extern.java.Log;
-import org.opengroup.osdu.common.RecordSteps;
 import org.opengroup.osdu.core.common.model.legal.Legal;
 import org.opengroup.osdu.util.AWSHTTPClient;
 
@@ -27,6 +26,7 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.opengroup.osdu.util.ElasticUtilsAws;
 import org.opengroup.osdu.util.LegalTagUtilsAws;
+import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -34,7 +34,7 @@ import java.util.Set;
 import static org.opengroup.osdu.util.Config.getOtherRelevantDataCountries;
 
 @Log
-public class Steps extends RecordSteps {
+public class Steps extends SchemaServiceRecordSteps {
 
     protected LegalTagUtilsAws legalTagUtils;
     private String legalTagName;
