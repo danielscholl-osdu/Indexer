@@ -27,6 +27,7 @@ export DEFAULT_DATA_PARTITION_ID_TENANT2=common
 export ENTITLEMENTS_DOMAIN=testing.com
 export OTHER_RELEVANT_DATA_COUNTRIES=US
 export STORAGE_HOST=$STORAGE_URL
+export HOST=$SCHEMA_URL
 
 #### RUN INTEGRATION TEST #########################################################################
 
@@ -39,6 +40,7 @@ if [ -n "$1" ]
   then
     mkdir -p "$1"
     cp "$SCRIPT_SOURCE_DIR"/../target/junit-report.xml "$1"/os-indexer-junit-report.xml
+    cp  -R "$SCRIPT_SOURCE_DIR"/../target/surefire-reports "$1"
 fi
 
 exit $TEST_EXIT_CODE
