@@ -57,7 +57,7 @@ phases:
       - printenv
 
       - echo "Building primary service assemblies..."
-      - mvn -B test install -pl indexer-core,provider/indexer-aws -Ddeployment.environment=prod
+      - mvn -ntp -B test install -pl indexer-core,provider/indexer-aws -Ddeployment.environment=prod
 
 
 #      - echo "Copying assemblies to dist..."
