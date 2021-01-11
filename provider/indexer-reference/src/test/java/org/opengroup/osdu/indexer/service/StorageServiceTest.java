@@ -39,9 +39,9 @@ import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.model.indexer.Records;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
@@ -67,6 +67,8 @@ public class StorageServiceTest {
     private JaxRsDpsLog log;
     @Mock
     private IRequestInfo requestInfo;
+    @Mock
+    private IndexerConfigurationProperties configurationProperties;
     @InjectMocks
     private StorageServiceImpl sut;
 
@@ -89,7 +91,7 @@ public class StorageServiceTest {
         jobStatus.initialize(msgs);
         ids = Arrays.asList(RECORD_ID1, RECORDS_ID2);
 
-        ReflectionTestUtils.setField(this.sut, "STORAGE_RECORDS_BATCH_SIZE", "20");
+        when(configurationProperties.getStorageRecordsBatchSize()).thenReturn(20);
     }
 
     @Test

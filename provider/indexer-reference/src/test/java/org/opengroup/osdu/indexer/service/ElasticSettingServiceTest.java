@@ -30,6 +30,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCache;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
 import org.opengroup.osdu.core.common.multitenancy.ITenantInfoService;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.junit.Assert.assertEquals;
@@ -45,6 +46,8 @@ public class ElasticSettingServiceTest {
     private IElasticRepository elasticRepository;
     @Mock
     private IElasticCredentialsCache elasticCredentialCache;
+    @Mock
+    private IndexerConfigurationProperties configurationProperties;
     @Mock
     private TenantInfo tenantInfo;
     @InjectMocks
@@ -72,7 +75,7 @@ public class ElasticSettingServiceTest {
         when(tenantInfo.getName()).thenReturn("tenant1");
         when(this.headersInfo.getPartitionId()).thenReturn("tenant1");
         when(this.tenantInfoService.getTenantInfo()).thenReturn(tenantInfo);
-        sut.GAE_SERVICE = "indexer";
+        when(configurationProperties.getGaeService()).thenReturn("indexer");
         clusterSettings = ClusterSettings.builder().host(host).port(port).userNameAndPassword(credentials).build();
         cacheKey = String.format("%s-%s", GAE_SERVICE, tenantInfo.getName());
     }
