@@ -31,10 +31,10 @@ import org.springframework.web.context.annotation.RequestScope;
 public class EntitlementsClientFactory extends AbstractFactoryBean<IEntitlementsFactory> {
 
 	@Value("${AUTHORIZE_API}")
-	private String AUTHORIZE_API;
+	private String authorizeApi;
 
 	@Value("${AUTHORIZE_API_KEY:}")
-	private String AUTHORIZE_API_KEY;
+	private String authorizeApiKey;
 
 	@Autowired
 	private HttpResponseBodyMapper mapper;
@@ -44,8 +44,8 @@ public class EntitlementsClientFactory extends AbstractFactoryBean<IEntitlements
 
 		return new EntitlementsFactory(EntitlementsAPIConfig
 				.builder()
-				.rootUrl(AUTHORIZE_API)
-				.apiKey(AUTHORIZE_API_KEY)
+				.rootUrl(authorizeApi)
+				.apiKey(authorizeApiKey)
 				.build(),
 				mapper);
 	}
