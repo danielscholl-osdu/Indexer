@@ -38,7 +38,7 @@ import org.mockito.Mock;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
-import org.opengroup.osdu.core.common.search.Config;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.powermock.api.mockito.PowerMockito;
@@ -54,12 +54,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @Ignore
 @RunWith(SpringRunner.class)
-@PrepareForTest({ RestHighLevelClient.class, IndicesClient.class, Config.class })
+@PrepareForTest({ RestHighLevelClient.class, IndicesClient.class})
 public class IndexerMappingServiceTest {
 
 	private final String kind = "tenant:test:test:1.0.0";
@@ -67,6 +66,8 @@ public class IndexerMappingServiceTest {
 	private final String type = "test";
 	private final String mappingValid = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"analyzer\":\"de_indexer_analyzer\",\"search_analyzer\":\"de_search_analyzer\"},\"Location\":{\"type\":\"geo_point\"}}},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
 
+	@Mock
+	private IndexerConfigurationProperties configurationProperties;
 	@Mock
 	private RestClient restClient;
 	@Mock
@@ -94,8 +95,7 @@ public class IndexerMappingServiceTest {
 	@Before
 	public void setup() throws IOException {
 		initMocks(this);
-		mockStatic(Config.class);
-		when(Config.isPreDemo()).thenReturn(true);
+		when(configurationProperties.isPreDemo()).thenReturn(true);
 		Map<String, String> dataMapping = new HashMap<>();
 		dataMapping.put("Location", "geo_point");
 		dataMapping.put("Msg", "text");

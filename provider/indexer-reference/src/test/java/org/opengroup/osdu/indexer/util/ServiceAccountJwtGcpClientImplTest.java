@@ -41,7 +41,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.search.DeploymentEnvironment;
 import org.opengroup.osdu.core.common.model.search.IdToken;
 import org.opengroup.osdu.core.common.provider.interfaces.IJwtCache;
-import org.opengroup.osdu.core.common.search.Config;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -52,11 +52,13 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @Ignore
 @RunWith(SpringRunner.class)
-@PrepareForTest({GoogleNetHttpTransport.class, GoogleCredential.class, NetHttpTransport.class, SignJwtResponse.class, Iam.Builder.class, HttpClients.class, EntityUtils.class, Config.class})
+@PrepareForTest({GoogleNetHttpTransport.class, GoogleCredential.class, NetHttpTransport.class, SignJwtResponse.class, Iam.Builder.class, HttpClients.class, EntityUtils.class, IndexerConfigurationProperties.class})
 public class ServiceAccountJwtGcpClientImplTest {
 
     private static final String JWT_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik1UVXlPREE0TXpFd09BPT0ifQ.eyJzdWIiOiJtemh1OUBzbGIuY29tIiwiaXNzIjoic2F1dGgtcHJldmlldy5zbGIuY29tIiwiYXVkIjoidGVzdC1zbGJkZXYtZGV2cG9ydGFsLnNsYmFwcC5jb20iLCJpYXQiOjE1MjgxNDg5MTUsImV4cCI6MTUyODIzNTMxNSwicHJvdmlkZXIiOiJzbGIuY29tIiwiY2xpZW50IjoidGVzdC1zbGJkZXYtZGV2cG9ydGFsLnNsYmFwcC5jb20iLCJ1c2VyaWQiOiJtemh1OUBzbGIuY29tIiwiZW1haWwiOiJtemh1OUBzbGIuY29tIiwiYXV0aHoiOiJ7XCJhY2NvdW50Q291bnRyeVwiOntcImNvZGVcIjpcInVzXCIsXCJpZFwiOjU3MTU5OTkxMDE4MTI3MzYsXCJuYW1lXCI6XCJVbml0ZWQgU3RhdGVzIG9mIEFtZXJpY2FcIn0sXCJhY2NvdW50SWRcIjo1NjkxODc4ODMzOTEzODU2LFwiYWNjb3VudE5hbWVcIjpcIlNJUyBJbnRlcm5hbCBIUVwiLFwiY3JlYXRlZFwiOlwiMjAxOC0wNS0wM1QxNzoyNTo1NS40NDNaXCIsXCJkZXBhcnRtZW50TWFuYWdlclwiOm51bGwsXCJzdWJzY3JpcHRpb25zXCI6W3tcImFjY291bnRJZFwiOjU2OTE4Nzg4MzM5MTM4NTYsXCJjb250cmFjdElkXCI6NTc1MTcwMDIxMjE1NDM2OCxcImNyZWF0ZWRcIjpcIjIwMTgtMDUtMDNUMTc6MzM6MDkuNTczWlwiLFwiY3JtQ29udHJhY3RJZFwiOlwiU0lTLUlOVEVSTkFMLUhRLVFBXCIsXCJjcm1Db250cmFjdEl0ZW1JZFwiOlwiZGV2bGlcIixcImV4cGlyYXRpb25cIjpcIjE5NzAtMDEtMDFUMDA6MDA6MDAuMDAwWlwiLFwiaWRcIjo1MDc5Mjg4NTA0MTIzMzkyLFwicHJvZHVjdFwiOntcImNvZGVcIjpcImRldmVsb3Blci1saWdodFwiLFwiY29tY2F0TmFtZVwiOlwiTm90IGluIENvbUNhdFwiLFwiZmVhdHVyZVNldHNcIjpbe1wiYXBwbGljYXRpb25cIjp7XCJjb2RlXCI6XCJhcGlkZXZlbG9wZXJwb3J0YWxcIixcImlkXCI6NTE2ODkzMDY5NTkzODA0OCxcIm5hbWVcIjpcIkFQSSBEZXZlbG9wZXIgUG9ydGFsXCIsXCJ0eXBlXCI6XCJXZWJBcHBcIn0sXCJjbGFpbXNcIjpudWxsLFwiaWRcIjo1MTkxNTcyMjg3MTI3NTUyLFwibmFtZVwiOlwiRGV2ZWxvcGVyXCIsXCJ0eXBlXCI6XCJCQVNFXCJ9XSxcImlkXCI6NTE1MDczMDE1MTI2NDI1NixcIm5hbWVcIjpcIkRldmVsb3BlciBQb3J0YWxcIixcInBhcnROdW1iZXJcIjpcIlNERUwtUEItU1VCVVwifX1dLFwidXNlckVtYWlsXCI6XCJtemh1OUBzbGIuY29tXCIsXCJ1c2VyTmFtZVwiOlwiTWluZ3lhbmcgWmh1XCJ9XG4iLCJsYXN0bmFtZSI6IlpodSIsImZpcnN0bmFtZSI6Ik1pbmd5YW5nIiwiY291bnRyeSI6IiIsImNvbXBhbnkiOiIiLCJqb2J0aXRsZSI6IiIsInN1YmlkIjoiNDE3YjczMjktYmMwNy00OTFmLWJiYzQtZTQ1YjRhMWFiYjVjLVd3U0c0dyIsImlkcCI6ImNvcnAyIiwiaGQiOiJzbGIuY29tIn0.WQfGr1Xu-6IdaXdoJ9Fwzx8O2el1UkFPWo1vk_ujiAfdOjAR46UG5SrBC7mzC7gYRyK3a4fimBmbv3uRVJjTNXdxXRLZDw0SvXUMIOqjUGLom491ESbrtka_Xz7vGO-tWyDcEQDTfFzQ91LaVN7XdzL18_EDTXZoPhKb-zquyk9WLQxP9Mw-3Yh-UrbvC9nl1-GRn1IVbzp568kqkpOVUFM9alYSGw-oMGDZNt1DIYOJnpGaw2RB5B3AKvNivZH_Xdac7ZTzQbsDOt8B8DL2BphuxcJ9jshCJkM2SHQ15uErv8sfnzMwdF08e_0QcC_30I8eX9l8yOu6TnwwqlXunw";
 
+    @Mock
+    private IndexerConfigurationProperties indexerConfigurationProperties;
     @Mock
     private JaxRsDpsLog log;
     @Mock
@@ -101,8 +103,8 @@ public class ServiceAccountJwtGcpClientImplTest {
         when(credential.createScoped(any())).thenReturn(credential);
         when(HttpClients.createDefault()).thenReturn(httpClient);
         when(httpClient.execute(any())).thenReturn(httpResponse);
-        when(Config.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.LOCAL);
-        when(Config.getGoogleAudiences()).thenReturn("aud");
+        when(indexerConfigurationProperties.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.LOCAL);
+        when(indexerConfigurationProperties.getGoogleAudiences()).thenReturn("aud");
 
 //        when(this.tenantInfoServiceProvider).thenReturn(this.tenantInfoService);
         
