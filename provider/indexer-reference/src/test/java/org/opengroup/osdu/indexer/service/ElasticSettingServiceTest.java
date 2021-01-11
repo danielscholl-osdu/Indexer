@@ -72,7 +72,6 @@ public class ElasticSettingServiceTest {
         when(tenantInfo.getName()).thenReturn("tenant1");
         when(this.headersInfo.getPartitionId()).thenReturn("tenant1");
         when(this.tenantInfoService.getTenantInfo()).thenReturn(tenantInfo);
-        sut.GAE_SERVICE = "indexer";
         clusterSettings = ClusterSettings.builder().host(host).port(port).userNameAndPassword(credentials).build();
         cacheKey = String.format("%s-%s", GAE_SERVICE, tenantInfo.getName());
     }
