@@ -73,6 +73,10 @@ public class AuditLogger {
         this.writeLog(this.getAuditEvents().getIndexPurgeRecordFailEvent(resources));
     }
 
+    public void indexStarted(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getIndexEvent(resources));
+    }
+
     public void getReindex(List<String> resources) {
         this.writeLog(this.getAuditEvents().getReindexEvent(resources));
     }
