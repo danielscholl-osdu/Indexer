@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.extern.java.Log;
@@ -28,6 +29,7 @@ import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
 import org.opengroup.osdu.indexer.SwaggerDoc;
+import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,9 @@ public class CleanupIndiciesApi {
 
   @Autowired
   private IndexerService indexerService;
+
+  @Autowired
+  private AuditLogger auditLogger;
 
   @PostMapping(path = "/index-cleanup", consumes = "application/json")
   @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
@@ -69,6 +74,10 @@ public class CleanupIndiciesApi {
         return new ResponseEntity(HttpStatus.OK);
       }
       indexerService.processSchemaMessages(recordInfos);
+
+      auditLogger.getIndexCleanUpJobRun(recordInfos.stream()
+              .map(RecordInfo::getKind)
+              .collect(Collectors.toList()));
       return new ResponseEntity(HttpStatus.OK);
     } catch (AppException e) {
       throw e;
