@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,58 +40,63 @@ import org.springframework.stereotype.Component;
 @Component
 public class TenantFactoryImpl implements ITenantFactory {
 
-	private static final Logger LOG = LoggerFactory.getLogger(TenantFactoryImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TenantFactoryImpl.class);
 
-	public static final String MAIN_DATABASE = "main";
-	public static final String TENANT_INFO = "tenantinfo";
+  public static final String MAIN_DATABASE = "main";
+  public static final String TENANT_INFO = "tenantinfo";
 
-	@Autowired
-	private MongoDdmsClient mongoClient;
 
-	private Map<String, TenantInfo> tenants;
+  private final MongoDdmsClient mongoClient;
 
-	public boolean exists(String tenantName) {
-		if (this.tenants == null) {
-			initTenants();
-		}
-		return this.tenants.containsKey(tenantName);
-	}
+  @Autowired
+  public TenantFactoryImpl(MongoDdmsClient mongoClient) {
+    this.mongoClient = mongoClient;
+  }
 
-	public TenantInfo getTenantInfo(String tenantName) {
-		if (this.tenants == null) {
-			initTenants();
-		}
-		return this.tenants.get(tenantName);
-	}
+  private Map<String, TenantInfo> tenants;
 
-	public Collection<TenantInfo> listTenantInfo() {
-		if (this.tenants == null) {
-			initTenants();
-		}
-		return this.tenants.values();
-	}
+  public boolean exists(String tenantName) {
+    if (this.tenants == null) {
+      initTenants();
+    }
+    return this.tenants.containsKey(tenantName);
+  }
 
-	public <V> ICache<String, V> createCache(String tenantName, String host, int port,
-		int expireTimeSeconds, Class<V> classOfV) {
-		return null;
-	}
+  public TenantInfo getTenantInfo(String tenantName) {
+    if (this.tenants == null) {
+      initTenants();
+    }
+    return this.tenants.get(tenantName);
+  }
 
-	public void flushCache() {
-	}
+  public Collection<TenantInfo> listTenantInfo() {
+    if (this.tenants == null) {
+      initTenants();
+    }
+    return this.tenants.values();
+  }
 
-	private void initTenants() {
-		this.tenants = new HashMap<>();
-		MongoCollection<Document> mongoCollection = mongoClient
-			.getMongoCollection(MAIN_DATABASE, TENANT_INFO);
-		FindIterable<Document> results = mongoCollection.find();
-		if (Objects.isNull(results) && Objects.isNull(results.first())) {
-			LOG.error(String.format("Collection \'%s\' is empty.", results));
-		}
-		for (Document document : results) {
-			TenantInfo tenantInfo = new Gson().fromJson(document.toJson(),TenantInfo.class);
-			this.tenants.put(tenantInfo.getName(), tenantInfo);
-		}
-	}
+  public <V> ICache<String, V> createCache(String tenantName, String host, int port,
+      int expireTimeSeconds, Class<V> classOfV) {
+    return null;
+  }
+
+  public void flushCache() {
+  }
+
+  private void initTenants() {
+    this.tenants = new HashMap<>();
+    MongoCollection<Document> mongoCollection = mongoClient
+        .getMongoCollection(MAIN_DATABASE, TENANT_INFO);
+    FindIterable<Document> results = mongoCollection.find();
+    if (Objects.isNull(results) && Objects.isNull(results.first())) {
+      LOG.error(String.format("Collection \'%s\' is empty.", results));
+    }
+    for (Document document : results) {
+      TenantInfo tenantInfo = new Gson().fromJson(document.toJson(), TenantInfo.class);
+      this.tenants.put(tenantInfo.getName(), tenantInfo);
+    }
+  }
 
 }
 

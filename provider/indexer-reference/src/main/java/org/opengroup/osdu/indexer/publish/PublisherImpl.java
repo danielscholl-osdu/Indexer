@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,61 +43,67 @@ import org.springframework.web.context.annotation.RequestScope;
 @RequestScope
 public class PublisherImpl implements IPublisher {
 
-	private static final Logger LOG = LoggerFactory.getLogger(PublisherImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PublisherImpl.class);
+  private final IMessageFactory mq;
 
-	@Autowired
-	IMessageFactory mq;
+  @Autowired
+  public PublisherImpl(IMessageFactory mq) {
+    this.mq = mq;
+  }
 
+  @Override
+  public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) {
 
-	@Override
-	public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception {
+    String tenant = headers.getPartitionId();
+    if (Strings.isNullOrEmpty(tenant)) {
+      tenant = headers.getAccountId();
+    }
 
-		String tenant = headers.getPartitionId();
-		if (Strings.isNullOrEmpty(tenant)) {
-			tenant = headers.getAccountId();
-		}
+    Map<String, String> message = new HashMap<>();
+    message.put(tenant, headers.getPartitionIdWithFallbackToAccountId());
+    headers.addCorrelationIdIfMissing();
+    message.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
 
-		Map<String, String> message = new HashMap<>();
-		message.put(tenant, headers.getPartitionIdWithFallbackToAccountId());
-		headers.addCorrelationIdIfMissing();
-		message.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+    RecordChangedMessages recordChangedMessages = getRecordChangedMessage(headers,
+        indexerBatchStatus);
+    message.put("data", recordChangedMessages.toString());
 
-		RecordChangedMessages recordChangedMessages = getRecordChangedMessage(headers, indexerBatchStatus);
-		message.put("data", recordChangedMessages.toString());
+    try {
+      LOG.info("Indexer publishes message " + headers.getCorrelationId());
+      mq.sendMessage(IMessageFactory.INDEXER_QUEUE_NAME, message.toString());
+    } catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    }
+  }
 
-		try {
-			LOG.info("Indexer publishes message " + headers.getCorrelationId());
-			mq.sendMessage(IMessageFactory.INDEXER_QUEUE_NAME, message.toString());
-		} catch (Exception e) {
-			LOG.error(e.getMessage(), e);
-		}
-	}
+  private RecordChangedMessages getRecordChangedMessage(DpsHeaders headers,
+      JobStatus indexerBatchStatus) {
 
-	private RecordChangedMessages getRecordChangedMessage(DpsHeaders headers, JobStatus indexerBatchStatus) {
+    Gson gson = new GsonBuilder().create();
+    Map<String, String> attributesMap = new HashMap<>();
+    Type listType = new TypeToken<List<RecordStatus>>() {
+    }.getType();
 
-		Gson gson = new GsonBuilder().create();
-		Map<String, String> attributesMap = new HashMap<>();
-		Type listType = new TypeToken<List<RecordStatus>>() {
-		}.getType();
+    JsonElement statusChangedTagsJson = gson
+        .toJsonTree(indexerBatchStatus.getStatusesList(), listType);
+    String statusChangedTagsData = (statusChangedTagsJson.toString());
 
-		JsonElement statusChangedTagsJson = gson.toJsonTree(indexerBatchStatus.getStatusesList(), listType);
-		String statusChangedTagsData = (statusChangedTagsJson.toString());
+    String tenant = headers.getPartitionId();
+    // This code it to provide backward compatibility to slb-account-id
+    if (!Strings.isNullOrEmpty(tenant)) {
+      attributesMap
+          .put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
+    } else {
+      attributesMap.put(DpsHeaders.ACCOUNT_ID, headers.getPartitionIdWithFallbackToAccountId());
+    }
+    headers.addCorrelationIdIfMissing();
+    attributesMap.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
 
-		String tenant = headers.getPartitionId();
-		// This code it to provide backward compatibility to slb-account-id
-		if (!Strings.isNullOrEmpty(tenant)) {
-			attributesMap.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
-		} else {
-			attributesMap.put(DpsHeaders.ACCOUNT_ID, headers.getPartitionIdWithFallbackToAccountId());
-		}
-		headers.addCorrelationIdIfMissing();
-		attributesMap.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+    RecordChangedMessages recordChangedMessages = new RecordChangedMessages();
+    // statusChangedTagsData is not ByteString but String
+    recordChangedMessages.setData(statusChangedTagsData);
+    recordChangedMessages.setAttributes(attributesMap);
 
-		RecordChangedMessages recordChangedMessages = new RecordChangedMessages();
-		// statusChangedTagsData is not ByteString but String
-		recordChangedMessages.setData(statusChangedTagsData);
-		recordChangedMessages.setAttributes(attributesMap);
-
-		return recordChangedMessages;
-	}
+    return recordChangedMessages;
+  }
 }

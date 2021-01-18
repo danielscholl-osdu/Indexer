@@ -15,14 +15,21 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.messagebus;
+package org.opengroup.osdu.indexer.config;
 
-public interface IMessageFactory {
-	String DEFAULT_QUEUE_NAME = "records";
-	String LEGAL_QUEUE_NAME = "legal";
-	String INDEXER_QUEUE_NAME = "indexer";
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-	void sendMessage(String msg);
+@Configuration
+@ConfigurationProperties
+@Getter
+@Setter
+public class MongoDBConfigProperties {
 
-	void sendMessage(String queueName, String msg);
+  private String mongoDbUrl;
+  private String mongoDbUser;
+  private String mongoDbPassword;
+  private String mongoDbName;
 }

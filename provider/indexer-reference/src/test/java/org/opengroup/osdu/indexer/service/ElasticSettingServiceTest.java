@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,101 +17,102 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.opengroup.osdu.core.common.model.search.ClusterSettings;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.model.search.ClusterSettings;
+import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
+import org.opengroup.osdu.core.common.multitenancy.ITenantInfoService;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCache;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
-import org.opengroup.osdu.core.common.multitenancy.ITenantInfoService;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 public class ElasticSettingServiceTest {
 
-    @Mock
-    private ITenantInfoService tenantInfoService;
-    @Mock
-    private IElasticRepository elasticRepository;
-    @Mock
-    private IElasticCredentialsCache elasticCredentialCache;
-    @Mock
-    private IndexerConfigurationProperties configurationProperties;
-    @Mock
-    private TenantInfo tenantInfo;
-    @InjectMocks
-    private ElasticSettingServiceImpl sut;
-    @Mock
-    private ClusterSettings clusterSettings;
-    @Mock
-    private DpsHeaders headersInfo;
+  @Mock
+  private ITenantInfoService tenantInfoService;
+  @Mock
+  private IElasticRepository elasticRepository;
+  @Mock
+  private IElasticCredentialsCache elasticCredentialCache;
+  @Mock
+  private IndexerConfigurationProperties configurationProperties;
+  @Mock
+  private TenantInfo tenantInfo;
+  @InjectMocks
+  private ElasticSettingServiceImpl sut;
+  @Mock
+  private ClusterSettings clusterSettings;
+  @Mock
+  private DpsHeaders headersInfo;
 
-    @Mock
-    private JaxRsDpsLog log;
-
-
-    public String GAE_SERVICE = "indexer";
-
-    private final String host = "db5c51c1.us-central1.gcp.cloud.es.io";
-    private final int port = 9243;
-    private final String credentials = "name:password";
-
-    String cacheKey = "";
+  @Mock
+  private JaxRsDpsLog log;
 
 
-    @Before
-    public void setup() {
-        when(tenantInfo.getName()).thenReturn("tenant1");
-        when(this.headersInfo.getPartitionId()).thenReturn("tenant1");
-        when(this.tenantInfoService.getTenantInfo()).thenReturn(tenantInfo);
-        when(configurationProperties.getGaeService()).thenReturn("indexer");
-        clusterSettings = ClusterSettings.builder().host(host).port(port).userNameAndPassword(credentials).build();
-        cacheKey = String.format("%s-%s", GAE_SERVICE, tenantInfo.getName());
-    }
+  public String GAE_SERVICE = "indexer";
 
-    @Test
-    public void should_getValid_clusterSettings_fromCache() {
+  private final String host = "db5c51c1.us-central1.gcp.cloud.es.io";
+  private final int port = 9243;
+  private final String credentials = "name:password";
 
-        when(this.elasticCredentialCache.get(cacheKey)).thenReturn(clusterSettings);
+  String cacheKey = "";
 
-        ClusterSettings response = this.sut.getElasticClusterInformation();
-        assertNotNull(response);
-        assertEquals(response.getHost(), host);
-        assertEquals(response.getPort(), port);
-        assertEquals(response.getUserNameAndPassword(), credentials);
-    }
 
-    @Test
-    public void should_getValid_clusterSettings_fromCosmosDB() {
+  @Before
+  public void setup() {
+    when(tenantInfo.getName()).thenReturn("tenant1");
+    when(this.headersInfo.getPartitionId()).thenReturn("tenant1");
+    when(this.tenantInfoService.getTenantInfo()).thenReturn(tenantInfo);
+    when(configurationProperties.getGaeService()).thenReturn("indexer");
+    clusterSettings = ClusterSettings.builder().host(host).port(port)
+        .userNameAndPassword(credentials).build();
+    cacheKey = String.format("%s-%s", GAE_SERVICE, tenantInfo.getName());
+  }
 
-        when(this.elasticCredentialCache.get(cacheKey)).thenReturn(clusterSettings);
+  @Test
+  public void should_getValid_clusterSettings_fromCache() {
 
-        when(this.elasticRepository.getElasticClusterSettings(tenantInfo)).thenReturn(clusterSettings);
+    when(this.elasticCredentialCache.get(cacheKey)).thenReturn(clusterSettings);
 
-        ClusterSettings response = this.sut.getElasticClusterInformation();
-        assertNotNull(response);
-        assertEquals(response.getHost(), host);
-        assertEquals(response.getPort(), port);
-        assertEquals(response.getUserNameAndPassword(), credentials);
-    }
+    ClusterSettings response = this.sut.getElasticClusterInformation();
+    assertNotNull(response);
+    assertEquals(response.getHost(), host);
+    assertEquals(response.getPort(), port);
+    assertEquals(response.getUserNameAndPassword(), credentials);
+  }
 
-    @Test(expected = AppException.class)
-    public void should_throwAppException_when_tenantClusterInfo_not_found() throws AppException {
+  @Test
+  public void should_getValid_clusterSettings_fromCosmosDB() {
 
-        when(this.elasticRepository.getElasticClusterSettings(tenantInfo)).thenReturn(null);
+    when(this.elasticCredentialCache.get(cacheKey)).thenReturn(clusterSettings);
 
-        this.sut.getElasticClusterInformation();
+    when(this.elasticRepository.getElasticClusterSettings(tenantInfo)).thenReturn(clusterSettings);
 
-    }
+    ClusterSettings response = this.sut.getElasticClusterInformation();
+    assertNotNull(response);
+    assertEquals(response.getHost(), host);
+    assertEquals(response.getPort(), port);
+    assertEquals(response.getUserNameAndPassword(), credentials);
+  }
+
+  @Test(expected = AppException.class)
+  public void should_throwAppException_when_tenantClusterInfo_not_found() throws AppException {
+
+    when(this.elasticRepository.getElasticClusterSettings(tenantInfo)).thenReturn(null);
+
+    this.sut.getElasticClusterInformation();
+
+  }
 }

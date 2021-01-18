@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,13 @@
 
 package org.opengroup.osdu.indexer.util;
 
+import com.google.common.base.Strings;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
 import javax.inject.Inject;
-
-import com.google.common.base.Strings;
+import javax.servlet.http.HttpServletRequest;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-
 import org.opengroup.osdu.core.gcp.model.AppEngineHeaders;
 import org.opengroup.osdu.core.gcp.util.TraceIdExtractor;
 import org.springframework.context.annotation.Primary;
@@ -38,23 +35,23 @@ import org.springframework.web.context.annotation.RequestScope;
 @Primary
 public class DpsHeaderFactoryGcp extends DpsHeaders {
 
-    @Inject
-    public DpsHeaderFactoryGcp(HttpServletRequest request) {
+  @Inject
+  public DpsHeaderFactoryGcp(HttpServletRequest request) {
 
-        Map<String, String> headers = Collections
-                .list(request.getHeaderNames())
-                .stream()
-                .collect(Collectors.toMap(h -> h, request::getHeader));
+    Map<String, String> headers = Collections
+        .list(request.getHeaderNames())
+        .stream()
+        .collect(Collectors.toMap(h -> h, request::getHeader));
 
-        String traceContext = headers.get(AppEngineHeaders.CLOUD_TRACE_CONTEXT);
+    String traceContext = headers.get(AppEngineHeaders.CLOUD_TRACE_CONTEXT);
 
-        if(!Strings.isNullOrEmpty(traceContext)){
-            headers.put(AppEngineHeaders.TRACE_ID, TraceIdExtractor.getTraceId(traceContext));
-        }
-
-        this.addFromMap(headers);
-
-        // Add Correlation ID if missing
-        this.addCorrelationIdIfMissing();
+    if (!Strings.isNullOrEmpty(traceContext)) {
+      headers.put(AppEngineHeaders.TRACE_ID, TraceIdExtractor.getTraceId(traceContext));
     }
+
+    this.addFromMap(headers);
+
+    // Add Correlation ID if missing
+    this.addCorrelationIdIfMissing();
+  }
 }

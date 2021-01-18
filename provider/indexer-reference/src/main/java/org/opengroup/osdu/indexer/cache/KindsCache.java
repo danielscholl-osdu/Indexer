@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,48 +17,50 @@
 
 package org.opengroup.osdu.indexer.cache;
 
+import java.util.Set;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.core.common.provider.interfaces.IKindsCache;
-import org.springframework.beans.factory.annotation.Value;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Set;
 
 @Component
 public class KindsCache implements IKindsCache<String, Set>, AutoCloseable {
-    private RedisCache<String, Set> cache;
 
-    public KindsCache(@Value("${REDIS_SEARCH_HOST}") final String REDIS_SEARCH_HOST,
-                      @Value("${REDIS_SEARCH_PORT}") final String REDIS_SEARCH_PORT,
-                      @Value("${KINDS_CACHE_EXPIRATION}") final String KINDS_CACHE_EXPIRATION,
-                      @Value("${KINDS_REDIS_DATABASE}") final String KINDS_REDIS_DATABASE) {
-        cache = new RedisCache<>(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT),
-                Integer.parseInt(KINDS_CACHE_EXPIRATION) * 60,
-                Integer.parseInt(KINDS_REDIS_DATABASE), String.class, Set.class);
-    }
+  private RedisCache<String, Set> cache;
 
-    @Override
-    public void close() throws Exception {
-        this.cache.close();
-    }
+  @Autowired
+  public KindsCache(IndexerConfigurationProperties indexerConfigurationProperties) {
+    cache = new RedisCache<>(indexerConfigurationProperties.getRedisSearchHost(),
+        Integer.parseInt(indexerConfigurationProperties.getRedisSearchPort()),
+        indexerConfigurationProperties.getKindsCacheExpiration() * 60,
+        indexerConfigurationProperties.getKindsRedisDatabase(),
+        String.class,
+        Set.class);
+  }
 
-    @Override
-    public void put(String s, Set o) {
-        this.cache.put(s, o);
-    }
+  @Override
+  public void close() throws Exception {
+    this.cache.close();
+  }
 
-    @Override
-    public Set get(String s) {
-        return this.cache.get(s);
-    }
+  @Override
+  public void put(String s, Set o) {
+    this.cache.put(s, o);
+  }
 
-    @Override
-    public void delete(String s) {
-        this.cache.delete(s);
-    }
+  @Override
+  public Set get(String s) {
+    return this.cache.get(s);
+  }
 
-    @Override
-    public void clearAll() {
-        this.cache.clearAll();
-    }
+  @Override
+  public void delete(String s) {
+    this.cache.delete(s);
+  }
+
+  @Override
+  public void clearAll() {
+    this.cache.clearAll();
+  }
 }
