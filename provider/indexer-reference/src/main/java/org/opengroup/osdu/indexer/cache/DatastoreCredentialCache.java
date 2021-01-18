@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,19 @@ package org.opengroup.osdu.indexer.cache;
 
 import com.google.auth.oauth2.AccessToken;
 import org.opengroup.osdu.core.common.cache.RedisCache;
-import org.springframework.beans.factory.annotation.Value;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DatastoreCredentialCache extends RedisCache<String, AccessToken> {
 
-	// Datastore credentials are only valid for 1hr, release the key 2 minutes before the expiration
-	public DatastoreCredentialCache(@Value("${REDIS_SEARCH_HOST}") final String REDIS_SEARCH_HOST, @Value("${REDIS_SEARCH_PORT}") final String REDIS_SEARCH_PORT) {
-		super(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT), 58 * 60, String.class, AccessToken.class);
-	}
+  @Autowired
+  public DatastoreCredentialCache(IndexerConfigurationProperties indexerConfigurationProperties) {
+    super(indexerConfigurationProperties.getRedisSearchHost(),
+        Integer.parseInt(indexerConfigurationProperties.getRedisSearchPort()),
+        58 * 60,
+        String.class,
+        AccessToken.class);
+  }
 }

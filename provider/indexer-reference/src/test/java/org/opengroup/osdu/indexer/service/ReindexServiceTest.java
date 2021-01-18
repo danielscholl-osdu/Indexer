@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,17 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -35,119 +46,116 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.*;
-
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
-
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(SpringRunner.class)
 public class ReindexServiceTest {
 
-    private final String cursor = "100";
+  private final String cursor = "100";
 
-    private final String correlationId = UUID.randomUUID().toString();
+  private final String correlationId = UUID.randomUUID().toString();
 
-    @Mock
-    private IndexerConfigurationProperties configurationProperties;
-    @Mock
-    private StorageService storageService;
-    @Mock
-    private IRequestInfo requestInfo;
-    @Mock
-    private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
-    @Mock
-    private JaxRsDpsLog log;
-    @InjectMocks
-    private ReindexServiceImpl sut;
+  @Mock
+  private IndexerConfigurationProperties configurationProperties;
+  @Mock
+  private StorageService storageService;
+  @Mock
+  private IRequestInfo requestInfo;
+  @Mock
+  private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
+  @Mock
+  private JaxRsDpsLog log;
+  @InjectMocks
+  private ReindexServiceImpl sut;
 
-    private RecordReindexRequest recordReindexRequest;
-    private RecordQueryResponse recordQueryResponse;
+  private RecordReindexRequest recordReindexRequest;
+  private RecordQueryResponse recordQueryResponse;
 
-    private Map<String, String> httpHeaders;
+  private Map<String, String> httpHeaders;
 
-    @Before
-    public void setup() {
-        initMocks(this);
+  @Before
+  public void setup() {
+    initMocks(this);
 
-        mockStatic(UUID.class);
+    mockStatic(UUID.class);
 
-        recordReindexRequest = RecordReindexRequest.builder().kind("tenant:test:test:1.0.0").cursor(cursor).build();
-        recordQueryResponse = new RecordQueryResponse();
+    recordReindexRequest = RecordReindexRequest.builder().kind("tenant:test:test:1.0.0")
+        .cursor(cursor).build();
+    recordQueryResponse = new RecordQueryResponse();
 
-        httpHeaders = new HashMap<>();
-        httpHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
-        httpHeaders.put(DpsHeaders.CORRELATION_ID, correlationId);
-        DpsHeaders standardHeaders = DpsHeaders.createFromMap(httpHeaders);
-        when(requestInfo.getHeaders()).thenReturn(standardHeaders);
-        when(requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(httpHeaders);
-        when(requestInfo.getHeadersWithDwdAuthZ()).thenReturn(standardHeaders);
+    httpHeaders = new HashMap<>();
+    httpHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
+    httpHeaders.put(DpsHeaders.CORRELATION_ID, correlationId);
+    DpsHeaders standardHeaders = DpsHeaders.createFromMap(httpHeaders);
+    when(requestInfo.getHeaders()).thenReturn(standardHeaders);
+    when(requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(httpHeaders);
+    when(requestInfo.getHeadersWithDwdAuthZ()).thenReturn(standardHeaders);
+  }
+
+  @Test
+  public void should_returnNull_givenNullResponseResult_reIndexRecordsTest() {
+    try {
+      recordQueryResponse.setResults(null);
+      when(storageService.getRecordsByKind(any())).thenReturn(recordQueryResponse);
+
+      String response = sut.reindexRecords(recordReindexRequest, false);
+
+      Assert.assertNull(response);
+    } catch (Exception e) {
+      fail("Should not throw this exception" + e.getMessage());
     }
+  }
 
-    @Test
-    public void should_returnNull_givenNullResponseResult_reIndexRecordsTest() {
-        try {
-            recordQueryResponse.setResults(null);
-            when(storageService.getRecordsByKind(any())).thenReturn(recordQueryResponse);
+  @Test
+  public void should_returnNull_givenEmptyResponseResult_reIndexRecordsTest() {
+    try {
+      recordQueryResponse.setResults(new ArrayList<>());
+      when(storageService.getRecordsByKind(any())).thenReturn(recordQueryResponse);
 
-            String response = sut.reindexRecords(recordReindexRequest, false);
+      String response = sut.reindexRecords(recordReindexRequest, false);
 
-            Assert.assertNull(response);
-        } catch (Exception e) {
-            fail("Should not throw this exception" + e.getMessage());
-        }
+      Assert.assertNull(response);
+    } catch (Exception e) {
+      fail("Should not throw this exception" + e.getMessage());
     }
+  }
 
-    @Test
-    public void should_returnNull_givenEmptyResponseResult_reIndexRecordsTest() {
-        try {
-            recordQueryResponse.setResults(new ArrayList<>());
-            when(storageService.getRecordsByKind(any())).thenReturn(recordQueryResponse);
+  @Ignore
+  @Test
+  public void should_returnRecordQueryRequestPayload_givenValidResponseResult_reIndexRecordsTest() {
+    try {
+      recordQueryResponse.setCursor(cursor);
+      List<String> results = new ArrayList<>();
+      results.add("test1");
+      recordQueryResponse.setResults(results);
 
-            String response = sut.reindexRecords(recordReindexRequest, false);
+      when(configurationProperties.getStorageRecordsBatchSize()).thenReturn(1);
 
-            Assert.assertNull(response);
-        } catch (Exception e) {
-            fail("Should not throw this exception" + e.getMessage());
-        }
+      when(storageService.getRecordsByKind(any())).thenReturn(recordQueryResponse);
+
+      String taskQueuePayload = sut.reindexRecords(recordReindexRequest, false);
+
+      Assert.assertEquals("{\"kind\":\"tenant:test:test:1.0.0\",\"cursor\":\"100\"}",
+          taskQueuePayload);
+    } catch (Exception e) {
+      fail("Should not throw exception" + e.getMessage());
     }
-    @Ignore
-    @Test
-    public void should_returnRecordQueryRequestPayload_givenValidResponseResult_reIndexRecordsTest() {
-        try {
-            recordQueryResponse.setCursor(cursor);
-            List<String> results = new ArrayList<>();
-            results.add("test1");
-            recordQueryResponse.setResults(results);
+  }
 
-            when(configurationProperties.getStorageRecordsBatchSize()).thenReturn(1);
+  @Test
+  public void should_returnRecordChangedMessage_givenValidResponseResult_reIndexRecordsTest() {
+    try {
+      List<String> results = new ArrayList<>();
+      results.add("test1");
+      recordQueryResponse.setResults(results);
+      when(storageService.getRecordsByKind(any())).thenReturn(recordQueryResponse);
 
-            when(storageService.getRecordsByKind(any())).thenReturn(recordQueryResponse);
+      String taskQueuePayload = sut.reindexRecords(recordReindexRequest, false);
 
-            String taskQueuePayload = sut.reindexRecords(recordReindexRequest, false);
-
-            Assert.assertEquals("{\"kind\":\"tenant:test:test:1.0.0\",\"cursor\":\"100\"}", taskQueuePayload);
-        } catch (Exception e) {
-            fail("Should not throw exception" + e.getMessage());
-        }
+      Assert.assertEquals(String.format(
+          "{\"data\":\"[{\\\"id\\\":\\\"test1\\\",\\\"kind\\\":\\\"tenant:test:test:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"correlation-id\":\"%s\"}}",
+          correlationId), taskQueuePayload);
+    } catch (Exception e) {
+      fail("Should not throw exception" + e.getMessage());
     }
-
-    @Test
-    public void should_returnRecordChangedMessage_givenValidResponseResult_reIndexRecordsTest() {
-        try {
-            List<String> results = new ArrayList<>();
-            results.add("test1");
-            recordQueryResponse.setResults(results);
-            when(storageService.getRecordsByKind(any())).thenReturn(recordQueryResponse);
-
-            String taskQueuePayload = sut.reindexRecords(recordReindexRequest, false);
-
-            Assert.assertEquals(String.format("{\"data\":\"[{\\\"id\\\":\\\"test1\\\",\\\"kind\\\":\\\"tenant:test:test:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"correlation-id\":\"%s\"}}", correlationId), taskQueuePayload);
-        } catch (Exception e) {
-            fail("Should not throw exception" + e.getMessage());
-        }
-    }
+  }
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,15 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 
-@SpringBootApplication(exclude = {MongoAutoConfiguration.class, SecurityAutoConfiguration.class, ManagementWebSecurityAutoConfiguration.class})
+@SpringBootApplication(exclude = {MongoAutoConfiguration.class, SecurityAutoConfiguration.class,
+    ManagementWebSecurityAutoConfiguration.class})
 @Configuration
 @ComponentScan(value = {"org.opengroup.osdu"}, excludeFilters = {
-	@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = TenantFactory.class)})
+    @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = TenantFactory.class)})
 public class IndexerAnthosApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(IndexerAnthosApplication.class, args);
-	}
+  public static void main(String[] args) {
+    SpringApplication.run(IndexerAnthosApplication.class, args);
+  }
 
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class MongoDdmsClient {
 
-	@Autowired
-	private MongoClientHandler mongoClientHandler;
+	private final MongoClientHandler mongoClientHandler;
 
 	@Autowired
-	private TenantInfo tenantInfo;
+  public MongoDdmsClient(MongoClientHandler mongoClientHandler) {
+    this.mongoClientHandler = mongoClientHandler;
+  }
 
-	public MongoCollection<Document> getMongoCollection(String dbName, String collectionName) {
-		return mongoClientHandler.getMongoClient().getDatabase(dbName)
-			.getCollection(collectionName);
-	}
+  public MongoCollection<Document> getMongoCollection(String dbName, String collectionName) {
+    return mongoClientHandler.getMongoClient().getDatabase(dbName)
+        .getCollection(collectionName);
+  }
 }

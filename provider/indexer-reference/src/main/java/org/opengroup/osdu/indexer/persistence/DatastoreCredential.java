@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,82 +38,86 @@ import org.opengroup.osdu.indexer.cache.DatastoreCredentialCache;
 
 public class DatastoreCredential extends GoogleCredentials {
 
-	private static final long serialVersionUID = 8344377091688956815L;
-	private static final JsonFactory JSON_FACTORY = new JacksonFactory();
-	private Iam iam;
+  private static final long serialVersionUID = 8344377091688956815L;
+  private static final JsonFactory JSON_FACTORY = new JacksonFactory();
+  private Iam iam;
 
-	private final TenantInfo tenant;
-	private final DatastoreCredentialCache cache;
+  private final TenantInfo tenant;
+  private final DatastoreCredentialCache cache;
 
-	protected DatastoreCredential(TenantInfo tenant, DatastoreCredentialCache cache) {
-		this.tenant = tenant;
-		this.cache = cache;
-	}
+  protected DatastoreCredential(TenantInfo tenant, DatastoreCredentialCache cache) {
+    this.tenant = tenant;
+    this.cache = cache;
+  }
 
-	@Override
-	public AccessToken refreshAccessToken() {
+  @Override
+  public AccessToken refreshAccessToken() {
 
-		String cacheKey = this.getCacheKey();
+    String cacheKey = this.getCacheKey();
 
-		AccessToken accessToken = this.cache.get(cacheKey);
+    AccessToken accessToken = this.cache.get(cacheKey);
 
-		if (accessToken != null) {
-			return accessToken;
-		}
+    if (accessToken != null) {
+      return accessToken;
+    }
 
-		try {
-			SignJwtRequest signJwtRequest = new SignJwtRequest();
-			signJwtRequest.setPayload(this.getPayload());
+    try {
+      SignJwtRequest signJwtRequest = new SignJwtRequest();
+      signJwtRequest.setPayload(this.getPayload());
 
-			String serviceAccountName = String.format("projects/-/serviceAccounts/%s", this.tenant.getServiceAccount());
+      String serviceAccountName = String
+          .format("projects/-/serviceAccounts/%s", this.tenant.getServiceAccount());
 
-			SignJwt signJwt = this.getIam().projects().serviceAccounts().signJwt(serviceAccountName, signJwtRequest);
+      SignJwt signJwt = this.getIam().projects().serviceAccounts()
+          .signJwt(serviceAccountName, signJwtRequest);
 
-			SignJwtResponse signJwtResponse = signJwt.execute();
-			String signedJwt = signJwtResponse.getSignedJwt();
+      SignJwtResponse signJwtResponse = signJwt.execute();
+      String signedJwt = signJwtResponse.getSignedJwt();
 
-			accessToken = new AccessToken(signedJwt, DateUtils.addSeconds(new Date(), 3600));
+      accessToken = new AccessToken(signedJwt, DateUtils.addSeconds(new Date(), 3600));
 
-			this.cache.put(cacheKey, accessToken);
+      this.cache.put(cacheKey, accessToken);
 
-			return accessToken;
-		} catch (Exception e) {
-			throw new RuntimeException("Error creating datastore credential", e);
-		}
-	}
+      return accessToken;
+    } catch (Exception e) {
+      throw new RuntimeException("Error creating datastore credential", e);
+    }
+  }
 
-	private String getPayload() {
-		JsonObject payload = new JsonObject();
-		payload.addProperty("iss", this.tenant.getServiceAccount());
-		payload.addProperty("sub", this.tenant.getServiceAccount());
-		payload.addProperty("aud", "https://datastore.googleapis.com/google.datastore.v1.Datastore");
-		payload.addProperty("iat", System.currentTimeMillis() / 1000);
+  private String getPayload() {
+    JsonObject payload = new JsonObject();
+    payload.addProperty("iss", this.tenant.getServiceAccount());
+    payload.addProperty("sub", this.tenant.getServiceAccount());
+    payload.addProperty("aud", "https://datastore.googleapis.com/google.datastore.v1.Datastore");
+    payload.addProperty("iat", System.currentTimeMillis() / 1000);
 
-		return payload.toString();
-	}
+    return payload.toString();
+  }
 
-	protected void setIam(Iam iam) {
-		this.iam = iam;
-	}
+  protected void setIam(Iam iam) {
+    this.iam = iam;
+  }
 
-	private Iam getIam() throws Exception {
-		if (this.iam == null) {
+  private Iam getIam() throws Exception {
+    if (this.iam == null) {
 
-			GoogleCredential credential = GoogleCredential.getApplicationDefault();
-			if (credential.createScopedRequired()) {
-				credential = credential.createScoped(Collections.singletonList(IamScopes.CLOUD_PLATFORM));
-			}
+      GoogleCredential credential = GoogleCredential.getApplicationDefault();
+      if (credential.createScopedRequired()) {
+        credential = credential.createScoped(Collections.singletonList(IamScopes.CLOUD_PLATFORM));
+      }
 
-			Iam.Builder builder = new Iam.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY,
-				credential).setApplicationName("Search Service");
+      Iam.Builder builder = new Iam.Builder(GoogleNetHttpTransport.newTrustedTransport(),
+          JSON_FACTORY,
+          credential).setApplicationName("Search Service");
 
-			this.iam = builder.build();
-		}
-		return this.iam;
-	}
+      this.iam = builder.build();
+    }
+    return this.iam;
+  }
 
 
-	private String getCacheKey() {
-		return Crc32c.hashToBase64EncodedString(String.format("datastoreCredential:%s", this.tenant.getName()));
-	}
+  private String getCacheKey() {
+    return Crc32c
+        .hashToBase64EncodedString(String.format("datastoreCredential:%s", this.tenant.getName()));
+  }
 }

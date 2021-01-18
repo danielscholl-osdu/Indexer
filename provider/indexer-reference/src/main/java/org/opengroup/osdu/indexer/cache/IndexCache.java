@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,42 +19,46 @@ package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
-import org.springframework.beans.factory.annotation.Value;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class IndexCache implements IIndexCache<String, Boolean>, AutoCloseable {
-    private RedisCache<String, Boolean> cache;
 
-    public IndexCache(@Value("${REDIS_SEARCH_HOST}") final String REDIS_SEARCH_HOST,
-                      @Value("${REDIS_SEARCH_PORT}") final String REDIS_SEARCH_PORT,
-                      @Value("${INDEX_CACHE_EXPIRATION}") final String INDEX_CACHE_EXPIRATION) {
-        cache = new RedisCache<>(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT),
-                Integer.parseInt(INDEX_CACHE_EXPIRATION) * 60, String.class, Boolean.class);
-    }
+  private RedisCache<String, Boolean> cache;
 
-    @Override
-    public void close() throws Exception {
-        this.cache.close();
-    }
+  @Autowired
+  public IndexCache(IndexerConfigurationProperties indexerConfigurationProperties) {
+    cache = new RedisCache<>(indexerConfigurationProperties.getRedisSearchHost(),
+        Integer.parseInt(indexerConfigurationProperties.getRedisSearchPort()),
+        indexerConfigurationProperties.getIndexCacheExpiration() * 60,
+        String.class,
+        Boolean.class);
+  }
 
-    @Override
-    public void put(String s, Boolean o) {
-        this.cache.put(s, o);
-    }
+  @Override
+  public void close() throws Exception {
+    this.cache.close();
+  }
 
-    @Override
-    public Boolean get(String s) {
-        return this.cache.get(s);
-    }
+  @Override
+  public void put(String s, Boolean o) {
+    this.cache.put(s, o);
+  }
 
-    @Override
-    public void delete(String s) {
-        this.cache.delete(s);
-    }
+  @Override
+  public Boolean get(String s) {
+    return this.cache.get(s);
+  }
 
-    @Override
-    public void clearAll() {
-        this.cache.clearAll();
-    }
+  @Override
+  public void delete(String s) {
+    this.cache.delete(s);
+  }
+
+  @Override
+  public void clearAll() {
+    this.cache.clearAll();
+  }
 }

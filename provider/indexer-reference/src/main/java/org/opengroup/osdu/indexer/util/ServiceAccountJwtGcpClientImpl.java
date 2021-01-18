@@ -1,6 +1,6 @@
 /*
- * Copyright 2020 Google LLC
- * Copyright 2020 EPAM Systems, Inc
+ * Copyright 2021 Google LLC
+ * Copyright 2021 EPAM Systems, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,10 @@ import com.google.api.services.iam.v1.model.SignJwtRequest;
 import com.google.api.services.iam.v1.model.SignJwtResponse;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -55,7 +53,8 @@ import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IJwtCache;
 import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
-import org.springframework.beans.factory.annotation.Value;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -63,134 +62,141 @@ import org.springframework.web.context.annotation.RequestScope;
 @RequestScope
 public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient {
 
-	private static final String JWT_AUDIENCE = "https://www.googleapis.com/oauth2/v4/token";
-	private static final String SERVICE_ACCOUNT_NAME_FORMAT = "projects/%s/serviceAccounts/%s";
+  private static final String JWT_AUDIENCE = "https://www.googleapis.com/oauth2/v4/token";
+  private static final String SERVICE_ACCOUNT_NAME_FORMAT = "projects/%s/serviceAccounts/%s";
 
-	private final JsonFactory JSON_FACTORY = new JacksonFactory();
+  private final JsonFactory JSON_FACTORY = new JacksonFactory();
+  private final IndexerConfigurationProperties indexerConfigurationProperties;
+  private final ITenantFactory tenantInfoServiceProvider;
+  private final IJwtCache cacheService;
+  private final JaxRsDpsLog log;
+  private final DpsHeaders dpsHeaders;
 
-	private Iam iam;
+  private Iam iam;
 
-	@Inject
-	private ITenantFactory tenantInfoServiceProvider;
-	@Inject
-	private IJwtCache cacheService;
-	@Inject
-	private JaxRsDpsLog log;
-	@Inject
-	private DpsHeaders dpsHeaders;
+  @Autowired
+  public ServiceAccountJwtGcpClientImpl(
+      IndexerConfigurationProperties indexerConfigurationProperties,
+      ITenantFactory tenantInfoServiceProvider,
+      IJwtCache cacheService, JaxRsDpsLog log, DpsHeaders dpsHeaders) {
+    this.indexerConfigurationProperties = indexerConfigurationProperties;
+    this.tenantInfoServiceProvider = tenantInfoServiceProvider;
+    this.cacheService = cacheService;
+    this.log = log;
+    this.dpsHeaders = dpsHeaders;
+  }
 
-	@Value("${GOOGLE_AUDIENCES}")
-	public String GOOGLE_AUDIENCES;
+  public String getIdToken(String tenantName) {
+    this.log.info("Tenant name received for auth token is: " + tenantName);
+    TenantInfo tenant = this.tenantInfoServiceProvider.getTenantInfo(tenantName);
+    if (tenant == null) {
+      this.log.error("Invalid tenant name receiving from pubsub");
+      throw new AppException(HttpStatus.SC_BAD_REQUEST, "Invalid tenant Name",
+          "Invalid tenant Name from pubsub");
+    }
+    try {
 
-	@Value("${INDEXER_HOST}")
-	public String INDEXER_HOST;
+      IdToken cachedToken = (IdToken) this.cacheService.get(tenant.getServiceAccount());
+      // Add the user to DpsHeaders directly
+      this.dpsHeaders.put(DpsHeaders.USER_EMAIL, tenant.getServiceAccount());
 
-	public String getIdToken(String tenantName) {
-		this.log.info("Tenant name received for auth token is: " + tenantName);
-		TenantInfo tenant = this.tenantInfoServiceProvider.getTenantInfo(tenantName);
-		if (tenant == null) {
-			this.log.error("Invalid tenant name receiving from pubsub");
-			throw new AppException(HttpStatus.SC_BAD_REQUEST, "Invalid tenant Name", "Invalid tenant Name from pubsub");
-		}
-		try {
+      if (!IdToken.refreshToken(cachedToken)) {
+        return cachedToken.getTokenValue();
+      }
 
-			IdToken cachedToken = (IdToken) this.cacheService.get(tenant.getServiceAccount());
-			// Add the user to DpsHeaders directly
-			this.dpsHeaders.put(DpsHeaders.USER_EMAIL, tenant.getServiceAccount());
+      // Getting signed JWT
+      Map<String, Object> signJwtPayload = this.getJWTCreationPayload(tenant);
 
-			if (!IdToken.refreshToken(cachedToken)) {
-				return cachedToken.getTokenValue();
-			}
+      SignJwtRequest signJwtRequest = new SignJwtRequest();
+      signJwtRequest.setPayload(JSON_FACTORY.toString(signJwtPayload));
 
-			// Getting signed JWT
-			Map<String, Object> signJwtPayload = this.getJWTCreationPayload(tenant);
+      String serviceAccountName = String
+          .format(SERVICE_ACCOUNT_NAME_FORMAT, tenant.getProjectId(), tenant.getServiceAccount());
 
-			SignJwtRequest signJwtRequest = new SignJwtRequest();
-			signJwtRequest.setPayload(JSON_FACTORY.toString(signJwtPayload));
+      Iam.Projects.ServiceAccounts.SignJwt signJwt = this.getIam().projects().serviceAccounts()
+          .signJwt(serviceAccountName, signJwtRequest);
+      SignJwtResponse signJwtResponse = signJwt.execute();
+      String signedJwt = signJwtResponse.getSignedJwt();
 
-			String serviceAccountName = String
-				.format(SERVICE_ACCOUNT_NAME_FORMAT, tenant.getProjectId(), tenant.getServiceAccount());
+      // Getting id token
+      List<NameValuePair> postParameters = new ArrayList<>();
+      postParameters
+          .add(new BasicNameValuePair("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"));
+      postParameters.add(new BasicNameValuePair("assertion", signedJwt));
 
-			Iam.Projects.ServiceAccounts.SignJwt signJwt = this.getIam().projects().serviceAccounts()
-				.signJwt(serviceAccountName, signJwtRequest);
-			SignJwtResponse signJwtResponse = signJwt.execute();
-			String signedJwt = signJwtResponse.getSignedJwt();
+      HttpPost post = new HttpPost(JWT_AUDIENCE);
+      post.setHeader(HttpHeaders.CONTENT_TYPE,
+          ContentType.APPLICATION_FORM_URLENCODED.getMimeType());
+      post.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
 
-			// Getting id token
-			List<NameValuePair> postParameters = new ArrayList<>();
-			postParameters.add(new BasicNameValuePair("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"));
-			postParameters.add(new BasicNameValuePair("assertion", signedJwt));
+      try (CloseableHttpClient httpclient = HttpClients.createDefault();
+          CloseableHttpResponse httpResponse = httpclient.execute(post)) {
+        JsonObject jsonContent = new JsonParser()
+            .parse(EntityUtils.toString(httpResponse.getEntity()))
+            .getAsJsonObject();
 
-			HttpPost post = new HttpPost(JWT_AUDIENCE);
-			post.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.getMimeType());
-			post.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
+        if (!jsonContent.has("id_token")) {
+          log.error(String.format("Google IAM response: %s", jsonContent.toString()));
+          throw new AppException(HttpStatus.SC_FORBIDDEN, "Access denied",
+              "The user is not authorized to perform this action");
+        }
 
-			try (CloseableHttpClient httpclient = HttpClients.createDefault();
-				CloseableHttpResponse httpResponse = httpclient.execute(post)) {
-				JsonObject jsonContent = new JsonParser().parse(EntityUtils.toString(httpResponse.getEntity()))
-					.getAsJsonObject();
+        String token = jsonContent.get("id_token").getAsString();
+        IdToken idToken = IdToken.builder().tokenValue(token)
+            .expirationTimeMillis(JWT.decode(token).getExpiresAt().getTime()).build();
 
-				if (!jsonContent.has("id_token")) {
-					log.error(String.format("Google IAM response: %s", jsonContent.toString()));
-					throw new AppException(HttpStatus.SC_FORBIDDEN, "Access denied",
-						"The user is not authorized to perform this action");
-				}
+        this.cacheService.put(tenant.getServiceAccount(), idToken);
 
-				String token = jsonContent.get("id_token").getAsString();
-				IdToken idToken = IdToken.builder().tokenValue(token)
-					.expirationTimeMillis(JWT.decode(token).getExpiresAt().getTime()).build();
+        return token;
+      }
+    } catch (JWTDecodeException e) {
+      throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Persistence error",
+          "Invalid token, error decoding", e);
+    } catch (AppException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Persistence error",
+          "Error generating token",
+          e);
+    }
+  }
 
-				this.cacheService.put(tenant.getServiceAccount(), idToken);
+  public Iam getIam() throws Exception {
 
-				return token;
-			}
-		} catch (JWTDecodeException e) {
-			throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Persistence error",
-				"Invalid token, error decoding", e);
-		} catch (AppException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Persistence error", "Error generating token",
-				e);
-		}
-	}
+    if (this.iam == null) {
+      HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
-	public Iam getIam() throws Exception {
+      // Authenticate using Google Application Default Credentials.
+      GoogleCredential credential = GoogleCredential.getApplicationDefault();
+      if (credential.createScopedRequired()) {
+        List<String> scopes = new ArrayList<>();
+        // Enable full Cloud Platform scope.
+        scopes.add(IamScopes.CLOUD_PLATFORM);
+        credential = credential.createScoped(scopes);
+      }
 
-		if (this.iam == null) {
-			HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+      // Create IAM API object associated with the authenticated transport.
+      this.iam = new Iam.Builder(httpTransport, JSON_FACTORY, credential)
+          .setApplicationName(indexerConfigurationProperties.getIndexerHost())
+          .build();
+    }
 
-			// Authenticate using Google Application Default Credentials.
-			GoogleCredential credential = GoogleCredential.getApplicationDefault();
-			if (credential.createScopedRequired()) {
-				List<String> scopes = new ArrayList<>();
-				// Enable full Cloud Platform scope.
-				scopes.add(IamScopes.CLOUD_PLATFORM);
-				credential = credential.createScoped(scopes);
-			}
+    return this.iam;
+  }
 
-			// Create IAM API object associated with the authenticated transport.
-			this.iam = new Iam.Builder(httpTransport, JSON_FACTORY, credential)
-				.setApplicationName(INDEXER_HOST)
-				.build();
-		}
+  private Map<String, Object> getJWTCreationPayload(TenantInfo tenantInfo) {
 
-		return this.iam;
-	}
+    Map<String, Object> payload = new HashMap<>();
+    String googleAudience = indexerConfigurationProperties.getGoogleAudiences();
+    if (googleAudience.contains(",")) {
+      googleAudience = googleAudience.split(",")[0];
+    }
+    payload.put("target_audience", googleAudience);
+    payload.put("exp", System.currentTimeMillis() / 1000 + 3600);
+    payload.put("iat", System.currentTimeMillis() / 1000);
+    payload.put("iss", tenantInfo.getServiceAccount());
+    payload.put("aud", JWT_AUDIENCE);
 
-	private Map<String, Object> getJWTCreationPayload(TenantInfo tenantInfo) {
-
-		Map<String, Object> payload = new HashMap<>();
-		String googleAudience = GOOGLE_AUDIENCES;
-		if (googleAudience.contains(",")) {
-			googleAudience = googleAudience.split(",")[0];
-		}
-		payload.put("target_audience", googleAudience);
-		payload.put("exp", System.currentTimeMillis() / 1000 + 3600);
-		payload.put("iat", System.currentTimeMillis() / 1000);
-		payload.put("iss", tenantInfo.getServiceAccount());
-		payload.put("aud", JWT_AUDIENCE);
-
-		return payload;
-	}
+    return payload;
+  }
 }
