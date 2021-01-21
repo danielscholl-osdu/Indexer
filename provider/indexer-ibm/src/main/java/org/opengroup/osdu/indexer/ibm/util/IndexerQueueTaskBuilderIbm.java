@@ -1,3 +1,6 @@
+/* Licensed Materials - Property of IBM              */		
+/* (c) Copyright IBM Corp. 2020. All Rights Reserved.*/
+ 
 package org.opengroup.osdu.indexer.ibm.util;
 
 import java.util.Map;
