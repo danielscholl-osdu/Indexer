@@ -39,6 +39,8 @@ import static org.junit.Assert.fail;
 @SpringBootTest
 public class SchemaToStorageFormatImplTest {
 
+    private static final String KIND = "KIND_VAL";
+
     private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
 
     private JaxRsDpsLog jaxRsDpsLog = Mockito.mock(JaxRsDpsLog.class);
@@ -53,23 +55,43 @@ public class SchemaToStorageFormatImplTest {
     }
 
     @Test
+    public void rootProperties() {
+        testSingleFile("/converter/root-properties/schema.json", KIND);
+    }
+
+    @Test
     public void integrationTestSchema1() {
-        testSingleFile("/converter/integration-tests/index_records_1.schema", "KIND_VAL");
+        testSingleFile("/converter/integration-tests/index_records_1.schema", KIND);
     }
 
     @Test
     public void integrationTestSchema2() {
-        testSingleFile("/converter/integration-tests/index_records_2.schema", "KIND_VAL");
+        testSingleFile("/converter/integration-tests/index_records_2.schema", KIND);
     }
 
     @Test
     public void integrationTestSchema3() {
-        testSingleFile("/converter/integration-tests/index_records_3.schema", "KIND_VAL");
+        testSingleFile("/converter/integration-tests/index_records_3.schema", KIND);
     }
 
     @Test
     public void wkeSchemaPassed() {
         testSingleFile("/converter/wks/slb_wke_wellbore.json", "slb:wks:wellbore:1.0.6");
+    }
+
+    @Test
+    public void allOfInsideAllOf() {
+        testSingleFile("/converter/tags/allOf/allOf-inside-allOf.json", KIND);
+    }
+
+    @Test
+    public void allOfInsideProperty() {
+        testSingleFile("/converter/tags/allOf/allOf-inside-property.json", KIND);
+    }
+
+    @Test
+    public void allOfInDefinitions() {
+        testSingleFile("/converter/tags/allOf/indefinitions.json", KIND);
     }
 
     @Test
@@ -85,8 +107,9 @@ public class SchemaToStorageFormatImplTest {
 
     private void testSingleFile(String filename, String kind) {
         String json = getSchemaFromSchemaService(filename);
-        Map<String, Object> expected = getStorageSchema( filename + ".res");
+
         Map<String, Object> converted = schemaToStorageFormatImpl.convertToMap(json, kind);
+        Map<String, Object> expected = getStorageSchema( filename + ".res");
 
         compareSchemas(expected, converted, filename);
     }
