@@ -101,6 +101,11 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                     storageSchemaItems.addAll(propertiesProcessor.processRef(schemaData.getRef())
                             .collect(Collectors.toList()));
                 }
+
+                if (schemaData.getProperties() != null) {
+                    storageSchemaItems.addAll(propertiesProcessor.processProperties(schemaData.getProperties())
+                            .collect(Collectors.toList()));
+                }
             }
         } else {
             log.warning("Schema doesn't have properties, kind:" + kind);

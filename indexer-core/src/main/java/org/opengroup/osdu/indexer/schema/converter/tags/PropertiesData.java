@@ -18,10 +18,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class PropertiesData {
     private List<AllOfItem> allOf;
     @JsonProperty("$ref")
     private String ref;
+    private Map<String, TypeProperty> properties;
 }

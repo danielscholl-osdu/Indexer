@@ -815,7 +815,6 @@ The following software have components provided under the terms of this license:
 
 - OSGi resource locator (from )
 - Project Lombok (from https://projectlombok.org)
-- Project Lombok (from https://projectlombok.org)
 - javax.ws.rs-api (from http://jax-rs-spec.java.net)
 
 ========================================================================
@@ -903,7 +902,6 @@ The following software have components provided under the terms of this license:
 - Netty/Common (from )
 - Plexus :: Default Container (from )
 - Plexus Default Interactivity Handler (from )
-- Project Lombok (from https://projectlombok.org)
 - Project Lombok (from https://projectlombok.org)
 - SLF4J API Module (from http://www.slf4j.org)
 - Spongy Castle (from http://rtyley.github.io/spongycastle/)
@@ -1005,7 +1003,6 @@ The following software have components provided under the terms of this license:
 - Microsoft Application Insights Java SDK Core (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Azure SDK for SQL API of Azure Cosmos DB Service (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure client library for Blob Storage (from https://github.com/Azure/azure-sdk-for-java)
-- Project Lombok (from https://projectlombok.org)
 - Project Lombok (from https://projectlombok.org)
 - Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
 - Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
