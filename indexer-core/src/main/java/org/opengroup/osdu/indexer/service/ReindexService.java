@@ -20,4 +20,6 @@ import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 public interface ReindexService {
 
     String reindexRecords(RecordReindexRequest recordReindexRequest, boolean forceClean);
+
+    void fullReindex(boolean forceClean);
 }
