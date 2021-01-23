@@ -17,6 +17,7 @@ package org.opengroup.osdu.indexer.schema.converter.tags;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -28,4 +29,5 @@ public class TypeProperty {
     private String ref;
     private Items items;
     private Map<String, TypeProperty> properties;
+    private List<AllOfItem> allOf;
 }

@@ -56,6 +56,10 @@ public class PropertiesProcessor {
     public Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
         Preconditions.checkNotNull(allOfItem, "allOfItem cannot be null");
 
+        if (Objects.nonNull(allOfItem.getAllOf())) {
+            return allOfItem.getAllOf().stream().flatMap(this::processItem);
+        }
+
         String ref = allOfItem.getRef();
 
         return Objects.isNull(ref) ?
@@ -85,7 +89,15 @@ public class PropertiesProcessor {
                 new AppException(HttpStatus.SC_NOT_FOUND, "Failed to find definition:" + definitionSubRef,
                         "Unknown definition:" + definitionSubRef));
 
-        return definition.getProperties().entrySet().stream().flatMap(this::processPropertyEntry);
+        if (Objects.nonNull(definition.getAllOf())) {
+            return definition.getAllOf().stream().flatMap(this::processItem);
+        }
+
+        return processProperties(definition.getProperties());
+    }
+
+    public Stream<Map<String, Object>> processProperties(Map<String, TypeProperty> properties){
+        return properties.entrySet().stream().flatMap(this::processPropertyEntry);
     }
 
     private Stream<Map<String, Object>> processPropertyEntry(Map.Entry<String, TypeProperty> entry) {
@@ -104,6 +116,13 @@ public class PropertiesProcessor {
             }
 
             return Stream.empty();
+        }
+
+        if (Objects.nonNull(entry.getValue().getAllOf())) {
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
+                    , log, new SchemaConverterPropertiesConfig());
+
+            return entry.getValue().getAllOf().stream().flatMap(propertiesProcessor::processItem);
         }
 
         if (Objects.nonNull(entry.getValue().getProperties())) {
@@ -163,7 +182,7 @@ public class PropertiesProcessor {
 
     private Supplier<String> getFromFormat(Supplier<String> formatSupplier){
         return  () -> {
-            String format = formatSupplier.get();;
+            String format = formatSupplier.get();
             return Objects.nonNull(format) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(format, format) : null;
         };
     }
