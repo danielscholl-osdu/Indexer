@@ -11,6 +11,7 @@ public class Config {
     private static final String DEFAULT_INDEXER_HOST = "";
     private static final String DEFAULT_SEARCH_HOST = "";
     private static final String DEFAULT_STORAGE_HOST = "";
+    private static final String DEFAULT_HOST = "";
     private static final String DEFAULT_DATA_PARTITION_ID_TENANT1 = "";
     private static final String DEFAULT_DATA_PARTITION_ID_TENANT2 = "";
     private static final String DEFAULT_SEARCH_INTEGRATION_TESTER = "";
@@ -22,6 +23,7 @@ public class Config {
 
     private static final String DEFAULT_ENTITLEMENTS_DOMAIN = "";
 
+    private static final String SCHEMA_PATH = "/api/schema-service/v1";
     private static final String DEFAULT_SECURITY_HTTPS_CERTIFICATE_TRUST = "false";
 
 
@@ -79,6 +81,10 @@ public class Config {
 
     public static String getStorageBaseURL() {
         return getEnvironmentVariableOrDefaultValue("STORAGE_HOST", DEFAULT_STORAGE_HOST);
+    }
+
+    public static String getSchemaBaseURL() {
+        return getEnvironmentVariableOrDefaultValue("HOST", DEFAULT_HOST) + SCHEMA_PATH;
     }
 
     public static String getEntitlementsDomain() {

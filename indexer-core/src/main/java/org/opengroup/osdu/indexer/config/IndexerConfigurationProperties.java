@@ -47,6 +47,7 @@ public class IndexerConfigurationProperties {
 	private String storageQueryRecordHost;
 	private Integer storageRecordsBatchSize;
 	private String storageSchemaHost;
+	private String schemaHost;
 	private String entitlementsHost;
 	private String entitlementTargetAudience;
 	private String indexerQueueHost;
