@@ -16,9 +16,11 @@ package org.opengroup.osdu.indexer.schema.converter.tags;
 
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
 public class Definition {
     private Map<String, TypeProperty> properties;
+    private List<AllOfItem> allOf;
 }
