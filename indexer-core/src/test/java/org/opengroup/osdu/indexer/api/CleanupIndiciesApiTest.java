@@ -14,6 +14,7 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.search.Config;
+import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -35,6 +36,9 @@ public class CleanupIndiciesApiTest {
 
   @Mock
   private IndexerService indexerService;
+
+  @Mock
+  private AuditLogger auditLogger;
 
   @Before
   public void setup() {
