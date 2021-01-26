@@ -6,7 +6,7 @@
       "entityType": "sample-schema-1",
       "schemaVersionMajor": "1",
       "schemaVersionMinor": "0",
-      "schemaVersionPatch": "4"
+      "schemaVersionPatch": "5"
     },
     "status": "DEVELOPMENT"
   },
@@ -58,7 +58,7 @@
                 "type": "integer"
               },
               "Score": {
-                "type": "integer"
+                "type": "long"
               },
               "Established": {
                 "type": "date-time"
