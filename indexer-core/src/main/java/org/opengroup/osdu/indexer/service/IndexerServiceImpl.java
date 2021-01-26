@@ -125,6 +125,10 @@ public class IndexerServiceImpl implements IndexerService {
                 retryRecordIds.addAll(deleteFailureRecordIds);
             }
 
+            auditLogger.indexStarted(recordInfos.stream()
+                            .map(RecordInfo::getKind)
+                            .collect(Collectors.toList()));
+
             // process schema change messages
             Map<String, OperationType> schemaMsgs = RecordInfo.getSchemaMsgs(recordInfos);
             if (schemaMsgs != null && !schemaMsgs.isEmpty()) {

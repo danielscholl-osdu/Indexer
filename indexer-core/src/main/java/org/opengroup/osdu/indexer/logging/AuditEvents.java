@@ -38,6 +38,9 @@ public class AuditEvents {
 
     private static final String INDEX_PURGE_RECORD_ACTION_ID = "IN004";
 
+    private static final String INDEX_STARTED_ACTION_ID = "IN006";
+    private static final String INDEX_STARTED_OPERATION = "Indexing started";
+
     private static final String REINDEX_KIND_ACTION_ID = "IN007";
     private static final String REINDEX_KIND_OPERATION = "Reindex kind";
 
@@ -146,6 +149,17 @@ public class AuditEvents {
                 .status(AuditStatus.FAILURE)
                 .actionId(INDEX_PURGE_RECORD_ACTION_ID)
                 .message(INDEX_DELETE_RECORDS_FAILURE)
+                .resources(resources)
+                .user(this.user)
+                .build();
+    }
+
+    public AuditPayload getIndexEvent(List<String> resources) {
+        return AuditPayload.builder()
+                .action(AuditAction.CREATE)
+                .status(AuditStatus.SUCCESS)
+                .actionId(INDEX_STARTED_ACTION_ID)
+                .message(INDEX_STARTED_OPERATION)
                 .resources(resources)
                 .user(this.user)
                 .build();
