@@ -23,6 +23,8 @@ import java.util.Map;
 @Data
 public class PropertiesData {
     private List<AllOfItem> allOf;
+    private List<AllOfItem> oneOf;
+    private List<AllOfItem> anyOf;
     @JsonProperty("$ref")
     private String ref;
     private Map<String, TypeProperty> properties;

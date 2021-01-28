@@ -23,4 +23,6 @@ import java.util.Map;
 public class Definition {
     private Map<String, TypeProperty> properties;
     private List<AllOfItem> allOf;
+    private List<AllOfItem> oneOf;
+    private List<AllOfItem> anyOf;
 }
