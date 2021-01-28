@@ -199,7 +199,7 @@ Create king ring and key in the ***master project***
 
 Add **Cloud KMS CryptoKey Encrypter/Decrypter** role to the **App Engine default service account** of the ***master project*** through IAM - Role tab
 
-Add **Cloud KMS Encrypt/Decrypt** role to the **App Engine default service account(()) of ***master project***
+Add **Cloud KMS Encrypt/Decrypt** role to the **App Engine default service account** of ***master project***
 
 #### Memory Store (Redis Instance) Setup
 
