@@ -35,7 +35,7 @@ In order to run the service locally or remotely, you will need to have the follo
 | `GOOGLE_AUDIENCES` | ex `*****.apps.googleusercontent.com` | Client ID for getting access to cloud resources | yes | https://console.cloud.google.com/apis/credentials |
 | `GOOGLE_APPLICATION_CREDENTIALS` | ex `/path/to/directory/service-key.json` | Service account credentials, you only need this if running locally | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `security.https.certificate.trust` | ex `false` | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false | output of infrastructure deployment |
-| `indexer.que.service.mail` | ex `default@iam.gserviceaccount.com` | IndexerQue environment service account mail, required if Indexer Que deployed in cloud task mode, to validate token from it | yes | - |
+| `indexer.que.service.mail` | ex `default@iam.gserviceaccount.com` | Indexer Que environment service account mail, required if Indexer Que deployed in cloud task mode, to validate token from it | yes | - |
 
 ### Run Locally
 Check that maven is installed:
@@ -197,9 +197,9 @@ Create king ring and key in the ***master project***
     		--purpose encryption
 ```
 
-Add **Cloud KMS CryptoKey Encrypter/Decrypter** role to the **App Engine default service account** of the master project through IAM - Role tab
+Add **Cloud KMS CryptoKey Encrypter/Decrypter** role to the **App Engine default service account** of the ***master project*** through IAM - Role tab
 
-Add "Cloud KMS Encrypt/Decrypt" role to the "App Engine default service account" of ***master project***
+Add **Cloud KMS Encrypt/Decrypt** role to the **App Engine default service account(()) of ***master project***
 
 #### Memory Store (Redis Instance) Setup
 
