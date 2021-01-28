@@ -4,9 +4,9 @@
       "authority": "tenant1",
       "source": "indexer-int-test",
       "entityType": "sample-schema-1",
-      "schemaVersionMajor": "1",
+      "schemaVersionMajor": "2",
       "schemaVersionMinor": "0",
-      "schemaVersionPatch": "5"
+      "schemaVersionPatch": "4"
     },
     "status": "DEVELOPMENT"
   },
