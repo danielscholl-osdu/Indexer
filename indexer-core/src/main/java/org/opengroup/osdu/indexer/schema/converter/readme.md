@@ -346,6 +346,8 @@ For instance
 
 ```
 
+is converted to
+
 ```json
 {
   "kind": "KIND_VAL",
