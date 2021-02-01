@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import java.util.Objects;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -100,4 +101,26 @@ public class ReindexServiceImpl implements ReindexService {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", "An unknown error has occurred.", e);
         }
     }
+
+	@Override
+	public void fullReindex(boolean forceClean) {
+		List<String> allKinds = null;
+		try {
+			allKinds = storageService.getAllKinds();
+		} catch (Exception e) {
+			jaxRsDpsLog.error("storage service all kinds request failed",e);
+			throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "an unknown error has occurred.", e);
+		}
+		if (Objects.isNull(allKinds)){
+			throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "full reindex failed");
+		}
+		for (String kind : allKinds) {
+			try {
+				reindexRecords(new RecordReindexRequest(kind, ""), forceClean);
+			} catch (Exception e) {
+				jaxRsDpsLog.warning(String.format("kind: %s cannot be re-indexed", kind));
+				continue;
+			}
+		}
+	}
 }
