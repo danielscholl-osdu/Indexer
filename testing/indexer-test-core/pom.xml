@@ -13,7 +13,7 @@
 
     <groupId>org.opengroup.osdu.indexer</groupId>
     <artifactId>indexer-test-core</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>

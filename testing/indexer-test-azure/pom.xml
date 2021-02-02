@@ -29,7 +29,7 @@
 
     <groupId>org.opengroup.osdu.indexer</groupId>
     <artifactId>indexer-test-azure</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -38,6 +38,7 @@
         <cucumber.version>1.2.5</cucumber.version>
         <azure.keyvault.version>4.1.0</azure.keyvault.version>
         <junit.jupiter.version>5.6.0</junit.jupiter.version>
+        <elasticsearch.version>7.8.1</elasticsearch.version>
     </properties>
 
     <dependencies>
@@ -46,7 +47,7 @@
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-test-core</artifactId>
-            <version>0.0.2-SNAPSHOT</version>
+            <version>0.0.3-SNAPSHOT</version>
         </dependency>
 
         <!-- Azure dependencies -->
@@ -54,6 +55,13 @@
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-lib-azure</artifactId>
             <version>0.0.33</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core-http-netty</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -137,17 +145,17 @@
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
-            <version>6.6.2</version>
+            <version>${elasticsearch.version}</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
-            <version>6.6.2</version>
+            <version>${elasticsearch.version}</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>6.6.2</version>
+            <version>${elasticsearch.version}</version>
         </dependency>
 
         <!--Logging-->
@@ -168,18 +176,6 @@
             <scope>test</scope>
         </dependency>
 <!--Added dependency for utilizing azure service principle class-->
-        <dependency>
-            <groupId>org.opengroup.osdu</groupId>
-            <artifactId>core-lib-azure</artifactId>
-            <version>0.0.33</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.azure</groupId>
-                    <artifactId>azure-core-http-netty</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>

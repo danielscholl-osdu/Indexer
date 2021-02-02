@@ -14,7 +14,7 @@
 
     <groupId>org.opengroup.osdu.indexer</groupId>
     <artifactId>indexer-test-ibm</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-test-core</artifactId>
-            <version>0.0.2-SNAPSHOT</version>
+            <version>0.0.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
