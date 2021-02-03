@@ -97,8 +97,8 @@ public class RecordSteps extends TestsBase {
             records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
 
             for (Map<String, Object> testRecord : records) {
-                testRecord.put("id", generateRecordId(testRecord));
                 testRecord.put("kind", actualKind);
+                testRecord.put("id", generateRecordId(testRecord));                
                 testRecord.put("legal", generateLegalTag());
                 String[] x_acl = {generateActualName(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
                 Acl acl = Acl.builder().viewers(x_acl).owners(x_acl).build();
@@ -114,7 +114,7 @@ public class RecordSteps extends TestsBase {
     }
 
     protected String generateRecordId(Map<String, Object> testRecord) {
-        return generateActualName(testRecord.get("id").toString(), timeStamp);
+        return generateActualId(testRecord.get("id").toString(), timeStamp, testRecord.get("kind").toString());
     }
 
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search(int expectedCount, String index) throws Throwable {

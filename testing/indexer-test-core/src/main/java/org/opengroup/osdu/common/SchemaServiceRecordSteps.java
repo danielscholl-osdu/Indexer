@@ -39,7 +39,7 @@ public class SchemaServiceRecordSteps extends RecordSteps {
 
     @Override
     protected String generateRecordId(Map<String, Object> testRecord) {
-        return generateActualNameWithoutTs(testRecord.get("id").toString());
+        return generateActualIdWithoutTs(testRecord.get("id").toString(), testRecord.get("kind").toString());
     }
 
     @Override

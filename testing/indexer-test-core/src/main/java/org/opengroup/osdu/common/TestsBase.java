@@ -130,11 +130,30 @@ public abstract class TestsBase {
         return rawName.replaceAll("<timestamp>", timeStamp);
     }
 
+    protected String generateActualId(String rawName, String timeStamp, String kind) {
+        
+        rawName = generateActualName(rawName, timeStamp);
+
+        String kindSubType = kind.split(":")[2];
+
+        return rawName.replaceAll("<kindSubType>", kindSubType);
+
+    }
+
+
     public String generateActualNameWithoutTs(String rawName) {
         for (Map.Entry<String, String> tenant : tenantMap.entrySet()) {
             rawName = rawName.replaceAll(tenant.getKey(), tenant.getValue());
         }
         return rawName.replaceAll("<timestamp>", "");
+    }
+
+    public String generateActualIdWithoutTs(String rawName, String kind) {
+        rawName = generateActualNameWithoutTs(rawName);
+
+        String kindSubType = kind.split(":")[2];
+
+        return rawName.replaceAll("<kindSubType>", kindSubType);
     }
 
     protected Legal generateLegalTag() {
