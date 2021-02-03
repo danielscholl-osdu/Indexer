@@ -87,8 +87,8 @@ public class CleanupIndiciesSteps extends TestsBase {
       records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
 
       for (Map<String, Object> testRecord : records) {
-        testRecord.put("id", generateActualName(testRecord.get("id").toString(), timeStamp));
         testRecord.put("kind", actualKind);
+        testRecord.put("id", generateActualId(testRecord.get("id").toString(), timeStamp, actualKind));
         testRecord.put("legal", generateLegalTag());
         String[] x_acl = {generateActualName(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
         Acl acl = Acl.builder().viewers(x_acl).owners(x_acl).build();
