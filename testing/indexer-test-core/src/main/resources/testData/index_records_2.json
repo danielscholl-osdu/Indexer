@@ -1,6 +1,6 @@
 [
   {
-    "id": "tenant1:ihs:testIngest7<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest7<timestamp>",
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
@@ -22,7 +22,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest8<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest8<timestamp>",
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
@@ -44,7 +44,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest9<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest9<timestamp>",
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
@@ -66,7 +66,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest10<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest10<timestamp>",
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
@@ -88,7 +88,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest11<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest11<timestamp>",
     "data": {
       "Field": 1234,
       "Location": {
