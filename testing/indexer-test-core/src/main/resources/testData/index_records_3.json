@@ -1,6 +1,6 @@
 [
   {
-    "id": "tenant1:ihs:testIngest51<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest51<timestamp>",
     "data": {
       "WellName": "Data Platform Services - 51",
       "GeoShape": {
@@ -13,7 +13,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest52<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest52<timestamp>",
     "data": {
       "WellName": "Data Platform Services - 52",
       "GeoShape": {
@@ -32,7 +32,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest53<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest53<timestamp>",
     "data": {
       "WellName": "Data Platform Services - 53",
       "GeoShape": {
@@ -147,7 +147,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest54<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest54<timestamp>",
     "data": {
       "WellName": "Data Platform Services - 54",
       "GeoShape": {
@@ -238,7 +238,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest55<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest55<timestamp>",
     "data": {
       "WellName": "Data Platform Services - 55",
       "GeoShape": {
@@ -271,7 +271,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest56<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest56<timestamp>",
     "data": {
       "WellName": "Data Platform Services - 56",
       "GeoShape": {
@@ -330,7 +330,7 @@
     }
   },
   {
-    "id": "tenant1:ihs:testIngest57<timestamp>",
+    "id": "tenant1:<kindSubType>:testIngest57<timestamp>",
     "data": {
       "WellName": "Data Platform Services - 57",
       "GeoShape": {
