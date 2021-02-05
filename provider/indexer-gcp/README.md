@@ -152,7 +152,7 @@ You will need to have the following environment variables defined.
 
 | INTEGRATION_TESTER | NO_DATA_ACCESS_TESTER | 
 | ---  | ---   |
-| users<br/>service.entitlements.user<br/>service.search.user<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{domain}.com |
+| users<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{domain}.com |
 
 Execute following command to build code and run all the integration tests:
 
