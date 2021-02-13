@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
-
+//
 @Primary
 @Component
 public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
@@ -70,12 +70,20 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
     @Override
     public void createWorkerTask(String payload, DpsHeaders headers) {
-        createTask(payload, headers);
+        this.createTask(payload, headers);
     }
 
     @Override
+    public  void createWorkerTask(String payload, Long countDownMillis, DpsHeaders headers){
+        this.createTask(payload, headers);
+    }
+    @Override
     public void createReIndexTask(String payload,DpsHeaders headers) {
-        createTask(payload, headers);
+        this.createTask(payload, headers);
+    }
+    @Override
+    public void createReIndexTask(String payload, Long countDownMillis, DpsHeaders headers){
+        this.createTask(payload, headers);
     }
 
     private void createTask(String payload, DpsHeaders headers) {
