@@ -30,4 +30,6 @@ public interface StorageService {
     RecordQueryResponse getRecordsByKind(RecordReindexRequest request) throws URISyntaxException;
 
     String getStorageSchema(String kind) throws URISyntaxException, UnsupportedEncodingException;
+
+    List<String> getAllKinds() throws URISyntaxException;
 }
