@@ -20,6 +20,9 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -208,5 +211,19 @@ public class StorageServiceImpl implements StorageService {
                 .build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
         return response.getResponseCode() != HttpStatus.SC_OK ? null : response.getBody();
+    }
+
+    @Override
+    public List<String> getAllKinds() throws URISyntaxException {
+        String url = configurationProperties.getStorageQueryKindsHost();
+        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
+            .httpMethod(HttpMethods.GET)
+            .headers(this.requestInfo.getHeadersMap())
+            .url(url)
+            .build();
+        HttpResponse response = this.urlFetchService.sendRequest(request);
+        JsonObject asJsonObject = new JsonParser().parse(response.getBody()).getAsJsonObject();
+        JsonElement results = asJsonObject.get("results");
+        return response.getResponseCode() != HttpStatus.SC_OK ? null : this.gson.fromJson(results,List.class);
     }
 }

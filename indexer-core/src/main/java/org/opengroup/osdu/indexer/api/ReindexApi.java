@@ -54,4 +54,11 @@ public class ReindexApi {
         this.auditLogger.getReindex(singletonList(recordReindexRequest.getKind()));
         return new ResponseEntity<>(org.springframework.http.HttpStatus.OK);
     }
+
+    @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
+    @PatchMapping
+    public ResponseEntity<String> fullReindex(@RequestParam(value = "force_clean", defaultValue = "false") boolean forceClean) throws IOException {
+        this.reIndexService.fullReindex(forceClean);
+        return new ResponseEntity<>(org.springframework.http.HttpStatus.OK);
+    }
 }

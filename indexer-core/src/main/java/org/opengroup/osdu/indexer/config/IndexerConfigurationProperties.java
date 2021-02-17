@@ -43,6 +43,7 @@ public class IndexerConfigurationProperties {
 	private String environment;
 	private String indexerHost;
 	private String searchHost;
+	private String storageQueryKindsHost;
 	private String storageQueryRecordForConversionHost;
 	private String storageQueryRecordHost;
 	private Integer storageRecordsBatchSize;
