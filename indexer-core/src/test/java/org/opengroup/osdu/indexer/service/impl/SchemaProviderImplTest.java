@@ -77,7 +77,7 @@ public class SchemaProviderImplTest {
         Assert.assertEquals("{\n" +
                 "  \"kind\" : \"fake\",\n" +
                 "  \"schema\" : [ ]\n" +
-                "}", schema);
+                "}", schema.replaceAll("\r", ""));
 
     }
 

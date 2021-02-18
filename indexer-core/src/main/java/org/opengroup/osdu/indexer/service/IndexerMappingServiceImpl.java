@@ -123,13 +123,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         Map<String, Object> dataMapping = new HashMap<>();
         if (schema.getDataSchema() != null) {
             for (Map.Entry<String, String> entry : schema.getDataSchema().entrySet()) {
-                // Apply de_indexer_analyzer and de_search_analyzer to TEXT field
-                if (configurationProperties.isPreDemo() && ElasticType.TEXT.getValue().equalsIgnoreCase(entry.getValue())) {
-                    log.info(String.format("indexing %s with custom analyzer", entry.getKey()));
-                    dataMapping.put(entry.getKey(), Records.Analyzer.builder().type(entry.getValue()).analyzer(DEAnalyzerType.INDEXER_ANALYZER.getValue()).search_analyzer(DEAnalyzerType.SEARCH_ANALYZER.getValue()).build());
-                } else {
-                    dataMapping.put(entry.getKey(), Records.Type.builder().type(entry.getValue()).build());
-                }
+                dataMapping.put(entry.getKey(), Records.Type.builder().type(entry.getValue()).build());
             }
 
             // inner properties.data.properties block

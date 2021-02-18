@@ -40,6 +40,7 @@ public class TypeMapper {
         metaAttributeIndexerType.put(RecordMetaAttribute.VERSION.getValue(), ElasticType.LONG.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.X_ACL.getValue(), ElasticType.KEYWORD.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.ACL.getValue(), getAclIndexerMapping());
+        metaAttributeIndexerType.put(RecordMetaAttribute.TAGS.getValue(), ElasticType.FLATTENED.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.LEGAL.getValue(), getLegalIndexerMapping());
         metaAttributeIndexerType.put(RecordMetaAttribute.ANCESTRY.getValue(), getAncestryIndexerMapping());
         metaAttributeIndexerType.put(RecordMetaAttribute.INDEX_STATUS.getValue(), getIndexStatusMapping());
