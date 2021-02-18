@@ -1,5 +1,5 @@
 {
-  "opendes:ihs:testIngest6": {
+  "opendes:sample-schema-1:testIngest6": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
@@ -30,7 +30,7 @@
       "lat": 32.406403
     }
   },
-  "opendes:ihs:testIngest3": {
+  "opendes:sample-schema-1:testIngest3": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
@@ -61,7 +61,7 @@
       "lat": 32.406403
     }
   },
-  "opendes:ihs:testIngest2": {
+  "opendes:sample-schema-1:testIngest2": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
@@ -92,7 +92,7 @@
       "lat": 32.406403
     }
   },
-  "opendes:ihs:testIngest5": {
+  "opendes:sample-schema-1:testIngest5": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
@@ -123,7 +123,7 @@
       "lat": 32.406403
     }
   },
-  "opendes:ihs:testIngest4": {
+  "opendes:sample-schema-1:testIngest4": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",

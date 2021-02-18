@@ -1,17 +1,17 @@
 {
-  "opendes:ihs:testIngest6": {
+  "opendes:sample-schema-3:testIngest6": {
     "WellName": "Data Platform Services"
   },
-  "opendes:ihs:testIngest3": {
+  "opendes:sample-schema-3:testIngest3": {
     "WellName": "Data Platform Services"
   },
-  "opendes:ihs:testIngest2": {
+  "opendes:sample-schema-3:testIngest2": {
     "WellName": "Data Platform Services"
   },
-  "opendes:ihs:testIngest5": {
+  "opendes:sample-schema-3:testIngest5": {
     "WellName": "Data Platform Services"
   },
-  "opendes:ihs:testIngest4": {
+  "opendes:sample-schema-3:testIngest4": {
     "WellName": "Data Platform Services"
   }
 }
