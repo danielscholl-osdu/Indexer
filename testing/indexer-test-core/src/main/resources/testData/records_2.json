@@ -1,6 +1,6 @@
 [
   {
-    "id": "test:well:2.0.0:1",
+    "id": "tenant1:well:2.0.0:1",
     "kind": "<kind>",
     "acl": "{viewers=[<Data-Group>], owners=[<Data-Group>]}",
     "x-acl": [
@@ -37,7 +37,7 @@
     }
   },
   {
-    "id": "test:well:2.0.0:2",
+    "id": "tenant1:well:2.0.0:2",
     "kind": "<kind>",
     "acl": "{viewers=[<Data-Group>], owners=[<Data-Group>]}",
     "x-acl": [
@@ -74,7 +74,7 @@
     }
   },
   {
-    "id": "test:well:2.0.0:3",
+    "id": "tenant1:well:2.0.0:3",
     "kind": "<kind>",
     "acl": "{viewers=[<Data-Group>], owners=[<Data-Group>]}",
     "x-acl": [
