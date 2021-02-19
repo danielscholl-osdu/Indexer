@@ -22,11 +22,13 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import static org.junit.Assert.*;
 import static org.opengroup.osdu.util.Config.getEntitlementsDomain;
 import static org.opengroup.osdu.util.Config.getStorageBaseURL;
+import static org.opengroup.osdu.util.SearchUtils.fetchRecordsBySearchQuery;
 
 @Log
 public class RecordSteps extends TestsBase {
@@ -138,6 +140,13 @@ public class RecordSteps extends TestsBase {
         long numOfIndexedDocuments = createIndex(index);
         long documentCountByQuery = elasticUtils.fetchRecordsByExistQuery(index, skippedAttributes);
         assertEquals(expectedCount, documentCountByQuery);
+    }
+
+    public void iShouldBeAbleToSearchRecordByTagKeyAndTagValue(String kind, String tagKey, String tagValue, int expectedNumber) throws Throwable {
+        TimeUnit.SECONDS.sleep(40);
+        String actualKind = generateActualName(kind, timeStamp);
+        int actualNumberOfRecords = fetchRecordsBySearchQuery(httpClient, actualKind, tagKey, tagValue);
+        assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
     private long createIndex(String index) throws InterruptedException, IOException {

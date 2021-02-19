@@ -64,4 +64,8 @@ public class Steps extends SchemaServiceRecordSteps {
         super.iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(expectedCount, index, skippedAttributes);
     }
 
+    @Then("^I should be able to search (\\d+) record with kind \"([^\"]*)\" by tag \"([^\"]*)\" and value \"([^\"]*)\"$")
+    public void iShouldBeAbleToSearchRecordByTagKeyAndTagValue(int expectedNumber, String kind, String tagKey, String tagValue) throws Throwable {
+        super.iShouldBeAbleToSearchRecordByTagKeyAndTagValue(kind, tagKey, tagValue, expectedNumber);
+    }
 }

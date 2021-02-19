@@ -217,8 +217,9 @@ public class ElasticUtils {
         }
     }
 
-    public long fetchRecordsByExistQuery(String index, String attributeName) throws IOException {
+    public long fetchRecordsByExistQuery(String index, String attributeName) throws Exception {
         try {
+            TimeUnit.SECONDS.sleep(40);
             try (RestHighLevelClient client = this.createClient(username, password, host)) {
                 SearchRequest searchRequest = new SearchRequest(index);
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
