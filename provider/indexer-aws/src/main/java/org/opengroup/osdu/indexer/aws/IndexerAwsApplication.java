@@ -14,15 +14,22 @@
 
 package org.opengroup.osdu.indexer.aws;
 
+import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 
 @SpringBootApplication(exclude = { SecurityAutoConfiguration.class, ManagementWebSecurityAutoConfiguration.class })
-@ComponentScan({"org.opengroup.osdu"})
+@ComponentScan(
+        basePackages = {"org.opengroup.osdu"},
+        excludeFilters={
+                @ComponentScan.Filter(
+                        type=FilterType.ASSIGNABLE_TYPE,
+                        value=IndexerQueueTaskBuilder.class)
+        })
 public class IndexerAwsApplication {
 
     public static void main(String[] args) {
