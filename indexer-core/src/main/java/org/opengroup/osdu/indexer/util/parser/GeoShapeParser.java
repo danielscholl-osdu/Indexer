@@ -42,7 +42,7 @@ public class GeoShapeParser {
 
         try {
             // use elasticsearch's ShapeParser to validate shape
-            ShapeBuilder<?, ?> shapeBuilder = getShapeBuilderFromObject(geoShapeObject);
+            ShapeBuilder shapeBuilder = getShapeBuilderFromObject(geoShapeObject);
             Shape shape = shapeBuilder.buildS4J();
             if (shape == null) {
                 throw new IllegalArgumentException("unable to parse shape");
@@ -54,7 +54,7 @@ public class GeoShapeParser {
         }
     }
 
-    private ShapeBuilder<?, ?> getShapeBuilderFromObject(Map<String, Object> object) throws IOException {
+    private ShapeBuilder getShapeBuilderFromObject(Map<String, Object> object) throws IOException {
         XContentBuilder contentBuilder = JsonXContent.contentBuilder().value(object);
 
         XContentParser parser = JsonXContent.jsonXContent.createParser(

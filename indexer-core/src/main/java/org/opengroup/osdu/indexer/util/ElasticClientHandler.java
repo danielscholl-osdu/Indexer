@@ -96,7 +96,6 @@ public class ElasticClientHandler {
     builder.setRequestConfigCallback(
         requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
             .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
-    builder.setMaxRetryTimeoutMillis(REST_CLIENT_RETRY_TIMEOUT);
 
     Header[] defaultHeaders = new Header[]{
         new BasicHeader("client.transport.nodes_sampler_interval", "30s"),

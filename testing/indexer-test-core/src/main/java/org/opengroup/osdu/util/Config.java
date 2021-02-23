@@ -24,6 +24,8 @@ public class Config {
     private static final String DEFAULT_ENTITLEMENTS_DOMAIN = "";
 
     private static final String SCHEMA_PATH = "/api/schema-service/v1";
+    private static final String DEFAULT_SECURITY_HTTPS_CERTIFICATE_TRUST = "false";
+
 
     public static int getPort() {
         return Integer.parseInt(getEnvironmentVariableOrDefaultValue("ELASTIC_PORT", String.valueOf(PORT)));
@@ -103,6 +105,12 @@ public class Config {
 
     public static String getAWSCognitoPassword() {
         return getEnvironmentVariableOrDefaultValue("AWS_COGNITO_AUTH_PARAMS_PASSWORD", "");
+    }
+
+    public static boolean isSecurityHttpsCertificateTrust() {
+        return Boolean.parseBoolean(
+            getEnvironmentVariableOrDefaultValue("SECURITY_HTTPS_CERTIFICATE_TRUST",
+                DEFAULT_SECURITY_HTTPS_CERTIFICATE_TRUST));
     }
 
     private static String getEnvironmentVariableOrDefaultValue(String key, String defaultValue) {
