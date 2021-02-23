@@ -36,6 +36,7 @@
         <cucumber.version>1.2.5</cucumber.version>
         <azure.keyvault.version>4.1.0</azure.keyvault.version>
         <junit.jupiter.version>5.6.0</junit.jupiter.version>
+        <elasticsearch.version>7.8.1</elasticsearch.version>
     </properties>
 
     <dependencies>
@@ -135,17 +136,17 @@
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
-            <version>6.6.2</version>
+            <version>${elasticsearch.version}</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
-            <version>6.6.2</version>
+            <version>${elasticsearch.version}</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>6.6.2</version>
+            <version>${elasticsearch.version}</version>
         </dependency>
 
         <!--Logging-->

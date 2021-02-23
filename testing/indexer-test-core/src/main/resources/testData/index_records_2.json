@@ -4,8 +4,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "latitude":32.406402588,
-        "longitude":-86.565592762
+        "lat":32.406402588,
+        "lon":-86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -26,8 +26,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "latitude":32.406402588,
-        "longitude":-86.565592762
+        "lat":32.406402588,
+        "lon":-86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -48,8 +48,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "latitude":32.406402588,
-        "longitude":-86.565592762
+        "lat":32.406402588,
+        "lon":-86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -70,8 +70,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "latitude":32.406402588,
-        "longitude":-86.565592762
+        "lat":32.406402588,
+        "lon":-86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -92,8 +92,8 @@
     "data": {
       "Field": 1234,
       "Location": {
-        "latitude":"BA1",
-        "longitude":-86.565592762
+        "lat":"BA1",
+        "lon":-86.565592762
       },
       "Basin": 789,
       "County": 0.99,
