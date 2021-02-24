@@ -1,24 +1,10 @@
-// Copyright 2017-2019, Schlumberger
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package org.opengroup.osdu.indexer.service;
 
-import com.google.gson.Gson;
 import org.apache.http.StatusLine;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse.FieldMappingMetaData;
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse.Failure;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.*;
@@ -30,14 +16,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
+import org.opengroup.osdu.indexer.service.IndexerMappingServiceImpl;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -50,21 +36,18 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @Ignore
 @RunWith(SpringRunner.class)
-@PrepareForTest({ RestHighLevelClient.class, IndicesClient.class})
+@PrepareForTest({ RestHighLevelClient.class, IndicesClient.class })
 public class IndexerMappingServiceTest {
 
 	private final String kind = "tenant:test:test:1.0.0";
 	private final String index = "tenant-test-test-1.0.0";
 	private final String type = "test";
-	private final String mappingValid = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"analyzer\":\"de_indexer_analyzer\",\"search_analyzer\":\"de_search_analyzer\"},\"Location\":{\"type\":\"geo_point\"}}},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
+	private final String mappingValid = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Location\":{\"type\":\"geo_point\"}}},\"id\":{\"type\":\"keyword\"}}}";
 
-	@Mock
-	private IndexerConfigurationProperties configurationProperties;
 	@Mock
 	private RestClient restClient;
 	@Mock
@@ -76,7 +59,7 @@ public class IndexerMappingServiceTest {
 	private IndexerMappingServiceImpl sut;
 
 	@Mock
-    private ElasticClientHandler elasticClientHandler;
+	private ElasticClientHandler elasticClientHandler;
 
 	@InjectMocks
 	private RestHighLevelClient restHighLevelClient;
@@ -91,14 +74,10 @@ public class IndexerMappingServiceTest {
 
 	@Before
 	public void setup() throws IOException {
-		initMocks(this);
-		when(configurationProperties.isPreDemo()).thenReturn(true);
 		Map<String, String> dataMapping = new HashMap<>();
 		dataMapping.put("Location", "geo_point");
-		dataMapping.put("Msg", "text");
 		Map<String, Object> metaMapping = new HashMap<>();
 		metaMapping.put(RecordMetaAttribute.ID.getValue(), "keyword");
-		metaMapping.put(RecordMetaAttribute.ACL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ACL));
 		this.indexSchema = IndexSchema.builder().kind(kind).type(type).dataSchema(dataMapping).metaSchema(metaMapping)
 				.build();
 
@@ -106,7 +85,7 @@ public class IndexerMappingServiceTest {
 		this.restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
 
 		when(this.restHighLevelClient.getLowLevelClient()).thenReturn(restClient);
-		when(this.restClient.performRequest(any())).thenReturn(response);
+		when(this.restClient.performRequest(ArgumentMatchers.any())).thenReturn(response);
 		when(this.response.getStatusLine()).thenReturn(statusLine);
 		when(this.statusLine.getStatusCode()).thenReturn(200);
 	}
@@ -125,7 +104,7 @@ public class IndexerMappingServiceTest {
 	public void should_returnValidMapping_givenTrueMerge_createMappingTest() {
 		try {
 			doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
-			doReturn(mappingResponse).when(this.indicesClient).putMapping(any(), any(RequestOptions.class));
+			doReturn(mappingResponse).when(this.indicesClient).putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class));
 
 			String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
 			assertEquals(this.mappingValid, mapping);
@@ -138,10 +117,10 @@ public class IndexerMappingServiceTest {
 	public void should_returnValidMapping_givenExistType_createMappingTest() {
 		try {
 			doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
-			doReturn(mappingResponse).when(this.indicesClient).putMapping(any(), any(RequestOptions.class));
+			doReturn(mappingResponse).when(this.indicesClient).putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class));
 
 			IndexerMappingServiceImpl indexerMappingServiceLocal = PowerMockito.spy(new IndexerMappingServiceImpl());
-			doReturn(false).when(indexerMappingServiceLocal).isTypeExist(any(), any(), any());
+			doReturn(false).when(indexerMappingServiceLocal).isTypeExist(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 			String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
 			assertEquals(this.mappingValid, mapping);
 		} catch (Exception e) {
@@ -156,24 +135,24 @@ public class IndexerMappingServiceTest {
 			indices.add("indices 1");
 			GetFieldMappingsResponse getFieldMappingsResponse = mock(GetFieldMappingsResponse.class);
 			doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
-			when(this.indicesClient.getFieldMapping(any(), any())).thenReturn(getFieldMappingsResponse);
+			when(this.indicesClient.getFieldMapping(ArgumentMatchers.any(GetFieldMappingsRequest.class), ArgumentMatchers.any())).thenReturn(getFieldMappingsResponse);
 			XContentBuilder builder = XContentFactory.jsonBuilder();
 			builder.startObject();
 			builder.field("any field", new HashMap());
 			builder.endObject();
 			BytesReference bytesReference = BytesReference.bytes(builder);
-			FieldMappingMetaData mappingMetaData = new FieldMappingMetaData(index, bytesReference);
-			Map<String, FieldMappingMetaData> mapBuilder = new HashMap<>();
+			GetFieldMappingsResponse.FieldMappingMetadata mappingMetaData = new GetFieldMappingsResponse.FieldMappingMetadata(index, bytesReference);
+			Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapBuilder = new HashMap<>();
 			mapBuilder.put("data.any field", mappingMetaData);
-			Map<String, Map<String, FieldMappingMetaData>> mappingBuilder = new HashMap<>();
+			Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> mappingBuilder = new HashMap<>();
 			mappingBuilder.put("any index 1", mapBuilder);
 			mappingBuilder.put("any index 2", mapBuilder);
-			Map<String, Map<String, Map<String, FieldMappingMetaData>>> mapping = new HashMap<>();
+			Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> mapping = new HashMap<>();
 			mapping.put("indices 1", mappingBuilder);
 			when(getFieldMappingsResponse.mappings()).thenReturn(mapping);
-			doReturn(mappingResponse).when(this.indicesClient).putMapping(any(), any(RequestOptions.class));
+			doReturn(mappingResponse).when(this.indicesClient).putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class));
 			BulkByScrollResponse response = mock(BulkByScrollResponse.class);
-			doReturn(response).when(this.restHighLevelClient).updateByQuery(any(), any(RequestOptions.class));
+			doReturn(response).when(this.restHighLevelClient).updateByQuery(ArgumentMatchers.any(), ArgumentMatchers.any(RequestOptions.class));
 			when(response.getBulkFailures()).thenReturn(new ArrayList<Failure>());
 			when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
 
@@ -190,24 +169,24 @@ public class IndexerMappingServiceTest {
 			indices.add("invalid 1");
 			GetFieldMappingsResponse getFieldMappingsResponse = mock(GetFieldMappingsResponse.class);
 			doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
-			when(this.indicesClient.getFieldMapping(any(), any())).thenReturn(getFieldMappingsResponse);
+			when(this.indicesClient.getFieldMapping(ArgumentMatchers.any(GetFieldMappingsRequest.class), ArgumentMatchers.any())).thenReturn(getFieldMappingsResponse);
 			XContentBuilder builder = XContentFactory.jsonBuilder();
 			builder.startObject();
 			builder.field("any field", new HashMap());
 			builder.endObject();
 			BytesReference bytesReference = BytesReference.bytes(builder);
-			FieldMappingMetaData mappingMetaData = new FieldMappingMetaData(index, bytesReference);
-			Map<String, FieldMappingMetaData> mapBuilder = new HashMap<>();
+			GetFieldMappingsResponse.FieldMappingMetadata mappingMetaData = new GetFieldMappingsResponse.FieldMappingMetadata(index, bytesReference);
+			Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapBuilder = new HashMap<>();
 			mapBuilder.put("data.any field", mappingMetaData);
-			Map<String, Map<String, FieldMappingMetaData>> mappingBuilder = new HashMap<>();
+			Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> mappingBuilder = new HashMap<>();
 			mappingBuilder.put("any index 1", mapBuilder);
 			mappingBuilder.put("any index 2", mapBuilder);
-			Map<String, Map<String, Map<String, FieldMappingMetaData>>> mapping = new HashMap<>();
+			Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> mapping = new HashMap<>();
 			mapping.put("indices 1", mappingBuilder);
 			when(getFieldMappingsResponse.mappings()).thenReturn(mapping);
-			doReturn(mappingResponse).when(this.indicesClient).putMapping(any(), any(RequestOptions.class));
+			doReturn(mappingResponse).when(this.indicesClient).putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class));
 			BulkByScrollResponse response = mock(BulkByScrollResponse.class);
-			doReturn(response).when(this.restHighLevelClient).updateByQuery(any(), any(RequestOptions.class));
+			doReturn(response).when(this.restHighLevelClient).updateByQuery(ArgumentMatchers.any(), ArgumentMatchers.any(RequestOptions.class));
 			when(response.getBulkFailures()).thenReturn(new ArrayList<Failure>());
 			when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
 
@@ -224,24 +203,24 @@ public class IndexerMappingServiceTest {
 			indices.add("indices 1");
 			GetFieldMappingsResponse getFieldMappingsResponse = mock(GetFieldMappingsResponse.class);
 			doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
-			when(this.indicesClient.getFieldMapping(any(), any())).thenReturn(getFieldMappingsResponse);
+			when(this.indicesClient.getFieldMapping(ArgumentMatchers.any(GetFieldMappingsRequest.class), ArgumentMatchers.any())).thenReturn(getFieldMappingsResponse);
 			XContentBuilder builder = XContentFactory.jsonBuilder();
 			builder.startObject();
 			builder.field("any field", new HashMap());
 			builder.endObject();
 			BytesReference bytesReference = BytesReference.bytes(builder);
-			FieldMappingMetaData mappingMetaData = new FieldMappingMetaData(index, bytesReference);
-			Map<String, FieldMappingMetaData> mapBuilder = new HashMap<>();
+			GetFieldMappingsResponse.FieldMappingMetadata mappingMetaData = new GetFieldMappingsResponse.FieldMappingMetadata(index, bytesReference);
+			Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapBuilder = new HashMap<>();
 			mapBuilder.put("data.any field", mappingMetaData);
-			Map<String, Map<String, FieldMappingMetaData>> mappingBuilder = new HashMap<>();
+			Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> mappingBuilder = new HashMap<>();
 			mappingBuilder.put("any index 1", mapBuilder);
 			mappingBuilder.put("any index 2", mapBuilder);
-			Map<String, Map<String, Map<String, FieldMappingMetaData>>> mapping = new HashMap<>();
+			Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> mapping = new HashMap<>();
 			mapping.put("indices 1", mappingBuilder);
 			when(getFieldMappingsResponse.mappings()).thenReturn(mapping);
-			doReturn(mappingResponse).when(this.indicesClient).putMapping(any(), any(RequestOptions.class));
+			doReturn(mappingResponse).when(this.indicesClient).putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class));
 			BulkByScrollResponse response = mock(BulkByScrollResponse.class);
-			doReturn(response).when(this.restHighLevelClient).updateByQuery(any(), any(RequestOptions.class));
+			doReturn(response).when(this.restHighLevelClient).updateByQuery(ArgumentMatchers.any(), ArgumentMatchers.any(RequestOptions.class));
 			when(response.getBulkFailures()).thenReturn(new ArrayList<Failure>());
 			when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
 			this.sut.updateIndexMappingForIndicesOfSameType(indices,"any field invalid");
@@ -259,24 +238,24 @@ public class IndexerMappingServiceTest {
 			indices.add("indices Invalid");
 			GetFieldMappingsResponse getFieldMappingsResponse = mock(GetFieldMappingsResponse.class);
 			doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
-			when(this.indicesClient.getFieldMapping(any(), any())).thenThrow(new ElasticsearchException(""));
+			when(this.indicesClient.getFieldMapping(ArgumentMatchers.any(GetFieldMappingsRequest.class), ArgumentMatchers.any())).thenThrow(new ElasticsearchException(""));
 			XContentBuilder builder = XContentFactory.jsonBuilder();
 			builder.startObject();
 			builder.field("any field", new HashMap());
 			builder.endObject();
 			BytesReference bytesReference = BytesReference.bytes(builder);
-			FieldMappingMetaData mappingMetaData = new FieldMappingMetaData(index, bytesReference);
-			Map<String, FieldMappingMetaData> mapBuilder = new HashMap<>();
+			GetFieldMappingsResponse.FieldMappingMetadata mappingMetaData = new GetFieldMappingsResponse.FieldMappingMetadata(index, bytesReference);
+			Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapBuilder = new HashMap<>();
 			mapBuilder.put("data.any field", mappingMetaData);
-			Map<String, Map<String, FieldMappingMetaData>> mappingBuilder = new HashMap<>();
+			Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> mappingBuilder = new HashMap<>();
 			mappingBuilder.put("any index 1", mapBuilder);
 			mappingBuilder.put("any index 2", mapBuilder);
-			Map<String, Map<String, Map<String, FieldMappingMetaData>>> mapping = new HashMap<>();
+			Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> mapping = new HashMap<>();
 			mapping.put("indices 1", mappingBuilder);
 			when(getFieldMappingsResponse.mappings()).thenReturn(mapping);
-			doReturn(mappingResponse).when(this.indicesClient).putMapping(any(), any(RequestOptions.class));
+			doReturn(mappingResponse).when(this.indicesClient).putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class));
 			BulkByScrollResponse response = mock(BulkByScrollResponse.class);
-			doReturn(response).when(this.restHighLevelClient).updateByQuery(any(), any(RequestOptions.class));
+			doReturn(response).when(this.restHighLevelClient).updateByQuery(ArgumentMatchers.any(), ArgumentMatchers.any(RequestOptions.class));
 			when(response.getBulkFailures()).thenReturn(new ArrayList<Failure>());
 			when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
 			this.sut.updateIndexMappingForIndicesOfSameType(indices,"any field");
@@ -293,44 +272,30 @@ public class IndexerMappingServiceTest {
 			indices.add("indices Invalid");
 			GetFieldMappingsResponse getFieldMappingsResponse = mock(GetFieldMappingsResponse.class);
 			doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
-			when(this.indicesClient.getFieldMapping(any(), any())).thenReturn(getFieldMappingsResponse);
+			when(this.indicesClient.getFieldMapping(ArgumentMatchers.any(GetFieldMappingsRequest.class), ArgumentMatchers.any())).thenReturn(getFieldMappingsResponse);
 			XContentBuilder builder = XContentFactory.jsonBuilder();
 			builder.startObject();
 			builder.field("any field", new HashMap());
 			builder.endObject();
 			BytesReference bytesReference = BytesReference.bytes(builder);
-			FieldMappingMetaData mappingMetaData = new FieldMappingMetaData(index, bytesReference);
-			Map<String, FieldMappingMetaData> mapBuilder = new HashMap<>();
+			GetFieldMappingsResponse.FieldMappingMetadata mappingMetaData = new GetFieldMappingsResponse.FieldMappingMetadata(index, bytesReference);
+			Map<String, GetFieldMappingsResponse.FieldMappingMetadata> mapBuilder = new HashMap<>();
 			mapBuilder.put("data.any field", mappingMetaData);
-			Map<String, Map<String, FieldMappingMetaData>> mappingBuilder = new HashMap<>();
+			Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> mappingBuilder = new HashMap<>();
 			mappingBuilder.put("any index 1", mapBuilder);
 			mappingBuilder.put("any index 2", mapBuilder);
-			Map<String, Map<String, Map<String, FieldMappingMetaData>>> mapping = new HashMap<>();
+			Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> mapping = new HashMap<>();
 			mapping.put("indices 1", mappingBuilder);
 			when(getFieldMappingsResponse.mappings()).thenReturn(mapping);
-			doReturn(mappingResponse).when(this.indicesClient).putMapping(any(), any(RequestOptions.class));
+			doReturn(mappingResponse).when(this.indicesClient).putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class));
 			BulkByScrollResponse response = mock(BulkByScrollResponse.class);
-			doReturn(response).when(this.restHighLevelClient).updateByQuery(any(), any(RequestOptions.class));
+			doReturn(response).when(this.restHighLevelClient).updateByQuery(ArgumentMatchers.any(), ArgumentMatchers.any(RequestOptions.class));
 			when(response.getBulkFailures()).thenReturn(new ArrayList<Failure>());
-			when(this.indicesClient.putMapping(any(), any(RequestOptions.class))).thenThrow(new ElasticsearchException(""));
+			when(this.indicesClient.putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class))).thenThrow(new ElasticsearchException(""));
 			when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
 			this.sut.updateIndexMappingForIndicesOfSameType(indices,"any field");
 		} catch (AppException e) {
 			throw e;
-		} catch (Exception e) {
-			fail("Should not throw this exception" + e.getMessage());
-		}
-	}
-
-
-	@Test
-	public void should_returnDocumentMapping_givenValidIndexSchema() {
-
-		try {
-			Map<String, Object> documentMapping = this.sut.getIndexMappingFromRecordSchema(this.indexSchema);
-			String documentMappingJson = new Gson().toJson(documentMapping);
-			assertEquals(this.mappingValid, documentMappingJson);
-
 		} catch (Exception e) {
 			fail("Should not throw this exception" + e.getMessage());
 		}

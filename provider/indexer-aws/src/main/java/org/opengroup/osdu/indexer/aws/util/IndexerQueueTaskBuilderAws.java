@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
-
+//
 @Primary
 @Component
 public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
@@ -43,8 +43,8 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
     private ParameterStorePropertySource ssm;
 
-    private String amazonSQSQueueUrl;
-
+    private String storageQueue;
+    private String dlq;
     private final String retryString = "retry";
 
     private Gson gson;
@@ -54,7 +54,8 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
     @Value("${aws.storage.sqs.queue.url}")
     String sqsStorageQueueParameter;
-
+    @Value("${aws.indexer.sqs.dlq.url}")
+    String deadLetterQueueParameter;
 
     @Inject
     public void init() {
@@ -63,17 +64,26 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
         gson =new Gson();
         SSMConfig ssmConfig = new SSMConfig();
         ssm = ssmConfig.amazonSSM();
-        amazonSQSQueueUrl = ssm.getProperty(sqsStorageQueueParameter).toString();
+        storageQueue = ssm.getProperty(sqsStorageQueueParameter).toString();
+        dlq = ssm.getProperty(deadLetterQueueParameter).toString();
     }
 
     @Override
     public void createWorkerTask(String payload, DpsHeaders headers) {
-        createTask(payload, headers);
+        this.createTask(payload, headers);
     }
 
     @Override
+    public  void createWorkerTask(String payload, Long countDownMillis, DpsHeaders headers){
+        this.createTask(payload, headers);
+    }
+    @Override
     public void createReIndexTask(String payload,DpsHeaders headers) {
-        createTask(payload, headers);
+        this.createTask(payload, headers);
+    }
+    @Override
+    public void createReIndexTask(String payload, Long countDownMillis, DpsHeaders headers){
+        this.createTask(payload, headers);
     }
 
     private void createTask(String payload, DpsHeaders headers) {
@@ -119,11 +129,19 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
         );
 
         // Send a message with an attribute and a delay
-        final SendMessageRequest sendMessageRequest = new SendMessageRequest()
-                .withQueueUrl(amazonSQSQueueUrl)
-                .withMessageBody(message.getData())
-                .withDelaySeconds(new Integer(retryDelay))
-                .withMessageAttributes(messageAttributes);
+        final SendMessageRequest sendMessageRequest ;
+        if (retryCount< 10) {
+
+            sendMessageRequest = new SendMessageRequest()
+                    .withQueueUrl(storageQueue)
+                    .withMessageBody(message.getData())
+                    .withDelaySeconds(new Integer(retryDelay))
+                    .withMessageAttributes(messageAttributes);
+        }else{
+            sendMessageRequest = new SendMessageRequest()
+                    .withQueueUrl(dlq)
+                    .withMessageBody(message.getData());
+        }
         sqsClient.sendMessage(sendMessageRequest);
     }
 
