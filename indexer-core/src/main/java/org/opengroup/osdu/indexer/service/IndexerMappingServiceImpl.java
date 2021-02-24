@@ -76,7 +76,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
      *
      * @param schema Index schema
      * @param type   Mapping type
-     * @return String JSON represnetation of type and elastic type
+     * @return String JSON representation of type and elastic type
      *
      * sample index mapping:
      * "properties": {
@@ -182,7 +182,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         }
     }
     
-    private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(RestHighLevelClient client, String index, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping, String fieldName) throws IOException {
+    private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(
+            RestHighLevelClient client, String index, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping, String fieldName) throws IOException {
 
         PutMappingRequest request = new PutMappingRequest(index);
         String type = indexMapping.keySet().iterator().next();
