@@ -372,10 +372,10 @@ public class IndexerServiceImpl implements IndexerService {
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKind());
 
             if (operation == OperationType.create) {
-                IndexRequest indexRequest = new IndexRequest(index, record.getType(), record.getId()).source(this.gson.toJson(sourceMap), XContentType.JSON);
+                IndexRequest indexRequest = new IndexRequest(index).id(record.getId()).source(this.gson.toJson(sourceMap), XContentType.JSON);
                 bulkRequest.add(indexRequest);
             } else if (operation == OperationType.update) {
-                UpdateRequest updateRequest = new UpdateRequest(index, record.getType(), record.getId()).upsert(this.gson.toJson(sourceMap), XContentType.JSON);
+                UpdateRequest updateRequest = new UpdateRequest(index, record.getId()).upsert(this.gson.toJson(sourceMap), XContentType.JSON);
                 bulkRequest.add(updateRequest);
             }
         }
@@ -389,13 +389,10 @@ public class IndexerServiceImpl implements IndexerService {
 
         for (Map.Entry<String, List<String>> record : deleteRecordMap.entrySet()) {
 
-            String[] kindParts = record.getKey().split(":");
-            String type = kindParts[2];
-
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKey());
 
             for (String id : record.getValue()) {
-                DeleteRequest deleteRequest = new DeleteRequest(index, type, id);
+                DeleteRequest deleteRequest = new DeleteRequest(index, id);
                 bulkRequest.add(deleteRequest);
             }
         }
@@ -409,8 +406,6 @@ public class IndexerServiceImpl implements IndexerService {
 
         List<String> failureRecordIds = new LinkedList<>();
         if (bulkRequest.numberOfActions() == 0) return failureRecordIds;
-
-
 
         try {
             BulkResponse bulkResponse = restClient.bulk(bulkRequest, RequestOptions.DEFAULT);
