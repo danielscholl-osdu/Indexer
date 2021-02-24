@@ -15,12 +15,6 @@
 package org.opengroup.osdu.indexer.service;
 
 import com.google.gson.Gson;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -38,27 +32,22 @@ import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.indexer.DEAnalyzerType;
-import org.opengroup.osdu.core.common.model.indexer.ElasticType;
-import org.opengroup.osdu.core.common.Constants;
-import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
-import org.opengroup.osdu.core.common.model.indexer.Records;
-import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.search.Preconditions;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IndexerMappingService {
 
-    @Inject
-    private IndexerConfigurationProperties configurationProperties;
     @Inject
     private JaxRsDpsLog log;
     @Inject
@@ -195,7 +184,6 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
     
     private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(RestHighLevelClient client, String index, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping, String fieldName) throws IOException {
 
-    private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(RestHighLevelClient client, String index, Map<String, Map<String, FieldMappingMetaData>> indexMapping, String fieldName) throws IOException {
         PutMappingRequest request = new PutMappingRequest(index);
         String type = indexMapping.keySet().iterator().next();
         if(type.isEmpty()) {
