@@ -16,6 +16,11 @@ package org.opengroup.osdu.indexer.azure.config;
 
 import com.azure.security.keyvault.secrets.SecretClient;
 import org.opengroup.osdu.azure.KeyVaultFacade;
+import org.opengroup.osdu.core.common.entitlements.EntitlementsAPIConfig;
+import org.opengroup.osdu.core.common.entitlements.EntitlementsFactory;
+import org.opengroup.osdu.core.common.entitlements.IEntitlementsFactory;
+import org.opengroup.osdu.core.common.http.json.HttpResponseBodyMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -36,6 +41,12 @@ public class AzureBootstrapConfig {
 
     @Value("${MAX_CACHE_VALUE_SIZE}")
     private Integer maxCacheValueSize;
+
+    @Value("${AUTHORIZE_API_KEY}")
+    private String entitlementsAPIKey;
+
+    @Value("${AUTHORIZE_API}")
+    private String entitlementsAPIEndpoint;
 
     @Bean
     @Named("KEY_VAULT_URL")
@@ -79,5 +90,17 @@ public class AzureBootstrapConfig {
         String urlFormat = "https://login.microsoftonline.com/%s/oauth2/token/";
         String tenant = KeyVaultFacade.getSecretWithValidation(sc, "app-dev-sp-tenant-id");
         return String.format(urlFormat, tenant);
+    }
+
+    @Autowired
+    private HttpResponseBodyMapper httpResponseBodyMapper;
+
+    @Bean
+    public IEntitlementsFactory entitlementsFactory() {
+        EntitlementsAPIConfig apiConfig = EntitlementsAPIConfig.builder()
+                .apiKey(entitlementsAPIKey)
+                .rootUrl(entitlementsAPIEndpoint)
+                .build();
+        return new EntitlementsFactory(apiConfig, httpResponseBodyMapper);
     }
 }
