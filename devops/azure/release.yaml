@@ -161,4 +161,4 @@ spec:
         - name: STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST
           value: http://storage/api/storage/v2/query/records:batch
         - name: STORAGE_QUERY_RECORD_HOST
-          value: http://storage/api/storage/v2/records
+          value: http://storage/api/storage/v2/query/records
