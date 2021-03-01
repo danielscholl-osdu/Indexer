@@ -1,4 +1,4 @@
-// Copyright © Amazon Web Services
+// Copyright © Azure
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.lang.reflect.Type;
-
 
 @Log
 @Component
@@ -94,7 +93,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         message.setContentType("application/json");
 
         try {
-            logger.info("Storage publishes message to Service Bus " + headers.getCorrelationId());
+            logger.info("Indexer publishes message to Service Bus " + headers.getCorrelationId());
             topicClientFactory.getClient(headers.getPartitionId(), serviceBusTopic).send(message);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
