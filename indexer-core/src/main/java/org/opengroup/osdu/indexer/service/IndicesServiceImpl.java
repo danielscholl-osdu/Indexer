@@ -22,15 +22,15 @@ import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.CreateIndexResponse;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -93,11 +93,10 @@ public class IndicesServiceImpl implements IndicesService {
             request.settings(settings != null ? settings : DEFAULT_INDEX_SETTINGS);
             if (mapping != null) {
                 String mappingJsonString = new Gson().toJson(mapping, Map.class);
-                request.mapping(type, mappingJsonString, XContentType.JSON);
+                request.mapping(mappingJsonString,XContentType.JSON);
             }
-            request.timeout(REQUEST_TIMEOUT);
+            request.setTimeout(REQUEST_TIMEOUT);
             CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
-
             // cache the index status
             boolean indexStatus = response.isAcknowledged() && response.isShardsAcknowledged();
             if (indexStatus) this.indicesExistCache.put(index, true);
@@ -130,8 +129,7 @@ public class IndicesServiceImpl implements IndicesService {
                 //In case the format of cache changes then clean the cache
                 this.indicesExistCache.delete(index);
             }
-            GetIndexRequest request = new GetIndexRequest();
-            request.indices(index);
+            GetIndexRequest request = new GetIndexRequest(index);
             boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
             if (exists) this.indicesExistCache.put(index, true);
             return exists;
