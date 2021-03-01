@@ -18,19 +18,22 @@
 package org.opengroup.osdu.util;
 
 import com.google.gson.Gson;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import javax.net.ssl.SSLContext;
 import lombok.extern.java.Log;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.action.admin.indices.close.CloseIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.client.indices.CloseIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -40,7 +43,12 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.*;
-import org.elasticsearch.cluster.metadata.MappingMetaData;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.CreateIndexResponse;
+import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.indices.GetMappingsRequest;
+import org.elasticsearch.client.indices.GetMappingsResponse;
+import org.elasticsearch.cluster.metadata.MappingMetadata;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -89,9 +97,9 @@ public class ElasticUtils {
 
                 // creating index + add mapping to the index
                 log.info("Creating index with name: " + index);
-                CreateIndexRequest request = new CreateIndexRequest(index, settings);
+                CreateIndexRequest request = new CreateIndexRequest(index).settings(settings);
                 request.source("{\"mappings\":" + mapping + "}", XContentType.JSON);
-                request.timeout(REQUEST_TIMEOUT);
+                request.setTimeout(REQUEST_TIMEOUT);
                 CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
 
                 //wait for ack
@@ -199,7 +207,7 @@ public class ElasticUtils {
             try (RestHighLevelClient client = this.createClient(username, password, host)) {
                 SearchRequest request = new SearchRequest(index);
                 SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
-                return searchResponse.getHits().totalHits;
+                return searchResponse.getHits().getTotalHits().value;
             }
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
@@ -233,7 +241,7 @@ public class ElasticUtils {
                 searchRequest.source(searchSourceBuilder);
 
                 SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-                return searchResponse.getHits().totalHits;
+                return searchResponse.getHits().getTotalHits().value;
             }
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
@@ -241,13 +249,13 @@ public class ElasticUtils {
         }
     }
 
-    public ImmutableOpenMap<String, MappingMetaData> getMapping(String index) throws IOException {
+    public Map<String, MappingMetadata> getMapping(String index) throws IOException {
         try (RestHighLevelClient client = this.createClient(username, password, host)) {
             GetMappingsRequest request = new GetMappingsRequest();
             request.indices(index);
             GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
-            ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> allMappings = response.mappings();
-            return allMappings.get(index);
+            Map<String, MappingMetadata> mappings = response.mappings();
+            return mappings;
         }
     }
 
@@ -265,7 +273,8 @@ public class ElasticUtils {
     private boolean closeIndex(RestHighLevelClient client, String index) {
         try {
             CloseIndexRequest request = new CloseIndexRequest(index);
-            request.timeout(TimeValue.timeValueMinutes(1));
+            request.setTimeout(TimeValue.timeValueMinutes(1));
+            request.timeout();
             AcknowledgedResponse closeIndexResponse = client.indices().close(request, RequestOptions.DEFAULT);
             return closeIndexResponse.isAcknowledged();
         } catch (ElasticsearchException | IOException exception) {
@@ -282,7 +291,7 @@ public class ElasticUtils {
             for (Map<String, Object> record : testRecords) {
                 String id = (String) record.get("id");
                 Map<String, Object> mapData = gson.fromJson(gson.toJson(record), Map.class);
-                IndexRequest indexRequest = new IndexRequest(index, kind.split(":")[2], id).source(mapData);
+                IndexRequest indexRequest = new IndexRequest(index).id(id).source(mapData);
                 dataList.add(indexRequest);
             }
         } catch (Exception e) {
@@ -314,7 +323,6 @@ public class ElasticUtils {
             RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, scheme));
             builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
                     .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
-            builder.setMaxRetryTimeoutMillis(REST_CLIENT_RETRY_TIMEOUT);
 
             Header[] defaultHeaders = new Header[]{
                     new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
@@ -326,8 +334,41 @@ public class ElasticUtils {
                 new BasicHeader("Authorization", String.format("Basic %s", Base64.getEncoder().encodeToString(usernameAndPassword.getBytes()))),
             };
 
+        boolean isSecurityHttpsCertificateTrust = Config.isSecurityHttpsCertificateTrust();
+        log.info(String.format(
+            "Elastic client connection uses protocolScheme = %s with a flag "
+                + "'security.https.certificate.trust' = %s",
+            scheme, isSecurityHttpsCertificateTrust));
+
+        if ("https".equals(scheme) && isSecurityHttpsCertificateTrust) {
+            log.warning("Elastic client connection uses TrustSelfSignedStrategy()");
+            SSLContext sslContext = createSSLContext();
+            builder.setHttpClientConfigCallback(httpClientBuilder ->
+            {
+                HttpAsyncClientBuilder httpAsyncClientBuilder = httpClientBuilder.setSSLContext(sslContext)
+                    .setSSLHostnameVerifier(
+                        NoopHostnameVerifier.INSTANCE);
+                return httpAsyncClientBuilder;
+            });
+        }
+
             builder.setDefaultHeaders(defaultHeaders);
         return builder;
+    }
+
+    private SSLContext createSSLContext() {
+        SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
+        try {
+            sslContextBuilder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+            return sslContextBuilder.build();
+        } catch (NoSuchAlgorithmException e) {
+            log.severe(e.getMessage());
+        } catch (KeyStoreException e) {
+            log.severe(e.getMessage());
+        } catch (KeyManagementException e) {
+            log.severe(e.getMessage());
+        }
+        return null;
     }
 
     public boolean isIndexExist(String index) {
@@ -342,8 +383,7 @@ public class ElasticUtils {
 
     private boolean createRestClientAndCheckIndexExist(String index) {
         try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            GetIndexRequest request = new GetIndexRequest();
-            request.indices(index);
+            GetIndexRequest request = new GetIndexRequest(index);
             return client.indices().exists(request, RequestOptions.DEFAULT);
         } catch (IOException e) {
             log.log(Level.INFO, String.format("Error getting index: %s %s", index, e.getMessage()));

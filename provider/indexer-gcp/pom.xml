@@ -25,7 +25,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-lib-gcp</artifactId>
-            <version>0.3.23</version>
+            <version>0.6.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -74,17 +74,14 @@
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
-            <version>6.6.2</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
-            <version>6.6.2</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>6.6.2</version>
         </dependency>
 
         <!-- Test Dependencies -->
@@ -151,7 +148,16 @@
             <artifactId>proto-google-iam-v1</artifactId>
             <version>0.12.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>ch.qos.logback.contrib</groupId>
+            <artifactId>logback-json-classic</artifactId>
+            <version>0.1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback.contrib</groupId>
+            <artifactId>logback-jackson</artifactId>
+            <version>0.1.5</version>
+        </dependency>
     </dependencies>
 
     <build>

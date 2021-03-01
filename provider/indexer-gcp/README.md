@@ -35,7 +35,7 @@ In order to run the service locally or remotely, you will need to have the follo
 | `GOOGLE_AUDIENCES` | ex `*****.apps.googleusercontent.com` | Client ID for getting access to cloud resources | yes | https://console.cloud.google.com/apis/credentials |
 | `GOOGLE_APPLICATION_CREDENTIALS` | ex `/path/to/directory/service-key.json` | Service account credentials, you only need this if running locally | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `security.https.certificate.trust` | ex `false` | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false | output of infrastructure deployment |
-| `indexer.que.service.mail` | ex `default@iam.gserviceaccount.com` | IndexerQue environment service account mail, required if Indexer Que deployed in cloud task mode, to validate token from it | yes | - |
+| `indexer.que.service.mail` | ex `default@iam.gserviceaccount.com` | Indexer Que environment service account mail, required if Indexer Que deployed in cloud task mode, to validate token from it | yes | - |
 
 ### Run Locally
 Check that maven is installed:
@@ -147,12 +147,14 @@ You will need to have the following environment variables defined.
 | `SEARCH_INTEGRATION_TESTER` | `********` | Service account for API calls. Note: this user must have entitlements configured already | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `SEARCH_HOST` | ex `http://localhost:8080/api/search/v2/` | Endpoint of search service | no | - |
 | `STORAGE_HOST` | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/schemas` | Storage API endpoint | Storage Host | no | output of infrastructure deployment |
+| `SECURITY_HTTPS_CERTIFICATE_TRUST` | ex `false` | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false | output of infrastructure deployment |
+
 
 **Entitlements configuration for integration accounts**
 
 | INTEGRATION_TESTER | NO_DATA_ACCESS_TESTER | 
 | ---  | ---   |
-| users<br/>service.entitlements.user<br/>service.search.user<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{domain}.com |
+| users<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{domain}.com |
 
 Execute following command to build code and run all the integration tests:
 
@@ -197,9 +199,9 @@ Create king ring and key in the ***master project***
     		--purpose encryption
 ```
 
-Add **Cloud KMS CryptoKey Encrypter/Decrypter** role to the **App Engine default service account** of the master project through IAM - Role tab
+Add **Cloud KMS CryptoKey Encrypter/Decrypter** role to the **App Engine default service account** of the ***master project*** through IAM - Role tab
 
-Add "Cloud KMS Encrypt/Decrypt" role to the "App Engine default service account" of ***master project***
+Add **Cloud KMS Encrypt/Decrypt** role to the **App Engine default service account** of ***master project***
 
 #### Memory Store (Redis Instance) Setup
 

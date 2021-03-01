@@ -86,7 +86,7 @@ spec:
         - name: cosmosdb_database
           value: osdu-db
         - name: servicebus_topic_name
-          value: recordstopic
+          value: indexing-progress
         - name: entitlements_service_endpoint
           value: http://entitlements-azure/entitlements/v1
         - name: entitlements_service_api_key
