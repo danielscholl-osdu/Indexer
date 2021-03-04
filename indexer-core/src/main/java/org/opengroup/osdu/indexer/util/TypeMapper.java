@@ -22,6 +22,7 @@ import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 
 import org.apache.commons.lang3.StringUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,22 +65,45 @@ public class TypeMapper {
         storageToIndexerType.put(StorageType.GEO_SHAPE.getValue(), ElasticType.GEO_SHAPE.getValue());
     }
 
-
     public static String getIndexerType(String storageType) {
-        String indexedType = storageToIndexerType.getOrDefault(storageType, null);
-        if (indexedType != null && indexedType.endsWith("_array")) {
-            return StringUtils.substringBefore(indexedType, "_");
-        }
-        return indexedType;
+        return storageToIndexerType.getOrDefault(storageType, null);
     }
 
     public static Object getIndexerType(RecordMetaAttribute attribute) {
         return metaAttributeIndexerType.getOrDefault(attribute.getValue(), null);
     }
 
+    public static Object getMetaAttributeIndexerMapping(String key) {
+        if (key.equals(RecordMetaAttribute.ACL.getValue())
+                || key.equals(RecordMetaAttribute.LEGAL.getValue()) || key.equals(RecordMetaAttribute.ANCESTRY.getValue()) || key.equals(RecordMetaAttribute.INDEX_STATUS.getValue())) {
+            return metaAttributeIndexerType.get(key);
+        }
+        return Records.Type.builder().type(metaAttributeIndexerType.get(key).toString()).build();
+    }
+
+    public static Object getDataAttributeIndexerMapping(String indexerType) {
+        if (ElasticType.TEXT.getValue().equalsIgnoreCase(indexerType)) {
+            return getTextIndexerMapping();
+        }
+
+        if (isArray(indexerType)) {
+            return Records.Type.builder().type(getArrayMemberType(indexerType)).build();
+        }
+
+        return Records.Type.builder().type(indexerType).build();
+    }
+
+    private static boolean isArray(String indexerType) {
+        return indexerType != null && indexerType.endsWith("_array");
+    }
+
+    private static String getArrayMemberType(String indexerType) {
+        return StringUtils.substringBefore(indexerType, "_");
+    }
+
     private static Object getAclIndexerMapping() {
         Map<String, Object> aclRoleMapping = new HashMap<>();
-        aclRoleMapping.put(AclRole.VIEWERS.getValue() , Records.Type.builder().type(ElasticType.KEYWORD.getValue()).build());
+        aclRoleMapping.put(AclRole.VIEWERS.getValue(), Records.Type.builder().type(ElasticType.KEYWORD.getValue()).build());
         aclRoleMapping.put(AclRole.OWNERS.getValue(), Records.Type.builder().type(ElasticType.KEYWORD.getValue()).build());
 
         Map<String, Object> aclProperties = new HashMap<>();
@@ -120,5 +144,23 @@ public class TypeMapper {
         indexStatusProperties.put(Constants.PROPERTIES, indexStatusMapping);
 
         return indexStatusProperties;
+    }
+
+    private static Object getTextIndexerMapping() {
+        Map<String, Object> fieldIndexTypeMap = getKeywordMap();
+        Map<String, Object> textMap = new HashMap<>();
+        textMap.put("type", "text");
+        textMap.put("fields", fieldIndexTypeMap);
+        return textMap;
+    }
+
+    private static Map<String, Object> getKeywordMap() {
+        Map<String, Object> keywordMap = new HashMap<>();
+        keywordMap.put("type", "keyword");
+        keywordMap.put("ignore_above", 256);
+        keywordMap.put("null_value", "null");
+        Map<String, Object> fieldIndexTypeMap = new HashMap<>();
+        fieldIndexTypeMap.put("keyword", keywordMap);
+        return fieldIndexTypeMap;
     }
 }
