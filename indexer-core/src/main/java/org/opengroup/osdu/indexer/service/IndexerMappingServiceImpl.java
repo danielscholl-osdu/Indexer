@@ -15,12 +15,6 @@
 package org.opengroup.osdu.indexer.service;
 
 import com.google.gson.Gson;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -38,28 +32,29 @@ import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.indexer.DEAnalyzerType;
-import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
-import org.opengroup.osdu.core.common.model.indexer.Records;
-import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.search.Preconditions;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IndexerMappingService {
 
-    @Inject
-    private IndexerConfigurationProperties configurationProperties;
     @Inject
     private JaxRsDpsLog log;
     @Inject
     private ElasticClientHandler elasticClientHandler;
     private TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
-    
+
     /**
      * Create a new type in Elasticsearch
      *
@@ -81,7 +76,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
      *
      * @param schema Index schema
      * @param type   Mapping type
-     * @return String JSON represnetation of type and elastic type
+     * @return String JSON representation of type and elastic type
      *
      * sample index mapping:
      * "properties": {
@@ -111,19 +106,14 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         // meta  attribute
         Map<String, Object> metaMapping = new HashMap<>();
         for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
-            String key = entry.getKey();
-            if (key.equals(RecordMetaAttribute.ACL.getValue()) || key.equals(RecordMetaAttribute.LEGAL.getValue()) || key.equals(RecordMetaAttribute.ANCESTRY.getValue()) || key.equals(RecordMetaAttribute.INDEX_STATUS.getValue())) {
-                metaMapping.put(key, entry.getValue());
-            } else {
-                metaMapping.put(key, Records.Type.builder().type(entry.getValue().toString()).build());
-            }
+            metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey()));
         }
 
         // data-source attributes
         Map<String, Object> dataMapping = new HashMap<>();
         if (schema.getDataSchema() != null) {
             for (Map.Entry<String, String> entry : schema.getDataSchema().entrySet()) {
-                dataMapping.put(entry.getKey(), Records.Type.builder().type(entry.getValue()).build());
+                dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue()));
             }
 
             // inner properties.data.properties block
@@ -153,7 +143,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
             }
         }
     }
-    
+
     private boolean updateMappingToEnableKeywordIndexingForField(RestHighLevelClient client, Set<String> indicesSet, String fieldName) throws IOException {
         String[] indices = indicesSet.toArray(new String[indicesSet.size()]);
         Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> indexMappingMap = getIndexFieldMap(new String[]{"data."+fieldName}, client, indices);
@@ -184,7 +174,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
                     }
                 }
             }
-            	
+
             return indexMappingMap;
         } catch (ElasticsearchException e) {
             log.error(String.format("Failed to get indices: %s. | Error: %s", Arrays.toString(indices), e));
@@ -192,7 +182,9 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         }
     }
     
-    private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(RestHighLevelClient client, String index, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping, String fieldName) throws IOException {
+    private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(
+            RestHighLevelClient client, String index, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping, String fieldName) throws IOException {
+
         PutMappingRequest request = new PutMappingRequest(index);
         String type = indexMapping.keySet().iterator().next();
         if(type.isEmpty()) {
@@ -213,7 +205,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
             log.error(String.format("Could not find field: %s in the mapping of index: %s.", fieldName, index));
             return false;
         }
-        
+
         //Index the field with additional keyword type
         Map<String, Object> keywordMap = new HashMap<>();
         keywordMap.put(Constants.TYPE, "keyword");
@@ -229,22 +221,22 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         data.put(Constants.DATA,mapping);
         Map<String, Object> properties = new HashMap<>();
         properties.put(Constants.PROPERTIES, data);
-        
+
         request.source(new Gson().toJson(properties), XContentType.JSON);
 
         try {
             AcknowledgedResponse response = client.indices().putMapping(request, RequestOptions.DEFAULT);
             boolean isIndicesUpdated = updateIndices(client, index);
             return response.isAcknowledged() && isIndicesUpdated;
-            	
+
         } catch (Exception e) {
             log.error(String.format("Could not update mapping of index: %s. | Error: %s", index, e));
             return false;
         }
     }
-    
+
     private boolean updateIndices(RestHighLevelClient client, String index) throws IOException {
-        UpdateByQueryRequest request = new UpdateByQueryRequest(index); 
+        UpdateByQueryRequest request = new UpdateByQueryRequest(index);
         request.setConflicts("proceed");
         BulkByScrollResponse response = client.updateByQuery(request, RequestOptions.DEFAULT);
         if(!response.getBulkFailures().isEmpty()) {
@@ -253,7 +245,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         }
 		return true;
     }
-    
+
     /**
      * Create a new type in Elasticsearch
      *

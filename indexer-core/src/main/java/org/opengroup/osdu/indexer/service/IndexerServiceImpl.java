@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.gson.Gson;
 
+import com.google.gson.GsonBuilder;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -66,7 +67,7 @@ public class IndexerServiceImpl implements IndexerService {
 
     private static final List<RestStatus> RETRY_ELASTIC_EXCEPTION = new ArrayList<>(Arrays.asList(RestStatus.TOO_MANY_REQUESTS, RestStatus.BAD_GATEWAY, RestStatus.SERVICE_UNAVAILABLE));
 
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
