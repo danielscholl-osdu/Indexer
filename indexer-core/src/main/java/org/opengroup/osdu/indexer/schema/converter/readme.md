@@ -300,3 +300,66 @@ Ignored for now (array of references)
 ```
 
 \"kind\": \"long\"
+
+Processing specifics
+----------------------------------------------------------------------------
+
+allOf, anyOf and oneOf tags are processed at the same way. All internal data(properties) are included into converted schema.
+
+For instance
+```json
+{
+  "definitions": {
+    "wellboreData1": {
+      "properties": {
+        "prop1": {
+          "type": "string"
+        }
+      }
+    },
+    "wellboreData2": {
+      "properties": {
+        "prop2": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "properties": {
+    "data": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/wellboreData1"
+            } ],
+          "oneOf": [
+            {
+              "$ref": "#/definitions/wellboreData2"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+```
+
+is converted to
+
+```json
+{
+  "kind": "KIND_VAL",
+  "schema": [
+    {
+      "kind": "string",
+      "path": "prop1"
+    },
+    {
+      "kind": "string",
+      "path": "prop2"
+    }
+    ]
+}
+```

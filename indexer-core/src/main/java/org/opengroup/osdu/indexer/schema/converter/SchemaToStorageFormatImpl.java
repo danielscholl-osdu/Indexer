@@ -97,6 +97,18 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                             .collect(Collectors.toList()));
                 }
 
+                if (schemaData.getAnyOf() != null) {
+                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAnyOf().stream()
+                            .flatMap(propertiesProcessor::processItem)
+                            .collect(Collectors.toList()));
+                }
+
+                if (schemaData.getOneOf() != null) {
+                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getOneOf().stream()
+                            .flatMap(propertiesProcessor::processItem)
+                            .collect(Collectors.toList()));
+                }
+
                 if (schemaData.getRef() != null) {
                     storageSchemaItems.addAll(propertiesProcessor.processRef(schemaData.getRef())
                             .collect(Collectors.toList()));
