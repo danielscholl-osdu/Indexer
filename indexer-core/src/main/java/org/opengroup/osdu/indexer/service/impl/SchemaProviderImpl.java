@@ -32,6 +32,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Provides implementation of the client service that retrieves schemas from the Schema Service
@@ -58,13 +59,9 @@ public class SchemaProviderImpl implements SchemaService {
 
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        String schemaFromStorageService = getFromStorageService(kind);
+        String schemaServiceSchema = getFromSchemaService(kind);
 
-        if (schemaFromStorageService != null) {
-            return schemaFromStorageService;
-        }
-
-        return getFromSchemaService(kind);
+        return Objects.nonNull(schemaServiceSchema) ? schemaServiceSchema : getFromStorageService(kind);
     }
 
     protected String getFromSchemaService(String kind) throws UnsupportedEncodingException, URISyntaxException {
