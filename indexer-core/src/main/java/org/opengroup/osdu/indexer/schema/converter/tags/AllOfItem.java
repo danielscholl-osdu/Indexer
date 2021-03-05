@@ -27,4 +27,6 @@ public class AllOfItem {
     private String type;
     private Map<String, TypeProperty> properties;
     private List<AllOfItem> allOf;
+    private List<AllOfItem> oneOf;
+    private List<AllOfItem> anyOf;
 }

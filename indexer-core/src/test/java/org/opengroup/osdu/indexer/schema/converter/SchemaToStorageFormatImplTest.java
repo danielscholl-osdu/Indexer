@@ -95,6 +95,21 @@ public class SchemaToStorageFormatImplTest {
     }
 
     @Test
+    public void oneOfInDefinitions() {
+        testSingleFile("/converter/tags/oneOf/indefinitions.json", KIND);
+    }
+
+    @Test
+    public void anyOfInDefinitions() {
+        testSingleFile("/converter/tags/anyOf/indefinitions.json", KIND);
+    }
+
+    @Test
+    public void mixAllAnyOneOf() {
+        testSingleFile("/converter/tags/mixAllAnyOneOf/mix.json", KIND);
+    }
+
+    @Test
     public void folderPassed() throws URISyntaxException, IOException {
 
         String folder = "/converter/R3-json-schema";
