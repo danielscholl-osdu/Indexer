@@ -155,9 +155,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
             logger.error(e.getMessage(), e);
         }
     }
-
-
-
+    
     private List<RecordInfo> parseRecordsAsJSON(String inputPayload) {
         Gson gson = new Gson();
         Type type = new TypeToken<List<RecordInfo>>(){}.getType();
