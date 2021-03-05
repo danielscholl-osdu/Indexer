@@ -85,6 +85,9 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
     private void publishAllRecordsToServiceBus(String payload, DpsHeaders headers) {
         // fetch all the remaining records
+        // This logic is temporary and would be updated to call the storage service async.
+        // Currently the storage client can't be called out of request scope hence making the
+        // storage calls sync here
         Gson gson = new Gson();
         RecordReindexRequest recordReindexRequest = gson.fromJson(payload, RecordReindexRequest.class);
         final String recordKind = recordReindexRequest.getKind();
@@ -155,7 +158,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
             logger.error(e.getMessage(), e);
         }
     }
-    
+
     private List<RecordInfo> parseRecordsAsJSON(String inputPayload) {
         Gson gson = new Gson();
         Type type = new TypeToken<List<RecordInfo>>(){}.getType();
