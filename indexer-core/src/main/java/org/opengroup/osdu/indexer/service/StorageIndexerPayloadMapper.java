@@ -37,9 +37,9 @@ public class StorageIndexerPayloadMapper {
 
             Object value = getPropertyValue(recordId, storageRecordData, name);
 
-            if (value == null) continue;
-
             ElasticType elasticType = ElasticType.forValue(entry.getValue());
+
+            if (value == null && !nullIndexedValueSupported(elasticType)) continue;
 
             switch (elasticType) {
                 case KEYWORD:
@@ -88,7 +88,7 @@ public class StorageIndexerPayloadMapper {
                     this.attributeParsingService.tryParseGeopoint(recordId, name, storageRecordData, dataMap);
                     break;
                 case GEO_SHAPE:
-                    this.attributeParsingService.tryParseGeojson(recordId,  name,  value, dataMap);
+                    this.attributeParsingService.tryParseGeojson(recordId, name, value, dataMap);
                     break;
                 case NESTED:
                 case OBJECT:
@@ -122,5 +122,9 @@ public class StorageIndexerPayloadMapper {
             this.log.warning(String.format("record-id: %s | error fetching property: %s | error: %s", recordId, propertyKey, e.getMessage()), e);
         }
         return null;
+    }
+
+    private boolean nullIndexedValueSupported(ElasticType type) {
+        return type == ElasticType.TEXT;
     }
 }
