@@ -24,7 +24,7 @@ spec:
     kind: Deployment
     name: {{ .Chart.Name }}
   minReplicas: {{ .Values.global.replicaCount }}
-  maxReplicas: 5
+  maxReplicas: 10
   metrics:
   - type: Resource
     resource:
