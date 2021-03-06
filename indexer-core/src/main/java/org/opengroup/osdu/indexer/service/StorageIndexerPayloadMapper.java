@@ -91,7 +91,11 @@ public class StorageIndexerPayloadMapper {
                     this.attributeParsingService.tryParseGeojson(recordId, name, value, dataMap);
                     break;
                 case NESTED:
+                    this.attributeParsingService.tryParseNested(recordId, name, value, dataMap);
+                    break;
                 case OBJECT:
+                    this.attributeParsingService.tryParseObject(recordId, name, value, dataMap);
+                    break;
                 case UNDEFINED:
                     // don't do anything for now
                     break;
