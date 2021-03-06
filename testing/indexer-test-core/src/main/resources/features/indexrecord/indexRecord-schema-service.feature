@@ -29,7 +29,7 @@ Feature: Indexing of the documents
 
   Scenario Outline: Ingest the record and Index in the Elastic Search with tags
     When I ingest records with the <recordFile> with <acl> for a given <kind>
-    Then I should be able to search <number> record with kind <kind> by tag <tagKey> and value <tagValue>
+    Then I should be able to search <number> record with index <index> by tag <tagKey> and value <tagValue>
 
     Examples:
       | kind                                             | recordFile        | index                                            | acl                            | tagKey    | tagValue    | number |
