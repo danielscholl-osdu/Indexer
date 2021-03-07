@@ -208,6 +208,16 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
         }
     }
 
+	@Override
+	public void tryParseNested(String recordId, String name, Object value, Map<String, Object> dataMap) {
+		dataMap.put(name,value);
+	}
+
+	@Override
+	public void tryParseObject(String recordId, String name, Object value, Map<String, Object> dataMap) {
+		dataMap.put(name,value);
+	}
+
 
     private List<String> isArrayType(Object attributeVal) {
         try {
