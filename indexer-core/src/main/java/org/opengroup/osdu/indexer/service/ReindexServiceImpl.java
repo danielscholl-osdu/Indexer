@@ -16,7 +16,10 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+
 import java.util.Objects;
+
+import lombok.SneakyThrows;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -53,74 +56,70 @@ public class ReindexServiceImpl implements ReindexService {
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
 
+    @SneakyThrows
     @Override
     public String reindexRecords(RecordReindexRequest recordReindexRequest, boolean forceClean) {
         Long initialDelayMillis = 0l;
 
-        try {
-            DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
 
-            if (forceClean) {
-                this.indexSchemaService.syncIndexMappingWithStorageSchema(recordReindexRequest.getKind());
-                initialDelayMillis = 30000l;
-            }
+        DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
 
-            RecordQueryResponse recordQueryResponse = this.storageService.getRecordsByKind(recordReindexRequest);
-
-            if (recordQueryResponse.getResults() != null && recordQueryResponse.getResults().size() != 0) {
-
-                List<RecordInfo> msgs = recordQueryResponse.getResults().stream()
-                        .map(record -> RecordInfo.builder().id(record).kind(recordReindexRequest.getKind()).op(OperationType.create.name()).build()).collect(Collectors.toList());
-
-                Map<String, String> attributes = new HashMap<>();
-                attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
-                attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
-                attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
-
-                Gson gson = new Gson();
-                RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(msgs)).attributes(attributes).build();
-                String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-                this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, initialDelayMillis, headers);
-
-                // don't call reindex-worker endpoint if it's the last batch
-                // previous storage query result size will be less then requested (limit param)
-                if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageRecordsBatchSize()) {
-                    String newPayLoad = gson.toJson(RecordReindexRequest.builder().cursor(recordQueryResponse.getCursor()).kind(recordReindexRequest.getKind()).build());
-                    this.indexerQueueTaskBuilder.createReIndexTask(newPayLoad, initialDelayMillis, headers);
-                    return newPayLoad;
-                }
-
-                return recordChangedMessagePayload;
-            } else {
-                jaxRsDpsLog.info(String.format("kind: %s cannot be re-indexed, storage service cannot locate valid records", recordReindexRequest.getKind()));
-            }
-            return null;
-        } catch (AppException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", "An unknown error has occurred.", e);
+        if (forceClean) {
+            this.indexSchemaService.syncIndexMappingWithStorageSchema(recordReindexRequest.getKind());
+            initialDelayMillis = 30000l;
         }
+
+        RecordQueryResponse recordQueryResponse = this.storageService.getRecordsByKind(recordReindexRequest);
+
+        if (recordQueryResponse.getResults() != null && recordQueryResponse.getResults().size() != 0) {
+
+            List<RecordInfo> msgs = recordQueryResponse.getResults().stream()
+                    .map(record -> RecordInfo.builder().id(record).kind(recordReindexRequest.getKind()).op(OperationType.create.name()).build()).collect(Collectors.toList());
+
+            Map<String, String> attributes = new HashMap<>();
+            attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
+            attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
+            attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+
+            Gson gson = new Gson();
+            RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(msgs)).attributes(attributes).build();
+            String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
+            this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, initialDelayMillis, headers);
+
+            // don't call reindex-worker endpoint if it's the last batch
+            // previous storage query result size will be less then requested (limit param)
+            if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageRecordsBatchSize()) {
+                String newPayLoad = gson.toJson(RecordReindexRequest.builder().cursor(recordQueryResponse.getCursor()).kind(recordReindexRequest.getKind()).build());
+                this.indexerQueueTaskBuilder.createReIndexTask(newPayLoad, initialDelayMillis, headers);
+                return newPayLoad;
+            }
+
+            return recordChangedMessagePayload;
+        } else {
+            jaxRsDpsLog.info(String.format("kind: %s cannot be re-indexed, storage service cannot locate valid records", recordReindexRequest.getKind()));
+        }
+        return null;
     }
 
-	@Override
-	public void fullReindex(boolean forceClean) {
-		List<String> allKinds = null;
-		try {
-			allKinds = storageService.getAllKinds();
-		} catch (Exception e) {
-			jaxRsDpsLog.error("storage service all kinds request failed",e);
-			throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "an unknown error has occurred.", e);
-		}
-		if (Objects.isNull(allKinds)){
-			throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "full reindex failed");
-		}
-		for (String kind : allKinds) {
-			try {
-				reindexRecords(new RecordReindexRequest(kind, ""), forceClean);
-			} catch (Exception e) {
-				jaxRsDpsLog.warning(String.format("kind: %s cannot be re-indexed", kind));
-				continue;
-			}
-		}
-	}
+    @Override
+    public void fullReindex(boolean forceClean) {
+        List<String> allKinds = null;
+        try {
+            allKinds = storageService.getAllKinds();
+        } catch (Exception e) {
+            jaxRsDpsLog.error("storage service all kinds request failed", e);
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "an unknown error has occurred.", e);
+        }
+        if (Objects.isNull(allKinds)) {
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "full reindex failed");
+        }
+        for (String kind : allKinds) {
+            try {
+                reindexRecords(new RecordReindexRequest(kind, ""), forceClean);
+            } catch (Exception e) {
+                jaxRsDpsLog.warning(String.format("kind: %s cannot be re-indexed", kind));
+                continue;
+            }
+        }
+    }
 }

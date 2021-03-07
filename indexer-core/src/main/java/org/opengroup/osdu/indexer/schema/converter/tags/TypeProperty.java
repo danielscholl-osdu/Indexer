@@ -30,4 +30,6 @@ public class TypeProperty {
     private Items items;
     private Map<String, TypeProperty> properties;
     private List<AllOfItem> allOf;
+    private List<AllOfItem> oneOf;
+    private List<AllOfItem> anyOf;
 }

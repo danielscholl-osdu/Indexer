@@ -32,7 +32,14 @@
               },
               "County": {
                 "type": "string"
-              },
+              }
+            }
+          }
+        ],
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
               "State": {
                 "type": "string"
               },
@@ -53,7 +60,14 @@
               },
               "EmptyAttribute": {
                 "type": "string"
-              },
+              }
+            }
+          }
+        ],
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
               "Rank": {
                 "type": "integer"
               },
