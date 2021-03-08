@@ -226,6 +226,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             meta.put(RecordMetaAttribute.TYPE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.TYPE));
             meta.put(RecordMetaAttribute.ACL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ACL));
             meta.put(RecordMetaAttribute.X_ACL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.X_ACL));
+            meta.put(RecordMetaAttribute.TAGS.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.TAGS));
             meta.put(RecordMetaAttribute.LEGAL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.LEGAL));
             meta.put(RecordMetaAttribute.ANCESTRY.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ANCESTRY));
             meta.put(RecordMetaAttribute.INDEX_STATUS.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.INDEX_STATUS));

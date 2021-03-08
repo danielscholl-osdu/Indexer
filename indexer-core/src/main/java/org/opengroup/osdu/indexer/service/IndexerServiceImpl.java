@@ -48,6 +48,7 @@ import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.NestedNullException;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -59,6 +60,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Service
+@Primary
 public class IndexerServiceImpl implements IndexerService {
 
     private static final TimeValue BULK_REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
@@ -309,6 +311,9 @@ public class IndexerServiceImpl implements IndexerService {
             document.setVersion(storageRecord.getVersion());
             document.setAcl(storageRecord.getAcl());
             document.setLegal(storageRecord.getLegal());
+            if (storageRecord.getTags() != null) {
+                document.setTags(storageRecord.getTags());
+            }
             RecordStatus recordStatus = this.jobStatus.getJobStatusByRecordId(storageRecord.getId());
             if (recordStatus.getIndexProgress().getStatusCode() == 0) {
                 recordStatus.getIndexProgress().setStatusCode(HttpStatus.SC_OK);
@@ -463,6 +468,7 @@ public class IndexerServiceImpl implements IndexerService {
         indexerPayload.put(RecordMetaAttribute.TYPE.getValue(), record.getType());
         indexerPayload.put(RecordMetaAttribute.VERSION.getValue(), record.getVersion());
         indexerPayload.put(RecordMetaAttribute.ACL.getValue(), record.getAcl());
+        indexerPayload.put(RecordMetaAttribute.TAGS.getValue(), record.getTags());
         indexerPayload.put(RecordMetaAttribute.X_ACL.getValue(), Acl.flattenAcl(record.getAcl()));
         indexerPayload.put(RecordMetaAttribute.LEGAL.getValue(), record.getLegal());
         indexerPayload.put(RecordMetaAttribute.INDEX_STATUS.getValue(), record.getIndexProgress());
