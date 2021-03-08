@@ -4,7 +4,7 @@
       "authority": "tenant1",
       "source": "indexer-int-test",
       "entityType": "sample-schema-1",
-      "schemaVersionMajor": "1",
+      "schemaVersionMajor": "2",
       "schemaVersionMinor": "0",
       "schemaVersionPatch": "4"
     },
@@ -32,7 +32,14 @@
               },
               "County": {
                 "type": "string"
-              },
+              }
+            }
+          }
+        ],
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
               "State": {
                 "type": "string"
               },
@@ -53,7 +60,14 @@
               },
               "EmptyAttribute": {
                 "type": "string"
-              },
+              }
+            }
+          }
+        ],
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
               "Rank": {
                 "type": "integer"
               },

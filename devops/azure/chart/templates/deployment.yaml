@@ -56,7 +56,7 @@ spec:
           readOnly: true
         env:
         - name: spring_application_name
-          value: indexer
+          value: {{ .Chart.Name }}
         - name: server.servlet.contextPath
           value: /api/indexer/v2/
         - name: server_port

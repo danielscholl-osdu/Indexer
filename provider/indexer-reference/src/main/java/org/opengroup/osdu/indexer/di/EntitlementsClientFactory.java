@@ -20,6 +20,7 @@ package org.opengroup.osdu.indexer.di;
 import org.opengroup.osdu.core.common.entitlements.EntitlementsAPIConfig;
 import org.opengroup.osdu.core.common.entitlements.EntitlementsFactory;
 import org.opengroup.osdu.core.common.entitlements.IEntitlementsFactory;
+import org.opengroup.osdu.core.common.http.json.HttpResponseBodyMapper;
 import org.opengroup.osdu.indexer.config.EntitlementsConfigProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
@@ -34,12 +35,15 @@ public class EntitlementsClientFactory extends AbstractFactoryBean<IEntitlements
 
   private EntitlementsConfigProperties entitlementsConfigProperties;
 
+  @Autowired
+  private HttpResponseBodyMapper mapper;
+
   @Override
   protected IEntitlementsFactory createInstance() throws Exception {
   	return new EntitlementsFactory(EntitlementsAPIConfig
         .builder()
         .rootUrl(entitlementsConfigProperties.getAuthorizeApi())
-        .build());
+        .build(), mapper);
   }
 
   @Override
