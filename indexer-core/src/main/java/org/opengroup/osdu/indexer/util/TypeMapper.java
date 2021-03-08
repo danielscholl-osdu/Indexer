@@ -32,6 +32,8 @@ public class TypeMapper {
 
     private static final Map<String, Object> metaAttributeIndexerType = new HashMap<>();
 
+    private static final String STORAGE_TYPE_OBJECTS = "[]object";
+
     static {
 
         metaAttributeIndexerType.put(RecordMetaAttribute.KIND.getValue(), ElasticType.KEYWORD.getValue());
@@ -41,6 +43,7 @@ public class TypeMapper {
         metaAttributeIndexerType.put(RecordMetaAttribute.VERSION.getValue(), ElasticType.LONG.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.X_ACL.getValue(), ElasticType.KEYWORD.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.ACL.getValue(), getAclIndexerMapping());
+        metaAttributeIndexerType.put(RecordMetaAttribute.TAGS.getValue(), ElasticType.FLATTENED.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.LEGAL.getValue(), getLegalIndexerMapping());
         metaAttributeIndexerType.put(RecordMetaAttribute.ANCESTRY.getValue(), getAncestryIndexerMapping());
         metaAttributeIndexerType.put(RecordMetaAttribute.INDEX_STATUS.getValue(), getIndexStatusMapping());
@@ -63,6 +66,9 @@ public class TypeMapper {
         storageToIndexerType.put(StorageType.DATETIME_ARRAY.getValue(), ElasticType.DATE_ARRAY.getValue());
         storageToIndexerType.put(StorageType.GEO_POINT.getValue(), ElasticType.GEO_POINT.getValue());
         storageToIndexerType.put(StorageType.GEO_SHAPE.getValue(), ElasticType.GEO_SHAPE.getValue());
+
+        //TODO temporary fix for https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/1
+        storageToIndexerType.put(STORAGE_TYPE_OBJECTS, ElasticType.OBJECT.getValue());
     }
 
     public static String getIndexerType(String storageType) {

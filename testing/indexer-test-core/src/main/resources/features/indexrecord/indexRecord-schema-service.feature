@@ -26,3 +26,11 @@ Feature: Indexing of the documents
       | kind                                             | recordFile        | number | index                                            | skippedAttribute | acl                            |
       | "tenant1:indexer-int-test:sample-schema-2:1.0.4" | "index_records_2" | 4      | "tenant1-indexer-int-test-sample-schema-2-1.0.4" | "data.Location"  | "data.default.viewers@tenant1" |
       | "tenant1:indexer-int-test:sample-schema-3:1.0.4" | "index_records_3" | 7      | "tenant1-indexer-int-test-sample-schema-3-1.0.4" | "data.GeoShape"  | "data.default.viewers@tenant1" |
+
+  Scenario Outline: Ingest the record and Index in the Elastic Search with tags
+    When I ingest records with the <recordFile> with <acl> for a given <kind>
+    Then I should be able to search <number> record with index <index> by tag <tagKey> and value <tagValue>
+
+    Examples:
+      | kind                                             | recordFile        | index                                            | acl                            | tagKey    | tagValue    | number |
+      | "tenant1:indexer-int-test:sample-schema-1:1.0.4" | "index_records_1" | "tenant1-indexer-int-test-sample-schema-1-1.0.4" | "data.default.viewers@tenant1" | "testtag" | "testvalue" | 5      |

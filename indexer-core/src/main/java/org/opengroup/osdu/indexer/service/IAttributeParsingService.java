@@ -1,7 +1,5 @@
 package org.opengroup.osdu.indexer.service;
 
-import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
-
 import java.util.Map;
 
 public interface IAttributeParsingService {
@@ -26,4 +24,8 @@ public interface IAttributeParsingService {
     void tryParseGeopoint(String recordId, String attributeName, Map<String, Object> storageRecordData, Map<String, Object> dataMap);
 
     void tryParseGeojson(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap);
+
+    void tryParseNested(String recordId, String name, Object value, Map<String, Object> dataMap);
+
+    void tryParseObject(String recordId, String name, Object value, Map<String, Object> dataMap);
 }

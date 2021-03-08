@@ -19,6 +19,8 @@ import org.opengroup.osdu.azure.KeyVaultFacade;
 import org.opengroup.osdu.core.common.entitlements.EntitlementsAPIConfig;
 import org.opengroup.osdu.core.common.entitlements.EntitlementsFactory;
 import org.opengroup.osdu.core.common.entitlements.IEntitlementsFactory;
+import org.opengroup.osdu.core.common.http.json.HttpResponseBodyMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -90,12 +92,15 @@ public class AzureBootstrapConfig {
         return String.format(urlFormat, tenant);
     }
 
+    @Autowired
+    private HttpResponseBodyMapper httpResponseBodyMapper;
+
     @Bean
     public IEntitlementsFactory entitlementsFactory() {
         EntitlementsAPIConfig apiConfig = EntitlementsAPIConfig.builder()
                 .apiKey(entitlementsAPIKey)
                 .rootUrl(entitlementsAPIEndpoint)
                 .build();
-        return new EntitlementsFactory(apiConfig);
+        return new EntitlementsFactory(apiConfig, httpResponseBodyMapper);
     }
 }

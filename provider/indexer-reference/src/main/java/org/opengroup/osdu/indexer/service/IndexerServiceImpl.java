@@ -68,7 +68,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 @Service
-@Primary
 public class IndexerServiceImpl implements IndexerService {
 
   private static final TimeValue BULK_REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
