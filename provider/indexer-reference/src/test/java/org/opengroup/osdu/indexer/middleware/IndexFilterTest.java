@@ -51,30 +51,17 @@ public class IndexFilterTest {
 
     indexFilter.doFilter(httpServletRequest, httpServletResponse, filterChain);
 
-    Mockito.verify(httpServletResponse)
-        .addHeader("Access-Control-Allow-Origin", Collections.singletonList("*").toString());
-    Mockito.verify(httpServletResponse).addHeader("Access-Control-Allow-Headers", Collections
-        .singletonList(
-            "origin, content-type, accept, authorization, data-partition-id, correlation-id, appkey")
-        .toString());
-    Mockito.verify(httpServletResponse).addHeader("Access-Control-Allow-Methods",
-        Collections.singletonList("GET, POST, PUT, DELETE, OPTIONS, HEAD").toString());
-    Mockito.verify(httpServletResponse).addHeader("Access-Control-Allow-Credentials",
-        Collections.singletonList("true").toString());
-    Mockito.verify(httpServletResponse)
-        .addHeader("X-Frame-Options", Collections.singletonList("DENY").toString());
-    Mockito.verify(httpServletResponse)
-        .addHeader("X-XSS-Protection", Collections.singletonList("1; mode=block").toString());
-    Mockito.verify(httpServletResponse)
-        .addHeader("X-Content-Type-Options", Collections.singletonList("nosniff").toString());
-    Mockito.verify(httpServletResponse).addHeader("Cache-Control",
-        Collections.singletonList("no-cache, no-store, must-revalidate").toString());
-    Mockito.verify(httpServletResponse).addHeader("Content-Security-Policy",
-        Collections.singletonList("default-src 'self'").toString());
-    Mockito.verify(httpServletResponse).addHeader("Strict-Transport-Security",
-        Collections.singletonList("max-age=31536000; includeSubDomains").toString());
-    Mockito.verify(httpServletResponse)
-        .addHeader("Expires", Collections.singletonList("0").toString());
+    Mockito.verify(httpServletResponse).addHeader("Access-Control-Allow-Origin", Collections.singletonList("*").toString());
+    Mockito.verify(httpServletResponse).addHeader("Access-Control-Allow-Headers", Collections.singletonList("origin, content-type, accept, authorization, data-partition-id, correlation-id, appkey").toString());
+    Mockito.verify(httpServletResponse).addHeader("Access-Control-Allow-Methods", Collections.singletonList("GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH").toString());
+    Mockito.verify(httpServletResponse).addHeader("Access-Control-Allow-Credentials", Collections.singletonList("true").toString());
+    Mockito.verify(httpServletResponse).addHeader("X-Frame-Options", Collections.singletonList("DENY").toString());
+    Mockito.verify(httpServletResponse).addHeader("X-XSS-Protection", Collections.singletonList("1; mode=block").toString());
+    Mockito.verify(httpServletResponse).addHeader("X-Content-Type-Options", Collections.singletonList("nosniff").toString());
+    Mockito.verify(httpServletResponse).addHeader("Cache-Control", Collections.singletonList("no-cache, no-store, must-revalidate").toString());
+    Mockito.verify(httpServletResponse).addHeader("Content-Security-Policy", Collections.singletonList("default-src 'self'").toString());
+    Mockito.verify(httpServletResponse).addHeader("Strict-Transport-Security", Collections.singletonList("max-age=31536000; includeSubDomains").toString());
+    Mockito.verify(httpServletResponse).addHeader("Expires", Collections.singletonList("0").toString());
     Mockito.verify(httpServletResponse).addHeader("correlation-id", "correlation-id-value");
     Mockito.verify(filterChain).doFilter(httpServletRequest, httpServletResponse);
   }
