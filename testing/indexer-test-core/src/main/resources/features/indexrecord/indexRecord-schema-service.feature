@@ -7,6 +7,7 @@ Feature: Indexing of the documents
       | tenant1:indexer-int-test:sample-schema-1:1.0.4 | tenant1-indexer-int-test:sample-schema-1-1.0.4 | index_records_1 |
       | tenant1:indexer-int-test:sample-schema-2:1.0.4 | tenant1-indexer-int-test:sample-schema-2-1.0.4 | index_records_2 |
       | tenant1:indexer-int-test:sample-schema-3:1.0.4 | tenant1-indexer-int-test:sample-schema-3-1.0.4 | index_records_3 |
+      | tenant1:indexer-int-test:sample-schema-3:1.0.5 | tenant1-indexer-int-test:sample-schema-3-1.0.5 | index_records_3 |
 
   Scenario Outline: Ingest the record and Index in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
@@ -33,4 +34,4 @@ Feature: Indexing of the documents
 
     Examples:
       | kind                                             | recordFile        | index                                            | acl                            | tagKey    | tagValue    | number |
-      | "tenant1:indexer-int-test:sample-schema-1:1.0.4" | "index_records_1" | "tenant1-indexer-int-test-sample-schema-1-1.0.4" | "data.default.viewers@tenant1" | "testtag" | "testvalue" | 5      |
+      | "tenant1:indexer-int-test:sample-schema-1:1.0.5" | "index_records_1" | "tenant1-indexer-int-test-sample-schema-1-1.0.5" | "data.default.viewers@tenant1" | "testtag" | "testvalue" | 5      |
