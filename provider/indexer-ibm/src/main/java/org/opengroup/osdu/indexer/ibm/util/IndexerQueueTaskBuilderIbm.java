@@ -3,6 +3,8 @@
  
 package org.opengroup.osdu.indexer.ibm.util;
 
+import static org.opengroup.osdu.core.common.Constants.WORKER_RELATIVE_URL;
+
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -46,6 +48,12 @@ public class IndexerQueueTaskBuilderIbm extends IndexerQueueTaskBuilder {
 	public void createReIndexTask(String payload, DpsHeaders headers) {
 		createTask(payload, headers);
 	}
+	
+	//used by reindexer api
+	@Override
+	public void createWorkerTask(String payload, Long countdownMillis, DpsHeaders headers) {
+		createTask(payload, headers);
+    }
 
 	private void createTask(String payload, DpsHeaders headers) {
 
