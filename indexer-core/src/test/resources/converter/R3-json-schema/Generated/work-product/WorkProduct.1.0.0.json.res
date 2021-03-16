@@ -44,6 +44,10 @@
     {
       "kind": "[]string",
       "path": "Annotations"
+    },
+    {
+       "kind": "[]object",
+       "path": "LineageAssertions"
     }
   ]
 }

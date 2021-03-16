@@ -24,7 +24,7 @@ public class SchemaConverterPropertiesConfig implements SchemaConverterConfig {
     }
 
     private Set<String> getDefaultSupportedArrayTypes() {
-        return new HashSet<>(Arrays.asList("boolean", "integer", "number", "string"));
+        return new HashSet<>(Arrays.asList("boolean", "integer", "number", "string", "object"));
     }
 
     private Map<String, String> getDefaultSpecialDefinitionsMap() {
