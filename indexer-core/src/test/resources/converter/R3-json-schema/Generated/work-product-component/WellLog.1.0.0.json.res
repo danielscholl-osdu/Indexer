@@ -76,6 +76,10 @@
     {
       "kind": "string",
       "path": "VerticalMeasurementID"
+    },
+    {
+      "kind": "[]object",
+      "path": "Curves"
     }
   ]
 }
