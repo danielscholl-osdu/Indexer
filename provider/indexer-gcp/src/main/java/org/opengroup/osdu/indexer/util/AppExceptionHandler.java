@@ -23,12 +23,36 @@ public class AppExceptionHandler {
 			? e.getOriginalException().getMessage()
 			: e.getError().getMessage();
 
-		if (e.getError().getCode() > 499) {
+		Integer errorCode = e.getError().getCode();
+
+		if (errorCode > 499) {
 			log.error(exceptionMsg, e.getOriginalException());
 		} else {
 			log.warn(exceptionMsg, e.getOriginalException());
 		}
 
-		return new ResponseEntity<>(e.getError(), HttpStatus.resolve(e.getError().getCode()));
+		HttpStatus status = Objects.nonNull(HttpStatus.resolve(errorCode))
+			? HttpStatus.resolve(errorCode)
+			: resolveNotSupportedStatus(errorCode);
+
+		return new ResponseEntity<>(e.getError(), status);
+	}
+
+	//Currently not all codes provided from core can be resolved by HttpStatus
+	//example org.opengroup.osdu.core.common.model.http.RequestStatus have not supported by HttpStatus codes
+	private HttpStatus resolveNotSupportedStatus(int statusCode) {
+		if (statusCode > 99 && statusCode < 200) {
+			return HttpStatus.CONTINUE;
+		}
+		if (statusCode > 199 && statusCode < 300) {
+			return HttpStatus.NO_CONTENT;
+		}
+		if (statusCode > 299 && statusCode < 400) {
+			return HttpStatus.MULTIPLE_CHOICES;
+		}
+		if (statusCode > 399 && statusCode < 500) {
+			return HttpStatus.BAD_REQUEST;
+		}
+		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 }
