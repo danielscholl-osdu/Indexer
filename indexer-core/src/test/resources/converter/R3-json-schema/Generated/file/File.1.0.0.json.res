@@ -40,6 +40,10 @@
     {
       "kind": "string",
       "path": "Checksum"
+    },
+    {
+      "kind": "[]object",
+      "path": "VectorHeaderMapping"
     }
   ]
 }
