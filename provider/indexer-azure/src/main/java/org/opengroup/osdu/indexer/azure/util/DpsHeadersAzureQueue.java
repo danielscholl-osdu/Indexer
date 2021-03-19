@@ -33,9 +33,6 @@ import org.springframework.web.context.annotation.RequestScope;
 @Primary
 public class DpsHeadersAzureQueue extends DpsHeaders {
 
-    @Value("${indexer.queue.key}")
-    private String queueKey;
-
     //ToDo this should be moved to Azure client-lib
     public static final String INDEXER_QUEUE_KEY = "x-functions-key";
 
@@ -47,7 +44,8 @@ public class DpsHeadersAzureQueue extends DpsHeaders {
                 .stream()
                 .collect(Collectors.toMap(h -> h, request::getHeader));
 
-        headers.put(INDEXER_QUEUE_KEY,queueKey);
+        // TODO: Figure out if this header is actually required to be set for anything
+        headers.put(INDEXER_QUEUE_KEY, "NOT_USED");
 
         this.addFromMap(headers);
 
