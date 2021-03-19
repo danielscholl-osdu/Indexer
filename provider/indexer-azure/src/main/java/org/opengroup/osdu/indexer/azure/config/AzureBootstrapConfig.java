@@ -36,17 +36,14 @@ public class AzureBootstrapConfig {
     @Value("${azure.servicebus.topic-name}")
     private String serviceBusTopicName;
 
+    @Value("${azure.servicebus.reindex.topic-name}")
+    private String serviceBusReindexTopicName;
+
     @Value("${ELASTIC_CACHE_EXPIRATION}")
     private Integer elasticCacheExpiration;
 
     @Value("${MAX_CACHE_VALUE_SIZE}")
     private Integer maxCacheValueSize;
-
-    @Value("${AUTHORIZE_API_KEY}")
-    private String entitlementsAPIKey;
-
-    @Value("${AUTHORIZE_API}")
-    private String entitlementsAPIEndpoint;
 
     @Bean
     @Named("KEY_VAULT_URL")
@@ -58,6 +55,12 @@ public class AzureBootstrapConfig {
     @Named("SERVICE_BUS_TOPIC")
     public String serviceBusTopicName() {
         return serviceBusTopicName;
+    }
+
+    @Bean
+    @Named("SERVICE_BUS_REINDEX_TOPIC")
+    public String serviceBusReindexTopicName() {
+        return serviceBusReindexTopicName;
     }
 
     @Bean
@@ -92,15 +95,4 @@ public class AzureBootstrapConfig {
         return String.format(urlFormat, tenant);
     }
 
-    @Autowired
-    private HttpResponseBodyMapper httpResponseBodyMapper;
-
-    @Bean
-    public IEntitlementsFactory entitlementsFactory() {
-        EntitlementsAPIConfig apiConfig = EntitlementsAPIConfig.builder()
-                .apiKey(entitlementsAPIKey)
-                .rootUrl(entitlementsAPIEndpoint)
-                .build();
-        return new EntitlementsFactory(apiConfig, httpResponseBodyMapper);
-    }
 }
