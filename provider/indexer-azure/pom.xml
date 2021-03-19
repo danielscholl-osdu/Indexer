@@ -42,7 +42,6 @@
         <indexer-core.version>0.8.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
         <osdu.corelibazure.version>0.0.42</osdu.corelibazure.version>
-        <osdu.oscorecommon.version>0.6.9</osdu.oscorecommon.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
         <java-jwt.version>3.8.1</java-jwt.version>
         <powermock.version>2.0.2</powermock.version>
@@ -168,11 +167,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.opengroup.osdu</groupId>
-            <artifactId>os-core-common</artifactId>
-            <version>${osdu.oscorecommon.version}</version>
         </dependency>
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
