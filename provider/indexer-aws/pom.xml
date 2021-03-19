@@ -18,7 +18,7 @@
   <parent>
       <groupId>org.opengroup.osdu.indexer</groupId>
       <artifactId>indexer-service</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
+      <version>0.8.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -26,7 +26,7 @@
   <artifactId>indexer-aws</artifactId>
   <description>Storage service on AWS</description>
   <packaging>jar</packaging>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.8.0-SNAPSHOT</version>
 
   <properties>
       <aws.version>1.11.637</aws.version>
@@ -43,7 +43,7 @@
     <dependency>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-core</artifactId>
-        <version>0.6.0-SNAPSHOT</version>
+        <version>0.8.0-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
@@ -91,12 +91,6 @@
       <artifactId>spring-security-oauth2-jose</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-core</artifactId>
-      <version>7.6.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
       <version>1</version>
@@ -105,17 +99,14 @@
     <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
-      <version>6.6.2</version>
     </dependency>
     <dependency>
-      <groupId>org.elasticsearch.client</groupId>
-      <artifactId>elasticsearch-rest-client</artifactId>
-      <version>6.6.2</version>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>elasticsearch-rest-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.elasticsearch.client</groupId>
-      <artifactId>elasticsearch-rest-high-level-client</artifactId>
-      <version>6.6.2</version>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>elasticsearch-rest-high-level-client</artifactId>
     </dependency>
 
     <!-- Testing packages -->

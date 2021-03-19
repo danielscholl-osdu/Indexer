@@ -44,8 +44,7 @@ public class ElasticClientHandlerAws extends ElasticClientHandler {
         RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, protocolScheme));
         builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
                 .setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
-                .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
-        builder.setMaxRetryTimeoutMillis(REST_CLIENT_RETRY_TIMEOUT);
+                .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));        
 
         if(isLocalHost(host)) {
             builder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setSSLHostnameVerifier((s, sslSession) -> true));

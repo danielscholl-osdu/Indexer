@@ -56,8 +56,10 @@ public class PropertiesProcessor {
     public Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
         Preconditions.checkNotNull(allOfItem, "allOfItem cannot be null");
 
-        if (Objects.nonNull(allOfItem.getAllOf())) {
-            return allOfItem.getAllOf().stream().flatMap(this::processItem);
+        Stream<Map<String, Object>> ofItems = processOfItems(allOfItem.getAllOf(), allOfItem.getAnyOf(), allOfItem.getOneOf());
+
+        if (Objects.nonNull(ofItems)) {
+            return ofItems;
         }
 
         String ref = allOfItem.getRef();
@@ -89,11 +91,32 @@ public class PropertiesProcessor {
                 new AppException(HttpStatus.SC_NOT_FOUND, "Failed to find definition:" + definitionSubRef,
                         "Unknown definition:" + definitionSubRef));
 
-        if (Objects.nonNull(definition.getAllOf())) {
-            return definition.getAllOf().stream().flatMap(this::processItem);
+        Stream<Map<String, Object>> ofItems =
+                processOfItems(definition.getAllOf(), definition.getAnyOf(), definition.getOneOf());
+
+        if (Objects.nonNull(ofItems)) {
+            return ofItems;
         }
 
         return processProperties(definition.getProperties());
+    }
+
+    private Stream<Map<String, Object>> processOfItems(List<AllOfItem> allOf, List<AllOfItem> anyOf, List<AllOfItem> oneOf) {
+        Stream<Map<String, Object>> ofItems = null;
+
+        if (Objects.nonNull(allOf)) {
+            ofItems = allOf.stream().flatMap(this::processItem);
+        }
+
+        if (Objects.nonNull(anyOf)) {
+            ofItems = Stream.concat(Optional.ofNullable(ofItems).orElseGet(Stream::empty), anyOf.stream().flatMap(this::processItem));
+        }
+
+        if (Objects.nonNull(oneOf)) {
+            ofItems = Stream.concat(Optional.ofNullable(ofItems).orElseGet(Stream::empty), oneOf.stream().flatMap(this::processItem));
+        }
+
+        return ofItems;
     }
 
     public Stream<Map<String, Object>> processProperties(Map<String, TypeProperty> properties){
@@ -118,11 +141,10 @@ public class PropertiesProcessor {
             return Stream.empty();
         }
 
-        if (Objects.nonNull(entry.getValue().getAllOf())) {
-            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
-                    , log, new SchemaConverterPropertiesConfig());
+        Stream<Map<String, Object>> ofItems = processOfItems(entry);
 
-            return entry.getValue().getAllOf().stream().flatMap(propertiesProcessor::processItem);
+        if (Objects.nonNull(ofItems)) {
+            return ofItems;
         }
 
         if (Objects.nonNull(entry.getValue().getProperties())) {
@@ -137,6 +159,35 @@ public class PropertiesProcessor {
         }
 
         return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
+    }
+
+    private Stream<Map<String, Object>> processOfItems(Map.Entry<String, TypeProperty> entry) {
+        Stream<Map<String, Object>> ofItems = null;
+
+        if (Objects.nonNull(entry.getValue().getAllOf())) {
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
+                    , log, new SchemaConverterPropertiesConfig());
+
+            ofItems = entry.getValue().getAllOf().stream().flatMap(propertiesProcessor::processItem);
+        }
+
+        if (Objects.nonNull(entry.getValue().getAnyOf())) {
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
+                    , log, new SchemaConverterPropertiesConfig());
+
+            ofItems =  Stream.concat(Optional.ofNullable(ofItems).orElseGet(Stream::empty),
+                    entry.getValue().getAnyOf().stream().flatMap(propertiesProcessor::processItem));
+        }
+
+        if (Objects.nonNull(entry.getValue().getOneOf())) {
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
+                    , log, new SchemaConverterPropertiesConfig());
+
+            ofItems = Stream.concat(Optional.ofNullable(ofItems).orElseGet(Stream::empty),
+                    entry.getValue().getOneOf().stream().flatMap(propertiesProcessor::processItem));
+        }
+
+        return ofItems;
     }
 
     private Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {

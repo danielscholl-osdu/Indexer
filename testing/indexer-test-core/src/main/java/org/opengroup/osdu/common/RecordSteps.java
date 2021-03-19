@@ -25,6 +25,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import static org.junit.Assert.*;
@@ -165,6 +166,13 @@ public class RecordSteps extends TestsBase {
         long numOfIndexedDocuments = createIndex(index);
         long documentCountByQuery = elasticUtils.fetchRecordsByExistQuery(index, skippedAttributes);
         assertEquals(expectedCount, documentCountByQuery);
+    }
+
+    public void iShouldBeAbleToSearchRecordByTagKeyAndTagValue(String index, String tagKey, String tagValue, int expectedNumber) throws Throwable {
+        TimeUnit.SECONDS.sleep(40);
+        index = generateActualName(index, timeStamp);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsByTags(index, tagKey, tagValue);
+        assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
     private long createIndex(String index) throws InterruptedException, IOException {

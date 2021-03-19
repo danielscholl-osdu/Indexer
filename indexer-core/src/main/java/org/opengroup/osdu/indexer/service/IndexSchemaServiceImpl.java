@@ -23,6 +23,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
+import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
@@ -47,6 +48,10 @@ import java.util.Map;
 public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     private static final String FLATTENED_SCHEMA = "_flattened";
+    private static final String WELLBORE_MARKER_SET = "WellboreMarkerSet";
+    private static final String MARKERS = "Markers";
+    private static final String WELL_LOG = "WellLog";
+    private static final String CURVES = "Curves";
 
     private final Gson gson = new Gson();
 
@@ -221,12 +226,21 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             meta.put(RecordMetaAttribute.TYPE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.TYPE));
             meta.put(RecordMetaAttribute.ACL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ACL));
             meta.put(RecordMetaAttribute.X_ACL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.X_ACL));
+            meta.put(RecordMetaAttribute.TAGS.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.TAGS));
             meta.put(RecordMetaAttribute.LEGAL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.LEGAL));
             meta.put(RecordMetaAttribute.ANCESTRY.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ANCESTRY));
             meta.put(RecordMetaAttribute.INDEX_STATUS.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.INDEX_STATUS));
 
             String kind = schemaObj.getKind();
             String type = kind.split(":")[2];
+
+            //TODO temporary fix for https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/1
+            if(data.get(MARKERS) != null){
+                data.put(MARKERS, ElasticType.NESTED.getValue());
+            }
+            if(data.get(CURVES) != null){
+                data.put(CURVES, ElasticType.NESTED.getValue());
+            }
 
             return IndexSchema.builder().dataSchema(data).metaSchema(meta).kind(kind).type(type).build();
 

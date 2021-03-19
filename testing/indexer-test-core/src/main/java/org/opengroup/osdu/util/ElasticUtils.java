@@ -59,8 +59,12 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
+import static org.elasticsearch.index.query.QueryBuilders.termsQuery;
 
 
 /**
@@ -215,6 +219,22 @@ public class ElasticUtils {
         }
     }
 
+    public long fetchRecordsByTags(String index, String tagKey, String tagValue) throws IOException {
+        try {
+            try (RestHighLevelClient client = this.createClient(username, password, host)) {
+                SearchRequest request = new SearchRequest(index);
+                SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+                sourceBuilder.query(boolQuery().must(termsQuery(String.format("tags.%s", tagKey), tagValue)));
+                request.source(sourceBuilder);
+                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
+                return searchResponse.getHits().getTotalHits().value;
+            }
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        }
+    }
+
     public Map<String, Map<String, Object>> fetchRecordsData(String index) throws IOException {
         try {
             try (RestHighLevelClient client = this.createClient(username, password, host)) {
@@ -232,8 +252,9 @@ public class ElasticUtils {
         }
     }
 
-    public long fetchRecordsByExistQuery(String index, String attributeName) throws IOException {
+    public long fetchRecordsByExistQuery(String index, String attributeName) throws Exception {
         try {
+            TimeUnit.SECONDS.sleep(40);
             try (RestHighLevelClient client = this.createClient(username, password, host)) {
                 SearchRequest searchRequest = new SearchRequest(index);
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();

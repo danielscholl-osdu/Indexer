@@ -77,7 +77,7 @@ public class SchemaProviderImplTest {
         Assert.assertEquals("{\n" +
                 "  \"kind\" : \"fake\",\n" +
                 "  \"schema\" : [ ]\n" +
-                "}", schema);
+                "}", schema.replaceAll("\r", ""));
 
     }
 
@@ -136,7 +136,7 @@ public class SchemaProviderImplTest {
     }
 
     @Test
-    public void should_call_Storage_then_Schema() throws Exception {
+    public void should_call_Schema_then_Storage() throws Exception {
         String kind = "tenant:test:test:1.0.0";
 
         SchemaProviderImpl schemaService = Mockito.mock(SchemaProviderImpl.class);
@@ -148,20 +148,20 @@ public class SchemaProviderImplTest {
         assertNull(recordSchemaResponse);
 
         inOrder.verify(schemaService).getSchema(any());
-        inOrder.verify(schemaService).getFromStorageService(any());
         inOrder.verify(schemaService).getFromSchemaService(any());
+        inOrder.verify(schemaService).getFromStorageService(any());
         verify(schemaService, times(1)).getFromStorageService(any());
         verify(schemaService, times(1)).getFromSchemaService(any());
     }
 
     @Test
-    public void should_call_only_Storage_if_it_returns_result() throws Exception {
+    public void should_call_only_SchemaService_if_it_returns_result() throws Exception {
         String kind = "tenant:test:test:1.0.0";
 
         SchemaProviderImpl schemaService = Mockito.mock(SchemaProviderImpl.class);
         when(schemaService.getSchema(any())).thenCallRealMethod();
         String someSchema = "some schema";
-        when(schemaService.getFromStorageService(any())).thenReturn(someSchema);
+        when(schemaService.getFromSchemaService(any())).thenReturn(someSchema);
 
         InOrder inOrder = inOrder(schemaService);
 
@@ -169,9 +169,9 @@ public class SchemaProviderImplTest {
         assertEquals(recordSchemaResponse, someSchema);
 
         inOrder.verify(schemaService).getSchema(any());
-        inOrder.verify(schemaService).getFromStorageService(any());
-        verify(schemaService, times(0)).getFromSchemaService(any());
-        verify(schemaService, times(1)).getFromStorageService(any());
+        inOrder.verify(schemaService).getFromSchemaService(any());
+        verify(schemaService, times(1)).getFromSchemaService(any());
+        verify(schemaService, times(0)).getFromStorageService(any());
     }
 
 }

@@ -56,7 +56,7 @@ spec:
           readOnly: true
         env:
         - name: spring_application_name
-          value: indexer
+          value: {{ .Chart.Name }}
         - name: server.servlet.contextPath
           value: /api/indexer/v2/
         - name: server_port
@@ -88,7 +88,7 @@ spec:
         - name: servicebus_topic_name
           value: indexing-progress
         - name: entitlements_service_endpoint
-          value: http://entitlements-azure/entitlements/v1
+          value: http://entitlements/api/entitlements/v2
         - name: entitlements_service_api_key
           value: "OBSOLETE"
         - name: schema_service_url
@@ -100,7 +100,7 @@ spec:
         - name: STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST
           value: http://storage/api/storage/v2/query/records:batch
         - name: STORAGE_QUERY_RECORD_HOST
-          value: http://storage/api/storage/v2/records
+          value: http://storage/api/storage/v2/query/records
         - name: partition_service_endpoint
           value: http://partition/api/partition/v1
         - name: azure_istioauth_enabled
