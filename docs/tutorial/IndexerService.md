@@ -8,6 +8,7 @@
 - [Copy Index <a name="copy-index"></a>](#copy-index)
 - [Get task status <a name="get-task-status"></a>](#get-task-status)
 - [Schema Service adoption <a name="schema-service-adoption"></a>](#schema-service-adoption)
+  - [R3 Schema Support <a name="r3-schema-support"></a>](#r3-schema-support)
 
 
 ##Introduction <a name="introduction"></a>
@@ -251,12 +252,47 @@ API will respond with status of task.
 
 [Back to table of contents](#TOC)
 
-##Shema Service adoption <a name="schema-service-adoption"></a>
+##Schema Service adoption <a name="schema-service-adoption"></a>
 
 Indexer service is in adaptation process to use schemas from the Schema service instead of Storage Service.
 The Indexer Service retrieves a schema from the Schema Service if the schema is not found on the Storage Service.
 Change affects only Azure implementation so far.
 Later call to the Storage Service will be deprecated and then removed (after the end of the deprecation period).
 
+[Back to table of contents](#TOC)
+
+###R3 Schema Support <a name="r3-schema-support"></a>
+
+Indexer service support r3 schema. These schemas are created via Schema service. 
+
+Here is an example following end-to-end workflow can be exercised (please update the schema based on your environment):
+
+* Ingest r3 schema for `opendes:wks:master-data--Wellbore:1.0.0`. Schema service payload can be found [here](https://community.opengroup.org/osdu/platform/system/indexer-service/-/blob/master/testing/indexer-test-core/src/main/resources/testData/r3-index_record_wks_master.schema.json).
+
+* Ingest r3 master-data Wellbore record. Storage service payload can be found [here](https://community.opengroup.org/osdu/platform/system/indexer-service/-/blob/master/testing/indexer-test-core/src/main/resources/testData/r3-index_record_wks_master.json)
+
+* Records can be searched via Search service. Here is sample payload:
+
+```
+POST /api/search/v2/query HTTP/1.1
+Content-Type: application/json
+data-partition-id: opendes
+{
+    "kind": "opendes:wks:master-data--Wellbore:1.0.0",
+    "spatialFilter": {
+        "field": "data.SpatialLocation.Wgs84Coordinates",
+        "byBoundingBox": {
+            "topLeft": {
+                "longitude": -100.0,
+                "latitude": 52.0
+            },
+            "bottomRight": {
+                "longitude": 100.0,
+                "latitude": 0.0
+            }
+        }
+    }
+}
+```
 [Back to table of contents](#TOC)
 
