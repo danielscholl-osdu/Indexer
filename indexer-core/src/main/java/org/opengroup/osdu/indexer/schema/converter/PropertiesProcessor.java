@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package org.opengroup.osdu.indexer.schema.converter;
+
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -78,12 +79,16 @@ public class PropertiesProcessor {
 
         String definitionSubRef = ref.substring(DEF_PREFIX.length());
 
-        if (schemaConverterConfig.getSkippedDefinitions().contains(definitionSubRef)) {
+        String definitionIdentity = getDefinitionIdentity(definitionSubRef);
+
+        if (schemaConverterConfig.getSkippedDefinitions().contains(definitionIdentity)) {
             return Stream.empty();
         }
 
-        if (Objects.nonNull(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionSubRef))) {
-            return storageSchemaEntry(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionSubRef), pathPrefix);
+        if (Objects.nonNull(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionIdentity))) {
+            return storageSchemaEntry(
+                    schemaConverterConfig.getSpecialDefinitionsMap().get(definitionIdentity) + getDefinitionColonVersion(definitionSubRef),
+                    pathPrefix);
         }
 
         Definition definition = definitions.getDefinition(definitionSubRef);
@@ -99,6 +104,26 @@ public class PropertiesProcessor {
         }
 
         return processProperties(definition.getProperties());
+    }
+
+    private String getDefinitionIdentity(String definitionSubRef) {
+        String[] components = definitionSubRef.split(":");
+        if (components.length < 4) {
+            throw new AppException(HttpStatus.SC_CONFLICT, "Wrong definition format:" + definitionSubRef,
+                    "Wrong definition format:" + definitionSubRef);
+        }
+
+        return components[2];
+    }
+
+    private String getDefinitionColonVersion(String definitionSubRef) {
+        String[] components = definitionSubRef.split(":");
+        if (components.length < 4) {
+            throw new AppException(HttpStatus.SC_CONFLICT, "Wrong definition format:" + definitionSubRef,
+                    "Wrong definition format:" + definitionSubRef);
+        }
+
+        return ":" + components[3];
     }
 
     private Stream<Map<String, Object>> processOfItems(List<AllOfItem> allOf, List<AllOfItem> anyOf, List<AllOfItem> oneOf) {
@@ -119,7 +144,7 @@ public class PropertiesProcessor {
         return ofItems;
     }
 
-    public Stream<Map<String, Object>> processProperties(Map<String, TypeProperty> properties){
+    public Stream<Map<String, Object>> processProperties(Map<String, TypeProperty> properties) {
         return properties.entrySet().stream().flatMap(this::processPropertyEntry);
     }
 
@@ -175,7 +200,7 @@ public class PropertiesProcessor {
             PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
                     , log, new SchemaConverterPropertiesConfig());
 
-            ofItems =  Stream.concat(Optional.ofNullable(ofItems).orElseGet(Stream::empty),
+            ofItems = Stream.concat(Optional.ofNullable(ofItems).orElseGet(Stream::empty),
                     entry.getValue().getAnyOf().stream().flatMap(propertiesProcessor::processItem));
         }
 
@@ -207,7 +232,7 @@ public class PropertiesProcessor {
                 getFromPattern(definitionProperty.getPattern()),
                 getFromItemsPattern(() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getPattern() : null),
                 getFromFormat(definitionProperty::getFormat),
-                getFromItemsType (() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null))
+                getFromItemsType(() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null))
                 .filter(x -> x.get() != null)
                 .findFirst()
                 .orElse(getFromType(definitionProperty::getType)).get();
@@ -219,20 +244,20 @@ public class PropertiesProcessor {
 
     private Supplier<String> getFromItemsPattern(Supplier<String> itemsPatternSupplier) {
         return () -> {
-                String itemsPattern = itemsPatternSupplier.get();
-                return Objects.nonNull(itemsPattern) && itemsPattern.startsWith(LINK_PREFIX) ? LINK_TYPE : null;
-            };
+            String itemsPattern = itemsPatternSupplier.get();
+            return Objects.nonNull(itemsPattern) && itemsPattern.startsWith(LINK_PREFIX) ? LINK_TYPE : null;
+        };
     }
 
     private Supplier<String> getFromType(Supplier<String> typeSupplier) {
-        return  () -> {
+        return () -> {
             String type = typeSupplier.get();
             return schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(type, type);
         };
     }
 
-    private Supplier<String> getFromFormat(Supplier<String> formatSupplier){
-        return  () -> {
+    private Supplier<String> getFromFormat(Supplier<String> formatSupplier) {
+        return () -> {
             String format = formatSupplier.get();
             return Objects.nonNull(format) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(format, format) : null;
         };

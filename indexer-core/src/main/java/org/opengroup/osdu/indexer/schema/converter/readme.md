@@ -81,7 +81,7 @@ included
 "data": {
   "allOf": [
     {
-      "$ref": "#/definitions/AbstractFacility.1.0.0"
+      "$ref": "#/definitions/opendes:wks:AbstractFacility.1.0.0"
     },
     {
       "type": "object",
@@ -109,7 +109,7 @@ For instance,
 
 ```json
 "elevationReference": {
-  "$ref": "#/definitions/simpleElevationReference",
+  "$ref": "#/definitions/opendes:wks:simpleElevationReference:1.0.0",
   "description": "…",
   "title": "Elevation Reference",
   "type": "object"
@@ -119,7 +119,7 @@ For instance,
   "description": "...",
   "properties": {
     "elevationFromMsl": {
-      "$ref": "#/definitions/valueWithUnit",
+      "$ref": "#/definitions/opendes:wks:valueWithUnit:1.0.0",
       "description": "…",
       "example": 123.45,
       "title": "Elevation from MSL",
@@ -157,10 +157,18 @@ Not all data are converted to the storage service schema format:
 
 1.  Definitions
 
-Ignored definition(-s) are not included into Storage Service schema:
+Definitions must follow the pattern a:b:name:version, where a,b,name are required and version is optional.
+For instance
 
 ```json
-AbstractAnyCrsFeatureCollection.1.0.0
+opendes:wks:AbstractAnyCrsFeatureCollection:1.0.0
+opendes:wks:anyJsonFeatureCollection
+```
+
+Ignored definition(-s) name(-s) are not included into Storage Service schema:
+
+```json
+AbstractAnyCrsFeatureCollection
 anyCrsGeoJsonFeatureCollection
 ```
 
@@ -168,7 +176,7 @@ Following definitions are not unwrapped and kind is determined according
 to the following types conversions:
 
 ```json
-AbstractFeatureCollection.1.0.0 -> core:dl:geoshape:1.0.0
+AbstractFeatureCollection:version -> core:dl:geoshape:version
 geoJsonFeatureCollection -> core:dl:geoshape:1.0.0
 core_dl_geopoint -> core:dl:geopoint:1.0.0
 ```
@@ -179,7 +187,7 @@ for instance
 "Wgs84Coordinates": {
   "title": "WGS 84 Coordinates",
   "description": "…",
-  "$ref": "#/definitions/AbstractFeatureCollection.1.0.0"
+  "$ref": "#/definitions/opendes:wks:AbstractFeatureCollection.1.0.0"
 }
 
 ```
@@ -261,7 +269,7 @@ Examples
   "description": "The history of operator organizations of the facility.",
   "type": "array",
   "items": {
-    "$ref": "#/definitions/AbstractFacilityOperator.1.0.0"
+    "$ref": "#/definitions/opendes:wks:AbstractFacilityOperator.1.0.0"
   }
 }
 
@@ -310,14 +318,14 @@ For instance
 ```json
 {
   "definitions": {
-    "wellboreData1": {
+    "opendes:wks:wellboreData1:1.0.0": {
       "properties": {
         "prop1": {
           "type": "string"
         }
       }
     },
-    "wellboreData2": {
+    "opendes:wks:wellboreData2:1.0.0": {
       "properties": {
         "prop2": {
           "type": "string"
@@ -331,11 +339,11 @@ For instance
         {
           "anyOf": [
             {
-              "$ref": "#/definitions/wellboreData1"
+              "$ref": "#/definitions/opendes:wks:wellboreData1:1.0.0"
             } ],
           "oneOf": [
             {
-              "$ref": "#/definitions/wellboreData2"
+              "$ref": "#/definitions/opendes:wks:wellboreData2:1.0.0"
             }
           ]
         }

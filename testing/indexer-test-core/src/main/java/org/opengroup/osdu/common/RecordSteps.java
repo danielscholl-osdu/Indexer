@@ -148,6 +148,14 @@ public class RecordSteps extends TestsBase {
         assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
+    public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery (
+            int expectedNumber, String index, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude, String field) throws Throwable {
+        index = generateActualName(index, timeStamp);
+        long numOfIndexedDocuments = createIndex(index);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsByBoundingBoxQuery(index, field, topLatitude, topLongitude, bottomLatitude, bottomLongitude);
+        assertEquals(expectedNumber, actualNumberOfRecords);
+    }
+
     private long createIndex(String index) throws InterruptedException, IOException {
         long numOfIndexedDocuments = 0;
         int iterator;

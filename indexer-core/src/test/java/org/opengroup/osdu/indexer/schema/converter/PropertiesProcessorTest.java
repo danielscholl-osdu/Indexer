@@ -48,7 +48,7 @@ public class PropertiesProcessorTest {
         JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
 
         assertFalse(new PropertiesProcessor(null, log, new SchemaConverterPropertiesConfig())
-                .processRef(DEFINITIONS_PREFIX + "anyCrsGeoJsonFeatureCollection").findAny().isPresent());
+                .processRef(DEFINITIONS_PREFIX + "a:b:anyCrsGeoJsonFeatureCollection:1.0.0").findAny().isPresent());
     }
 
     @Test
@@ -56,7 +56,7 @@ public class PropertiesProcessorTest {
         JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
 
         String res = new PropertiesProcessor(null, PATH, log, new SchemaConverterPropertiesConfig())
-                .processRef(DEFINITIONS_PREFIX + "core_dl_geopoint").map(Object::toString).reduce("", String::concat);
+                .processRef(DEFINITIONS_PREFIX + "a:b:core_dl_geopoint:1.0.0").map(Object::toString).reduce("", String::concat);
         assertEquals("{path=" + PATH + ", kind=core:dl:geopoint:1.0.0}", res);
     }
 
@@ -76,7 +76,7 @@ public class PropertiesProcessorTest {
 
         definition.setProperties(properties);
 
-        String defName = "defName";
+        String defName = "a:b:defName:1.0.0";
         definitions.add(defName, definition);
 
         String res = new PropertiesProcessor(definitions, PATH, log, new SchemaConverterPropertiesConfig())
