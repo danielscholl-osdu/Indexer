@@ -1,6 +1,6 @@
 {
   "definitions": {
-    "def1": {
+    "opendes:wks:def1:1.0.0": {
       "properties": {
         "prop1": {
           "type": "string"
@@ -14,7 +14,7 @@
         "FacilityName": {
           "allOf": [
             {
-              "$ref": "#/definitions/def1"
+              "$ref": "#/definitions/opendes:wks:def1:1.0.0"
             },
             {
               "properties": {

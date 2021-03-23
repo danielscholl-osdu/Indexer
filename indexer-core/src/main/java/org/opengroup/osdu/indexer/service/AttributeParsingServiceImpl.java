@@ -25,6 +25,7 @@ import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.indexer.model.geojson.FeatureCollection;
 import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
@@ -185,7 +186,7 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
                 dataMap.put(DATA_GEOJSON_TAG, geometry);
             }
         } catch (JsonSyntaxException | IllegalArgumentException e) {
-            String parsingError = String.format("geopoint parsing error: %s attribute: %s | value: %s", e.getMessage(), attributeName, attributeVal);
+            String parsingError = String.format("geo-point parsing error: %s attribute: %s | value: %s", e.getMessage(), attributeName, attributeVal);
             jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, parsingError, String.format("record-id: %s | %s", recordId, parsingError));
         }
     }
@@ -199,9 +200,9 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
 
             if (geoJsonMap == null || geoJsonMap.isEmpty()) return;
 
-            this.geoShapeParser.parseGeoJson(geoJsonMap);
+            Map<String, Object> parsedShape = this.geoShapeParser.parseGeoJson(geoJsonMap);
 
-            dataMap.put(attributeName, geoJsonMap);
+            dataMap.put(attributeName, parsedShape);
         } catch (JsonSyntaxException | IllegalArgumentException e) {
             String parsingError = String.format("geo-json shape parsing error: %s attribute: %s", e.getMessage(), attributeName);
             jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, parsingError, String.format("record-id: %s | %s", recordId, parsingError));
