@@ -19,7 +19,7 @@ public class SchemaConverterPropertiesConfig implements SchemaConverterConfig {
     private Map<String, String> primitiveTypesMap = getDefaultPrimitiveTypesMap();
 
     private Set<String> getDefaultSkippedDefinitions() {
-        return new HashSet<>(Arrays.asList("AbstractAnyCrsFeatureCollection.1.0.0",
+        return new HashSet<>(Arrays.asList("AbstractAnyCrsFeatureCollection",
                 "anyCrsGeoJsonFeatureCollection"));
     }
 
@@ -30,9 +30,9 @@ public class SchemaConverterPropertiesConfig implements SchemaConverterConfig {
     private Map<String, String> getDefaultSpecialDefinitionsMap() {
         Map<String, String> defaultSpecialDefinitions = new HashMap<>();
 
-        defaultSpecialDefinitions.put("AbstractFeatureCollection.1.0.0", "core:dl:geoshape:1.0.0");
-        defaultSpecialDefinitions.put("core_dl_geopoint", "core:dl:geopoint:1.0.0");
-        defaultSpecialDefinitions.put("geoJsonFeatureCollection", "core:dl:geoshape:1.0.0");
+        defaultSpecialDefinitions.put("AbstractFeatureCollection", "core:dl:geoshape");
+        defaultSpecialDefinitions.put("core_dl_geopoint", "core:dl:geopoint");
+        defaultSpecialDefinitions.put("geoJsonFeatureCollection", "core:dl:geoshape");
 
         return defaultSpecialDefinitions;
     }

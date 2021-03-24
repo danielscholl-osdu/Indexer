@@ -14,55 +14,36 @@
 
 package org.opengroup.osdu.indexer.util.parser;
 
-import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.geo.builders.ShapeBuilder;
-import org.elasticsearch.common.geo.parsers.ShapeParser;
-import org.elasticsearch.common.xcontent.DeprecationHandler;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
-import org.locationtech.spatial4j.exception.InvalidShapeException;
-import org.locationtech.spatial4j.shape.Shape;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import org.opengroup.osdu.core.common.search.Preconditions;
+import org.opengroup.osdu.indexer.model.geojson.FeatureCollection;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
-import java.io.IOException;
 import java.util.Map;
 
 @Component
 @RequestScope
 public class GeoShapeParser {
 
-    public String parseGeoJson(Map<String, Object> geoShapeObject) {
+    private ObjectMapper mapper = new ObjectMapper();
 
-        Preconditions.checkNotNull(geoShapeObject, "geoShapeObject cannot be null");
+    public Map<String, Object> parseGeoJson(Map<String, Object> objectMap) {
+
+        Preconditions.checkNotNull(objectMap, "geoShapeObject cannot be null");
+        if (objectMap.isEmpty()) throw new IllegalArgumentException("shape not included");
 
         try {
-            // use elasticsearch's ShapeParser to validate shape
-            ShapeBuilder shapeBuilder = getShapeBuilderFromObject(geoShapeObject);
-            Shape shape = shapeBuilder.buildS4J();
-            if (shape == null) {
-                throw new IllegalArgumentException("unable to parse shape");
-            }
-
-            return shapeBuilder.toString().replaceAll("\\r", "").replaceAll("\\n", "");
-        } catch (ElasticsearchParseException | InvalidShapeException | IOException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
+            FeatureCollection collection = mapper.readValue(mapper.writeValueAsString(objectMap), FeatureCollection.class);
+            return mapper.readValue(mapper.writeValueAsString(collection), new TypeReference<Map<String, Object>>() {
+            });
+        } catch (InvalidTypeIdException e) {
+            throw new IllegalArgumentException("must be a valid FeatureCollection");
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("unable to parse FeatureCollection");
         }
-    }
-
-    private ShapeBuilder getShapeBuilderFromObject(Map<String, Object> object) throws IOException {
-        XContentBuilder contentBuilder = JsonXContent.contentBuilder().value(object);
-
-        XContentParser parser = JsonXContent.jsonXContent.createParser(
-                NamedXContentRegistry.EMPTY, DeprecationHandler.THROW_UNSUPPORTED_OPERATION,
-                BytesReference.bytes(contentBuilder).streamInput()
-        );
-
-        parser.nextToken();
-        return ShapeParser.parse(parser);
     }
 }

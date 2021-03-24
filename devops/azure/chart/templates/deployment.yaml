@@ -87,6 +87,8 @@ spec:
           value: osdu-db
         - name: servicebus_topic_name
           value: indexing-progress
+        - name: reindex_topic_name
+          value: recordstopic
         - name: entitlements_service_endpoint
           value: http://entitlements/api/entitlements/v2
         - name: entitlements_service_api_key
