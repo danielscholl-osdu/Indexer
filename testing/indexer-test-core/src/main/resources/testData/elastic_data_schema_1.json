@@ -1,5 +1,5 @@
 {
-  "opendes:sample-schema-1:testIngest6": {
+  "opendes:test-data--Integration:testIngest6": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
@@ -11,18 +11,6 @@
     "EmptyAttribute": "",
     "Basin": "Houston",
     "State": "TX",
-    "x-geojson": {
-      "geometries": [
-        {
-          "coordinates": [
-            -86.565593,
-            32.406403
-          ],
-          "type": "point"
-        }
-      ],
-      "type": "geometrycollection"
-    },
     "Country": "USA",
     "Established": "2000-03-27T23:38:48+0000",
     "Location": {
@@ -30,30 +18,22 @@
       "lat": 32.406403
     }
   },
-  "opendes:sample-schema-1:testIngest3": {
+  "opendes:test-data--Integration:testIngest3": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
     "Rank": 1,
+    "DblArray": [
+      62.4,
+      60.0
+    ],
     "County": "Harris",
     "Field": "OSDU OFFICE - 2",
-    "Score": 123456789123456789,
+    "Score" : 123456789123456789,
     "OriginalOperator": "OFFICE2",
     "EmptyAttribute": "",
     "Basin": "Houston",
     "State": "TX",
-    "x-geojson": {
-      "geometries": [
-        {
-          "coordinates": [
-            -86.565593,
-            32.406403
-          ],
-          "type": "point"
-        }
-      ],
-      "type": "geometrycollection"
-    },
     "Country": "USA",
     "Established": "2000-03-27T23:38:48+0000",
     "Location": {
@@ -61,30 +41,23 @@
       "lat": 32.406403
     }
   },
-  "opendes:sample-schema-1:testIngest2": {
+  "opendes:test-data--Integration:testIngest2": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
     "Rank": 1,
+    "DblArray": [
+      32.4,
+      36.45,
+      40.0
+    ],
     "County": "Harris",
     "Field": "OSDU OFFICE - 2",
-    "Score": 123456789123456789,
+    "Score" : 123456789123456789,
     "OriginalOperator": "OFFICE - 2",
     "EmptyAttribute": "",
     "Basin": "Houston",
     "State": "TX",
-    "x-geojson": {
-      "geometries": [
-        {
-          "coordinates": [
-            -86.565593,
-            32.406403
-          ],
-          "type": "point"
-        }
-      ],
-      "type": "geometrycollection"
-    },
     "Country": "USA",
     "Established": "2000-03-27T23:38:48+0000",
     "Location": {
@@ -92,30 +65,18 @@
       "lat": 32.406403
     }
   },
-  "opendes:sample-schema-1:testIngest5": {
+  "opendes:test-data--Integration:testIngest5": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
     "Rank": 1,
     "County": "Harris",
     "Field": "OSDU OFFICE - 2",
-    "Score": 123456789123456789,
+    "Score" : 123456789123456789,
     "OriginalOperator": "OFFICE2",
     "EmptyAttribute": "",
     "Basin": "Houston",
     "State": "TX",
-    "x-geojson": {
-      "geometries": [
-        {
-          "coordinates": [
-            -86.565593,
-            32.406403
-          ],
-          "type": "point"
-        }
-      ],
-      "type": "geometrycollection"
-    },
     "Country": "USA",
     "Established": "2000-03-27T23:38:48+0000",
     "Location": {
@@ -123,30 +84,18 @@
       "lat": 32.406403
     }
   },
-  "opendes:sample-schema-1:testIngest4": {
+  "opendes:test-data--Integration:testIngest4": {
     "WellName": "Data Platform Services",
     "WellStatus": "Under development",
     "WellType": "Data Lake Cloud",
     "Rank": 1,
     "County": "Harris",
     "Field": "OSDU OFFICE - 2",
-    "Score": 123456789123456789,
+    "Score" : 123456789123456789,
     "OriginalOperator": "OFFICE2",
     "EmptyAttribute": "",
     "Basin": "Houston",
     "State": "TX",
-    "x-geojson": {
-      "geometries": [
-        {
-          "coordinates": [
-            -86.565593,
-            32.406403
-          ],
-          "type": "point"
-        }
-      ],
-      "type": "geometrycollection"
-    },
     "Country": "USA",
     "Established": "2000-03-27T23:38:48+0000",
     "Location": {
