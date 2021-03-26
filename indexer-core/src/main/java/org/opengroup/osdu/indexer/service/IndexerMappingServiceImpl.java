@@ -15,6 +15,12 @@
 package org.opengroup.osdu.indexer.service;
 
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -37,13 +43,6 @@ import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IndexerMappingService {
@@ -112,7 +111,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         // data-source attributes
         Map<String, Object> dataMapping = new HashMap<>();
         if (schema.getDataSchema() != null) {
-            for (Map.Entry<String, String> entry : schema.getDataSchema().entrySet()) {
+            for (Map.Entry<String, Object> entry : schema.getDataSchema().entrySet()) {
                 dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue()));
             }
 
@@ -131,7 +130,6 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
 
         // don't add dynamic mapping
         documentMapping.put("dynamic", false);
-
         return documentMapping;
     }
 

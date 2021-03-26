@@ -14,10 +14,12 @@
 
 package org.opengroup.osdu.indexer.schema.converter.tags;
 
+import java.util.Map;
 import lombok.Data;
 
 @Data
 public class Items {
     private String type;
     private String pattern;
+    private Map<String, TypeProperty> properties;
 }

@@ -16,6 +16,12 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -23,7 +29,6 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
-import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
@@ -36,13 +41,6 @@ import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
@@ -204,15 +202,19 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
             if (schemaObj == null) return null;
 
-            Map<String, String> data = new HashMap<>();
+            Map<String, Object> data = new HashMap<>();
             Map<String, Object> meta = new HashMap<>();
 
             if (schemaObj.getSchema() != null && schemaObj.getSchema().length > 0) {
                 for (SchemaItem schemaItem : schemaObj.getSchema()) {
                     String dataType = schemaItem.getKind();
-                    String elasticDataType = TypeMapper.getIndexerType(dataType);
+                    Object elasticDataType = TypeMapper.getIndexerType(dataType);
                     if (elasticDataType == null) {
                         elasticDataType = TypeMapper.getIndexerType(StorageType.STRING.getValue());
+                    }
+                    if(schemaItem.getProperties() != null){
+                        HashMap<String, Object> propertiesMap = normalizeInnerProperties(schemaItem);
+                        elasticDataType = TypeMapper.getObjectsArrayMapping(dataType, propertiesMap);
                     }
                     data.put(schemaItem.getPath(), elasticDataType);
                 }
@@ -234,19 +236,24 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             String kind = schemaObj.getKind();
             String type = kind.split(":")[2];
 
-            //TODO temporary fix for https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/1
-            if(data.get(MARKERS) != null){
-                data.put(MARKERS, ElasticType.NESTED.getValue());
-            }
-            if(data.get(CURVES) != null){
-                data.put(CURVES, ElasticType.NESTED.getValue());
-            }
-
             return IndexSchema.builder().dataSchema(data).metaSchema(meta).kind(kind).type(type).build();
 
         } catch (Exception e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Schema normalization error", "An error has occurred while normalizing the schema.", e);
         }
+    }
+
+    private HashMap<String, Object> normalizeInnerProperties(SchemaItem schemaItem) {
+        HashMap<String, Object> propertiesMap = new HashMap<>();
+        for (SchemaItem propertiesItem : schemaItem.getProperties()) {
+            String propertiesItemKind = propertiesItem.getKind();
+            String propertiesElasticType = TypeMapper.getIndexerType(propertiesItemKind);
+            if (propertiesElasticType == null) {
+                propertiesElasticType = TypeMapper.getIndexerType(StorageType.STRING.getValue());
+            }
+            propertiesMap.put(propertiesItem.getPath(),propertiesElasticType);
+        }
+        return propertiesMap;
     }
 
 }

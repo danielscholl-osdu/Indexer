@@ -14,17 +14,15 @@
 
 package org.opengroup.osdu.indexer.util;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.model.entitlements.AclRole;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
-
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class TypeMapper {
 
@@ -33,6 +31,10 @@ public class TypeMapper {
     private static final Map<String, Object> metaAttributeIndexerType = new HashMap<>();
 
     private static final String STORAGE_TYPE_OBJECTS = "[]object";
+
+    private static final String STORAGE_TYPE_NESTED = "nested";
+
+    private static final String STORAGE_TYPE_FLATTENED = "flattened";
 
     static {
 
@@ -69,6 +71,8 @@ public class TypeMapper {
 
         //TODO temporary fix for https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/1
         storageToIndexerType.put(STORAGE_TYPE_OBJECTS, ElasticType.OBJECT.getValue());
+        storageToIndexerType.put(STORAGE_TYPE_NESTED, ElasticType.NESTED.getValue());
+        storageToIndexerType.put(STORAGE_TYPE_FLATTENED,ElasticType.FLATTENED.getValue());
     }
 
     public static String getIndexerType(String storageType) {
@@ -87,16 +91,29 @@ public class TypeMapper {
         return Records.Type.builder().type(metaAttributeIndexerType.get(key).toString()).build();
     }
 
-    public static Object getDataAttributeIndexerMapping(String indexerType) {
-        if (ElasticType.TEXT.getValue().equalsIgnoreCase(indexerType)) {
+    public static Object getDataAttributeIndexerMapping(Object indexerType) {
+        if (ElasticType.TEXT.getValue().equalsIgnoreCase(indexerType.toString())) {
             return getTextIndexerMapping();
         }
 
-        if (isArray(indexerType)) {
-            return Records.Type.builder().type(getArrayMemberType(indexerType)).build();
+        if (isArray(indexerType.toString())) {
+            return Records.Type.builder().type(getArrayMemberType(indexerType.toString())).build();
         }
 
-        return Records.Type.builder().type(indexerType).build();
+        if(isMap(indexerType)){
+            Map<String,Object> type = (Map<String, Object>) indexerType;
+            HashMap<String, Object> propertiesMap = (HashMap<String, Object>) type.get(Constants.PROPERTIES);
+            for (Map.Entry<String,Object> entry : propertiesMap.entrySet()){
+                entry.setValue(Records.Type.builder().type(entry.getValue().toString()).build());
+            }
+            return indexerType;
+        }
+
+        return Records.Type.builder().type(indexerType.toString()).build();
+    }
+
+    private static boolean isMap(Object indexerType) {
+        return indexerType instanceof Map;
     }
 
     private static boolean isArray(String indexerType) {
@@ -138,6 +155,13 @@ public class TypeMapper {
         ancestryProperties.put(Constants.PROPERTIES, ancestryMapping);
 
         return ancestryProperties;
+    }
+
+    public static Object getObjectsArrayMapping(String dataType, Object properties) {
+        Map<String, Object> nestedMapping = new HashMap<>();
+        nestedMapping.put(Constants.TYPE,storageToIndexerType.getOrDefault(dataType, dataType));
+        nestedMapping.put(Constants.PROPERTIES,properties);
+        return nestedMapping;
     }
 
     private static Object getIndexStatusMapping() {

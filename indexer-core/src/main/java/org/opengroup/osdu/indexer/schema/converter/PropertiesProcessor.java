@@ -14,7 +14,16 @@
 
 package org.opengroup.osdu.indexer.schema.converter;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
@@ -23,11 +32,8 @@ import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropert
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
+import org.opengroup.osdu.indexer.schema.converter.tags.Items;
 import org.opengroup.osdu.indexer.schema.converter.tags.TypeProperty;
-
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 public class PropertiesProcessor {
 
@@ -151,6 +157,7 @@ public class PropertiesProcessor {
     private Stream<Map<String, Object>> processPropertyEntry(Map.Entry<String, TypeProperty> entry) {
         Preconditions.checkNotNull(entry, "entry cannot be null");
 
+
         if ("object".equals(entry.getValue().getType())
                 && Objects.isNull(entry.getValue().getItems())
                 && Objects.isNull(entry.getValue().getRef())
@@ -159,7 +166,46 @@ public class PropertiesProcessor {
         }
 
         if ("array".equals(entry.getValue().getType())) {
-            if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType())) {
+
+            Items items = entry.getValue().getItems();
+
+            if(Objects.nonNull(items.getProperties()) && !items.getProperties().isEmpty()){
+                String indexingType = getFromIndexingType(entry.getValue().getIndexingType());
+                /*Schema item inner properties will be processed if they are present & indexingType in schema configured for processing
+                result ex:
+                    {
+                        path = ArrayItem,
+                        kind = nested,
+                        properties = [{
+                                path = InnerProperty,
+                                kind = double
+                            }, {
+                                path = OtherInnerProperty,
+                                kind = string
+                            }
+                        ]
+                    }
+                 */
+                if(schemaConverterConfig.getProcessedArraysTypes().contains(indexingType)){
+                    PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, log, new SchemaConverterPropertiesConfig());
+                    return storageSchemaObjectArrayEntry(
+                        indexingType,
+                        entry.getKey(),
+                        items.getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry));
+
+                /*Otherwise inner properties won't be processed
+                result ex:
+                    {
+                        path = ArrayItem,
+                        kind = []object
+                    }
+                 */
+                }else {
+                    return storageSchemaEntry(indexingType, pathPrefixWithDot + entry.getKey());
+                }
+            }
+
+            if (schemaConverterConfig.getSupportedArrayTypes().contains(items.getType()) && Objects.isNull(items.getProperties())) {
                 return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
             }
 
@@ -225,6 +271,17 @@ public class PropertiesProcessor {
         return Stream.of(map);
     }
 
+    private Stream<Map<String, Object>> storageSchemaObjectArrayEntry(String kind, String path,Stream<Map<String, Object>> mapStream) {
+        Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
+        Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("kind", kind);
+        map.put("path", path);
+        map.put(Constants.PROPERTIES,mapStream.collect(Collectors.toList()));
+        return Stream.of(map);
+    }
+
     private String getTypeByDefinitionProperty(TypeProperty definitionProperty) {
         Preconditions.checkNotNull(definitionProperty, "definitionProperty cannot be null");
 
@@ -268,6 +325,10 @@ public class PropertiesProcessor {
             String itemsType = itemsTypeSupplier.get();
             return Objects.nonNull(itemsType) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(itemsType, itemsType) : null;
         };
+    }
+
+    private String getFromIndexingType(String indexingType) {
+        return schemaConverterConfig.getArraysTypesMap().getOrDefault(indexingType, "[]object");
     }
 
 }
