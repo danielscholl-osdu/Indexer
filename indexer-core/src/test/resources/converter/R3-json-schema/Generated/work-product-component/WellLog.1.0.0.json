@@ -114,12 +114,6 @@
     "data": {
       "allOf": [
         {
-          "$ref": "../abstract/AbstractWPCGroupType.1.0.0.json"
-        },
-        {
-          "$ref": "../abstract/AbstractWorkProductComponent.1.0.0.json"
-        },
-        {
           "type": "object",
           "properties": {
             "WellboreID": {

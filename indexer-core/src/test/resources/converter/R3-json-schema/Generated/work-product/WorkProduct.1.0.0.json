@@ -152,14 +152,6 @@
                 "type": "string"
               }
             },
-            "SpatialPoint": {
-              "description": "A centroid point that reflects the locale of the content of the work product (location of the subject matter).",
-              "$ref": "../abstract/AbstractSpatialLocation.1.0.0.json"
-            },
-            "SpatialArea": {
-              "description": "A polygon boundary that reflects the locale of the content of the work product (location of the subject matter).",
-              "$ref": "../abstract/AbstractSpatialLocation.1.0.0.json"
-            },
             "SubmitterName": {
               "type": "string",
               "description": "Name of the person that first submitted the work product package to OSDU."

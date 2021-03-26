@@ -70,7 +70,7 @@ public class SchemaProviderImplTest {
         org.opengroup.osdu.core.common.model.http.HttpResponse httpResponse =
                 mock(org.opengroup.osdu.core.common.model.http.HttpResponse.class);
         when(httpResponse.getResponseCode()).thenReturn(HttpStatus.SC_OK);
-        when(httpResponse.getBody()).thenReturn("{}");
+        when(httpResponse.getBody()).thenReturn("{ \"properties\" : { \"data\": {} } }");
 
         when(urlFetchService.sendRequest(any())).thenReturn(httpResponse);
         String schema = sut.getSchema("fake");

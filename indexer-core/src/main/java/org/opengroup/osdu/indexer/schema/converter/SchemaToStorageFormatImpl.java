@@ -16,11 +16,10 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.PropertiesData;
 import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
     private ObjectMapper objectMapper;
-    private JaxRsDpsLog log;
     private SchemaConverterConfig schemaConverterConfig;
 
     @Inject
@@ -45,7 +43,6 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         Preconditions.checkNotNull(objectMapper, "objectMapper cannot be null");
 
         this.objectMapper = objectMapper;
-        this.log = log;
         this.schemaConverterConfig = schemaConverterConfig;
     }
 
@@ -68,7 +65,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         try {
             return objectMapper.readValue(schemaServiceFormat, SchemaRoot.class);
         } catch (JsonProcessingException e) {
-            throw new AppException(HttpStatus.SC_BAD_REQUEST, "Loading shchem error", "Failed to load schema", e);
+            throw new SchemaProcessingException("Failed to parse the schema");
         }
     }
 
@@ -76,7 +73,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         try {
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(schemaServiceFormat);
         } catch (JsonProcessingException e) {
-            throw new AppException(HttpStatus.SC_UNPROCESSABLE_ENTITY, "Saving JSON error", "Failed to save a JSON file", e);
+            throw new SchemaProcessingException("Failed to save the JSON file");
         }
     }
 
@@ -84,7 +81,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         Preconditions.checkNotNull(objectMapper, "schemaServiceSchema cannot be null");
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 
-        PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), log, schemaConverterConfig);
+        PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), schemaConverterConfig);
 
         final List<Map<String, Object>> storageSchemaItems = new ArrayList<>();
         if (schemaServiceSchema.getProperties() != null) {
@@ -118,9 +115,16 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                     storageSchemaItems.addAll(propertiesProcessor.processProperties(schemaData.getProperties())
                             .collect(Collectors.toList()));
                 }
+            } else {
+                throw new SchemaProcessingException("Schema doesn't have properties section, kind:");
             }
         } else {
-            log.warning("Schema doesn't have properties, kind:" + kind);
+            throw new SchemaProcessingException("Schema doesn't have data section, kind:" + kind);
+        }
+
+        if (!propertiesProcessor.getErrors().isEmpty()) {
+            throw new SchemaProcessingException( "Error(-s) occurred during parsing the schema with kind:" + kind
+                    + ", " + String.join(",", propertiesProcessor.getErrors()));
         }
 
         final Map<String, Object> result = new LinkedHashMap<>();

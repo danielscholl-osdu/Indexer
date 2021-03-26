@@ -19,6 +19,7 @@ import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
@@ -59,7 +60,14 @@ public class SchemaProviderImpl implements SchemaService {
 
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        String schemaServiceSchema = getFromSchemaService(kind);
+        String schemaServiceSchema;
+
+        try {
+            schemaServiceSchema = getFromSchemaService(kind);
+        } catch (RuntimeException ex) {
+            log.error("Failed to get the schema from the Schema service, kind:" + kind + ", message:" + ex.getMessage(), ex);
+            return null;
+        }
 
         return Objects.nonNull(schemaServiceSchema) ? schemaServiceSchema : getFromStorageService(kind);
     }
