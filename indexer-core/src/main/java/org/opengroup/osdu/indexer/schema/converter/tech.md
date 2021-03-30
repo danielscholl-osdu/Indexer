@@ -104,14 +104,6 @@ happens.
 If a processing of some schema generates unexpected errors take that
 schema and investigate with unit test as was described before.
 
-#### Schema retrieval order.
-
-Schema is retrieved from the Schema service first. If schema is not
-found in the Schema Service it is retrieved from the Storage Service. If
-schema is found in the Schema Service but conversion failed for some
-reason the schema is not retrieved from the Storage Service. Please see
-org.opengroup.osdu.indexer.service.impl.SchemaProviderImpl for details
-
 #### Converter extensions/modifications
 
 a) Add new tags to schema.converter.tags package
