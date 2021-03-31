@@ -5,7 +5,7 @@ Purpose
 -------
 
 The purpose of this document is to describe schema conversion from the
-Schema Service format to the Storage Service format.
+Schema Service formats to the Storage Service format.
 
 Storage Service schema has the following JSON format
 ----------------------------------------------------
@@ -162,7 +162,7 @@ For instance
 
 ```json
 opendes:wks:AbstractAnyCrsFeatureCollection:1.0.0
-opendes:wks:anyJsonFeatureCollection
+opendes:wks:anyJsonFeatureCollection:1.0.0
 ```
 
 Ignored definition(-s) name(-s) are not included into Storage Service schema:
@@ -318,14 +318,14 @@ For instance
 ```json
 {
   "definitions": {
-    "opendes:wks:wellboreData1:1.0.0": {
+    "wellboreData1": {
       "properties": {
         "prop1": {
           "type": "string"
         }
       }
     },
-    "opendes:wks:wellboreData2:1.0.0": {
+    "wellboreData2": {
       "properties": {
         "prop2": {
           "type": "string"
@@ -339,11 +339,11 @@ For instance
         {
           "anyOf": [
             {
-              "$ref": "#/definitions/opendes:wks:wellboreData1:1.0.0"
+              "$ref": "#/definitions/wellboreData1"
             } ],
           "oneOf": [
             {
-              "$ref": "#/definitions/opendes:wks:wellboreData2:1.0.0"
+              "$ref": "#/definitions/wellboreData2"
             }
           ]
         }
