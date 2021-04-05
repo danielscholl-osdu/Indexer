@@ -108,22 +108,26 @@ public class PropertiesProcessor {
 
     private String getDefinitionIdentity(String definitionSubRef) {
         String[] components = definitionSubRef.split(":");
-        if (components.length < 4) {
-            throw new AppException(HttpStatus.SC_CONFLICT, "Wrong definition format:" + definitionSubRef,
-                    "Wrong definition format:" + definitionSubRef);
+        switch (components.length) {
+            case 1:
+                return components[0];
+            case 4:
+                return components[2];
         }
-
-        return components[2];
+        throw new AppException(HttpStatus.SC_CONFLICT, "Wrong definition format:" + definitionSubRef,
+                "Wrong definition format:" + definitionSubRef);
     }
 
     private String getDefinitionColonVersion(String definitionSubRef) {
         String[] components = definitionSubRef.split(":");
-        if (components.length < 4) {
-            throw new AppException(HttpStatus.SC_CONFLICT, "Wrong definition format:" + definitionSubRef,
-                    "Wrong definition format:" + definitionSubRef);
+        switch (components.length) {
+            case 1:
+                return ":1.0.0";
+            case 4:
+                return ":" + components[3];
         }
-
-        return ":" + components[3];
+        throw new AppException(HttpStatus.SC_CONFLICT, "Wrong definition format:" + definitionSubRef,
+                "Wrong definition format:" + definitionSubRef);
     }
 
     private Stream<Map<String, Object>> processOfItems(List<AllOfItem> allOf, List<AllOfItem> anyOf, List<AllOfItem> oneOf) {
