@@ -42,7 +42,6 @@ import javax.inject.Named;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,8 +63,8 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
     private JaxRsDpsLog logger;
 
     @Inject
-    @Named("SERVICE_BUS_TOPIC")
-    private String serviceBusTopic;
+    @Named("SERVICE_BUS_REINDEX_TOPIC")
+    private String serviceBusReindexTopicName;
 
     @Inject
     private StorageService storageService;
@@ -153,7 +152,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
         try {
             logger.info("Indexer publishes message to Service Bus " + headers.getCorrelationId());
-            topicClientFactory.getClient(headers.getPartitionId(), serviceBusTopic).send(message);
+            topicClientFactory.getClient(headers.getPartitionId(), serviceBusReindexTopicName).send(message);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }

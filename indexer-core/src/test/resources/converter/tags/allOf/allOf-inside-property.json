@@ -19,7 +19,7 @@
             {
               "properties": {
                 "val" : {
-                "type": "string" }
+                  "type": "string" }
               }
             }
           ]

@@ -321,7 +321,7 @@ public class AttributeParsingServiceImplTest {
         Map<String, Object> storageData = new HashMap<>();
         storageData.put("location", parseJson(shapeJson));
 
-        when(this.geoShapeParser.parseGeoJson(storageData)).thenReturn("");
+        when(this.geoShapeParser.parseGeoJson(storageData)).thenReturn(new HashMap<>());
 
         Map<String, Object> dataMap = new HashMap<>();
 

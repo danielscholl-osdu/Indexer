@@ -18,10 +18,12 @@
 package org.opengroup.osdu.util;
 
 import com.google.gson.Gson;
+
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import javax.net.ssl.SSLContext;
+
 import lombok.extern.java.Log;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -49,7 +51,8 @@ import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.client.indices.GetMappingsResponse;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.locationtech.jts.geom.Coordinate;
+import org.elasticsearch.common.geo.builders.EnvelopeBuilder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -65,8 +68,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
-import static org.elasticsearch.index.query.QueryBuilders.termsQuery;
+import static org.elasticsearch.index.query.QueryBuilders.*;
 
 
 /**
@@ -249,6 +251,23 @@ public class ElasticUtils {
                 SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
                 return searchResponse.getHits().getTotalHits().value;
             }
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        }
+    }
+
+    public long fetchRecordsByBoundingBoxQuery(String index, String field, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude) throws Exception {
+        try (RestHighLevelClient client = this.createClient(username, password, host)) {
+            SearchRequest searchRequest = new SearchRequest(index);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            Coordinate topLeft = new Coordinate(topLongitude, topLatitude);
+            Coordinate bottomRight = new Coordinate(bottomLongitude, bottomLatitude);
+            searchSourceBuilder.query(boolQuery().must(geoWithinQuery(field, new EnvelopeBuilder(topLeft, bottomRight))));
+            searchRequest.source(searchSourceBuilder);
+
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            return searchResponse.getHits().getTotalHits().value;
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;

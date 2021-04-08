@@ -39,14 +39,14 @@
     "ancestry": {
       "description": "The links to data, which constitute the inputs.",
       "title": "Ancestry",
-      "$ref": "#/definitions/AbstractLegalParentList.1.0.0"
+      "$ref": "#/definitions/opendes:wks:AbstractLegalParentList:1.0.0"
     },
     "meta": {
       "description": "The Frame of Reference meta data section linking the named properties to self-contained definitions.",
       "title": "Frame of Reference Meta Data",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/AbstractMetaItem.1.0.0"
+        "$ref": "#/definitions/opendes:wks:AbstractMetaItem:1.0.0"
       }
     },
     "source": {
@@ -63,7 +63,7 @@
     "data": {
       "allOf": [
         {
-          "$ref": "#/definitions/AbstractFacility.1.0.0"
+          "$ref": "#/definitions/opendes:wks:AbstractFacility:1.0.0"
         },
         {
           "type": "object",
@@ -80,14 +80,14 @@
               "description": "List of all depths and elevations pertaining to the wellbore, like, plug back measured depth, total measured depth, KB elevation",
               "type": "array",
               "items": {
-                "$ref": "#/definitions/AbstractFacilityVerticalMeasurement.1.0.0"
+                "$ref": "#/definitions/opendes:wks:AbstractFacilityVerticalMeasurement:1.0.0"
               }
             },
             "DrillingReason": {
               "description": "The history of drilling reasons of the wellbore.",
               "type": "array",
               "items": {
-                "$ref": "#/definitions/AbstractWellboreDrillingReason.1.0.0"
+                "$ref": "#/definitions/opendes:wks:AbstractWellboreDrillingReason:1.0.0"
               }
             },
             "KickOffWellbore": {
@@ -121,11 +121,11 @@
             },
             "ProjectedBottomHoleLocation": {
               "description": "Projected location at total depth.",
-              "$ref": "#/definitions/AbstractSpatialLocation.1.0.0"
+              "$ref": "#/definitions/opendes:wks:AbstractSpatialLocation:1.0.0"
             },
             "GeographicBottomHoleLocation": {
               "description": "Geographic location at total depth.",
-              "$ref": "#/definitions/AbstractSpatialLocation.1.0.0"
+              "$ref": "#/definitions/opendes:wks:AbstractSpatialLocation:1.0.0"
             }
           }
         },
@@ -149,7 +149,7 @@
   ],
   "additionalProperties": false,
   "definitions": {
-    "AbstractAccessControlList.1.0.0": {
+    "opendes:wks:AbstractAccessControlList:1.0.0": {
       "title": "Access Control List",
       "description": "The access control tags associated with this entity. This structure is included by the SystemProperties \"acl\", which is part of all OSDU records. Not extensible.",
       "type": "object",
@@ -179,7 +179,7 @@
       ],
       "additionalProperties": false
     },
-    "AbstractLegalTags.1.0.0": {
+    "opendes:wks:AbstractLegalTags:1.0.0": {
       "title": "Legal Meta Data",
       "description": "Legal meta data like legal tags, relevant other countries, legal status. This structure is included by the SystemProperties \"legal\", which is part of all OSDU records. Not extensible.",
       "type": "object",
@@ -214,7 +214,7 @@
       ],
       "additionalProperties": false
     },
-    "AbstractLegalParentList.1.0.0": {
+    "opendes:wks:AbstractLegalParentList:1.0.0": {
       "title": "Parent List",
       "description": "A list of entity IDs in the data ecosystem, which act as legal parents to the current entity. This structure is included by the SystemProperties \"ancestry\", which is part of all OSDU records. Not extensible.",
       "type": "object",
@@ -231,7 +231,7 @@
       },
       "additionalProperties": false
     },
-    "AbstractMetaItem.1.0.0": {
+    "opendes:wks:AbstractMetaItem:1.0.0": {
       "title": "Frame of Reference Meta Data Item",
       "description": "A meta data item, which allows the association of named properties or property values to a Unit/Measurement/CRS/Azimuth/Time context.",
       "oneOf": [
@@ -404,7 +404,7 @@
         }
       ]
     },
-    "AbstractFacilityOperator.1.0.0": {
+    "opendes:wks:AbstractFacilityOperator:1.0.0": {
       "title": "AbstractFacilityOperator",
       "description": "The organisation that was responsible for a facility at some point in time.",
       "type": "object",
@@ -426,7 +426,7 @@
         }
       }
     },
-    "AbstractAnyCrsFeatureCollection.1.0.0": {
+    "opendes:wks:AbstractAnyCrsFeatureCollection:1.0.0": {
       "title": "AbstractAnyCrsFeatureCollection",
       "description": "A schema like GeoJSON FeatureCollection with a non-WGS 84 CRS context; based on https://geojson.org/schema/FeatureCollection.json. Attention: the coordinate order is fixed: Longitude/Easting/Westing/X first, followed by Latitude/Northing/Southing/Y, optionally height as third coordinate.",
       "type": "object",
@@ -979,7 +979,7 @@
         }
       }
     },
-    "AbstractFeatureCollection.1.0.0": {
+    "opendes:wks:AbstractFeatureCollection:1.0.0": {
       "description": "GeoJSON feature collection as originally published in https://geojson.org/schema/FeatureCollection.json. Attention: the coordinate order is fixed: Longitude first, followed by Latitude, optionally height above MSL (EPSG:5714) as third coordinate.",
       "title": "GeoJSON FeatureCollection",
       "type": "object",
@@ -1499,7 +1499,7 @@
         }
       }
     },
-    "AbstractSpatialLocation.1.0.0": {
+    "opendes:wks:AbstractSpatialLocation:1.0.0": {
       "title": "AbstractSpatialLocation",
       "description": "A geographic object which can be described by a set of points.",
       "type": "object",
@@ -1538,13 +1538,13 @@
         "AsIngestedCoordinates": {
           "title": "As Ingested Coordinates",
           "description": "The original or 'as ingested' coordinates (Point, MultiPoint, LineString, MultiLineString, Polygon or MultiPolygon). The name 'AsIngestedCoordinates' was chosen to contrast it to 'OriginalCoordinates', which carries the uncertainty whether any coordinate operations took place before ingestion. In cases where the original CRS is different from the as-ingested CRS, the OperationsApplied can also contain the list of operations applied to the coordinate prior to ingestion. The data structure is similar to GeoJSON FeatureCollection, however in a CRS context explicitly defined within the AbstractAnyCrsFeatureCollection. The coordinate sequence follows GeoJSON standard, i.e. 'eastward/longitude', 'northward/latitude' {, 'upward/height' unless overridden by an explicit direction in the AsIngestedCoordinates.VerticalCoordinateReferenceSystemID}.",
-          "$ref": "#/definitions/AbstractAnyCrsFeatureCollection.1.0.0",
+          "$ref": "#/definitions/opendes:wks:AbstractAnyCrsFeatureCollection:1.0.0",
           "x-osdu-frame-of-reference": "CRS:"
         },
         "Wgs84Coordinates": {
           "title": "WGS 84 Coordinates",
           "description": "The normalized coordinates (Point, MultiPoint, LineString, MultiLineString, Polygon or MultiPolygon) based on WGS 84 (EPSG:4326 for 2-dimensional coordinates, EPSG:4326 + EPSG:5714 (MSL) for 3-dimensional coordinates). This derived coordinate representation is intended for global discoverability only. The schema of this substructure is identical to the GeoJSON FeatureCollection https://geojson.org/schema/FeatureCollection.json. The coordinate sequence follows GeoJSON standard, i.e. longitude, latitude {, height}",
-          "$ref": "#/definitions/AbstractFeatureCollection.1.0.0"
+          "$ref": "#/definitions/opendes:wks:AbstractFeatureCollection:1.0.0"
         },
         "OperationsApplied": {
           "title": "Operations Applied",
@@ -1570,7 +1570,7 @@
         }
       }
     },
-    "AbstractGeoPoliticalContext.1.0.0": {
+    "opendes:wks:AbstractGeoPoliticalContext:1.0.0": {
       "title": "AbstractGeoPoliticalContext",
       "description": "A single, typed geo-political entity reference, which is 'abstracted' to AbstractGeoContext and then aggregated by GeoContexts properties.",
       "type": "object",
@@ -1587,7 +1587,7 @@
         }
       }
     },
-    "AbstractGeoBasinContext.1.0.0": {
+    "opendes:wks:AbstractGeoBasinContext:1.0.0": {
       "title": "AbstractGeoBasinContext",
       "description": "A single, typed basin entity reference, which is 'abstracted' to AbstractGeoContext and then aggregated by GeoContexts properties.",
       "type": "object",
@@ -1604,7 +1604,7 @@
         }
       }
     },
-    "AbstractGeoFieldContext.1.0.0": {
+    "opendes:wks:AbstractGeoFieldContext:1.0.0": {
       "title": "AbstractGeoFieldContext",
       "description": "A single, typed field entity reference, which is 'abstracted' to AbstractGeoContext and then aggregated by GeoContexts properties.",
       "type": "object",
@@ -1620,7 +1620,7 @@
         }
       }
     },
-    "AbstractGeoPlayContext.1.0.0": {
+    "opendes:wks:AbstractGeoPlayContext:1.0.0": {
       "title": "AbstractGeoPlayContext",
       "description": "A single, typed Play entity reference, which is 'abstracted' to AbstractGeoContext and then aggregated by GeoContexts properties.",
       "type": "object",
@@ -1637,7 +1637,7 @@
         }
       }
     },
-    "AbstractGeoProspectContext.1.0.0": {
+    "opendes:wks:AbstractGeoProspectContext:1.0.0": {
       "title": "AbstractGeoProspectContext",
       "description": "A single, typed Prospect entity reference, which is 'abstracted' to AbstractGeoContext and then aggregated by GeoContexts properties.",
       "type": "object",
@@ -1654,28 +1654,28 @@
         }
       }
     },
-    "AbstractGeoContext.1.0.0": {
+    "opendes:wks:AbstractGeoContext:1.0.0": {
       "title": "AbstractGeoContext",
       "description": "A geographic context to an entity. It can be either a reference to a GeoPoliticalEntity, Basin, Field, Play or Prospect.",
       "oneOf": [
         {
-          "$ref": "#/definitions/AbstractGeoPoliticalContext.1.0.0"
+          "$ref": "#/definitions/opendes:wks:AbstractGeoPoliticalContext:1.0.0"
         },
         {
-          "$ref": "#/definitions/AbstractGeoBasinContext.1.0.0"
+          "$ref": "#/definitions/opendes:wks:AbstractGeoBasinContext:1.0.0"
         },
         {
-          "$ref": "#/definitions/AbstractGeoFieldContext.1.0.0"
+          "$ref": "#/definitions/opendes:wks:AbstractGeoFieldContext:1.0.0"
         },
         {
-          "$ref": "#/definitions/AbstractGeoPlayContext.1.0.0"
+          "$ref": "#/definitions/opendes:wks:AbstractGeoPlayContext:1.0.0"
         },
         {
-          "$ref": "#/definitions/AbstractGeoProspectContext.1.0.0"
+          "$ref": "#/definitions/opendes:wks:AbstractGeoProspectContext:1.0.0"
         }
       ]
     },
-    "AbstractAliasNames.1.0.0": {
+    "opendes:wks:AbstractAliasNames:1.0.0": {
       "title": "AbstractAliasNames",
       "description": "A list of alternative names for an object.  The preferred name is in a separate, scalar property.  It may or may not be repeated in the alias list, though a best practice is to include it if the list is present, but to omit the list if there are no other names.  Note that the abstract entity is an array so the $ref to it is a simple property reference.",
       "type": "object",
@@ -1706,7 +1706,7 @@
         }
       }
     },
-    "AbstractFacilityState.1.0.0": {
+    "opendes:wks:AbstractFacilityState:1.0.0": {
       "title": "AbstractFacilityState",
       "description": "The life cycle status of a facility at some point in time.",
       "type": "object",
@@ -1728,7 +1728,7 @@
         }
       }
     },
-    "AbstractFacilityEvent.1.0.0": {
+    "opendes:wks:AbstractFacilityEvent:1.0.0": {
       "title": "AbstractFacilityEvent",
       "description": "A significant occurrence in the life of a facility, which often changes its state, or the state of one of its components.",
       "type": "object",
@@ -1750,7 +1750,7 @@
         }
       }
     },
-    "AbstractFacilitySpecification.1.0.0": {
+    "opendes:wks:AbstractFacilitySpecification:1.0.0": {
       "title": "AbstractFacilitySpecification",
       "description": "A property, characteristic, or attribute about a facility that is not described explicitly elsewhere.",
       "type": "object",
@@ -1795,7 +1795,7 @@
         }
       }
     },
-    "AbstractFacility.1.0.0": {
+    "opendes:wks:AbstractFacility:1.0.0": {
       "title": "AbstractFacility",
       "description": "",
       "type": "object",
@@ -1813,7 +1813,7 @@
           "description": "The history of operator organizations of the facility.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AbstractFacilityOperator.1.0.0"
+            "$ref": "#/definitions/opendes:wks:AbstractFacilityOperator:1.0.0"
           }
         },
         "DataSourceOrganisationID": {
@@ -1825,14 +1825,14 @@
           "description": "The spatial location information such as coordinates,CRS information.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AbstractSpatialLocation.1.0.0"
+            "$ref": "#/definitions/opendes:wks:AbstractSpatialLocation:1.0.0"
           }
         },
         "GeoContexts": {
           "description": "List of geographic entities which provide context to the facility.  This may include multiple types or multiple values of the same type.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AbstractGeoContext.1.0.0"
+            "$ref": "#/definitions/opendes:wks:AbstractGeoContext:1.0.0"
           }
         },
         "OperatingEnvironmentID": {
@@ -1848,33 +1848,33 @@
           "description": "Alternative names, including historical, by which this facility is/has been known.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AbstractAliasNames.1.0.0"
+            "$ref": "#/definitions/opendes:wks:AbstractAliasNames:1.0.0"
           }
         },
         "FacilityState": {
           "description": "The history of life cycle states the facility has been through.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AbstractFacilityState.1.0.0"
+            "$ref": "#/definitions/opendes:wks:AbstractFacilityState:1.0.0"
           }
         },
         "FacilityEvent": {
           "description": "A list of key facility events.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AbstractFacilityEvent.1.0.0"
+            "$ref": "#/definitions/opendes:wks:AbstractFacilityEvent:1.0.0"
           }
         },
         "FacilitySpecification": {
           "description": "facilitySpecification maintains the specification like slot name, wellbore drilling permit number, rig name etc.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AbstractFacilitySpecification.1.0.0"
+            "$ref": "#/definitions/opendes:wks:AbstractFacilitySpecification:1.0.0"
           }
         }
       }
     },
-    "AbstractFacilityVerticalMeasurement.1.0.0": {
+    "opendes:wks:AbstractFacilityVerticalMeasurement:1.0.0": {
       "title": "AbstractFacilityVerticalMeasurement",
       "description": "A location along a wellbore, _usually_ associated with some aspect of the drilling of the wellbore, but not with any intersecting _subsurface_ natural surfaces.",
       "type": "object",
@@ -1938,7 +1938,7 @@
         }
       }
     },
-    "AbstractWellboreDrillingReason.1.0.0": {
+    "opendes:wks:AbstractWellboreDrillingReason:1.0.0": {
       "title": "AbstractWellboreDrillingReason",
       "description": "Purpose for drilling a wellbore, which often is an indication of the level of risk.",
       "type": "object",
