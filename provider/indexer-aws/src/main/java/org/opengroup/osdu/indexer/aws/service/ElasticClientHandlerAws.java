@@ -16,7 +16,9 @@ package org.opengroup.osdu.indexer.aws.service;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.elasticsearch.client.RestClientBuilder;
@@ -24,16 +26,29 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.java.Log;
+
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+
 import javax.inject.Inject;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 // TODO: Elastic Client Handler should be designed to allow cloud providers to implement their own handler if not we have to inherited
 // SPI needs to be refactored
 @Primary
 @Component
+@Log
 public class ElasticClientHandlerAws extends ElasticClientHandler {
 
     private static final int REST_CLIENT_CONNECT_TIMEOUT = 60000;
     private static final int REST_CLIENT_SOCKET_TIMEOUT = 60000;
     private static final int REST_CLIENT_RETRY_TIMEOUT = 60000;
+
+    @Value("${aws.es.certificate.disableTrust:false}")
+    // @Value("#{new Boolean('${aws.es.certificate.disableTrust:false}')}")
+    private Boolean disableSslCertificateTrust;
 
     public ElasticClientHandlerAws() {
     }
@@ -46,8 +61,23 @@ public class ElasticClientHandlerAws extends ElasticClientHandler {
                 .setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
                 .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));        
 
-        if(isLocalHost(host)) {
-            builder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setSSLHostnameVerifier((s, sslSession) -> true));
+        if(isLocalHost(host) || disableSslCertificateTrust) {            
+
+            SSLContext sslContext;            
+            try {
+                sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, new TrustManager[]{ UnsafeX509ExtendedTrustManager.INSTANCE }, null);
+                builder.setHttpClientConfigCallback(httpClientBuilder -> 
+                httpClientBuilder.setSSLContext(sslContext)
+                                .setSSLHostnameVerifier((s, session) -> true));
+            } catch (NoSuchAlgorithmException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (KeyManagementException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
         }
         Header[] defaultHeaders = new Header[]{
                 new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
@@ -55,7 +85,8 @@ public class ElasticClientHandlerAws extends ElasticClientHandler {
                 new BasicHeader("client.transport.sniff", "false"),
                 new BasicHeader("request.headers.X-Found-Cluster", host),
                 new BasicHeader("cluster.name", host),
-                new BasicHeader("xpack.security.transport.ssl.enabled", tls)
+                new BasicHeader("xpack.security.transport.ssl.enabled", tls),
+                new BasicHeader("Authorization", basicAuthenticationHeaderVal),
         };
         builder.setDefaultHeaders(defaultHeaders);
         return builder;
