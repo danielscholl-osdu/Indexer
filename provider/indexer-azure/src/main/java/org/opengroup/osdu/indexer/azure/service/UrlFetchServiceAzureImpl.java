@@ -4,6 +4,7 @@ package org.opengroup.osdu.indexer.azure.service;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
+import lombok.var;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
@@ -28,9 +29,34 @@ public class UrlFetchServiceAzureImpl extends UrlFetchServiceImpl implements IUr
     @Override
     public HttpResponse sendRequest(FetchServiceHttpRequest httpRequest) throws URISyntaxException {
         logger.info("inside azure impl muskan;");
-        HttpResponse output = this.retryFunction(httpRequest);
-        logger.info("response code" + output.getResponseCode());
+        HttpResponse output;
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        if(isGetStorageRecords(stackTraceElements))
+        {
+            logger.info("retry function");
+            output = this.retryFunction(httpRequest);
+            if(output!=null)
+            {
+                return output;
+            }
+
+        }
+
+        logger.info("no retry function");
+        output=super.sendRequest(httpRequest);
+
         return output;
+    }
+    private boolean isGetStorageRecords(StackTraceElement[] stElements)
+    {
+        for (int i=1; i<stElements.length; i++)
+        {
+            if(stElements[i].getMethodName().equals("getRecords"))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public HttpResponse retryFunction(FetchServiceHttpRequest request)
@@ -59,5 +85,6 @@ public class UrlFetchServiceAzureImpl extends UrlFetchServiceImpl implements IUr
 
         return null;
     }
+
 
 }
