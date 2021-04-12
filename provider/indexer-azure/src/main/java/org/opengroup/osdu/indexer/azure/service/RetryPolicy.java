@@ -41,9 +41,9 @@ public class RetryPolicy {
                 .retryOnResult(response -> {
                     List<String> notFound = new Gson().fromJson(response.getBody(), List.class);
                     if(notFound.isEmpty()) {
-                        return true;
+                        return false;
                     }
-                    return false;
+                    return true;
                 })
                 .build();
         return config;
