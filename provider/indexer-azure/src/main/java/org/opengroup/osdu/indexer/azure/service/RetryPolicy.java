@@ -1,6 +1,7 @@
 package org.opengroup.osdu.indexer.azure.service;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.github.resilience4j.core.IntervalFunction;
@@ -25,8 +26,9 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class RetryPolicy {
 
-    private static final int attempts =3;
-    private static final int waitDurationInMillis = 1000;
+    private final int attempts =3;
+    private final int waitDurationInMillis = 1000;
+    private final String notFound ="notFound";
 
     Logger logger =  LoggerFactory.getLogger(RetryPolicy.class);
 
@@ -39,8 +41,9 @@ public class RetryPolicy {
                 .maxAttempts(attempts)
                 .waitDuration(Duration.ofMillis(waitDurationInMillis))
                 .retryOnResult(response -> {
-                    List<String> notFound = new Gson().fromJson(response.getBody(), List.class);
-                    if(notFound.isEmpty()) {
+                    JsonObject jsonObject = new JsonParser().parse(response.getBody()).getAsJsonObject();
+                    JsonArray notFoundArray = (JsonArray) jsonObject.get(notFound);
+                    if (notFoundArray.size() == 0 || notFoundArray.isJsonNull()) {
                         return false;
                     }
                     return true;
