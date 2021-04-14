@@ -61,7 +61,6 @@ public class SchemaConverterPropertiesConfig implements SchemaConverterConfig {
 
     private Map<String, String> getDefaultArraysTypesMap() {
         Map<String, String> defaultArrayTypesMap = new HashMap<>();
-        defaultArrayTypesMap.put("x-type-object","[]object");
         defaultArrayTypesMap.put("x-type-flattened","flattened");
         defaultArrayTypesMap.put("x-type-nested","nested");
         return defaultArrayTypesMap;
