@@ -186,7 +186,7 @@ public class RetryPolicyTest {
     @Test
     public void retryFunction_shouldReturn_null_ifURISyntaxException() throws URISyntaxException
     {
-        when(urlFetchService.sendRequest(httpRequest)).thenThrow(new URISyntaxException("ye","ye"));
+        when(urlFetchService.sendRequest(httpRequest)).thenThrow(new URISyntaxException("demo","demo"));
         assert(retryPolicy.retryFunction(httpRequest)==null);
     }
 
