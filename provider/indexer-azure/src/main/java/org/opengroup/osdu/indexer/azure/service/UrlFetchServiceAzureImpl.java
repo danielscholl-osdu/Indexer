@@ -1,54 +1,60 @@
 package org.opengroup.osdu.indexer.azure.service;
-
-
-import io.github.resilience4j.retry.Retry;
-import io.github.resilience4j.retry.RetryConfig;
-import io.github.resilience4j.retry.RetryRegistry;
-import lombok.var;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.net.URISyntaxException;
-import java.util.function.Supplier;
 
 @Service
 @RequestScope
 @Primary
-public class UrlFetchServiceAzureImpl extends UrlFetchServiceImpl implements IUrlFetchService {
+public class UrlFetchServiceAzureImpl implements IUrlFetchService {
 
+    private RetryPolicy policy;
+    private UrlFetchServiceImpl urlFetchService;
 
+    public UrlFetchServiceAzureImpl()
+    {
+        policy = new RetryPolicy();
+        urlFetchService = new UrlFetchServiceImpl();
+    }
+    public UrlFetchServiceAzureImpl(RetryPolicy policy,UrlFetchServiceImpl urlFetchService)
+    {
+        this.policy=policy;
+        this.urlFetchService=urlFetchService;
+    }
 
-    Logger logger =  LoggerFactory.getLogger(UrlFetchServiceAzureImpl.class);
     @Override
     public HttpResponse sendRequest(FetchServiceHttpRequest httpRequest) throws URISyntaxException {
-        logger.info("inside azure impl muskan;");
         HttpResponse output;
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
         if(isGetStorageRecords(stackTraceElements))
         {
-            logger.info("retry function");
-            output = this.retryFunction(httpRequest);
+            output = policy.retryFunction(httpRequest);
             if(output!=null)
             {
                 return output;
             }
-
         }
-
-        logger.info("no retry function");
-        output=super.sendRequest(httpRequest);
-
+        output=superSendRequest(httpRequest);
         return output;
     }
+    protected HttpResponse superSendRequest(FetchServiceHttpRequest httpRequest) throws URISyntaxException
+    {
+        HttpResponse output=urlFetchService.sendRequest(httpRequest);
+        return output;
+    }
+
     private boolean isGetStorageRecords(StackTraceElement[] stElements)
     {
+        if(stElements==null)
+        {
+            return false;
+        }
         for (int i=1; i<stElements.length; i++)
         {
             if(stElements[i].getMethodName().equals("getRecords"))
@@ -58,33 +64,5 @@ public class UrlFetchServiceAzureImpl extends UrlFetchServiceImpl implements IUr
         }
         return false;
     }
-
-    public HttpResponse retryFunction(FetchServiceHttpRequest request)
-    {
-        logger.info("inside retry function muskan");
-        RetryPolicy retryPolicy= new RetryPolicy();
-        RetryConfig config= retryPolicy.retryConfig();
-        RetryRegistry registry = RetryRegistry.of(config);
-        Retry retry = registry.retry("retryPolicy", config);
-
-
-        Supplier<HttpResponse> urlFetchServiceSupplier = ()-> {
-            try {
-                return super.sendRequest(request);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                return null;
-            }
-        };
-
-        if(urlFetchServiceSupplier!= null) {
-            Supplier<HttpResponse> decoratedUrlFetchServiceSupplier = Retry.decorateSupplier(retry, urlFetchServiceSupplier);
-            logger.info("url fetch supplier is not null");
-            return decoratedUrlFetchServiceSupplier.get();
-        }
-
-        return null;
-    }
-
 
 }
