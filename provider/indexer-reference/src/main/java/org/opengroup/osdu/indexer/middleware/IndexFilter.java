@@ -89,6 +89,8 @@ public class IndexFilter implements Filter {
       checkWorkerApiAccess(requestInfo);
     }
 
+    filterChain.doFilter(servletRequest, servletResponse);
+    
     HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
     Map<String, List<Object>> standardHeaders = ResponseHeaders.STANDARD_RESPONSE_HEADERS;
     for (Map.Entry<String, List<Object>> header : standardHeaders.entrySet()) {
@@ -97,7 +99,7 @@ public class IndexFilter implements Filter {
     if (httpResponse.getHeader(DpsHeaders.CORRELATION_ID) == null) {
       httpResponse.addHeader(DpsHeaders.CORRELATION_ID, dpsHeaders.getCorrelationId());
     }
-    filterChain.doFilter(servletRequest, servletResponse);
+
   }
 
   @Override
