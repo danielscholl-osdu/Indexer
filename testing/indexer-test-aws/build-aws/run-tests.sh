@@ -28,10 +28,15 @@ export ENTITLEMENTS_DOMAIN=testing.com
 export OTHER_RELEVANT_DATA_COUNTRIES=US
 export STORAGE_HOST=$STORAGE_URL
 export HOST=$SCHEMA_URL
+export ELASTIC_HOST=$ELASTIC_HOST
+export ELASTIC_PORT=$ELASTIC_PORT
+export ELASTIC_PASSWORD=$ELASTIC_PASSWORD
+export ELASTIC_USER_NAME=$ELASTIC_USERNAME
 
 #### RUN INTEGRATION TEST #########################################################################
 
 mvn -ntp test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml"
+# mvn -Dmaven.surefire.debug test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml"
 TEST_EXIT_CODE=$?
 
 #### COPY TEST REPORTS #########################################################################
