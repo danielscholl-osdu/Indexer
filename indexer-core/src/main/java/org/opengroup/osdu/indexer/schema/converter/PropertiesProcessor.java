@@ -14,6 +14,8 @@
 
 package org.opengroup.osdu.indexer.schema.converter;
 
+import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
@@ -121,23 +123,27 @@ public class PropertiesProcessor {
     }
 
     private String getDefinitionIdentity(String definitionSubRef) {
-        String[] components = parseDefinition(definitionSubRef);
-
-        return components[2];
+        String[] components = definitionSubRef.split(":");
+        switch (components.length) {
+            case 1:
+                return components[0];
+            case 4:
+                return components[2];
+        }
+        throw new AppException(HttpStatus.SC_CONFLICT, "Wrong definition format:" + definitionSubRef,
+                "Wrong definition format:" + definitionSubRef);
     }
 
     private String getDefinitionColonVersion(String definitionSubRef) {
-        String[] components = parseDefinition(definitionSubRef);
-
-        return ":" + components[3];
-    }
-
-    private String[] parseDefinition(String definitionSubRef) {
         String[] components = definitionSubRef.split(":");
-        if (components.length < 4) {
-            throw new SchemaProcessingException("Wrong definition format \'" + definitionSubRef + '\'');
+        switch (components.length) {
+            case 1:
+                return ":1.0.0";
+            case 4:
+                return ":" + components[3];
         }
-        return components;
+        throw new AppException(HttpStatus.SC_CONFLICT, "Wrong definition format:" + definitionSubRef,
+                "Wrong definition format:" + definitionSubRef);
     }
 
     private Stream<Map<String, Object>> processOfItems(List<AllOfItem> allOf, List<AllOfItem> anyOf, List<AllOfItem> oneOf) {
