@@ -59,7 +59,7 @@ public class UrlFetchServiceAzureImplTest {
         verify(retryPolicy,times(1)).retryFunction(httpRequest);
     }
     @Test
-    public void etryFunction_shouldBeCalled_when_isGetStorageRecords_returnsTrue() throws Exception {
+    public void retryFunction_shouldNotBeCalled_when_isGetStorageRecords_returnsFalse() throws Exception {
         UrlFetchServiceAzureImpl mock= spy(new UrlFetchServiceAzureImpl(retryPolicy,urlFetchService));
         response.setBody(json3);
         when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
