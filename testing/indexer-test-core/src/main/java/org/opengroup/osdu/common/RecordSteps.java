@@ -156,6 +156,15 @@ public class RecordSteps extends TestsBase {
         assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
+    public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(
+        int expectedNumber, String index, String path, String firstNestedField, String firstNestedValue, String secondNestedField, String secondNestedValue)
+        throws Exception {
+
+        long numOfIndexedDocuments = createIndex(index);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsByNestedQuery(index, path, firstNestedField, firstNestedValue, secondNestedField, secondNestedValue);
+        assertEquals(expectedNumber, actualNumberOfRecords);
+    }
+
     private long createIndex(String index) throws InterruptedException, IOException {
         long numOfIndexedDocuments = 0;
         int iterator;

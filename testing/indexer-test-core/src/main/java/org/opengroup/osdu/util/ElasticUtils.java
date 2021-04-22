@@ -32,6 +32,7 @@ import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.indices.CloseIndexRequest;
@@ -264,6 +265,23 @@ public class ElasticUtils {
             Coordinate topLeft = new Coordinate(topLongitude, topLatitude);
             Coordinate bottomRight = new Coordinate(bottomLongitude, bottomLatitude);
             searchSourceBuilder.query(boolQuery().must(geoWithinQuery(field, new EnvelopeBuilder(topLeft, bottomRight))));
+            searchRequest.source(searchSourceBuilder);
+
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            return searchResponse.getHits().getTotalHits().value;
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        }
+    }
+
+    public long fetchRecordsByNestedQuery(String index, String path, String firstNestedField, String firstNestedValue, String secondNestedField, String secondNestedValue) throws Exception{
+        try (RestHighLevelClient client = this.createClient(username, password, host)) {
+            SearchRequest searchRequest = new SearchRequest(index);
+
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(nestedQuery(path,boolQuery().must(matchQuery(firstNestedField,firstNestedValue)).must(matchQuery(secondNestedField,secondNestedValue)), ScoreMode.Avg));
+
             searchRequest.source(searchSourceBuilder);
 
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
