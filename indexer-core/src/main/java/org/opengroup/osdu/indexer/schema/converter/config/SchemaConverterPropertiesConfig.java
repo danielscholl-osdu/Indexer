@@ -20,14 +20,13 @@ public class SchemaConverterPropertiesConfig implements SchemaConverterConfig {
     private Set<String> supportedArrayTypes = getDefaultSupportedArrayTypes();
     private Map<String, String> specialDefinitionsMap = getDefaultSpecialDefinitionsMap();
     private Map<String, String> primitiveTypesMap = getDefaultPrimitiveTypesMap();
-    private Map<String, String> arraysTypesMap = getDefaultArraysTypesMap();
     private Set<String> processedArraysTypes = getDefaultArraysTypesForProcessing();
-
+    private String defaultObjectArraysType = getObjectArraysDefaultType();
 
 
     private Set<String> getDefaultSkippedDefinitions() {
         return new HashSet<>(Arrays.asList("AbstractAnyCrsFeatureCollection",
-                "anyCrsGeoJsonFeatureCollection"));
+            "anyCrsGeoJsonFeatureCollection"));
     }
 
     private Set<String> getDefaultSupportedArrayTypes() {
@@ -59,14 +58,11 @@ public class SchemaConverterPropertiesConfig implements SchemaConverterConfig {
         return defaultPrimitiveTypesMap;
     }
 
-    private Map<String, String> getDefaultArraysTypesMap() {
-        Map<String, String> defaultArrayTypesMap = new HashMap<>();
-        defaultArrayTypesMap.put("x-type-flattened","flattened");
-        defaultArrayTypesMap.put("x-type-nested","nested");
-        return defaultArrayTypesMap;
+    private Set<String> getDefaultArraysTypesForProcessing() {
+        return new HashSet<>(Arrays.asList("nested"));
     }
 
-    private Set<String> getDefaultArraysTypesForProcessing(){
-        return new HashSet<>(Arrays.asList("nested"));
+    private String getObjectArraysDefaultType() {
+        return "[]object";
     }
 }

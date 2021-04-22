@@ -40,6 +40,7 @@ public class PropertiesProcessor {
     private JaxRsDpsLog log;
     private SchemaConverterConfig schemaConverterConfig;
 
+    private static final String TYPE_KEY = "type";
     private static final String DEF_PREFIX = "#/definitions/";
     private static final String LINK_PREFIX = "^srn";
     private static final String LINK_TYPE = "link";
@@ -174,7 +175,10 @@ public class PropertiesProcessor {
             Items items = entry.getValue().getItems();
 
             if(Objects.nonNull(items.getProperties()) && !items.getProperties().isEmpty()){
-                String indexingType = getFromIndexingType(entry.getValue().getIndexingType());
+                Map<String, String> type = entry.getValue().getIndexingType();
+                String indexingType = Objects.isNull(type) ?
+                    schemaConverterConfig.getDefaultObjectArraysType() :
+                    type.getOrDefault(TYPE_KEY,schemaConverterConfig.getDefaultObjectArraysType());
                 /*Schema item inner properties will be processed if they are present & indexingType in schema configured for processing
                 result ex:
                     {
@@ -329,10 +333,6 @@ public class PropertiesProcessor {
             String itemsType = itemsTypeSupplier.get();
             return Objects.nonNull(itemsType) ? schemaConverterConfig.getPrimitiveTypesMap().getOrDefault(itemsType, itemsType) : null;
         };
-    }
-
-    private String getFromIndexingType(String indexingType) {
-        return schemaConverterConfig.getArraysTypesMap().getOrDefault(indexingType, "[]object");
     }
 
 }

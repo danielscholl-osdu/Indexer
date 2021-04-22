@@ -22,7 +22,7 @@ import lombok.Data;
 @Data
 public class TypeProperty {
     @JsonProperty("x-osdu-indexing")
-    private String indexingType;
+    private Map<String, String> indexingType;
     private String type;
     private String pattern;
     private String format;
