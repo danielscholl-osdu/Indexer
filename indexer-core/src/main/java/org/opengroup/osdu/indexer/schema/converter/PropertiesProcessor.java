@@ -247,7 +247,7 @@ public class PropertiesProcessor {
 
     private Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {
         Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
-        Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty for path \'" + path + '\'' );
+        Preconditions.checkNotNullOrEmpty(kind, String.format("kind cannot be null or empty for path '%s'", path));
 
         Map<String, Object> map = new HashMap<>();
         map.put("kind", kind);

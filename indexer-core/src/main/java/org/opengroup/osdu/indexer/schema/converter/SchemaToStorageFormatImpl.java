@@ -116,15 +116,15 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                             .collect(Collectors.toList()));
                 }
             } else {
-                throw new SchemaProcessingException("Schema doesn't have properties section, kind:");
+                throw new SchemaProcessingException(String.format("Schema doesn't have properties section, kind: %s", kind));
             }
         } else {
-            throw new SchemaProcessingException("Schema doesn't have data section, kind:" + kind);
+            throw new SchemaProcessingException(String.format("Schema doesn't have data section, kind: %s", kind));
         }
 
         if (!propertiesProcessor.getErrors().isEmpty()) {
-            throw new SchemaProcessingException( "Error(-s) occurred during parsing the schema with kind:" + kind
-                    + ", " + String.join(",", propertiesProcessor.getErrors()));
+            throw new SchemaProcessingException(String.format("Errors occurred during parsing the schema, kind: %s | errors: %s" ,
+                    kind, String.join(",", propertiesProcessor.getErrors())));
         }
 
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -133,5 +133,4 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
         return result;
     }
-
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.service.impl;
+package org.opengroup.osdu.indexer.service;
 
 import com.google.api.client.http.HttpMethods;
 import org.apache.http.HttpStatus;
@@ -65,7 +65,7 @@ public class SchemaProviderImpl implements SchemaService {
         try {
             schemaServiceSchema = getFromSchemaService(kind);
         } catch (RuntimeException ex) {
-            log.error("Failed to get the schema from the Schema service, kind:" + kind + ", message:" + ex.getMessage(), ex);
+            log.error(String.format("Failed to get the schema from the Schema service, kind: %s | message: %s", kind, ex.getMessage(), ex));
             return null;
         }
 
@@ -106,5 +106,4 @@ public class SchemaProviderImpl implements SchemaService {
         
         return this.urlFetchService.sendRequest(request);
     }
-
 }
