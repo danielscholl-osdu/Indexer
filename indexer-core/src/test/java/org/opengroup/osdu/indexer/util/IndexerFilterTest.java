@@ -15,13 +15,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.util.Collections;
 
 @RunWith(MockitoJUnitRunner.class)
-public class IndexFilterTest {
+public class IndexerFilterTest {
+
 
     @InjectMocks
-    private IndexFilter indexFilter;
+    private IndexerFilter indexerFilter;
 
     @Mock
     private DpsHeaders dpsHeaders;
@@ -34,7 +34,7 @@ public class IndexFilterTest {
 
         Mockito.when(dpsHeaders.getCorrelationId()).thenReturn("correlation-id-value");
 
-        indexFilter.doFilter(httpServletRequest, httpServletResponse, filterChain);
+        indexerFilter.doFilter(httpServletRequest, httpServletResponse, filterChain);
 
         Mockito.verify(httpServletResponse).addHeader("correlation-id", "correlation-id-value");
         Mockito.verify(filterChain).doFilter(httpServletRequest, httpServletResponse);

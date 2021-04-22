@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
 
 @Log
 @Component
-public class IndexFilter implements Filter {
+public class IndexerFilter implements Filter {
 
     private final DpsHeaders dpsHeaders;
 
     @Autowired
-    public IndexFilter(DpsHeaders dpsHeaders) {
+    public IndexerFilter(DpsHeaders dpsHeaders) {
         this.dpsHeaders = dpsHeaders;
     }
 
