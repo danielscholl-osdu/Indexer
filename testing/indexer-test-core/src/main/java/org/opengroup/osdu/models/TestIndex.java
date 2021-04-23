@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import org.opengroup.osdu.util.IndexerClientUtil;
 
 import static org.junit.Assert.assertEquals;
 import static org.opengroup.osdu.util.Config.*;
@@ -38,6 +39,7 @@ public class TestIndex {
     private HTTPClient httpClient;
     private Map<String, String> headers;
     private ElasticUtils elasticUtils;
+    protected IndexerClientUtil indexerClient;
     private Gson gson = new Gson();
 
     public TestIndex(ElasticUtils elasticUtils){
@@ -47,6 +49,7 @@ public class TestIndex {
     public void setHttpClient(HTTPClient httpClient) {
         this.httpClient = httpClient;
         headers = httpClient.getCommonHeader();
+        indexerClient = new IndexerClientUtil(this.httpClient);
     }
 
     public void setupIndex() {
@@ -73,7 +76,7 @@ public class TestIndex {
     }
 
     public void cleanupIndex() {
-        this.elasticUtils.deleteIndex(index);
+        this.indexerClient.deleteIndex(kind);
     }
 
     private String getRecordFile() {

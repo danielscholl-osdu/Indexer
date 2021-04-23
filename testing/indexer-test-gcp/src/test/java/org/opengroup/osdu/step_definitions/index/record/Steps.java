@@ -1,21 +1,22 @@
 package org.opengroup.osdu.step_definitions.index.record;
 
-import lombok.extern.java.Log;
-import org.opengroup.osdu.common.RecordSteps;
-import org.opengroup.osdu.util.GCPHTTPClient;
-
+import cucumber.api.DataTable;
 import cucumber.api.Scenario;
 import cucumber.api.java.Before;
-import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import java.io.IOException;
+import lombok.extern.java.Log;
+import org.opengroup.osdu.common.SchemaServiceRecordSteps;
+import org.opengroup.osdu.util.ElasticUtils;
+import org.opengroup.osdu.util.GCPHTTPClient;
 
 @Log
-public class Steps extends RecordSteps {
+public class Steps extends SchemaServiceRecordSteps {
 
     public Steps() {
-        super(new GCPHTTPClient());
+        super(new GCPHTTPClient(), new ElasticUtils());
     }
 
     @Before
@@ -48,5 +49,31 @@ public class Steps extends RecordSteps {
     public void iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(int expectedCount, String index, String skippedAttributes) throws Throwable {
         super.iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(expectedCount, index, skippedAttributes);
     }
+//TODO fix tags step
 
+//    @Then("^I should be able to search (\\d+) record with index \"([^\"]*)\" by tag \"([^\"]*)\" and value \"([^\"]*)\"$")
+//    public void iShouldBeAbleToSearchRecordByTagKeyAndTagValue(int expectedNumber, String index, String tagKey, String tagValue) throws Throwable {
+//        super.iShouldBeAbleToSearchRecordByTagKeyAndTagValue(index, tagKey, tagValue, expectedNumber);
+//    }
+//
+    @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by bounding box query with points \\((-?\\d+), (-?\\d+)\\) and  \\((-?\\d+), (-?\\d+)\\) on field \"([^\"]*)\"$")
+    public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery(
+        int expectedCount, String index, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude, String field) throws Throwable {
+        super.i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery(expectedCount, index, topLatitude, topLongitude, bottomLatitude, bottomLongitude, field);
+    }
+
+    @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by nested \"([^\"]*)\" and properties \\(\"([^\"]*)\", (\\d+)\\) and  \\(\"([^\"]*)\", \"([^\"]*)\"\\)$")
+    public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(
+        int expectedCount, String index, String path, String firstNestedProperty, String firstNestedValue, String secondNestedProperty,
+        String secondNestedValue) throws Exception {
+        super.i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(expectedCount, index, path, firstNestedProperty, firstNestedValue,
+            secondNestedProperty, secondNestedValue);
+    }
+
+    @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by flattened inner properties \\(\"([^\"]*)\", \"([^\"]*)\"\\)$")
+    public void i_should_be_able_search_documents_for_the_by_flattened_inner_properties(int expectedCount, String index, String flattenedField, String flattenedFieldValue)
+        throws IOException, InterruptedException {
+        super.i_should_be_able_search_documents_for_the_by_flattened_inner_properties(expectedCount,index,flattenedField,flattenedFieldValue);
+
+    }
 }
