@@ -1,6 +1,6 @@
 [
     {
-        "id": "tenant1:<kindSubType>:testIngest70<timestamp>",
+        "id": "tenant1:<kindSubType>:testIngest70",
         "data": {
             "NestedTest": [
                 {

@@ -4,7 +4,7 @@
             "authority": "tenant1",
             "source": "wks",
             "entityType": "ArraysOfObjectsTestCollection",
-            "schemaVersionMajor": 1,
+            "schemaVersionMajor": 4,
             "schemaVersionMinor": 0,
             "schemaVersionPatch": 0
         },

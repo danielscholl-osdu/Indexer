@@ -8,7 +8,7 @@ Feature: Indexing of the documents
       | tenant1:indexer:test-data--Integration:2.0.0    | tenant1-indexer-test-data--integration-2.0.0    | index_records_2                |
       | tenant1:indexer:test-data--Integration:3.0.0    | tenant1-indexer-test-data--integration-3.0.0    | index_records_3                |
       | tenant1:wks:master-data--Wellbore:2.0.3         | tenant1-wks-master-data--wellbore-2.0.3         | r3-index_record_wks_master     |
-      | tenant1:wks:ArraysOfObjectsTestCollection:1.0.0 | tenant1-wks-arraysofobjectstestcollection-1.0.0 | r3-index_record_arrayofobjects |
+      | tenant1:wks:ArraysOfObjectsTestCollection:4.0.0 | tenant1-wks-arraysofobjectstestcollection-4.0.0 | r3-index_record_arrayofobjects |
 
   Scenario Outline: Ingest the record and Index in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
@@ -47,7 +47,8 @@ Feature: Indexing of the documents
   Scenario Outline: Ingest the r3-record with arrays of objects and hints in schema and Index in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should be able search <number> documents for the <index> by nested <path> and properties (<first_nested_field>, <first_nested_value>) and  (<second_nested_field>, <second_nested_value>)
+    Then I should be able search <number> documents for the <index> by flattened inner properties (<flattened_inner_field>, <flattened_inner_value>)
 
     Examples:
-      | kind                                              | recordFile                       | number | index                                             | acl                            | path              | first_nested_field           | first_nested_value | second_nested_field          | second_nested_value |
-      | "tenant1:wks:ArraysOfObjectsTestCollection:1.0.0" | "r3-index_record_arrayofobjects" | 1      | "tenant1-wks-arraysofobjectstestcollection-1.0.0" | "data.default.viewers@tenant1" | "data.NestedTest" | "data.NestedTest.NumberTest" | 12345              | "data.NestedTest.StringTest" | "test string"       |
+      | kind                                              | recordFile                       | number | index                                             | acl                            | path              | first_nested_field           | first_nested_value | second_nested_field          | second_nested_value | flattened_inner_field           | flattened_inner_value |
+      | "tenant1:wks:ArraysOfObjectsTestCollection:4.0.0" | "r3-index_record_arrayofobjects" | 1      | "tenant1-wks-arraysofobjectstestcollection-4.0.0" | "data.default.viewers@tenant1" | "data.NestedTest" | "data.NestedTest.NumberTest" | 12345              | "data.NestedTest.StringTest" | "test string"       | "data.FlattenedTest.StringTest" | "test string"         |
