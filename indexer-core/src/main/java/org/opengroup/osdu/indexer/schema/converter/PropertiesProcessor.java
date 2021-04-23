@@ -173,6 +173,9 @@ public class PropertiesProcessor {
         if ("array".equals(entry.getValue().getType())) {
 
             Items items = entry.getValue().getItems();
+            if(Objects.isNull(items)){
+                return Stream.empty();
+            }
 
             if(Objects.nonNull(items.getProperties()) && !items.getProperties().isEmpty()){
                 Map<String, String> type = entry.getValue().getIndexingType();

@@ -42,6 +42,7 @@ public class StorageIndexerPayloadMapper {
 		Map<String, Object> dataMap = new HashMap<>();
 
 		if (storageSchema.isDataSchemaMissing()) {
+			this.log.warning(String.format("record-id: %s | schema mismatching: %s ", recordId, storageSchema.getKind()));
 			return dataMap;
 		}
 
@@ -65,8 +66,8 @@ public class StorageIndexerPayloadMapper {
 
 			if (Objects.isNull(elasticType)) {
 				this.jobStatus
-					.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, "e.getMessage()",
-						String.format("record-id: %s | %s", recordId, "e.getMessage()"));
+					.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST,
+						String.format("record-id: %s | %s for entry %s", recordId, "Not resolvable elastic type", name));
 				continue;
 			}
 
@@ -128,14 +129,14 @@ public class StorageIndexerPayloadMapper {
 					this.attributeParsingService.tryParseGeojson(recordId, name, value, dataMap);
 					break;
 				case NESTED:
-					// don't do anything , each nested property will be mapped separately
+					// don't do anything , each nested property will be parsed separately
 					break;
 				case FLATTENED:
-					// flattened type inner properties won't be mapped as they types not present in schema
+					// flattened type inner properties will be added "as is" without parsing as they types not present in schema
 					this.attributeParsingService.tryParseFlattened(recordId, name, value, dataMap);
 					break;
 				case OBJECT:
-					// object type inner properties won't be mapped as they types not present in schema
+					// object type inner properties will be added "as is" without parsing as they types not present in schema
 					this.attributeParsingService.tryParseObject(recordId, name, value, dataMap);
 					break;
 				case UNDEFINED:
