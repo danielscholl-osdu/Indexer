@@ -151,26 +151,23 @@ public class RecordSteps extends TestsBase {
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery (
             int expectedNumber, String index, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude, String field) throws Throwable {
         index = generateActualName(index, timeStamp);
-        String actualName = generateActualName(index, timeStamp);
-        long numOfIndexedDocuments = createIndex(actualName);
-        long actualNumberOfRecords = elasticUtils.fetchRecordsByBoundingBoxQuery(actualName, field, topLatitude, topLongitude, bottomLatitude, bottomLongitude);
+        long numOfIndexedDocuments = createIndex(index);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsByBoundingBoxQuery(index, field, topLatitude, topLongitude, bottomLatitude, bottomLongitude);
         assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(
         int expectedNumber, String index, String path, String firstNestedField, String firstNestedValue, String secondNestedField, String secondNestedValue)
         throws Exception {
-        String actualName = generateActualName(index, timeStamp);
-        long numOfIndexedDocuments = createIndex(actualName);
-        long actualNumberOfRecords = elasticUtils.fetchRecordsByNestedQuery(actualName, path, firstNestedField, firstNestedValue, secondNestedField, secondNestedValue);
+        long numOfIndexedDocuments = createIndex(index);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsByNestedQuery(index, path, firstNestedField, firstNestedValue, secondNestedField, secondNestedValue);
         assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
     public void i_should_be_able_search_documents_for_the_by_flattened_inner_properties(int expectedCount, String index, String flattenedField,
         String flattenedFieldValue) throws IOException, InterruptedException {
-        String actualName = generateActualName(index, timeStamp);
-        long numOfIndexedDocuments = createIndex(actualName);
-        long actualNumberOfRecords = elasticUtils.fetchRecordsWithFlattenedFieldsQuery(actualName, flattenedField, flattenedFieldValue);
+        long numOfIndexedDocuments = createIndex(index);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsWithFlattenedFieldsQuery(index, flattenedField, flattenedFieldValue);
         assertEquals(expectedCount, actualNumberOfRecords);
     }
 

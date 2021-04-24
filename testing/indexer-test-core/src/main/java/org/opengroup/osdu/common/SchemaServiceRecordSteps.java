@@ -1,29 +1,24 @@
 package org.opengroup.osdu.common;
 
 import cucumber.api.DataTable;
-import java.util.List;
-import java.util.Map;
-import lombok.extern.java.Log;
 import org.opengroup.osdu.models.Setup;
 import org.opengroup.osdu.models.schema.PersistentSchemaTestIndex;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.HTTPClient;
-import org.opengroup.osdu.util.IndexerClientUtil;
 
-@Log
+import java.util.List;
+import java.util.Map;
+
 public class SchemaServiceRecordSteps extends RecordSteps {
-
-    private IndexerClientUtil indexerClient;
 
     public SchemaServiceRecordSteps(HTTPClient httpClient, ElasticUtils elasticUtils) {
         super(httpClient, elasticUtils);
-        indexerClient = new IndexerClientUtil(this.httpClient);
     }
 
     public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
         List<Setup> inputList = dataTable.asList(Setup.class);
         inputList.forEach(this::createSchema);
-        inputList.forEach(s -> deleteIndex(generateActualNameWithoutTs(s.getKind())));
+        inputList.forEach(s -> deleteIndex(generateActualNameWithoutTs(s.getIndex())));
         super.addShutDownHook();
     }
 
@@ -38,8 +33,8 @@ public class SchemaServiceRecordSteps extends RecordSteps {
         super.getInputIndexMap().put(testIndex.getKind(), testIndex);
     }
 
-    private void deleteIndex(String kind) {
-        indexerClient.deleteIndex(kind);
+    private void deleteIndex(String index) {
+        this.elasticUtils.deleteIndex(index);
     }
 
     @Override
