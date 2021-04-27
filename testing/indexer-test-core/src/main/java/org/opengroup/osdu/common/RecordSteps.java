@@ -1,5 +1,6 @@
 package org.opengroup.osdu.common;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -11,6 +12,7 @@ import org.elasticsearch.cluster.metadata.MappingMetadata;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.models.Setup;
 import org.opengroup.osdu.models.TestIndex;
+import org.opengroup.osdu.models.record.RecordData;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.FileHandler;
 import org.opengroup.osdu.util.HTTPClient;
@@ -32,6 +34,7 @@ import static org.opengroup.osdu.util.Config.getStorageBaseURL;
 @Log
 public class RecordSteps extends TestsBase {
     private Map<String, TestIndex> inputIndexMap = new HashMap<>();
+    private ObjectMapper mapper = new ObjectMapper();
     private boolean shutDownHookAdded = false;
 
     private String timeStamp = String.valueOf(System.currentTimeMillis());
@@ -158,17 +161,31 @@ public class RecordSteps extends TestsBase {
 
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(
         int expectedNumber, String index, String path, String firstNestedField, String firstNestedValue, String secondNestedField, String secondNestedValue)
-        throws Exception {
+        throws Throwable {
         long numOfIndexedDocuments = createIndex(index);
         long actualNumberOfRecords = elasticUtils.fetchRecordsByNestedQuery(index, path, firstNestedField, firstNestedValue, secondNestedField, secondNestedValue);
         assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
     public void i_should_be_able_search_documents_for_the_by_flattened_inner_properties(int expectedCount, String index, String flattenedField,
-        String flattenedFieldValue) throws IOException, InterruptedException {
+        String flattenedFieldValue) throws Throwable {
         long numOfIndexedDocuments = createIndex(index);
         long actualNumberOfRecords = elasticUtils.fetchRecordsWithFlattenedFieldsQuery(index, flattenedField, flattenedFieldValue);
         assertEquals(expectedCount, actualNumberOfRecords);
+    }
+
+    public void i_should_get_object_in_search_response_without_hints_in_schema(String objectField, String index, String recordFile, String acl, String kind)
+        throws Throwable {
+        long numOfIndexedDocuments = createIndex(index);
+        String expectedRecord = FileHandler.readFile(String.format("%s.%s", recordFile, "json"));
+
+        RecordData[] fileRecordData = mapper.readValue(expectedRecord, RecordData[].class);
+        RecordData expectedRecordData = fileRecordData[0];
+
+        String elasticRecordData = elasticUtils.fetchDataFromObjectsArrayRecords(index);
+        RecordData actualRecordData = mapper.readValue(elasticRecordData, RecordData.class);
+
+        assertEquals(expectedRecordData.getData().get(objectField),actualRecordData.getData().get(objectField));
     }
 
     private long createIndex(String index) throws InterruptedException, IOException {

@@ -48,7 +48,8 @@ Feature: Indexing of the documents
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should be able search <number> documents for the <index> by nested <path> and properties (<first_nested_field>, <first_nested_value>) and  (<second_nested_field>, <second_nested_value>)
     Then I should be able search <number> documents for the <index> by flattened inner properties (<flattened_inner_field>, <flattened_inner_value>)
+    Then I should get <object_inner_field> in response, without hints in schema for the <index> that present in the <recordFile> with <acl> for a given <kind>
 
     Examples:
-      | kind                                              | recordFile                       | number | index                                             | acl                            | path              | first_nested_field           | first_nested_value | second_nested_field          | second_nested_value | flattened_inner_field           | flattened_inner_value |
-      | "tenant1:wks:ArraysOfObjectsTestCollection:4.0.0" | "r3-index_record_arrayofobjects" | 1      | "tenant1-wks-arraysofobjectstestcollection-4.0.0" | "data.default.viewers@tenant1" | "data.NestedTest" | "data.NestedTest.NumberTest" | 12345              | "data.NestedTest.StringTest" | "test string"       | "data.FlattenedTest.StringTest" | "test string"         |
+      | kind                                              | recordFile                       | number | index                                             | acl                            | path              | first_nested_field           | first_nested_value | second_nested_field          | second_nested_value | flattened_inner_field           | flattened_inner_value | object_inner_field |
+      | "tenant1:wks:ArraysOfObjectsTestCollection:4.0.0" | "r3-index_record_arrayofobjects" | 1      | "tenant1-wks-arraysofobjectstestcollection-4.0.0" | "data.default.viewers@tenant1" | "data.NestedTest" | "data.NestedTest.NumberTest" | 12345              | "data.NestedTest.StringTest" | "test string"       | "data.FlattenedTest.StringTest" | "test string"         | "ObjectTest"       |

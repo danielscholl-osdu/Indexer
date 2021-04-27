@@ -128,9 +128,6 @@ public class StorageIndexerPayloadMapper {
 				case GEO_SHAPE:
 					this.attributeParsingService.tryParseGeojson(recordId, name, value, dataMap);
 					break;
-				case NESTED:
-					// don't do anything , each nested property will be parsed separately
-					break;
 				case FLATTENED:
 					// flattened type inner properties will be added "as is" without parsing as they types not present in schema
 					this.attributeParsingService.tryParseFlattened(recordId, name, value, dataMap);

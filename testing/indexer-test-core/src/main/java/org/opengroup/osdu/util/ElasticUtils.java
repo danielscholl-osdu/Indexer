@@ -52,6 +52,7 @@ import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.client.indices.GetMappingsResponse;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
+import org.elasticsearch.search.SearchHits;
 import org.locationtech.jts.geom.Coordinate;
 import org.elasticsearch.common.geo.builders.EnvelopeBuilder;
 import org.elasticsearch.common.settings.Settings;
@@ -306,6 +307,24 @@ public class ElasticUtils {
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
+        }
+    }
+
+    public String fetchDataFromObjectsArrayRecords(String index) throws IOException {
+        try {
+            try (RestHighLevelClient client = this.createClient(username, password, host)) {
+                SearchRequest request = new SearchRequest(index);
+                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
+
+                SearchHits searchHits = searchResponse.getHits();
+                if (searchHits.getHits().length != 0) {
+                    return searchHits.getHits()[0].getSourceAsString();
+                }
+                return null;
+            }
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return null;
         }
     }
 

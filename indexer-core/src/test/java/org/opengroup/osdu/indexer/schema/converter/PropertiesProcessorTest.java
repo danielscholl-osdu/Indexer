@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.schema.converter;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -22,6 +23,7 @@ import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropert
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
+import org.opengroup.osdu.indexer.schema.converter.tags.Items;
 import org.opengroup.osdu.indexer.schema.converter.tags.TypeProperty;
 
 import java.util.LinkedHashMap;
@@ -100,5 +102,110 @@ public class PropertiesProcessorTest {
         String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
                 .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
         assertEquals("{path=" + PATH + ", kind=int}", res);
+    }
+
+    @Test
+    public void should_return_processed_nested_array_items(){
+        JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
+
+        Map<String, TypeProperty> itemsProperties = new LinkedHashMap<>();
+        TypeProperty intProperty = new TypeProperty();
+        intProperty.setType("integer");
+        itemsProperties.put(PATH, intProperty);
+
+        Items items = new Items();
+        items.setProperties(itemsProperties);
+
+        TypeProperty arrayProperty = new TypeProperty();
+        arrayProperty.setIndexingType(ImmutableMap.of("type","nested"));
+        arrayProperty.setType("array");
+        arrayProperty.setItems(items);
+
+        Map<String, TypeProperty> allOfItemProperties = new LinkedHashMap<>();
+        allOfItemProperties.put(PATH,arrayProperty);
+
+        AllOfItem allOfItem = new AllOfItem();
+        allOfItem.setProperties(allOfItemProperties);
+
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+            .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
+        assertEquals("{path="+ PATH + ", kind=nested, properties=[{path="+ PATH + ", kind=int}]}",res);
+    }
+
+    @Test
+    public void should_return_flattened_array_without_processing(){
+        JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
+
+        Map<String, TypeProperty> itemsProperties = new LinkedHashMap<>();
+        TypeProperty intProperty = new TypeProperty();
+        intProperty.setType("integer");
+        itemsProperties.put(PATH, intProperty);
+
+        Items items = new Items();
+        items.setProperties(itemsProperties);
+
+        TypeProperty arrayProperty = new TypeProperty();
+        arrayProperty.setIndexingType(ImmutableMap.of("type","flattened"));
+        arrayProperty.setType("array");
+        arrayProperty.setItems(items);
+
+        Map<String, TypeProperty> allOfItemProperties = new LinkedHashMap<>();
+        allOfItemProperties.put(PATH,arrayProperty);
+
+        AllOfItem allOfItem = new AllOfItem();
+        allOfItem.setProperties(allOfItemProperties);
+
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+            .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
+        assertEquals("{path="+ PATH + ", kind=flattened}",res);
+    }
+
+    @Test
+    public void should_return_object_array_without_hints_in_schema_without_processing(){
+        JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
+
+        Map<String, TypeProperty> itemsProperties = new LinkedHashMap<>();
+        TypeProperty intProperty = new TypeProperty();
+        intProperty.setType("integer");
+        itemsProperties.put(PATH, intProperty);
+
+        Items items = new Items();
+        items.setProperties(itemsProperties);
+
+        TypeProperty arrayProperty = new TypeProperty();
+        arrayProperty.setType("array");
+        arrayProperty.setItems(items);
+
+        Map<String, TypeProperty> allOfItemProperties = new LinkedHashMap<>();
+        allOfItemProperties.put(PATH,arrayProperty);
+
+        AllOfItem allOfItem = new AllOfItem();
+        allOfItem.setProperties(allOfItemProperties);
+
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+            .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
+        assertEquals("{path="+ PATH + ", kind=[]object}",res);
+    }
+
+    @Test
+    public void should_process_not_object_array_type(){
+        JaxRsDpsLog log = Mockito.mock(JaxRsDpsLog.class);
+
+        Items items = new Items();
+        items.setType("integer");
+
+        TypeProperty arrayProperty = new TypeProperty();
+        arrayProperty.setType("array");
+        arrayProperty.setItems(items);
+
+        Map<String, TypeProperty> allOfItemProperties = new LinkedHashMap<>();
+        allOfItemProperties.put(PATH,arrayProperty);
+
+        AllOfItem allOfItem = new AllOfItem();
+        allOfItem.setProperties(allOfItemProperties);
+
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+            .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
+        assertEquals("{path="+ PATH + ", kind=[]int}",res);
     }
 }

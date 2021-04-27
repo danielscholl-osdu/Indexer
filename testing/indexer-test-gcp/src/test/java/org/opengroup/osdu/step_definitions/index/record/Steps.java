@@ -6,7 +6,6 @@ import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import java.io.IOException;
 import lombok.extern.java.Log;
 import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 import org.opengroup.osdu.util.ElasticUtils;
@@ -66,7 +65,7 @@ public class Steps extends SchemaServiceRecordSteps {
     @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by nested \"([^\"]*)\" and properties \\(\"([^\"]*)\", (\\d+)\\) and  \\(\"([^\"]*)\", \"([^\"]*)\"\\)$")
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(
         int expectedCount, String index, String path, String firstNestedProperty, String firstNestedValue, String secondNestedProperty,
-        String secondNestedValue) throws Exception {
+        String secondNestedValue) throws Throwable {
         String actualName = generateActualName(index, null);
         super.i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(expectedCount, actualName, path, firstNestedProperty, firstNestedValue,
             secondNestedProperty, secondNestedValue);
@@ -74,10 +73,16 @@ public class Steps extends SchemaServiceRecordSteps {
 
     @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by flattened inner properties \\(\"([^\"]*)\", \"([^\"]*)\"\\)$")
     public void i_should_be_able_search_documents_for_the_by_flattened_inner_properties(int expectedCount, String index, String flattenedField,
-        String flattenedFieldValue)
-        throws IOException, InterruptedException {
+        String flattenedFieldValue) throws Throwable {
         String actualName = generateActualName(index, null);
         super.i_should_be_able_search_documents_for_the_by_flattened_inner_properties(expectedCount, actualName, flattenedField, flattenedFieldValue);
 
+    }
+
+    @Then("^I should get \"([^\"]*)\" in response, without hints in schema for the \"([^\"]*)\" that present in the \"([^\"]*)\" with \"([^\"]*)\" for a given \"([^\"]*)\"$")
+    public void i_should_get_object_in_search_response_without_hints_in_schema(String objectInnerField, String index, String recordFile, String acl, String kind)
+        throws Throwable {
+        String actualName = generateActualName(index, null);
+        super.i_should_get_object_in_search_response_without_hints_in_schema(objectInnerField ,actualName, recordFile, acl, kind);
     }
 }
