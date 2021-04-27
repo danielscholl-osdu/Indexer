@@ -1,44 +1,54 @@
+//  Copyright © Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 package org.opengroup.osdu.indexer.azure.service;
 
 import io.github.resilience4j.retry.RetryConfig;
-import org.junit.Before;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 
-import java.net.URISyntaxException;
 import java.util.function.Predicate;
-
-import static org.assertj.core.api.Fail.fail;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RetryPolicyTest {
 
-    private static final String json1="{\n" +
+    private static final String JSON1 = "{\n" +
             "    \"records\": [\n" +
             "        {\n" +
             "            \"data\": {\n" +
             "                \"Spuddate\": \"atspud\",\n" +
             "                \"UWI\": \"atuwi\",\n" +
-            "                \"dlLatLongWGS84latitude\": \"latitude\",\n" +
-            "                \"dlLatLongWGS84longitude\": \"longitude\"\n" +
+            "                \"latitude\": \"latitude\",\n" +
+            "                \"longitude\": \"longitude\"\n" +
             "            },\n" +
             "            \"meta\": null,\n" +
-            "            \"id\": \"opendes:wellbore:a9e2fa21318a49d681894d6251a0dc9c\",\n" +
-            "            \"version\": 1617781485040156,\n" +
-            "            \"kind\": \"opendes:at:wellbore:1.0.0\",\n" +
+            "            \"id\": \"demo\",\n" +
+            "            \"version\": demo,\n" +
+            "            \"kind\": \"demo\",\n" +
             "            \"acl\": {\n" +
             "                \"viewers\": [\n" +
-            "                    \"data.test1@opendes.contoso.com\"\n" +
+            "                    \"demo\"\n" +
             "                ],\n" +
             "                \"owners\": [\n" +
-            "                    \"data.test1@opendes.contoso.com\"\n" +
+            "                    \"demo\"\n" +
             "                ]\n" +
             "            },\n" +
             "            \"legal\": {\n" +
@@ -50,35 +60,35 @@ public class RetryPolicyTest {
             "                ],\n" +
             "                \"status\": \"compliant\"\n" +
             "            },\n" +
-            "            \"createUser\": \"a38fdd7b-f209-4552-96cd-126ec2494605\",\n" +
-            "            \"createTime\": \"2021-04-07T07:44:57.748Z\"\n" +
+            "            \"createUser\": \"demo\",\n" +
+            "            \"createTime\": \"demo\"\n" +
             "        }\n" +
             "    ],\n" +
             "    \"notFound\": [\n" +
-            "        \"opendes:doc:foo-bar\"\n" +
+            "        \"demo\"\n" +
             "    ],\n" +
             "    \"conversionStatuses\": []\n" +
             "}";
 
-    private static final String json2 ="{\n" +
+    private static final String JSON2 = "{\n" +
             "    \"records\": [\n" +
             "        {\n" +
             "            \"data\": {\n" +
             "                \"Spuddate\": \"atspud\",\n" +
             "                \"UWI\": \"atuwi\",\n" +
-            "                \"dlLatLongWGS84latitude\": \"latitude\",\n" +
-            "                \"dlLatLongWGS84longitude\": \"longitude\"\n" +
+            "                \"latitude\": \"latitude\",\n" +
+            "                \"longitude\": \"longitude\"\n" +
             "            },\n" +
             "            \"meta\": null,\n" +
-            "            \"id\": \"opendes:wellbore:a9e2fa21318a49d681894d6251a0dc9c\",\n" +
-            "            \"version\": 1617781485040156,\n" +
-            "            \"kind\": \"opendes:at:wellbore:1.0.0\",\n" +
+            "            \"id\": \"demo\",\n" +
+            "            \"version\": demo,\n" +
+            "            \"kind\": \"demo\",\n" +
             "            \"acl\": {\n" +
             "                \"viewers\": [\n" +
-            "                    \"data.test1@opendes.contoso.com\"\n" +
+            "                    \"demo\"\n" +
             "                ],\n" +
             "                \"owners\": [\n" +
-            "                    \"data.test1@opendes.contoso.com\"\n" +
+            "                    \"demo\"\n" +
             "                ]\n" +
             "            },\n" +
             "            \"legal\": {\n" +
@@ -90,104 +100,66 @@ public class RetryPolicyTest {
             "                ],\n" +
             "                \"status\": \"compliant\"\n" +
             "            },\n" +
-            "            \"createUser\": \"a38fdd7b-f209-4552-96cd-126ec2494605\",\n" +
-            "            \"createTime\": \"2021-04-07T07:44:57.748Z\"\n" +
+            "            \"createUser\": \"demo\",\n" +
+            "            \"createTime\": \"demo\"\n" +
             "        }\n" +
             "    ],\n" +
             "    \"notFound\": [],\n" +
             "    \"conversionStatuses\": []\n" +
             "}";
-    private static final String json3="{\n" +
+
+    private static final String JSON3 = "{\n" +
             " \"records\" :[],\n" +
             " \"conversionStatuses\":[]\n" +
             "}";
 
+    @Mock
+    private UrlFetchServiceImpl urlFetchService;
+    @Mock
+    private FetchServiceHttpRequest httpRequest;
     @InjectMocks
     private HttpResponse response;
-
-    private UrlFetchServiceImpl urlFetchService;
-
-    private FetchServiceHttpRequest httpRequest;
-
+    @InjectMocks
     private RetryPolicy retryPolicy;
 
-    @Before
-    public void setUp(){
-        urlFetchService= mock(UrlFetchServiceImpl.class);
-        retryPolicy = new RetryPolicy(urlFetchService);
-        httpRequest = mock(FetchServiceHttpRequest.class);
-    }
-
     @Test
-    public void number_of_Attempts_must_be_3()
-    {
+    public void number_of_Attempts_must_be_3() {
         RetryConfig config = this.retryPolicy.retryConfig();
         int attempts = config.getMaxAttempts();
-        int max_attempts =3;
-        assert (max_attempts==attempts);
+        int max_attempts = 3;
+
+        assert (max_attempts == attempts);
     }
 
-
     @Test
-    public void retry_should_be_true_for_json1()
-    {
+    public void retry_should_be_true_for_json1() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
-        response.setBody(json1);
+        response.setBody(JSON1);
+        assert retry != null;
         boolean value = retry.test(response);
-        assert(value==true);
 
+        assert (value == true);
     }
 
     @Test
-    public void retry_should_be_false_for_json2()
-    {
+    public void retry_should_be_false_for_json2() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
-        response.setBody(json2);
+        response.setBody(JSON2);
         boolean value = retry.test(response);
-        assert(value==false);
+
+        assert (value == false);
     }
 
     @Test
-    public void retry_should_be_false_for_json3()
-    {
+    public void retry_should_be_false_for_json3() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
-        response.setBody(json3);
+        response.setBody(JSON3);
         boolean value = retry.test(response);
-        assert (value==false);
-    }
 
-    @Test
-    public void urlFetchService_should_be_retried_for_json1() throws URISyntaxException {
-        response.setBody(json1);
-        when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
-        retryPolicy.retryFunction(httpRequest);
-        verify(urlFetchService,times(3)).sendRequest(httpRequest);
-    }
-
-    @Test
-    public void urlFetchService_shouldNot_be_retried_for_json2() throws URISyntaxException {
-        response.setBody(json2);
-        when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
-        retryPolicy.retryFunction(httpRequest);
-        verify(urlFetchService,atMost(1)).sendRequest(httpRequest);
-    }
-
-    @Test
-    public void urlFetchService_shouldNot_be_retried_for_json3() throws URISyntaxException {
-        response.setBody(json3);
-        when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
-        retryPolicy.retryFunction(httpRequest);
-        verify(urlFetchService,atMost(1)).sendRequest(httpRequest);
-    }
-
-    @Test
-    public void retryFunction_shouldReturn_null_ifURISyntaxException() throws URISyntaxException
-    {
-        when(urlFetchService.sendRequest(httpRequest)).thenThrow(new URISyntaxException("demo","demo"));
-        assert(retryPolicy.retryFunction(httpRequest)==null);
+        assert (value == false);
     }
 
 }

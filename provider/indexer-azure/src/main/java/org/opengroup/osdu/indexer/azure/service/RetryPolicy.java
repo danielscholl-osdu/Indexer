@@ -1,12 +1,33 @@
+//  Copyright © Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 package org.opengroup.osdu.indexer.azure.service;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
+import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -15,80 +36,47 @@ import java.util.function.Supplier;
 import static io.github.resilience4j.retry.RetryConfig.custom;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
+/**
+ * This class handles retry configuration logic for calls made to <prefix>/storage/v2/query/records:batch
+ * to resolve intermittent CosmosDb Not found issue
+ */
+@Log
+@Service
 public class RetryPolicy {
 
-    private final int attempts =3;
-    private final int waitDurationInMillis = 1000;
-    private final String notFound ="notFound";
+    private final int ATTEMPTS = 3;
+    private final int WAIT_DURATION_IN_MILLIS = 1000;
+    private final String RECORD_NOT_FOUND = "notFound";
 
-    private UrlFetchServiceImpl urlFetchService;
-
-    public RetryPolicy()
-    {
-        urlFetchService = new UrlFetchServiceImpl();
-    }
-
-    public RetryPolicy(UrlFetchServiceImpl urlFetchService)
-    {
-        this.urlFetchService = urlFetchService;
-    }
-
-    public RetryConfig retryConfig()
-    {
-        RetryConfig config = RetryConfig.<HttpResponse>custom()
-                .maxAttempts(attempts)
-                .waitDuration(Duration.ofMillis(waitDurationInMillis))
-                .retryOnResult(response -> retryOnlyOn(response))
+    /**
+     * @return RetryConfig with 3 attempts and 1 sec wait time
+     */
+    public RetryConfig retryConfig() {
+        return RetryConfig.<HttpResponse>custom()
+                .maxAttempts(ATTEMPTS)
+                .waitDuration(Duration.ofMillis(WAIT_DURATION_IN_MILLIS))
+                .retryOnResult(response -> isRetryRequired(response))
                 .build();
-        return config;
     }
 
-    private boolean retryOnlyOn(HttpResponse response)
-    {
-        if(response==null || response.getBody().isEmpty())
-        {
+    /**
+     * Unfound records get listed under a JsonArray "notFound" in the http json response
+     * @param response
+     * @return if there are elements in "notFound" returns true, else false
+     */
+    private boolean isRetryRequired(HttpResponse response) {
+        if (response == null || response.getBody().isEmpty()) {
             return false;
         }
         JsonObject jsonObject = new JsonParser().parse(response.getBody()).getAsJsonObject();
-        JsonElement notFoundElement = (JsonArray) jsonObject.get(notFound);
-        if(notFoundElement==null)
-        {
+        JsonElement notFoundElement = (JsonArray) jsonObject.get(RECORD_NOT_FOUND);
+        if (notFoundElement == null ||
+                !notFoundElement.isJsonArray() ||
+                notFoundElement.getAsJsonArray().size() == 0 ||
+                notFoundElement.getAsJsonArray().isJsonNull()) {
             return false;
         }
-        JsonArray notFoundArray  = null;
-        if(notFoundElement.isJsonArray())
-        {
-            notFoundArray = notFoundElement.getAsJsonArray();
-        }
-        else
-        {
-            return false;
-        }
-        if (notFoundArray.size() == 0 || notFoundArray.isJsonNull()) {
-            return false;
-        }
+        log.info("Retry is set true for 3 attempts");
         return true;
     }
-
-    public HttpResponse retryFunction(FetchServiceHttpRequest request)
-    {
-        RetryConfig config= this.retryConfig();
-        RetryRegistry registry = RetryRegistry.of(config);
-        Retry retry = registry.retry("retryPolicy", config);
-
-        Supplier<HttpResponse> urlFetchServiceSupplier = ()-> {
-            try {
-                return this.urlFetchService.sendRequest(request);
-            } catch (URISyntaxException e) {
-                return null;
-            }
-        };
-
-        if(urlFetchServiceSupplier!= null) {
-            Supplier<HttpResponse> decoratedUrlFetchServiceSupplier = Retry.decorateSupplier(retry, urlFetchServiceSupplier);
-            return decoratedUrlFetchServiceSupplier.get();
-        }
-        return null;
-    }
-
 }
