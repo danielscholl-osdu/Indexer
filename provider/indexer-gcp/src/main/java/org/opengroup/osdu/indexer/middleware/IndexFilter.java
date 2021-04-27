@@ -75,7 +75,7 @@ public class IndexFilter implements Filter {
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
-
+        
         HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
         Map<String, List<Object>> standardHeaders = ResponseHeaders.STANDARD_RESPONSE_HEADERS;
         for (Map.Entry<String, List<Object>> header : standardHeaders.entrySet()) {
