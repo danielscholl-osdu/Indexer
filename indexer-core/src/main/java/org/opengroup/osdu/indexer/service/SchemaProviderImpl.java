@@ -19,13 +19,11 @@ import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
-import org.opengroup.osdu.indexer.service.SchemaService;
-import org.opengroup.osdu.indexer.service.StorageService;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -64,8 +62,11 @@ public class SchemaProviderImpl implements SchemaService {
 
         try {
             schemaServiceSchema = getFromSchemaService(kind);
+        } catch (SchemaProcessingException ex) {
+            log.error(ex.getMessage(), ex);
+            return null;
         } catch (RuntimeException ex) {
-            log.error(String.format("Failed to get the schema from the Schema service, kind: %s | message: %s", kind, ex.getMessage(), ex));
+            log.error(String.format("Failed to get the schema from the Schema service, kind: %s | message: %s", kind, ex.getMessage()), ex);
             return null;
         }
 

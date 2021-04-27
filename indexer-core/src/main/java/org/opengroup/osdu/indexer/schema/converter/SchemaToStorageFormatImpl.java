@@ -84,42 +84,41 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), schemaConverterConfig);
 
         final List<Map<String, Object>> storageSchemaItems = new ArrayList<>();
-        if (schemaServiceSchema.getProperties() != null) {
-            PropertiesData schemaData = schemaServiceSchema.getProperties().getData();
-            if (!Objects.isNull(schemaData)) {
-
-                if (schemaData.getAllOf() != null) {
-                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAllOf().stream()
-                            .flatMap(propertiesProcessor::processItem)
-                            .collect(Collectors.toList()));
-                }
-
-                if (schemaData.getAnyOf() != null) {
-                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAnyOf().stream()
-                            .flatMap(propertiesProcessor::processItem)
-                            .collect(Collectors.toList()));
-                }
-
-                if (schemaData.getOneOf() != null) {
-                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getOneOf().stream()
-                            .flatMap(propertiesProcessor::processItem)
-                            .collect(Collectors.toList()));
-                }
-
-                if (schemaData.getRef() != null) {
-                    storageSchemaItems.addAll(propertiesProcessor.processRef(schemaData.getRef())
-                            .collect(Collectors.toList()));
-                }
-
-                if (schemaData.getProperties() != null) {
-                    storageSchemaItems.addAll(propertiesProcessor.processProperties(schemaData.getProperties())
-                            .collect(Collectors.toList()));
-                }
-            } else {
-                throw new SchemaProcessingException(String.format("Schema doesn't have properties section, kind: %s", kind));
-            }
-        } else {
+        if (schemaServiceSchema.getProperties() == null) {
             throw new SchemaProcessingException(String.format("Schema doesn't have data section, kind: %s", kind));
+        }
+
+        PropertiesData schemaData = schemaServiceSchema.getProperties().getData();
+        if (Objects.isNull(schemaData)) {
+            throw new SchemaProcessingException(String.format("Schema doesn't have properties section, kind: %s", kind));
+        }
+
+        if (schemaData.getAllOf() != null) {
+            storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAllOf().stream()
+                    .flatMap(propertiesProcessor::processItem)
+                    .collect(Collectors.toList()));
+        }
+
+        if (schemaData.getAnyOf() != null) {
+            storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAnyOf().stream()
+                    .flatMap(propertiesProcessor::processItem)
+                    .collect(Collectors.toList()));
+        }
+
+        if (schemaData.getOneOf() != null) {
+            storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getOneOf().stream()
+                    .flatMap(propertiesProcessor::processItem)
+                    .collect(Collectors.toList()));
+        }
+
+        if (schemaData.getRef() != null) {
+            storageSchemaItems.addAll(propertiesProcessor.processRef(schemaData.getRef())
+                    .collect(Collectors.toList()));
+        }
+
+        if (schemaData.getProperties() != null) {
+            storageSchemaItems.addAll(propertiesProcessor.processProperties(schemaData.getProperties())
+                    .collect(Collectors.toList()));
         }
 
         if (!propertiesProcessor.getErrors().isEmpty()) {
