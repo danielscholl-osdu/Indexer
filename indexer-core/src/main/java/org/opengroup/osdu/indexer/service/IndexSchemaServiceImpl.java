@@ -29,9 +29,9 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
+import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
-import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
@@ -208,10 +208,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             if (schemaObj.getSchema() != null && schemaObj.getSchema().length > 0) {
                 for (SchemaItem schemaItem : schemaObj.getSchema()) {
                     String dataType = schemaItem.getKind();
-                    Object elasticDataType = TypeMapper.getIndexerType(dataType);
-                    if (elasticDataType == null) {
-                        elasticDataType = TypeMapper.getIndexerType(StorageType.STRING.getValue());
-                    }
+                    Object elasticDataType = TypeMapper.getIndexerType(dataType, ElasticType.TEXT.getValue());
                     if(schemaItem.getProperties() != null){
                         HashMap<String, Object> propertiesMap = normalizeInnerProperties(schemaItem);
                         elasticDataType = TypeMapper.getObjectsArrayMapping(dataType, propertiesMap);
@@ -247,10 +244,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         HashMap<String, Object> propertiesMap = new HashMap<>();
         for (SchemaItem propertiesItem : schemaItem.getProperties()) {
             String propertiesItemKind = propertiesItem.getKind();
-            String propertiesElasticType = TypeMapper.getIndexerType(propertiesItemKind);
-            if (propertiesElasticType == null) {
-                propertiesElasticType = TypeMapper.getIndexerType(StorageType.STRING.getValue());
-            }
+            String propertiesElasticType = TypeMapper.getIndexerType(propertiesItemKind,ElasticType.TEXT.getValue());
             propertiesMap.put(propertiesItem.getPath(),propertiesElasticType);
         }
         return propertiesMap;

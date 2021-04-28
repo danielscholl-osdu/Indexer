@@ -39,43 +39,43 @@ public class StorageIndexerPayloadMapper {
 	public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
 		String recordId) {
 
-		Map<String, Object> dataMap = new HashMap<>();
+		Map<String, Object> dataCollectorMap = new HashMap<>();
 
 		if (storageSchema.isDataSchemaMissing()) {
 			this.log.warning(String.format("record-id: %s | schema mismatching: %s ", recordId, storageSchema.getKind()));
-			return dataMap;
+			return dataCollectorMap;
 		}
 
-		mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataMap);
+		mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
 
 		// add these once iterated over the list
 		storageSchema.getDataSchema().put(DATA_GEOJSON_TAG, ElasticType.GEO_SHAPE.getValue());
 		storageSchema.getDataSchema().remove(RECORD_GEOJSON_TAG);
 
-		return dataMap;
+		return dataCollectorMap;
 	}
 
 	private Map<String, Object> mapDataPayload(Map<String, Object> dataSchema, Map<String, Object> storageRecordData,
-		String recordId, Map<String, Object> dataMap) {
+		String recordId, Map<String, Object> dataCollectorMap) {
 
 		// get the key and get the corresponding object from the storageRecord object
 		for (Map.Entry<String, Object> entry : dataSchema.entrySet()) {
-			String name = entry.getKey();
-			Object value = getPropertyValue(recordId, storageRecordData, name);
-			ElasticType elasticType = defineElasticType(entry);
+			String schemaPropertyName = entry.getKey();
+			Object storageRecordValue = getPropertyValue(recordId, storageRecordData, schemaPropertyName);
+			ElasticType elasticType = defineElasticType(entry.getValue());
 
 			if (Objects.isNull(elasticType)) {
 				this.jobStatus
 					.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST,
-						String.format("record-id: %s | %s for entry %s", recordId, "Not resolvable elastic type", name));
+						String.format("record-id: %s | %s for entry %s", recordId, "Not resolvable elastic type", schemaPropertyName));
 				continue;
 			}
 
-			if (schemaConfig.getProcessedArraysTypes().contains(elasticType.getValue().toLowerCase())) {
-				processInnerProperties(recordId, dataMap, entry, name, (List<Map>) value);
+			if (schemaConfig.getProcessedArraysTypes().contains(elasticType.getValue().toLowerCase()) && Objects.nonNull(storageRecordValue)) {
+				processInnerProperties(recordId, dataCollectorMap, entry.getValue(), schemaPropertyName, (List<Map>) storageRecordValue);
 			}
 
-			if (value == null && !nullIndexedValueSupported(elasticType)) {
+			if (storageRecordValue == null && !nullIndexedValueSupported(elasticType)) {
 				continue;
 			}
 
@@ -84,57 +84,57 @@ public class StorageIndexerPayloadMapper {
 				case KEYWORD_ARRAY:
 				case TEXT:
 				case TEXT_ARRAY:
-					dataMap.put(name, value);
+					dataCollectorMap.put(schemaPropertyName, storageRecordValue);
 					break;
 				case INTEGER_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Integer.class, recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseValueArray(Integer.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case INTEGER:
-					this.attributeParsingService.tryParseInteger(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseInteger(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case LONG_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Long.class, recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseValueArray(Long.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case LONG:
-					this.attributeParsingService.tryParseLong(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseLong(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case FLOAT_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Float.class, recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseValueArray(Float.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case FLOAT:
-					this.attributeParsingService.tryParseFloat(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseFloat(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case DOUBLE_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Double.class, recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseValueArray(Double.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case DOUBLE:
-					this.attributeParsingService.tryParseDouble(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseDouble(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case BOOLEAN_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Boolean.class, recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseValueArray(Boolean.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case BOOLEAN:
-					this.attributeParsingService.tryParseBoolean(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseBoolean(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case DATE_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Date.class, recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseValueArray(Date.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case DATE:
-					this.attributeParsingService.tryParseDate(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseDate(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case GEO_POINT:
-					this.attributeParsingService.tryParseGeopoint(recordId, name, storageRecordData, dataMap);
+					this.attributeParsingService.tryParseGeopoint(recordId, schemaPropertyName, storageRecordData, dataCollectorMap);
 					break;
 				case GEO_SHAPE:
-					this.attributeParsingService.tryParseGeojson(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseGeojson(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case FLATTENED:
 					// flattened type inner properties will be added "as is" without parsing as they types not present in schema
-					this.attributeParsingService.tryParseFlattened(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseFlattened(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case OBJECT:
 					// object type inner properties will be added "as is" without parsing as they types not present in schema
-					this.attributeParsingService.tryParseObject(recordId, name, value, dataMap);
+					this.attributeParsingService.tryParseObject(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case UNDEFINED:
 					// don't do anything for now
@@ -142,24 +142,24 @@ public class StorageIndexerPayloadMapper {
 			}
 		}
 
-		return dataMap;
+		return dataCollectorMap;
 	}
 
-	private void processInnerProperties(String recordId, Map<String, Object> dataMap, Entry<String, Object> entry,
-		String name, List<Map> value) {
-		Map map = (Map) entry.getValue();
-		Map innerProperties = (Map) map.get(Constants.PROPERTIES);
-		ArrayList<Map> maps = new ArrayList<>();
-		value.forEach(recordData -> maps.add(mapDataPayload(innerProperties, recordData, recordId, new HashMap<>())));
-		dataMap.put(name, maps);
+	private void processInnerProperties(String recordId, Map<String, Object> dataCollectorMap, Object schemaPropertyWithInnerProperties,
+		String name, List<Map> storageRecordValue) {
+		Map schemaPropertyMap = (Map) schemaPropertyWithInnerProperties;
+		Map innerProperties = (Map) schemaPropertyMap.get(Constants.PROPERTIES);
+		ArrayList<Map> innerPropertiesMappingCollector = new ArrayList<>();
+		storageRecordValue.forEach(recordData -> innerPropertiesMappingCollector.add(mapDataPayload(innerProperties, recordData, recordId, new HashMap<>())));
+		dataCollectorMap.put(name, innerPropertiesMappingCollector);
 	}
 
-	private ElasticType defineElasticType(Map.Entry<String, Object> entry) {
+	private ElasticType defineElasticType(Object entryValue) {
 		ElasticType elasticType = null;
-		if (entry.getValue() instanceof String) {
-			elasticType = ElasticType.forValue(entry.getValue().toString());
-		} else if (entry.getValue() instanceof Map) {
-			Map map = (Map) entry.getValue();
+		if (entryValue instanceof String) {
+			elasticType = ElasticType.forValue(entryValue.toString());
+		} else if (entryValue instanceof Map) {
+			Map map = (Map) entryValue;
 			elasticType = ElasticType.forValue(map.get(Constants.TYPE).toString());
 		}
 		return elasticType;

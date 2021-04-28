@@ -75,8 +75,8 @@ public class TypeMapper {
         storageToIndexerType.put(STORAGE_TYPE_FLATTENED,ElasticType.FLATTENED.getValue());
     }
 
-    public static String getIndexerType(String storageType) {
-        return storageToIndexerType.getOrDefault(storageType, null);
+    public static String getIndexerType(String storageType, String defaultType) {
+        return storageToIndexerType.getOrDefault(storageType, defaultType);
     }
 
     public static Object getIndexerType(RecordMetaAttribute attribute) {
