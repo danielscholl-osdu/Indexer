@@ -162,6 +162,7 @@ public class RecordSteps extends TestsBase {
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(
         int expectedNumber, String index, String path, String firstNestedField, String firstNestedValue, String secondNestedField, String secondNestedValue)
         throws Throwable {
+        index = generateActualName(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
         long actualNumberOfRecords = elasticUtils.fetchRecordsByNestedQuery(index, path, firstNestedField, firstNestedValue, secondNestedField, secondNestedValue);
         assertEquals(expectedNumber, actualNumberOfRecords);
@@ -169,6 +170,7 @@ public class RecordSteps extends TestsBase {
 
     public void i_should_be_able_search_documents_for_the_by_flattened_inner_properties(int expectedCount, String index, String flattenedField,
         String flattenedFieldValue) throws Throwable {
+        index = generateActualName(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
         long actualNumberOfRecords = elasticUtils.fetchRecordsWithFlattenedFieldsQuery(index, flattenedField, flattenedFieldValue);
         assertEquals(expectedCount, actualNumberOfRecords);
@@ -176,6 +178,7 @@ public class RecordSteps extends TestsBase {
 
     public void i_should_get_object_in_search_response_without_hints_in_schema(String objectField, String index, String recordFile, String acl, String kind)
         throws Throwable {
+        index = generateActualName(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
         String expectedRecord = FileHandler.readFile(String.format("%s.%s", recordFile, "json"));
 
