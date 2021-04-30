@@ -15,11 +15,11 @@
 package org.opengroup.osdu.indexer.schema.converter;
 
 import org.apache.http.HttpStatus;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 
 public class PropertiesProcessor {
 
-    private JaxRsDpsLog log;
     private SchemaConverterConfig schemaConverterConfig;
 
     private static final String DEF_PREFIX = "#/definitions/";
@@ -42,12 +41,13 @@ public class PropertiesProcessor {
     private final String pathPrefix;
     private final String pathPrefixWithDot;
 
-    public PropertiesProcessor(Definitions definitions, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {
-        this(definitions, null, log, schemaConverterConfig);
+    private final List<String> errors = new LinkedList<>();
+
+    public PropertiesProcessor(Definitions definitions, SchemaConverterConfig schemaConverterConfig) {
+        this(definitions, null, schemaConverterConfig);
     }
 
-    public PropertiesProcessor(Definitions definitions, String pathPrefix, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {
-        this.log = log;
+    public PropertiesProcessor(Definitions definitions, String pathPrefix, SchemaConverterConfig schemaConverterConfig) {
         this.definitions = definitions;
         this.pathPrefix = pathPrefix;
         this.pathPrefixWithDot = Objects.isNull(pathPrefix) || pathPrefix.isEmpty() ? "" : pathPrefix + ".";
@@ -55,55 +55,71 @@ public class PropertiesProcessor {
     }
 
     public Stream<Map<String, Object>> processItem(AllOfItem allOfItem) {
-        Preconditions.checkNotNull(allOfItem, "allOfItem cannot be null");
+        try {
+            Preconditions.checkNotNull(allOfItem, "allOfItem cannot be null");
 
-        Stream<Map<String, Object>> ofItems = processOfItems(allOfItem.getAllOf(), allOfItem.getAnyOf(), allOfItem.getOneOf());
+            Stream<Map<String, Object>> ofItems = processOfItems(allOfItem.getAllOf(), allOfItem.getAnyOf(), allOfItem.getOneOf());
 
-        if (Objects.nonNull(ofItems)) {
-            return ofItems;
+            if (Objects.nonNull(ofItems)) {
+                return ofItems;
+            }
+
+            String ref = allOfItem.getRef();
+
+            return Objects.isNull(ref) ?
+                    allOfItem.getProperties().entrySet().stream().flatMap(this::processPropertyEntry) : processRef(ref);
+        } catch (RuntimeException exception) {
+            errors.add(exception.getMessage());
+            return Stream.empty();
         }
-
-        String ref = allOfItem.getRef();
-
-        return Objects.isNull(ref) ?
-                allOfItem.getProperties().entrySet().stream().flatMap(this::processPropertyEntry) : processRef(ref);
     }
 
     public Stream<Map<String, Object>> processRef(String ref) {
         Preconditions.checkNotNull(ref, "reference cannot be null");
 
-        if (!ref.contains(DEF_PREFIX)) {
-            log.warning("Unknown definition:" + ref);
+        try {
+            if (!ref.contains(DEF_PREFIX)) {
+                throw new SchemaProcessingException("Unknown definition format, no prefix:" + ref);
+            }
+
+            String definitionSubRef = ref.substring(DEF_PREFIX.length());
+
+            String definitionIdentity = getDefinitionIdentity(definitionSubRef);
+
+            if (schemaConverterConfig.getSkippedDefinitions().contains(definitionIdentity)) {
+                return Stream.empty();
+            }
+
+            if (Objects.nonNull(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionIdentity))) {
+                return storageSchemaEntry(
+                        schemaConverterConfig.getSpecialDefinitionsMap().get(definitionIdentity) + getDefinitionColonVersion(definitionSubRef),
+                        pathPrefix);
+            }
+
+            Definition definition = definitions.getDefinition(definitionSubRef);
+            Optional.ofNullable(definition).orElseThrow(() ->
+                    new SchemaProcessingException("Failed to find definition:" + definitionSubRef));
+
+            Stream<Map<String, Object>> ofItems =
+                    processOfItems(definition.getAllOf(), definition.getAnyOf(), definition.getOneOf());
+
+            if (Objects.nonNull(ofItems)) {
+                return ofItems;
+            }
+
+            return processProperties(definition.getProperties());
+        } catch (RuntimeException exception) {
+            errors.add(exception.getMessage());
             return Stream.empty();
         }
+    }
 
-        String definitionSubRef = ref.substring(DEF_PREFIX.length());
+    public Stream<Map<String, Object>> processProperties(Map<String, TypeProperty> properties) {
+        return properties.entrySet().stream().flatMap(this::processPropertyEntry);
+    }
 
-        String definitionIdentity = getDefinitionIdentity(definitionSubRef);
-
-        if (schemaConverterConfig.getSkippedDefinitions().contains(definitionIdentity)) {
-            return Stream.empty();
-        }
-
-        if (Objects.nonNull(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionIdentity))) {
-            return storageSchemaEntry(
-                    schemaConverterConfig.getSpecialDefinitionsMap().get(definitionIdentity) + getDefinitionColonVersion(definitionSubRef),
-                    pathPrefix);
-        }
-
-        Definition definition = definitions.getDefinition(definitionSubRef);
-        Optional.ofNullable(definition).orElseThrow(() ->
-                new AppException(HttpStatus.SC_NOT_FOUND, "Failed to find definition:" + definitionSubRef,
-                        "Unknown definition:" + definitionSubRef));
-
-        Stream<Map<String, Object>> ofItems =
-                processOfItems(definition.getAllOf(), definition.getAnyOf(), definition.getOneOf());
-
-        if (Objects.nonNull(ofItems)) {
-            return ofItems;
-        }
-
-        return processProperties(definition.getProperties());
+    public List<String> getErrors() {
+        return errors;
     }
 
     private String getDefinitionIdentity(String definitionSubRef) {
@@ -148,46 +164,53 @@ public class PropertiesProcessor {
         return ofItems;
     }
 
-    public Stream<Map<String, Object>> processProperties(Map<String, TypeProperty> properties) {
-        return properties.entrySet().stream().flatMap(this::processPropertyEntry);
-    }
-
     private Stream<Map<String, Object>> processPropertyEntry(Map.Entry<String, TypeProperty> entry) {
         Preconditions.checkNotNull(entry, "entry cannot be null");
 
-        if ("object".equals(entry.getValue().getType())
-                && Objects.isNull(entry.getValue().getItems())
-                && Objects.isNull(entry.getValue().getRef())
-                && Objects.isNull(entry.getValue().getProperties())) {
-            return Stream.empty();
-        }
-
-        if ("array".equals(entry.getValue().getType())) {
-            if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType())) {
-                return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
+        try {
+            if ("object".equals(entry.getValue().getType())
+                    && Objects.isNull(entry.getValue().getItems())
+                    && Objects.isNull(entry.getValue().getRef())
+                    && Objects.isNull(entry.getValue().getProperties())) {
+                return Stream.empty();
             }
 
+            if ("array".equals(entry.getValue().getType())) {
+                if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType())) {
+                    return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
+                }
+
+                return Stream.empty();
+            }
+
+            Stream<Map<String, Object>> ofItems = processOfItems(entry);
+
+            if (Objects.nonNull(ofItems)) {
+                return ofItems;
+            }
+
+            if (Objects.nonNull(entry.getValue().getProperties())) {
+                PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
+                        , new SchemaConverterPropertiesConfig());
+                Stream<Map<String, Object>> result = entry.getValue().getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
+                errors.addAll(propertiesProcessor.getErrors());
+                return result;
+            }
+
+            if (Objects.nonNull(entry.getValue().getRef())) {
+                PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions
+                        , pathPrefixWithDot + entry.getKey(), new SchemaConverterPropertiesConfig());
+                Stream<Map<String, Object>> refResult =  propertiesProcessor.processRef(entry.getValue().getRef());
+                errors.addAll(propertiesProcessor.getErrors());
+                return refResult;
+            }
+
+            return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
+        } catch (RuntimeException ex) {
+            errors.add(ex.getMessage());
             return Stream.empty();
         }
 
-        Stream<Map<String, Object>> ofItems = processOfItems(entry);
-
-        if (Objects.nonNull(ofItems)) {
-            return ofItems;
-        }
-
-        if (Objects.nonNull(entry.getValue().getProperties())) {
-            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
-                    , log, new SchemaConverterPropertiesConfig());
-            return entry.getValue().getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
-        }
-
-        if (Objects.nonNull(entry.getValue().getRef())) {
-            return new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey(), log, new SchemaConverterPropertiesConfig())
-                    .processRef(entry.getValue().getRef());
-        }
-
-        return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
     }
 
     private Stream<Map<String, Object>> processOfItems(Map.Entry<String, TypeProperty> entry) {
@@ -195,33 +218,36 @@ public class PropertiesProcessor {
 
         if (Objects.nonNull(entry.getValue().getAllOf())) {
             PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
-                    , log, new SchemaConverterPropertiesConfig());
+                    , new SchemaConverterPropertiesConfig());
 
             ofItems = entry.getValue().getAllOf().stream().flatMap(propertiesProcessor::processItem);
+            errors.addAll(propertiesProcessor.getErrors());
         }
 
         if (Objects.nonNull(entry.getValue().getAnyOf())) {
             PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
-                    , log, new SchemaConverterPropertiesConfig());
+                    , new SchemaConverterPropertiesConfig());
 
             ofItems = Stream.concat(Optional.ofNullable(ofItems).orElseGet(Stream::empty),
                     entry.getValue().getAnyOf().stream().flatMap(propertiesProcessor::processItem));
+            errors.addAll(propertiesProcessor.getErrors());
         }
 
         if (Objects.nonNull(entry.getValue().getOneOf())) {
             PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, pathPrefixWithDot + entry.getKey()
-                    , log, new SchemaConverterPropertiesConfig());
+                    , new SchemaConverterPropertiesConfig());
 
             ofItems = Stream.concat(Optional.ofNullable(ofItems).orElseGet(Stream::empty),
                     entry.getValue().getOneOf().stream().flatMap(propertiesProcessor::processItem));
+            errors.addAll(propertiesProcessor.getErrors());
         }
 
         return ofItems;
     }
 
     private Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {
-        Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
         Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
+        Preconditions.checkNotNullOrEmpty(kind, String.format("kind cannot be null or empty for path '%s'", path));
 
         Map<String, Object> map = new HashMap<>();
         map.put("kind", kind);
