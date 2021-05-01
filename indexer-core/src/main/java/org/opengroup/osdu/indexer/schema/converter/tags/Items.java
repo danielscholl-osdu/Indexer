@@ -14,12 +14,23 @@
 
 package org.opengroup.osdu.indexer.schema.converter.tags;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Data;
 
 @Data
 public class Items {
+    @JsonProperty("$ref")
+    private String ref;
+    private List<AllOfItem> allOf;
     private String type;
     private String pattern;
     private Map<String, TypeProperty> properties;
+
+    public boolean isComplexTypeItems(){
+        return Objects.nonNull(ref) || Objects.nonNull(allOf) || Objects.nonNull(properties);
+    }
+
 }

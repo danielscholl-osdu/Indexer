@@ -17,6 +17,7 @@ package org.opengroup.osdu.indexer.schema.converter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -173,50 +174,11 @@ public class PropertiesProcessor {
         if ("array".equals(entry.getValue().getType())) {
 
             Items items = entry.getValue().getItems();
-            if(Objects.isNull(items)){
-                return Stream.empty();
+            if(Objects.nonNull(items) && items.isComplexTypeItems()){
+                return processComplexTypeItems(entry, items);
             }
 
-            if(Objects.nonNull(items.getProperties()) && !items.getProperties().isEmpty()){
-                Map<String, String> type = entry.getValue().getIndexingType();
-                String indexingType = Objects.isNull(type) ?
-                    schemaConverterConfig.getDefaultObjectArraysType() :
-                    type.getOrDefault(TYPE_KEY,schemaConverterConfig.getDefaultObjectArraysType());
-                /*Schema item inner properties will be processed if they are present & indexingType in schema configured for processing
-                result ex:
-                    {
-                        path = ArrayItem,
-                        kind = nested,
-                        properties = [{
-                                path = InnerProperty,
-                                kind = double
-                            }, {
-                                path = OtherInnerProperty,
-                                kind = string
-                            }
-                        ]
-                    }
-                 */
-                if(schemaConverterConfig.getProcessedArraysTypes().contains(indexingType)){
-                    PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, log, new SchemaConverterPropertiesConfig());
-                    return storageSchemaObjectArrayEntry(
-                        indexingType,
-                        entry.getKey(),
-                        items.getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry));
-
-                /*Otherwise inner properties won't be processed
-                result ex:
-                    {
-                        path = ArrayItem,
-                        kind = []object
-                    }
-                 */
-                }else {
-                    return storageSchemaEntry(indexingType, pathPrefixWithDot + entry.getKey());
-                }
-            }
-
-            if (schemaConverterConfig.getSupportedArrayTypes().contains(items.getType()) && Objects.isNull(items.getProperties())) {
+            if (schemaConverterConfig.getSupportedArrayTypes().contains(items.getType()) && !items.isComplexTypeItems()) {
                 return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
             }
 
@@ -241,6 +203,36 @@ public class PropertiesProcessor {
         }
 
         return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
+    }
+
+    private Stream<Map<String, Object>> processComplexTypeItems(Entry<String, TypeProperty> entry, Items items) {
+        Map<String, String> indexHint = entry.getValue().getIndexHint();
+
+        String indexingType = Objects.isNull(indexHint) ?
+            schemaConverterConfig.getDefaultObjectArraysType() :
+            indexHint.getOrDefault(TYPE_KEY,schemaConverterConfig.getDefaultObjectArraysType());
+
+        if(schemaConverterConfig.getProcessedArraysTypes().contains(indexingType)){
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, log, new SchemaConverterPropertiesConfig());
+
+            Stream<Map<String, Object>> propertiesStream = Stream.empty();
+
+            if(Objects.nonNull(items.getProperties())){
+                propertiesStream = items.getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
+            }
+            if (Objects.nonNull(items.getRef())){
+                propertiesStream = Stream.concat(propertiesStream, propertiesProcessor.processRef(items.getRef()));
+            }
+            if(Objects.nonNull(items.getAllOf())){
+                propertiesStream = Stream.concat(propertiesStream, items.getAllOf().stream().flatMap(propertiesProcessor::processItem));
+            }
+            return storageSchemaObjectArrayEntry(
+                indexingType,
+                entry.getKey(),
+                propertiesStream);
+        }else {
+            return storageSchemaEntry(indexingType, pathPrefixWithDot + entry.getKey());
+        }
     }
 
     private Stream<Map<String, Object>> processOfItems(Map.Entry<String, TypeProperty> entry) {

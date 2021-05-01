@@ -132,6 +132,42 @@
     {
       "kind": "link",
       "path": "GeographicBottomHoleLocation.SpatialGeometryTypeID"
+    },
+    {
+      "path": "VerticalMeasurements",
+      "kind": "[]object"
+    },
+    {
+      "path": "DrillingReason",
+      "kind": "[]object"
+    },
+    {
+      "path": "FacilityNameAlias",
+      "kind": "[]object"
+    },
+    {
+      "path": "FacilityState",
+      "kind": "[]object"
+    },
+    {
+      "path": "FacilityEvent",
+      "kind": "[]object"
+    },
+    {
+      "path": "FacilitySpecification",
+      "kind": "[]object"
+    },
+    {
+      "path": "FacilityOperator",
+      "kind": "[]object"
+    },
+    {
+      "path": "SpatialLocation",
+      "kind": "[]object"
+    },
+    {
+      "path": "GeoContexts",
+      "kind": "[]object"
     }
   ]
 }

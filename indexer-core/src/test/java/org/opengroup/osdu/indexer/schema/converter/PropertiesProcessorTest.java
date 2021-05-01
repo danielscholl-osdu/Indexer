@@ -117,7 +117,7 @@ public class PropertiesProcessorTest {
         items.setProperties(itemsProperties);
 
         TypeProperty arrayProperty = new TypeProperty();
-        arrayProperty.setIndexingType(ImmutableMap.of("type","nested"));
+        arrayProperty.setIndexHint(ImmutableMap.of("type","nested"));
         arrayProperty.setType("array");
         arrayProperty.setItems(items);
 
@@ -145,7 +145,7 @@ public class PropertiesProcessorTest {
         items.setProperties(itemsProperties);
 
         TypeProperty arrayProperty = new TypeProperty();
-        arrayProperty.setIndexingType(ImmutableMap.of("type","flattened"));
+        arrayProperty.setIndexHint(ImmutableMap.of("type","flattened"));
         arrayProperty.setType("array");
         arrayProperty.setItems(items);
 
