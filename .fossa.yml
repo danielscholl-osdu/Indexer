@@ -32,3 +32,7 @@ analyze:
     type: mvn
     target: provider/indexer-ibm/pom.xml
     path: .
+  - name: indexer-reference
+    type: mvn
+    target: provider/indexer-reference/pom.xml
+    path: .

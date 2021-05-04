@@ -50,6 +50,11 @@ public class SchemaToStorageFormatImplTest {
                     , new SchemaConverterPropertiesConfig());
 
     @Test
+    public void dotsDefinitionFormat() {
+        testSingleFile("/converter/new-definitions-format/colons-sample.json", "osdu:osdu:Wellbore:1.0.0");
+    }
+
+    @Test
     public void firstSchemaPassed() {
         testSingleFile("/converter/basic/schema.json", "osdu:osdu:Wellbore:1.0.0");
     }

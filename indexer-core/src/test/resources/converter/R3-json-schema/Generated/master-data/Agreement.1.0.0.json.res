@@ -32,6 +32,14 @@
     {
       "kind": "[]link",
       "path": "Counterparties"
+    },
+    {
+      "kind": "[]object",
+      "path": "Terms"
+    },
+    {
+      "kind": "[]object",
+      "path": "RestrictedResources"
     }
   ]
 }
