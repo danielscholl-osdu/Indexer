@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.service.impl;
+package org.opengroup.osdu.indexer.service;
 
 import com.google.api.client.http.HttpMethods;
 import org.apache.http.HttpStatus;
@@ -22,9 +22,8 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
-import org.opengroup.osdu.indexer.service.SchemaService;
-import org.opengroup.osdu.indexer.service.StorageService;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -59,7 +58,17 @@ public class SchemaProviderImpl implements SchemaService {
 
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        String schemaServiceSchema = getFromSchemaService(kind);
+        String schemaServiceSchema;
+
+        try {
+            schemaServiceSchema = getFromSchemaService(kind);
+        } catch (SchemaProcessingException ex) {
+            log.error(ex.getMessage(), ex);
+            return null;
+        } catch (RuntimeException ex) {
+            log.error(String.format("Failed to get the schema from the Schema service, kind: %s | message: %s", kind, ex.getMessage()), ex);
+            return null;
+        }
 
         return Objects.nonNull(schemaServiceSchema) ? schemaServiceSchema : getFromStorageService(kind);
     }
@@ -98,5 +107,4 @@ public class SchemaProviderImpl implements SchemaService {
         
         return this.urlFetchService.sendRequest(request);
     }
-
 }

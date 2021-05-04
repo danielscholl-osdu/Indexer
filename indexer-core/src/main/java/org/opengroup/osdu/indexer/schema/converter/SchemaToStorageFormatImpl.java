@@ -16,11 +16,10 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.PropertiesData;
 import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
     private ObjectMapper objectMapper;
-    private JaxRsDpsLog log;
     private SchemaConverterConfig schemaConverterConfig;
 
     @Inject
@@ -45,7 +43,6 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         Preconditions.checkNotNull(objectMapper, "objectMapper cannot be null");
 
         this.objectMapper = objectMapper;
-        this.log = log;
         this.schemaConverterConfig = schemaConverterConfig;
     }
 
@@ -68,7 +65,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         try {
             return objectMapper.readValue(schemaServiceFormat, SchemaRoot.class);
         } catch (JsonProcessingException e) {
-            throw new AppException(HttpStatus.SC_BAD_REQUEST, "Loading shchem error", "Failed to load schema", e);
+            throw new SchemaProcessingException("Failed to parse the schema");
         }
     }
 
@@ -76,7 +73,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         try {
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(schemaServiceFormat);
         } catch (JsonProcessingException e) {
-            throw new AppException(HttpStatus.SC_UNPROCESSABLE_ENTITY, "Saving JSON error", "Failed to save a JSON file", e);
+            throw new SchemaProcessingException("Failed to save the JSON file");
         }
     }
 
@@ -84,43 +81,49 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         Preconditions.checkNotNull(objectMapper, "schemaServiceSchema cannot be null");
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 
-        PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), log, schemaConverterConfig);
+        PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), schemaConverterConfig);
 
         final List<Map<String, Object>> storageSchemaItems = new ArrayList<>();
-        if (schemaServiceSchema.getProperties() != null) {
-            PropertiesData schemaData = schemaServiceSchema.getProperties().getData();
-            if (!Objects.isNull(schemaData)) {
+        if (schemaServiceSchema.getProperties() == null) {
+            throw new SchemaProcessingException(String.format("Schema doesn't have data section, kind: %s", kind));
+        }
 
-                if (schemaData.getAllOf() != null) {
-                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAllOf().stream()
-                            .flatMap(propertiesProcessor::processItem)
-                            .collect(Collectors.toList()));
-                }
+        PropertiesData schemaData = schemaServiceSchema.getProperties().getData();
+        if (Objects.isNull(schemaData)) {
+            throw new SchemaProcessingException(String.format("Schema doesn't have properties section, kind: %s", kind));
+        }
 
-                if (schemaData.getAnyOf() != null) {
-                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAnyOf().stream()
-                            .flatMap(propertiesProcessor::processItem)
-                            .collect(Collectors.toList()));
-                }
+        if (schemaData.getAllOf() != null) {
+            storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAllOf().stream()
+                    .flatMap(propertiesProcessor::processItem)
+                    .collect(Collectors.toList()));
+        }
 
-                if (schemaData.getOneOf() != null) {
-                    storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getOneOf().stream()
-                            .flatMap(propertiesProcessor::processItem)
-                            .collect(Collectors.toList()));
-                }
+        if (schemaData.getAnyOf() != null) {
+            storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getAnyOf().stream()
+                    .flatMap(propertiesProcessor::processItem)
+                    .collect(Collectors.toList()));
+        }
 
-                if (schemaData.getRef() != null) {
-                    storageSchemaItems.addAll(propertiesProcessor.processRef(schemaData.getRef())
-                            .collect(Collectors.toList()));
-                }
+        if (schemaData.getOneOf() != null) {
+            storageSchemaItems.addAll(schemaServiceSchema.getProperties().getData().getOneOf().stream()
+                    .flatMap(propertiesProcessor::processItem)
+                    .collect(Collectors.toList()));
+        }
 
-                if (schemaData.getProperties() != null) {
-                    storageSchemaItems.addAll(propertiesProcessor.processProperties(schemaData.getProperties())
-                            .collect(Collectors.toList()));
-                }
-            }
-        } else {
-            log.warning("Schema doesn't have properties, kind:" + kind);
+        if (schemaData.getRef() != null) {
+            storageSchemaItems.addAll(propertiesProcessor.processRef(schemaData.getRef())
+                    .collect(Collectors.toList()));
+        }
+
+        if (schemaData.getProperties() != null) {
+            storageSchemaItems.addAll(propertiesProcessor.processProperties(schemaData.getProperties())
+                    .collect(Collectors.toList()));
+        }
+
+        if (!propertiesProcessor.getErrors().isEmpty()) {
+            throw new SchemaProcessingException(String.format("Errors occurred during parsing the schema, kind: %s | errors: %s" ,
+                    kind, String.join(",", propertiesProcessor.getErrors())));
         }
 
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -129,5 +132,4 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
         return result;
     }
-
 }

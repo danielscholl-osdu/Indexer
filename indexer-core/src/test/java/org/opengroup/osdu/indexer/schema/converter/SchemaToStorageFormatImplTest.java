@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
@@ -52,6 +53,11 @@ public class SchemaToStorageFormatImplTest {
     @Test
     public void dotsDefinitionFormat() {
         testSingleFile("/converter/new-definitions-format/colons-sample.json", "osdu:osdu:Wellbore:1.0.0");
+    }
+
+    @Test(expected = SchemaProcessingException.class)
+    public void wrongDefinitions() {
+        testSingleFile("/converter/bad-schema/wrong-definitions-and-missed-type.json", KIND);
     }
 
     @Test

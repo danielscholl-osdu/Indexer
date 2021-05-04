@@ -54,7 +54,7 @@ import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
-import org.opengroup.osdu.indexer.service.impl.SchemaProviderImpl;
+import org.opengroup.osdu.indexer.service.SchemaProviderImpl;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;

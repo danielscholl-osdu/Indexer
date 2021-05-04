@@ -29,7 +29,7 @@ import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.search.IndicesService;
-import org.opengroup.osdu.indexer.service.impl.SchemaProviderImpl;
+import org.opengroup.osdu.indexer.service.SchemaProviderImpl;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.powermock.core.classloader.annotations.PrepareForTest;
