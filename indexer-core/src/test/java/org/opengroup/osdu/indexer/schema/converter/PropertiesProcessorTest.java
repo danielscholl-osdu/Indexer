@@ -128,7 +128,7 @@ public class PropertiesProcessorTest {
         AllOfItem allOfItem = new AllOfItem();
         allOfItem.setProperties(allOfItemProperties);
 
-        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), new SchemaConverterPropertiesConfig())
             .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
         assertEquals("{path="+ PATH + ", kind=nested, properties=[{path="+ PATH + ", kind=int}]}",res);
     }
@@ -156,7 +156,7 @@ public class PropertiesProcessorTest {
         AllOfItem allOfItem = new AllOfItem();
         allOfItem.setProperties(allOfItemProperties);
 
-        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), new SchemaConverterPropertiesConfig())
             .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
         assertEquals("{path="+ PATH + ", kind=flattened}",res);
     }
@@ -183,7 +183,7 @@ public class PropertiesProcessorTest {
         AllOfItem allOfItem = new AllOfItem();
         allOfItem.setProperties(allOfItemProperties);
 
-        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), new SchemaConverterPropertiesConfig())
             .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
         assertEquals("{path="+ PATH + ", kind=[]object}",res);
     }
@@ -205,7 +205,7 @@ public class PropertiesProcessorTest {
         AllOfItem allOfItem = new AllOfItem();
         allOfItem.setProperties(allOfItemProperties);
 
-        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), log, new SchemaConverterPropertiesConfig())
+        String res = new PropertiesProcessor(Mockito.mock(Definitions.class), new SchemaConverterPropertiesConfig())
             .processItem(allOfItem).map(Object::toString).reduce("", String::concat);
         assertEquals("{path="+ PATH + ", kind=[]int}",res);
     }

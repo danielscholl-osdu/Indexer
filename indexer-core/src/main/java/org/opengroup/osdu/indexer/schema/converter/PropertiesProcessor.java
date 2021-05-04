@@ -15,6 +15,7 @@
 package org.opengroup.osdu.indexer.schema.converter;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,7 +26,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.Constants;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
@@ -185,19 +185,15 @@ public class PropertiesProcessor {
             }
 
             if ("array".equals(entry.getValue().getType())) {
-                if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType())) {
+
+                Items items = entry.getValue().getItems();
+                if(Objects.nonNull(items) && items.isComplexTypeItems()){
+                    return processComplexTypeItems(entry, items);
+                }
+
+                if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType()) && !items.isComplexTypeItems()) {
                     return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
                 }
-        if ("array".equals(entry.getValue().getType())) {
-
-            Items items = entry.getValue().getItems();
-            if(Objects.nonNull(items) && items.isComplexTypeItems()){
-                return processComplexTypeItems(entry, items);
-            }
-
-            if (schemaConverterConfig.getSupportedArrayTypes().contains(items.getType()) && !items.isComplexTypeItems()) {
-                return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
-            }
 
                 return Stream.empty();
             }
@@ -240,7 +236,7 @@ public class PropertiesProcessor {
             indexHint.getOrDefault(TYPE_KEY,schemaConverterConfig.getDefaultObjectArraysType());
 
         if(schemaConverterConfig.getProcessedArraysTypes().contains(indexingType)){
-            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, log, new SchemaConverterPropertiesConfig());
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, new SchemaConverterPropertiesConfig());
 
             Stream<Map<String, Object>> propertiesStream = Stream.empty();
 
