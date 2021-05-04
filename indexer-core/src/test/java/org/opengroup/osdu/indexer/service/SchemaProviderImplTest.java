@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.package org.opengroup.osdu.indexer.service.impl;
 
-package org.opengroup.osdu.indexer.service.impl;
+package org.opengroup.osdu.indexer.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,7 +70,7 @@ public class SchemaProviderImplTest {
         org.opengroup.osdu.core.common.model.http.HttpResponse httpResponse =
                 mock(org.opengroup.osdu.core.common.model.http.HttpResponse.class);
         when(httpResponse.getResponseCode()).thenReturn(HttpStatus.SC_OK);
-        when(httpResponse.getBody()).thenReturn("{}");
+        when(httpResponse.getBody()).thenReturn("{ \"properties\" : { \"data\": {} } }");
 
         when(urlFetchService.sendRequest(any())).thenReturn(httpResponse);
         String schema = sut.getSchema("fake");
@@ -140,7 +140,7 @@ public class SchemaProviderImplTest {
         String kind = "tenant:test:test:1.0.0";
 
         SchemaProviderImpl schemaService = Mockito.mock(SchemaProviderImpl.class);
-        PowerMockito.when(schemaService.getSchema(any())).thenCallRealMethod();
+        when(schemaService.getSchema(any())).thenCallRealMethod();
 
         InOrder inOrder = inOrder(schemaService);
 
