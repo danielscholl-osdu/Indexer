@@ -60,7 +60,7 @@ public class Steps extends SchemaServiceRecordSteps {
 
     @Then("^I should get expected \"([^\"]*)\" values in the source section of Elastic Search results for the \"([^\"]*)\"$")
     public void i_should_get_expected_values_in_elastic_search(String elasticData, String index) throws Throwable {
-        super.i_hould_get_expected_data_values(elasticData, index);
+        super.i_should_get_expected_data_values(elasticData, index);
     }
 
     @Then("^I should get the (\\d+) documents for the \"([^\"]*)\" in the Elastic Search with out \"(.*?)\"$")

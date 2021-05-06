@@ -141,7 +141,7 @@ public class RecordSteps extends TestsBase {
         assertTrue(areJsonEqual(expectedMapping, mapping.toString()));
     }
 
-    public void i_hould_get_expected_data_values(String elasticDataFile, String index) throws Throwable {
+    public void i_should_get_expected_data_values(String elasticDataFile, String index) throws Throwable {
         index = generateActualName(index, timeStamp);
         Map<String, Map<String, Object>> elasticRecords = elasticUtils.fetchRecordsData(index);
         String expectedData = FileHandler.readFile(elasticDataFile);

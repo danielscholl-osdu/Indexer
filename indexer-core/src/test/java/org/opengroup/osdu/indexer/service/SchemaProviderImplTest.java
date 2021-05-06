@@ -65,7 +65,7 @@ public class SchemaProviderImplTest {
     @InjectMocks
     private SchemaProviderImpl sut;
 
-//    @Test
+    @Test
     public void test_empty_schema() throws UnsupportedEncodingException, URISyntaxException {
         org.opengroup.osdu.core.common.model.http.HttpResponse httpResponse =
                 mock(org.opengroup.osdu.core.common.model.http.HttpResponse.class);
