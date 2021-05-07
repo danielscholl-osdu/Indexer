@@ -19,25 +19,24 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Array;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
+import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
-import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
-import org.opengroup.osdu.core.common.Constants;
-import org.opengroup.osdu.indexer.model.geojson.FeatureCollection;
 import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
 import org.opengroup.osdu.indexer.util.parser.NumberParser;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
-
-import javax.inject.Inject;
-import java.lang.reflect.Array;
-import java.lang.reflect.Type;
-import java.util.*;
-import java.util.function.BiFunction;
 
 @Service
 @RequestScope
@@ -218,6 +217,11 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
 	public void tryParseObject(String recordId, String name, Object value, Map<String, Object> dataMap) {
 		dataMap.put(name,value);
 	}
+
+    @Override
+    public void tryParseFlattened(String recordId, String name, Object value, Map<String, Object> dataMap) {
+        dataMap.put(name,value);
+    }
 
 
     private List<String> isArrayType(Object attributeVal) {
