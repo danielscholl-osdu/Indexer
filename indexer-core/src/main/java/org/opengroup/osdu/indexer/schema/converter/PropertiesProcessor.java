@@ -14,7 +14,18 @@
 
 package org.opengroup.osdu.indexer.schema.converter;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
@@ -23,16 +34,14 @@ import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingExce
 import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
 import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
+import org.opengroup.osdu.indexer.schema.converter.tags.Items;
 import org.opengroup.osdu.indexer.schema.converter.tags.TypeProperty;
-
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 public class PropertiesProcessor {
 
     private SchemaConverterConfig schemaConverterConfig;
 
+    private static final String TYPE_KEY = "type";
     private static final String DEF_PREFIX = "#/definitions/";
     private static final String LINK_PREFIX = "^srn";
     private static final String LINK_TYPE = "link";
@@ -176,7 +185,13 @@ public class PropertiesProcessor {
             }
 
             if ("array".equals(entry.getValue().getType())) {
-                if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType())) {
+
+                Items items = entry.getValue().getItems();
+                if(Objects.nonNull(items) && items.isComplexTypeItems()){
+                    return processComplexTypeItems(entry, items);
+                }
+
+                if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType()) && !items.isComplexTypeItems()) {
                     return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
                 }
 
@@ -211,6 +226,36 @@ public class PropertiesProcessor {
             return Stream.empty();
         }
 
+    }
+
+    private Stream<Map<String, Object>> processComplexTypeItems(Entry<String, TypeProperty> entry, Items items) {
+        Map<String, String> indexHint = entry.getValue().getIndexHint();
+
+        String indexingType = Objects.isNull(indexHint) ?
+            schemaConverterConfig.getDefaultObjectArraysType() :
+            indexHint.getOrDefault(TYPE_KEY,schemaConverterConfig.getDefaultObjectArraysType());
+
+        if(schemaConverterConfig.getProcessedArraysTypes().contains(indexingType)){
+            PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, new SchemaConverterPropertiesConfig());
+
+            Stream<Map<String, Object>> propertiesStream = Stream.empty();
+
+            if(Objects.nonNull(items.getProperties())){
+                propertiesStream = items.getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
+            }
+            if (Objects.nonNull(items.getRef())){
+                propertiesStream = Stream.concat(propertiesStream, propertiesProcessor.processRef(items.getRef()));
+            }
+            if(Objects.nonNull(items.getAllOf())){
+                propertiesStream = Stream.concat(propertiesStream, items.getAllOf().stream().flatMap(propertiesProcessor::processItem));
+            }
+            return storageSchemaObjectArrayEntry(
+                indexingType,
+                entry.getKey(),
+                propertiesStream);
+        }else {
+            return storageSchemaEntry(indexingType, pathPrefixWithDot + entry.getKey());
+        }
     }
 
     private Stream<Map<String, Object>> processOfItems(Map.Entry<String, TypeProperty> entry) {
@@ -252,6 +297,17 @@ public class PropertiesProcessor {
         Map<String, Object> map = new HashMap<>();
         map.put("kind", kind);
         map.put("path", path);
+        return Stream.of(map);
+    }
+
+    private Stream<Map<String, Object>> storageSchemaObjectArrayEntry(String kind, String path,Stream<Map<String, Object>> mapStream) {
+        Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
+        Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("kind", kind);
+        map.put("path", path);
+        map.put(Constants.PROPERTIES,mapStream.collect(Collectors.toList()));
         return Stream.of(map);
     }
 
