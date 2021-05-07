@@ -203,8 +203,68 @@ Is converted to
 
 2.  Arrays
 
-Arrays of complex types are ignored, only following arrays of primitive
-types are supported
+Arrays of complex types by default will be consumed as object type
+```json
+"Markers": {
+"type": "array",
+    "items": {
+        "type": "object", 
+        "properties":  {
+            "NegativeVerticalDelta"{
+                "description": "The distance vertically below the Marker position that marks the limit of the high confidence range for the Marker pick.",
+                "x-osdu-frame-of-reference": "UOM:length",
+                "type": "number"
+            },
+          .....
+        }
+    }
+}        
+
+```
+Without inner objects processing
+```json
+{
+        path = Markers,
+        kind = []object
+}
+```
+
+Processing can be specified with optional "x-osdu-indexing" property 
+```json
+"properties": {
+    "Markers": {
+        "x-osdu-indexing": {
+        "type": "nested"
+         },
+        "type": "array",
+        "items": {
+            "type": "object",
+        "properties":  {
+            "NegativeVerticalDelta"{
+                "description": "The distance vertically below the Marker position that marks the limit of the high confidence range for the Marker pick.",
+                "x-osdu-frame-of-reference": "UOM:length",
+                "type": "number"
+            },
+          .....
+```
+"x-osdu-indexing" property values
+```json
+"nested" , "flattened"
+```
+By default, only "nested" type will lead to inner objects processing
+```json
+{ 
+path = Markers,
+        kind = nested,
+        properties = [{
+                path = NegativeVerticalDelta,
+                kind = double
+            },
+        .....
+}
+```
+
+Arrays of primitive types are supported
 
 ```json
 "number", "string", "integer", "boolean"

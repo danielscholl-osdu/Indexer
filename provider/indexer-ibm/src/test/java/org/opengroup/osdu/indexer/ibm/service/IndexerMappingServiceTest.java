@@ -76,7 +76,7 @@ public class IndexerMappingServiceTest {
 
 	@Before
 	public void setup() throws IOException {
-		Map<String, String> dataMapping = new HashMap<>();
+		Map<String, Object> dataMapping = new HashMap<>();
 		dataMapping.put("Location", "geo_point");
 		Map<String, Object> metaMapping = new HashMap<>();
 		metaMapping.put(RecordMetaAttribute.ID.getValue(), "keyword");

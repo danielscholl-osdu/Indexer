@@ -15,13 +15,14 @@
 package org.opengroup.osdu.indexer.schema.converter.tags;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-
 import java.util.List;
 import java.util.Map;
+import lombok.Data;
 
 @Data
 public class TypeProperty {
+    @JsonProperty("x-osdu-indexing")
+    private Map<String, String> indexHint;
     private String type;
     private String pattern;
     private String format;

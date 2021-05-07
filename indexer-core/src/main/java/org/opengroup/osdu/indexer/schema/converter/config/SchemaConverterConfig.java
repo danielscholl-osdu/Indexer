@@ -11,4 +11,6 @@ public interface SchemaConverterConfig {
     Set<String> getSupportedArrayTypes();
     Map<String, String> getSpecialDefinitionsMap();
     Map<String, String> getPrimitiveTypesMap();
+    Set<String> getProcessedArraysTypes();
+    String getDefaultObjectArraysType();
 }
