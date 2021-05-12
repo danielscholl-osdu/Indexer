@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opengroup.osdu.common.RecordSteps;
+import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.http.HttpClient;
 import org.opengroup.osdu.core.common.http.HttpRequest;
@@ -16,6 +17,7 @@ import org.opengroup.osdu.core.common.model.http.AppError;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.ibm.util.Config;
+import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.IBMHTTPClient;
 
 import com.google.gson.Gson;
@@ -29,10 +31,10 @@ import cucumber.api.java.en.When;
 import lombok.extern.java.Log;
 
 @Log
-public class Steps extends RecordSteps {
+public class Steps extends SchemaServiceRecordSteps {
 
     public Steps() {
-        super(new IBMHTTPClient());
+        super(new IBMHTTPClient(), new ElasticUtils());
     }
 
     @Before
@@ -64,6 +66,38 @@ public class Steps extends RecordSteps {
     @Then("^I should get the (\\d+) documents for the \"([^\"]*)\" in the Elastic Search with out \"(.*?)\"$")
     public void iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(int expectedCount, String index, String skippedAttributes) throws Throwable {
         super.iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(expectedCount, index, skippedAttributes);
+    }
+    
+    @Then("^I should be able to search (\\d+) record with index \"([^\"]*)\" by tag \"([^\"]*)\" and value \"([^\"]*)\"$")
+    public void iShouldBeAbleToSearchRecordByTagKeyAndTagValue(int expectedNumber, String index, String tagKey, String tagValue) throws Throwable {
+        super.iShouldBeAbleToSearchRecordByTagKeyAndTagValue(index, tagKey, tagValue, expectedNumber);
+    }
+
+    @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by bounding box query with points \\((-?\\d+), (-?\\d+)\\) and  \\((-?\\d+), (-?\\d+)\\) on field \"(.*?)\"$")
+    public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery (
+            int expectedCount, String index, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude, String field) throws Throwable {
+        super.i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery(expectedCount, index, topLatitude, topLongitude, bottomLatitude, bottomLongitude, field);
+    }
+
+    @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by nested \"([^\"]*)\" and properties \\(\"([^\"]*)\", (\\d+)\\) and  \\(\"([^\"]*)\", \"([^\"]*)\"\\)$")
+    public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(
+        int expectedCount, String index, String path, String firstNestedProperty, String firstNestedValue, String secondNestedProperty,
+        String secondNestedValue) throws Throwable {
+        super.i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(expectedCount, index, path, firstNestedProperty, firstNestedValue,
+            secondNestedProperty, secondNestedValue);
+    }
+
+    @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by flattened inner properties \\(\"([^\"]*)\", \"([^\"]*)\"\\)$")
+    public void i_should_be_able_search_documents_for_the_by_flattened_inner_properties(int expectedCount, String index, String flattenedField,
+        String flattenedFieldValue) throws Throwable {
+        super.i_should_be_able_search_documents_for_the_by_flattened_inner_properties(expectedCount, index, flattenedField, flattenedFieldValue);
+
+    }
+
+    @Then("^I should get \"([^\"]*)\" in response, without hints in schema for the \"([^\"]*)\" that present in the \"([^\"]*)\" with \"([^\"]*)\" for a given \"([^\"]*)\"$")
+    public void i_should_get_object_in_search_response_without_hints_in_schema(String objectInnerField, String index, String recordFile, String acl, String kind)
+        throws Throwable {
+        super.i_should_get_object_in_search_response_without_hints_in_schema(objectInnerField ,index, recordFile, acl, kind);
     }
     
     @When("^I pass api key$")
