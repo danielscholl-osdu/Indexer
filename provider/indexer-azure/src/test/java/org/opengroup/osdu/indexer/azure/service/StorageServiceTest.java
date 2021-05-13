@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.azure.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.junit.Before;
