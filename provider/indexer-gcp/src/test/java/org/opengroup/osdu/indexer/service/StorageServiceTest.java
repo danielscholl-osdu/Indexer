@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -24,6 +25,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
@@ -66,6 +68,8 @@ public class StorageServiceTest {
     private IRequestInfo requestInfo;
     @Mock
     private IndexerConfigurationProperties configurationProperties;
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
     @InjectMocks
     private StorageServiceImpl sut;
 

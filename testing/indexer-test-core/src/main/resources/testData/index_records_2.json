@@ -18,7 +18,8 @@
       "EmptyAttribute": "",
       "Rank": 1,
       "Score" : 10,
-      "Established": "2000-03-27T23:38:48Z"
+      "Established": "2000-03-27T23:38:48Z",
+      "InvalidInteger": 123456789123456789
     }
   },
   {
@@ -40,7 +41,8 @@
       "EmptyAttribute": "",
       "Rank": 1,
       "Score" : 10,
-      "Established": "2000-03-27T23:38:48Z"
+      "Established": "2000-03-27T23:38:48Z",
+      "InvalidInteger": 123456789123456789
     }
   },
   {
@@ -62,7 +64,8 @@
       "EmptyAttribute": "",
       "Rank": 1,
       "Score" : 10,
-      "Established": "2000-03-27T23:38:48Z"
+      "Established": "2000-03-27T23:38:48Z",
+      "InvalidInteger": 123456789123456789
     }
   },
   {
@@ -84,7 +87,8 @@
       "EmptyAttribute": "",
       "Rank": 1,
       "Score" : 10,
-      "Established": "2000-03-27T23:38:48Z"
+      "Established": "2000-03-27T23:38:48Z",
+      "InvalidInteger": 123456789123456789
     }
   },
   {
@@ -107,7 +111,7 @@
       "Rank": "Test",
       "Score" : 10,
       "Established": 123456,
-      "InvalidInteger": 2147483648
+      "InvalidInteger": 8888
     }
   }
 ]
