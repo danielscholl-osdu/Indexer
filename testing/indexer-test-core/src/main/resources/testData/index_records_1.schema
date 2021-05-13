@@ -51,7 +51,7 @@
     },
     {
       "path": "Score",
-       "kind": "long"
+       "kind": "int"
     },
     {
       "path": "Established",

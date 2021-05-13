@@ -1,8 +1,6 @@
 package org.opengroup.osdu.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -99,11 +97,7 @@ public class RecordSteps extends TestsBase {
         String actualKind = generateActualName(kind, timeStamp);
         try {
             String fileContent = FileHandler.readFile(String.format("%s.%s", record, "json"));
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            CollectionType mapCollectionType = objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class);
-
-            records = objectMapper.readValue(fileContent, mapCollectionType);
+            records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
 
             for (Map<String, Object> testRecord : records) {
                 testRecord.put("kind", actualKind);
@@ -141,26 +135,6 @@ public class RecordSteps extends TestsBase {
         Map<String, Object> mapping = typeMapping.sourceAsMap();
         assertNotNull(mapping);
         assertTrue(areJsonEqual(expectedMapping, mapping.toString()));
-    }
-
-    public void i_should_get_expected_data_values(String elasticDataFile, String index) throws Throwable {
-        index = generateActualName(index, timeStamp);
-        Map<String, Map<String, Object>> elasticRecords = elasticUtils.fetchRecordsData(index);
-        String expectedData = FileHandler.readFile(elasticDataFile);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> expected = objectMapper.readValue(expectedData, new TypeReference<Map<String,Object>>() {});
-
-        expected.forEach(
-                (key, val) -> checkData((Map<String,Object>)val, elasticRecords.get(key), key)
-        );
-    }
-
-    private void checkData(Map<String, Object> expected, Map<String, Object> actual, String id) {
-        assertNotNull("Original record is not found, id:" + id, expected);
-        assertNotNull("Elastic record is not found, id:" + id, actual);
-        assertEquals("Data sizes are not equals", expected.size(), actual.size());
-        assertTrue("Data is different", expected.equals(actual));
     }
 
     public void iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(int expectedCount, String index, String skippedAttributes) throws Throwable {

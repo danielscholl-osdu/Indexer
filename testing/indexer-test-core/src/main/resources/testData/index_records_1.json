@@ -20,7 +20,7 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 123456789123456789,
+      "Score" : 10,
       "Established": "2000-03-27T23:38:48Z",
       "DblArray": [32.40, 36.45, 40.0]
     }
@@ -46,7 +46,7 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 123456789123456789,
+      "Score" : 10,
       "Established": "2000-03-27T23:38:48Z",
       "DblArray": [62.40, 60.0]
     }
@@ -72,7 +72,7 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 123456789123456789,
+      "Score" : 10,
       "Established": "2000-03-27T23:38:48Z"
     }
   },
@@ -97,7 +97,7 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 123456789123456789,
+      "Score" : 10,
       "Established": "2000-03-27T23:38:48Z"
     }
   },
@@ -122,7 +122,7 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 88888,
+      "Score" : 10,
       "Established": "2000-03-27T23:38:48Z"
     }
   }

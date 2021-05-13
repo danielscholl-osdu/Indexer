@@ -63,10 +63,12 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import static org.elasticsearch.index.query.QueryBuilders.*;
 
@@ -236,23 +238,6 @@ public class ElasticUtils {
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
-        }
-    }
-
-    public Map<String, Map<String, Object>> fetchRecordsData(String index) throws IOException {
-        try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                SearchRequest request = new SearchRequest(index);
-                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
-                return
-                        Arrays.stream(searchResponse.getHits().getHits())
-                                .map(v -> new AbstractMap.SimpleEntry<>((String)v.getSourceAsMap().get("id")
-                                        , (Map<String, Object>)v.getSourceAsMap().get("data")))
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            }
-        } catch (ElasticsearchStatusException e) {
-            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
-            return null;
         }
     }
 

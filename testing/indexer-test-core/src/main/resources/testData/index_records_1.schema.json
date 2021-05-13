@@ -72,7 +72,7 @@
                 "type": "integer"
               },
               "Score": {
-                "type": "long"
+                "type": "integer"
               },
               "Established": {
                 "type": "date-time"
