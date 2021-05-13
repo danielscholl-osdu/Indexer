@@ -14,6 +14,8 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpMethods;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -61,6 +63,8 @@ public class StorageServiceImpl implements StorageService {
     private final Gson gson = new Gson();
 
     @Inject
+    private ObjectMapper objectMapper;
+    @Inject
     private IUrlFetchService urlFetchService;
     @Inject
     private JobStatus jobStatus;
@@ -89,7 +93,7 @@ public class StorageServiceImpl implements StorageService {
         return Records.builder().records(valid).notFound(notFound).conversionStatuses(conversionStatuses).missingRetryRecords(missingRetryRecordIds).build();
     }
 
-    private Records getRecords(List<String> ids) throws URISyntaxException {
+    protected Records getRecords(List<String> ids) throws URISyntaxException {
         // e.g. {"records":["test:10"]}
         String body = this.gson.toJson(RecordIds.builder().records(ids).build());
 
@@ -114,9 +118,12 @@ public class StorageServiceImpl implements StorageService {
             throw new AppException(HttpStatus.SC_NOT_FOUND, "Invalid request", "Storage service returned empty response");
         }
 
-        Type recordsListType = new TypeToken<Records>() {
-        }.getType();
-        Records records = this.gson.fromJson(bulkStorageData, recordsListType);
+        Records records = null;
+        try {
+            records = this.objectMapper.readValue(bulkStorageData, Records.class);
+        } catch (JsonProcessingException e) {
+            throw new AppException(RequestStatus.INVALID_RECORD, "Invalid request", "Successful Storage service response with wrong json");
+        }
 
         // no retry possible, update record status as failed -- storage service cannot locate records
         if (!records.getNotFound().isEmpty()) {
