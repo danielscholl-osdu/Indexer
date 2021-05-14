@@ -25,8 +25,9 @@ Feature: Indexing of the documents
     Then I should get the <number> documents for the <index> in the Elastic Search with out <skippedAttribute>
 
     Examples:
-      | kind                                           | recordFile        | number | index                                          | skippedAttribute | acl                            |
-      | "tenant1:indexer:test-data--Integration:2.0.0" | "index_records_2" | 4      | "tenant1-indexer-test-data--integration-2.0.0" | "data.Location"  | "data.default.viewers@tenant1" |
+      | kind                                           | recordFile        | number | index                                          | skippedAttribute      | acl                            |
+      | "tenant1:indexer:test-data--Integration:2.0.0" | "index_records_2" | 4      | "tenant1-indexer-test-data--integration-2.0.0" | "data.Location"       | "data.default.viewers@tenant1" |
+      | "tenant1:indexer:test-data--Integration:2.0.0" | "index_records_2" | 1      | "tenant1-indexer-test-data--integration-2.0.0" | "data.InvalidInteger" | "data.default.viewers@tenant1" |
 
   Scenario Outline: Ingest the record and Index in the Elastic Search with tags
     When I ingest records with the <recordFile> with <acl> for a given <kind>
