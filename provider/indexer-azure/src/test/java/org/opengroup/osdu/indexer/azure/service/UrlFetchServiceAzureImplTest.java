@@ -24,7 +24,11 @@ import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+
 
 @RunWith(MockitoJUnitRunner.class)
 public class UrlFetchServiceAzureImplTest {
@@ -85,6 +89,9 @@ public class UrlFetchServiceAzureImplTest {
             " \"conversionStatuses\":[]\n" +
             "}";
 
+    private static final String url = "https://demo/api/storage/v2/query/records:batch";
+    private static final String url2 = "https://demo/api/storage/v2/schemas";
+
     @Before
     public void setUp() {
         when(this.retryPolicy.retryConfig()).thenReturn(new RetryPolicy().retryConfig());
@@ -93,7 +100,7 @@ public class UrlFetchServiceAzureImplTest {
     @Test
     public void shouldRetry_ForJSON1_when_storageQueryRecordCallIsMade() throws Exception {
         response.setBody(JSON1);
-        httpRequest.setUrl("https://demo/api/storage/v2/query/records:batch");
+        httpRequest.setUrl(url);
 
         when(urlFetchServiceAzure.sendRequest(httpRequest)).thenReturn(response);
 
@@ -104,7 +111,7 @@ public class UrlFetchServiceAzureImplTest {
     @Test
     public void shouldNotRetry_ForJSON2_when_storageQueryRecordCallIsMade() throws Exception {
         response.setBody(JSON2);
-        httpRequest.setUrl("https://demo/api/storage/v2/query/records:batch");
+        httpRequest.setUrl(url);
 
         when(urlFetchServiceAzure.sendRequest(httpRequest)).thenReturn(response);
 
@@ -115,7 +122,7 @@ public class UrlFetchServiceAzureImplTest {
 
     @Test
     public void retryFunction_shouldNotBeCalled() throws Exception {
-        httpRequest.setUrl("https://demo/api/storage/v2/schemas");
+        httpRequest.setUrl(url2);
 
         when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
 

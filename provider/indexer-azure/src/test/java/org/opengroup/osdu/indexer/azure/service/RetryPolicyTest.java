@@ -27,6 +27,9 @@ import org.opengroup.osdu.core.common.model.http.HttpResponse;
 
 import java.util.function.Predicate;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 @RunWith(MockitoJUnitRunner.class)
 public class RetryPolicyTest {
 
@@ -139,7 +142,7 @@ public class RetryPolicyTest {
         assert retry != null;
         boolean value = retry.test(response);
 
-        assert (value == true);
+        assertTrue(value);
     }
 
     @Test
@@ -149,7 +152,7 @@ public class RetryPolicyTest {
         response.setBody(JSON2);
         boolean value = retry.test(response);
 
-        assert (value == false);
+        assertFalse(value);
     }
 
     @Test
@@ -159,7 +162,7 @@ public class RetryPolicyTest {
         response.setBody(JSON3);
         boolean value = retry.test(response);
 
-        assert (value == false);
+        assertFalse(value);
     }
 
 }
