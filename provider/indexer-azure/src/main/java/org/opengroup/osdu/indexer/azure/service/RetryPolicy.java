@@ -18,23 +18,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
-import io.github.resilience4j.retry.RetryRegistry;
 import lombok.extern.java.Log;
-import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
-import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.function.Supplier;
-
-import static io.github.resilience4j.retry.RetryConfig.custom;
-import static java.time.temporal.ChronoUnit.SECONDS;
 
 /**
  * This class handles retry configuration logic for calls made to <prefix>/storage/v2/query/records:batch
@@ -76,7 +65,7 @@ public class RetryPolicy {
                 notFoundElement.getAsJsonArray().isJsonNull()) {
             return false;
         }
-        log.info("Retry is set true for 3 attempts");
+        log.info("Retry is set true");
         return true;
     }
 }
