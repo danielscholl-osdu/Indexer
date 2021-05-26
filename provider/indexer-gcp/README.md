@@ -148,6 +148,8 @@ You will need to have the following environment variables defined.
 | `SEARCH_HOST` | ex `http://localhost:8080/api/search/v2/` | Endpoint of search service | no | - |
 | `STORAGE_HOST` | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/schemas` | Storage API endpoint | Storage Host | no | output of infrastructure deployment |
 | `SECURITY_HTTPS_CERTIFICATE_TRUST` | ex `false` | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false | output of infrastructure deployment |
+| `GOOGLE_AUDIENCES` | ex `*****.apps.googleusercontent.com` | Client ID for getting access to cloud resources | yes | https://console.cloud.google.com/apis/credentials |
+| `PARTITION_API` | ex `http://localhost:8081/api/partition/v1` | Partition service endpoint | no | - |
 
 
 **Entitlements configuration for integration accounts**
