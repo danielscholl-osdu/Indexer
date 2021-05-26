@@ -28,4 +28,6 @@ public interface IAttributeParsingService {
     void tryParseNested(String recordId, String name, Object value, Map<String, Object> dataMap);
 
     void tryParseObject(String recordId, String name, Object value, Map<String, Object> dataMap);
+
+    void tryParseFlattened(String recordId, String name, Object value, Map<String, Object> dataMap);
 }

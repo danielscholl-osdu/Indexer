@@ -72,6 +72,14 @@
     {
       "path": "VersionCreationReason",
       "kind": "string"
+    },
+    {
+      "path": "GeoContexts",
+      "kind": "[]object"
+    },
+    {
+      "path": "NameAliases",
+      "kind": "[]object"
     }
   ]
 }
