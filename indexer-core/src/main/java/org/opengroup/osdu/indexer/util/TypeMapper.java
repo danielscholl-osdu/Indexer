@@ -104,7 +104,11 @@ public class TypeMapper {
             Map<String,Object> type = (Map<String, Object>) indexerType;
             Map<String, Object> propertiesMap = (Map<String, Object>) type.get(Constants.PROPERTIES);
             for (Map.Entry<String,Object> entry : propertiesMap.entrySet()){
-                entry.setValue(Records.Type.builder().type(entry.getValue().toString()).build());
+                if(isMap(entry.getValue())){
+                    entry.setValue(getDataAttributeIndexerMapping(entry.getValue()));
+                }else {
+                    entry.setValue(Records.Type.builder().type(entry.getValue().toString()).build());
+                }
             }
             return indexerType;
         }
