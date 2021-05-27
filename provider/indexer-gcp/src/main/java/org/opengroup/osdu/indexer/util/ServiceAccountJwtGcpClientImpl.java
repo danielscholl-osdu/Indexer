@@ -47,6 +47,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.IJwtCache;
 import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -56,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Primary
 @Component
 @RequestScope
 public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient {

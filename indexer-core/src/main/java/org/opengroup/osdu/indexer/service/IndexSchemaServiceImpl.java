@@ -244,7 +244,11 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         HashMap<String, Object> propertiesMap = new HashMap<>();
         for (SchemaItem propertiesItem : schemaItem.getProperties()) {
             String propertiesItemKind = propertiesItem.getKind();
-            String propertiesElasticType = TypeMapper.getIndexerType(propertiesItemKind,ElasticType.TEXT.getValue());
+            Object propertiesElasticType = TypeMapper.getIndexerType(propertiesItemKind,ElasticType.TEXT.getValue());
+            if(propertiesItem.getProperties() != null){
+                HashMap<String, Object> innerProperties = normalizeInnerProperties(propertiesItem);
+                propertiesElasticType = TypeMapper.getObjectsArrayMapping(propertiesItemKind, innerProperties);
+            }
             propertiesMap.put(propertiesItem.getPath(),propertiesElasticType);
         }
         return propertiesMap;
