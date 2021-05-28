@@ -16,15 +16,12 @@ package org.opengroup.osdu.indexer.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.iam.v1.Iam;
-import com.google.api.services.iam.v1.IamScopes;
-import com.google.api.services.iam.v1.model.SignJwtRequest;
-import com.google.api.services.iam.v1.model.SignJwtResponse;
+import com.google.cloud.iam.credentials.v1.IamCredentialsClient;
+import com.google.cloud.iam.credentials.v1.ServiceAccountName;
+import com.google.cloud.iam.credentials.v1.SignJwtRequest;
+import com.google.cloud.iam.credentials.v1.SignJwtResponse;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.http.HttpHeaders;
@@ -63,11 +60,11 @@ import java.util.Map;
 public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient {
 
     private static final String JWT_AUDIENCE = "https://www.googleapis.com/oauth2/v4/token";
-    private static final String SERVICE_ACCOUNT_NAME_FORMAT = "projects/%s/serviceAccounts/%s";
+    private static final String SERVICE_ACCOUNT_NAME_FORMAT = "projects/-/serviceAccounts/%s";
 
     private final JsonFactory jsonFactory = new JacksonFactory();
 
-    private Iam iam;
+    private IamCredentialsClient iam;
 
     @Inject
     private ITenantFactory tenantInfoServiceProvider;
@@ -100,13 +97,17 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
             // Getting signed JWT
             Map<String, Object> signJwtPayload = this.getJWTCreationPayload(tenant);
 
-            SignJwtRequest signJwtRequest = new SignJwtRequest();
-            signJwtRequest.setPayload(jsonFactory.toString(signJwtPayload));
+            ServiceAccountName name = ServiceAccountName.parse(String.format(SERVICE_ACCOUNT_NAME_FORMAT,
+                tenant.getServiceAccount()));
+            List<String> delegates = new ArrayList<>();
+            delegates.add(tenant.getServiceAccount());
 
-            String serviceAccountName = String.format(SERVICE_ACCOUNT_NAME_FORMAT, tenant.getProjectId(), tenant.getServiceAccount());
-
-            Iam.Projects.ServiceAccounts.SignJwt signJwt = this.getIam().projects().serviceAccounts().signJwt(serviceAccountName, signJwtRequest);
-            SignJwtResponse signJwtResponse = signJwt.execute();
+            SignJwtRequest request = SignJwtRequest.newBuilder()
+                .setName(name.toString())
+                .addAllDelegates(delegates)
+                .setPayload(jsonFactory.toString(signJwtPayload))
+                .build();
+            SignJwtResponse signJwtResponse = this.getIamCredentialsClient().signJwt(request);
             String signedJwt = signJwtResponse.getSignedJwt();
 
             // Getting id token
@@ -143,26 +144,10 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
         }
     }
 
-    public Iam getIam() throws Exception {
-
+    public IamCredentialsClient getIamCredentialsClient() throws Exception {
         if (this.iam == null) {
-            HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-            // Authenticate using Google Application Default Credentials.
-            GoogleCredential credential = GoogleCredential.getApplicationDefault();
-            if (credential.createScopedRequired()) {
-                List<String> scopes = new ArrayList<>();
-                // Enable full Cloud Platform scope.
-                scopes.add(IamScopes.CLOUD_PLATFORM);
-                credential = credential.createScoped(scopes);
-            }
-
-            // Create IAM API object associated with the authenticated transport.
-            this.iam = new Iam.Builder(httpTransport, jsonFactory, credential)
-                    .setApplicationName(properties.getIndexerHost())
-                    .build();
+            this.iam = IamCredentialsClient.create();
         }
-
         return this.iam;
     }
 
