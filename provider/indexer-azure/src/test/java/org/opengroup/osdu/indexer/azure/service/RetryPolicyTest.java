@@ -125,14 +125,6 @@ public class RetryPolicyTest {
     @InjectMocks
     private RetryPolicy retryPolicy;
 
-    @Test
-    public void number_of_Attempts_must_be_3() {
-        RetryConfig config = this.retryPolicy.retryConfig();
-        int attempts = config.getMaxAttempts();
-        int max_attempts = 3;
-
-        assert (max_attempts == attempts);
-    }
 
     @Test
     public void retry_should_be_true_for_json1() {
