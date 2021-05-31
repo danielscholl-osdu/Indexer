@@ -41,7 +41,7 @@ public class RetryPolicy {
 
     private int attempts = 3;
     private int waitDuration = 1000;
-    private String recordNotFound = "notFound";
+    private final String RECORD_NOT_FOUND = "notFound";
 
     /**
      * @return RetryConfig with 3 attempts and 1 sec wait time
@@ -64,7 +64,7 @@ public class RetryPolicy {
             return false;
         }
         JsonObject jsonObject = new JsonParser().parse(response.getBody()).getAsJsonObject();
-        JsonElement notFoundElement = (JsonArray) jsonObject.get(recordNotFound);
+        JsonElement notFoundElement = (JsonArray) jsonObject.get(RECORD_NOT_FOUND);
         if (notFoundElement == null ||
                 !notFoundElement.isJsonArray() ||
                 notFoundElement.getAsJsonArray().size() == 0 ||
