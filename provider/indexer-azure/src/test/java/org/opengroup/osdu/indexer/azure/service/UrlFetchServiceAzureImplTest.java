@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.azure.service;
 
+import io.github.resilience4j.retry.RetryConfig;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,7 +23,10 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
+
+import java.time.Duration;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.atMost;
@@ -34,13 +38,15 @@ import static org.mockito.Mockito.when;
 public class UrlFetchServiceAzureImplTest {
 
     @Mock
-    private RetryPolicy retryPolicy;
+    private JaxRsDpsLog logger;
     @Mock
     private UrlFetchServiceImpl urlFetchService;
     @InjectMocks
     private FetchServiceHttpRequest httpRequest;
     @InjectMocks
     private HttpResponse response;
+    @Mock
+    private RetryPolicy retryPolicy;
     @InjectMocks
     private UrlFetchServiceAzureImpl urlFetchServiceAzure;
 

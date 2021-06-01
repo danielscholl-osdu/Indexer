@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 
 import java.util.function.Predicate;
@@ -124,10 +125,12 @@ public class RetryPolicyTest {
     private HttpResponse response;
     @InjectMocks
     private RetryPolicy retryPolicy;
+    @Mock
+    private JaxRsDpsLog logger;
 
 
     @Test
-    public void retry_should_be_true_for_json1() {
+    public void retry_should_be_true_for_jsonResponseWithNotFound() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE_WITH_NOT_FOUND);
@@ -138,7 +141,7 @@ public class RetryPolicyTest {
     }
 
     @Test
-    public void retry_should_be_false_for_json2() {
+    public void retry_should_be_false_for_jsonResponse1WithOut_NotFound() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
@@ -148,7 +151,7 @@ public class RetryPolicyTest {
     }
 
     @Test
-    public void retry_should_be_false_for_json3() {
+    public void retry_should_be_false_for_jsonResponse2WithOut_NotFound() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE2_WITHOUT_NOT_FOUND);

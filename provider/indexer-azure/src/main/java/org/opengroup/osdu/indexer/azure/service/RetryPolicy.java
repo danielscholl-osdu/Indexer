@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.github.resilience4j.retry.RetryConfig;
 import lombok.Data;
+import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ import java.time.Duration;
  * to resolve intermittent CosmosDb Not found issue
  */
 
+@Log
 @Component
 @Data
 @ConfigurationProperties(prefix = "azure.storage.client.retry")
@@ -73,7 +75,7 @@ public class RetryPolicy {
                 notFoundElement.getAsJsonArray().isJsonNull()) {
             return false;
         }
-        logger.info("Retry is set true");
+        log.info("Retry is set true");
         return true;
     }
 }
