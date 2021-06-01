@@ -17,10 +17,10 @@ package org.opengroup.osdu.indexer.azure.service;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
-import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
@@ -34,7 +34,7 @@ import java.util.function.Supplier;
  * This class has same function as that of UrlFetchService except in the case of
  * <prefix>/storage/v2/query/records:batch call for which it enables retry
  */
-@Log
+
 @Service
 @RequestScope
 @Primary
@@ -48,6 +48,8 @@ public class UrlFetchServiceAzureImpl implements IUrlFetchService {
     @Autowired
     private UrlFetchServiceImpl urlFetchService;
 
+    @Autowired
+    private JaxRsDpsLog logger;
     /**
      * this method invokes retryFunction only for <prefix>/storage/v2/query/records:batch
      * calls otherwise invokes UrlFetchService.sendRequest(FetchServiceHttpRequest request)
@@ -84,7 +86,7 @@ public class UrlFetchServiceAzureImpl implements IUrlFetchService {
             try {
                 return this.urlFetchService.sendRequest(request);
             } catch (URISyntaxException e) {
-                log.info("HttpResponse is null due to URISyntaxException. " + e.getReason());
+                logger.error("HttpResponse is null due to URISyntaxException. " + e.getReason());
                 return null;
             }
         };

@@ -20,12 +20,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.github.resilience4j.retry.RetryConfig;
 import lombok.Data;
-import lombok.extern.java.Log;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
@@ -33,11 +32,14 @@ import java.time.Duration;
  * This class handles retry configuration logic for calls made to <prefix>/storage/v2/query/records:batch
  * to resolve intermittent CosmosDb Not found issue
  */
-@Log
+
 @Component
 @Data
-@ConfigurationProperties(prefix = "azure.urlfetchservice.retry")
+@ConfigurationProperties(prefix = "azure.storage.client.retry")
 public class RetryPolicy {
+
+    @Autowired
+    private JaxRsDpsLog logger;
 
     private int attempts = 3;
     private int waitDuration = 1000;
@@ -71,7 +73,7 @@ public class RetryPolicy {
                 notFoundElement.getAsJsonArray().isJsonNull()) {
             return false;
         }
-        log.info("Retry is set true");
+        logger.info("Retry is set true");
         return true;
     }
 }
