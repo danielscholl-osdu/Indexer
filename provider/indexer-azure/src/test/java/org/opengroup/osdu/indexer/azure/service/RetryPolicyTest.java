@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(MockitoJUnitRunner.class)
 public class RetryPolicyTest {
 
-    private static final String JSON1 = "{\n" +
+    private static final String JSON_RESPONSE_WITH_NOT_FOUND = "{\n" +
             "    \"records\": [\n" +
             "        {\n" +
             "            \"data\": {\n" +
@@ -73,7 +73,7 @@ public class RetryPolicyTest {
             "    \"conversionStatuses\": []\n" +
             "}";
 
-    private static final String JSON2 = "{\n" +
+    private static final String JSON_RESPONSE1_WITHOUT_NOT_FOUND = "{\n" +
             "    \"records\": [\n" +
             "        {\n" +
             "            \"data\": {\n" +
@@ -111,7 +111,7 @@ public class RetryPolicyTest {
             "    \"conversionStatuses\": []\n" +
             "}";
 
-    private static final String JSON3 = "{\n" +
+    private static final String JSON_RESPONSE2_WITHOUT_NOT_FOUND = "{\n" +
             " \"records\" :[],\n" +
             " \"conversionStatuses\":[]\n" +
             "}";
@@ -130,7 +130,7 @@ public class RetryPolicyTest {
     public void retry_should_be_true_for_json1() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
-        response.setBody(JSON1);
+        response.setBody(JSON_RESPONSE_WITH_NOT_FOUND);
         assert retry != null;
         boolean value = retry.test(response);
 
@@ -141,7 +141,7 @@ public class RetryPolicyTest {
     public void retry_should_be_false_for_json2() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
-        response.setBody(JSON2);
+        response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
         boolean value = retry.test(response);
 
         assertFalse(value);
@@ -151,7 +151,7 @@ public class RetryPolicyTest {
     public void retry_should_be_false_for_json3() {
         RetryConfig config = this.retryPolicy.retryConfig();
         Predicate<HttpResponse> retry = config.getResultPredicate();
-        response.setBody(JSON3);
+        response.setBody(JSON_RESPONSE2_WITHOUT_NOT_FOUND);
         boolean value = retry.test(response);
 
         assertFalse(value);
