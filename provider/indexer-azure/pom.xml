@@ -52,6 +52,7 @@
         <reactor-netty.version>1.0.7</reactor-netty.version>
         <reactor-core.version>3.4.6</reactor-core.version>
         <jackson-dataformat-xml.version>2.11.4</jackson-dataformat-xml.version>
+        <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -289,6 +290,11 @@
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-xml</artifactId>
             <version>${jackson-dataformat-xml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>oauth2-oidc-sdk</artifactId>
+            <version>${oauth2-oidc-sdk.version}</version>
         </dependency>
 
     </dependencies>
