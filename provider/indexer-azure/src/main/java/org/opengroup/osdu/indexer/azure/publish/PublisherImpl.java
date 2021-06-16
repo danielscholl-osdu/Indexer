@@ -73,7 +73,7 @@ public class PublisherImpl implements IPublisher {
         message.setContentType("application/json");
 
         try {
-            logger.info("Indexer publishes message " + headers.getCorrelationId());
+            logger.debug("Indexer publishes message " + headers.getCorrelationId());
             topicClientFactory.getClient(headers.getPartitionId(), serviceBusTopic).send(message);
         }
         catch (Exception e)
