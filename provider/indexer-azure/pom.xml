@@ -49,6 +49,9 @@
         <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
         <spring-security-oauth2.version>2.3.6.RELEASE</spring-security-oauth2.version>
         <spring-boot.version>2.1.18.RELEASE</spring-boot.version>
+        <reactor-netty.version>1.0.7</reactor-netty.version>
+        <reactor-core.version>3.4.6</reactor-core.version>
+        <jackson-dataformat-xml.version>2.11.4</jackson-dataformat-xml.version>
     </properties>
 
     <dependencyManagement>
@@ -271,6 +274,21 @@
             <artifactId>cobertura-maven-plugin</artifactId>
             <version>${cobertura-maven-plugin.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty</artifactId>
+            <version>${reactor-netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${reactor-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>${jackson-dataformat-xml.version}</version>
         </dependency>
 
     </dependencies>
