@@ -1,0 +1,28 @@
+# Default values for indexer-configmap.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+data:
+  log_level: ""  
+  schema_host: ""
+  authorize_api: ""
+  google_cloud_project: ""
+  redis_search_host: ""
+  redis_group_host: ""
+  security_https_certificate_trust: "true"
+  indexer_host: ""
+  storage_query_record_host: ""
+  storage_schema_host: ""
+  storage_query_record_for_conversion_host: ""
+  storage_hostname: ""
+  storage_records_batch_size: "20"
+  indexer_queue_host: ""
+  legaltag_api: ""
+  crs_api: ""
+  partition_api: ""
+  google_audiences: ""
+  indexer_que_service_mail: ""  
+
+conf:
+  configmap: "indexer-config"
+  app_name: "indexer"
