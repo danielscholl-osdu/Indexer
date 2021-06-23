@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: "{{ .Values.conf.app_name }}"
+  name: "{{ .Values.conf.configmap }}"
+  namespace: "{{ .Release.Namespace }}"
+data:
+  LOG_LEVEL: "{{ .Values.data.log_level }}"
+  SCHEMA_HOST: "{{ .Values.data.schema_host }}"
+  AUTHORIZE_API: "{{ .Values.data.authorize_api }}"
+  GOOGLE_CLOUD_PROJECT: "{{ .Values.data.google_cloud_project }}"
+  REDIS_SEARCH_HOST: "{{ .Values.data.redis_search_host }}"
+  REDIS_GROUP_HOST: "{{ .Values.data.redis_group_host }}"
+  SECURITY_HTTPS_CERTIFICATE_TRUST: "{{ .Values.data.security_https_certificate_trust }}"
+  INDEXER_HOST: "{{ .Values.data.indexer_host }}"
+  STORAGE_QUERY_RECORD_HOST: "{{ .Values.data.storage_query_record_host }}"
+  STORAGE_SCHEMA_HOST: "{{ .Values.data.storage_schema_host }}"
+  STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST: "{{ .Values.data.storage_query_record_for_conversion_host }}"
+  STORAGE_HOSTNAME: "{{ .Values.data.storage_hostname }}"
+  STORAGE_RECORDS_BATCH_SIZE: "{{ .Values.data.storage_records_batch_size }}"
+  INDEXER_QUEUE_HOST: "{{ .Values.data.indexer_queue_host }}"
+  LEGALTAG_API: "{{ .Values.data.legaltag_api }}"
+  CRS_API: "{{ .Values.data.crs_api }}"
+  PARTITION_API: "{{ .Values.data.partition_api }}"
+  GOOGLE_AUDIENCES: "{{ .Values.data.google_audiences }}"
+  INDEXER_QUE_SERVICE_MAIL: "{{ .Values.data.indexer_que_service_mail }}"
