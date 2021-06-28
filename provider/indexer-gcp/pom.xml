@@ -70,6 +70,11 @@
             <artifactId>google-api-client</artifactId>
             <version>1.30.11</version>
         </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-core</artifactId>
+            <version>1.38.1</version>
+        </dependency>
 
         <dependency>
             <groupId>org.elasticsearch</groupId>
