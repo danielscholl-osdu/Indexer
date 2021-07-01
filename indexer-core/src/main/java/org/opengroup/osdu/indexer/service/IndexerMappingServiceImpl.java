@@ -109,12 +109,9 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         }
 
         // data-source attributes
-        Map<String, Object> dataMapping = new HashMap<>();
-        if (schema.getDataSchema() != null) {
-            for (Map.Entry<String, Object> entry : schema.getDataSchema().entrySet()) {
-                dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue()));
-            }
-
+        // data-source attributes
+        Map<String, Object> dataMapping = this.getDataMapping(schema);
+        if (!dataMapping.isEmpty()) {
             // inner properties.data.properties block
             Map<String, Object> dataProperties = new HashMap<>();
             dataProperties.put(Constants.PROPERTIES, dataMapping);
@@ -131,6 +128,16 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         // don't add dynamic mapping
         documentMapping.put("dynamic", false);
         return documentMapping;
+    }
+
+    private Map<String, Object> getDataMapping(IndexSchema schema) {
+        Map<String, Object> dataMapping = new HashMap<>();
+        if (schema.getDataSchema() == null || schema.getDataSchema().isEmpty()) return dataMapping;
+
+        for (Map.Entry<String, Object> entry : schema.getDataSchema().entrySet()) {
+            dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue()));
+        }
+        return dataMapping;
     }
 
     @Override
