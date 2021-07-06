@@ -20,9 +20,12 @@ import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public interface IndexSchemaService {
+
+    IndexSchema getIndexerInputSchema(String kind, List<String> errors) throws AppException;
 
     IndexSchema getIndexerInputSchema(String kind, boolean invalidateCached) throws AppException;
 
