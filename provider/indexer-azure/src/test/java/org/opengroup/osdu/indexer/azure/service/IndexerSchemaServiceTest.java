@@ -31,6 +31,7 @@ import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.service.IndexSchemaServiceImpl;
 import org.opengroup.osdu.indexer.service.IndexerMappingService;
 import org.opengroup.osdu.indexer.service.SchemaService;
@@ -39,9 +40,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -403,5 +407,29 @@ public class IndexerSchemaServiceTest {
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
 
         assertFalse(this.sut.isStorageSchemaSyncRequired(kind, false));
+    }
+
+    @Test
+    public void should_returnErrors_givenSchemaProcessingException_getIndexerInputSchemaSchemaTest() throws UnsupportedEncodingException, URISyntaxException {
+        SchemaProcessingException processingException = new SchemaProcessingException("error processing schema");
+        when(schemaService.getSchema(any())).thenThrow(processingException);
+
+        List<String> errors = new ArrayList<>();
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, errors);
+
+        assertNotNull(indexSchema);
+        assertTrue(errors.contains("error processing schema"));
+    }
+
+    @Test
+    public void should_returnErrors_givenRuntimeException_getIndexerInputSchemaSchemaTest() throws UnsupportedEncodingException, URISyntaxException {
+        RuntimeException exception = new RuntimeException("error processing schema, RuntimeException exception thrown");
+        when(schemaService.getSchema(any())).thenThrow(exception);
+
+        List<String> errors = new ArrayList<>();
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, errors);
+
+        assertNotNull(indexSchema);
+        assertTrue(errors.contains("error processing schema, RuntimeException exception thrown"));
     }
 }
