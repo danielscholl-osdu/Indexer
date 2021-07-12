@@ -224,7 +224,7 @@ public class IndexerServiceImpl implements IndexerService {
                 List<String> errors = new ArrayList<>();
                 IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, errors);
                 if (!errors.isEmpty()) {
-                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, RequestStatus.INVALID_RECORD, String.join("|", errors), String.format("error  | kind: %s", kind));
+                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, String.join("|", errors), String.format("error  | kind: %s", kind));
                 } else if (schemaObj.isDataSchemaMissing()) {
                     this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, "schema not found", String.format("schema not found | kind: %s", kind));
                 }
