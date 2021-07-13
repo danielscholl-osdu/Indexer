@@ -45,7 +45,7 @@ public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient 
 
     private final IamCredentialsProvider iamCredentialsProvider = new IamCredentialsProvider();
 
-    @Value("GOOGLE_AUDIENCES")
+    @Value("${GOOGLE_AUDIENCES}")
     private String audiences;
 
     @Inject
