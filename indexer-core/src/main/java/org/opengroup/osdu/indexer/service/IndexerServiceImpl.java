@@ -14,8 +14,8 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
-
 import com.google.gson.GsonBuilder;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -30,33 +30,29 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
-import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.Constants;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
-import org.opengroup.osdu.indexer.logging.AuditLogger;
-import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
+import org.opengroup.osdu.core.common.model.entitlements.Acl;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
+import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.core.common.search.IndicesService;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.beanutils.NestedNullException;
+import org.opengroup.osdu.core.common.search.IndicesService;
+import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
+import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Service
@@ -129,8 +125,8 @@ public class IndexerServiceImpl implements IndexerService {
             }
 
             auditLogger.indexStarted(recordInfos.stream()
-                            .map(RecordInfo::getKind)
-                            .collect(Collectors.toList()));
+                    .map(RecordInfo::getKind)
+                    .collect(Collectors.toList()));
 
             // process schema change messages
             Map<String, OperationType> schemaMsgs = RecordInfo.getSchemaMsgs(recordInfos);
@@ -303,16 +299,32 @@ public class IndexerServiceImpl implements IndexerService {
         try {
             // index individual parts of kind
             String[] kindParts = storageRecord.getKind().split(":");
-
+            String authority = kindParts[0];
+            String source = kindParts[1];
+            String type = kindParts[2];
             document.setKind(storageRecord.getKind());
-            document.setNamespace(kindParts[0] + ":" + kindParts[1]);
-            document.setType(kindParts[2]);
+            document.setNamespace(authority + ":" + source);
+            document.setAuthority(authority);
+            document.setSource(source);
+            document.setType(type);
             document.setId(storageRecord.getId());
             document.setVersion(storageRecord.getVersion());
             document.setAcl(storageRecord.getAcl());
             document.setLegal(storageRecord.getLegal());
             if (storageRecord.getTags() != null) {
                 document.setTags(storageRecord.getTags());
+            }
+            if (!Strings.isNullOrEmpty(storageRecord.getCreateUser())) {
+                document.setCreateUser(storageRecord.getCreateUser());
+            }
+            if (!Strings.isNullOrEmpty(storageRecord.getCreateTime())) {
+                document.setCreateTime(storageRecord.getCreateTime());
+            }
+            if (!Strings.isNullOrEmpty(storageRecord.getModifyUser())) {
+                document.setModifyUser(storageRecord.getModifyUser());
+            }
+            if (!Strings.isNullOrEmpty(storageRecord.getModifyTime())) {
+                document.setModifyTime(storageRecord.getModifyTime());
             }
             RecordStatus recordStatus = this.jobStatus.getJobStatusByRecordId(storageRecord.getId());
             if (recordStatus.getIndexProgress().getStatusCode() == 0) {
@@ -464,6 +476,8 @@ public class IndexerServiceImpl implements IndexerService {
 
         indexerPayload.put(RecordMetaAttribute.ID.getValue(), record.getId());
         indexerPayload.put(RecordMetaAttribute.KIND.getValue(), record.getKind());
+        indexerPayload.put(RecordMetaAttribute.AUTHORITY.getValue(), record.getAuthority());
+        indexerPayload.put(RecordMetaAttribute.SOURCE.getValue(), record.getSource());
         indexerPayload.put(RecordMetaAttribute.NAMESPACE.getValue(), record.getNamespace());
         indexerPayload.put(RecordMetaAttribute.TYPE.getValue(), record.getType());
         indexerPayload.put(RecordMetaAttribute.VERSION.getValue(), record.getVersion());
@@ -474,6 +488,18 @@ public class IndexerServiceImpl implements IndexerService {
         indexerPayload.put(RecordMetaAttribute.INDEX_STATUS.getValue(), record.getIndexProgress());
         if (record.getAncestry() != null) {
             indexerPayload.put(RecordMetaAttribute.ANCESTRY.getValue(), record.getAncestry());
+        }
+        if (!Strings.isNullOrEmpty(record.getCreateUser())) {
+            indexerPayload.put(RecordMetaAttribute.CREATE_USER.getValue(), record.getCreateUser());
+        }
+        if (!Strings.isNullOrEmpty(record.getCreateTime())) {
+            indexerPayload.put(RecordMetaAttribute.CREATE_TIME.getValue(), record.getCreateTime());
+        }
+        if (!Strings.isNullOrEmpty(record.getModifyUser())) {
+            indexerPayload.put(RecordMetaAttribute.MODIFY_USER.getValue(), record.getModifyUser());
+        }
+        if (!Strings.isNullOrEmpty(record.getModifyTime())) {
+            indexerPayload.put(RecordMetaAttribute.MODIFY_TIME.getValue(), record.getModifyTime());
         }
         return indexerPayload;
     }
@@ -509,13 +535,13 @@ public class IndexerServiceImpl implements IndexerService {
 
     private void logAuditEvents(OperationType operationType, Consumer<List<String>> successEvent, Consumer<List<String>> failedEvent) {
         List<RecordStatus> succeededRecords = this.jobStatus.getRecordStatuses(IndexingStatus.SUCCESS, operationType);
-        if(!succeededRecords.isEmpty()) {
+        if (!succeededRecords.isEmpty()) {
             successEvent.accept(succeededRecords.stream().map(RecordStatus::succeededAuditLogMessage).collect(Collectors.toList()));
         }
         List<RecordStatus> skippedRecords = this.jobStatus.getRecordStatuses(IndexingStatus.SKIP, operationType);
         List<RecordStatus> failedRecords = this.jobStatus.getRecordStatuses(IndexingStatus.FAIL, operationType);
         failedRecords.addAll(skippedRecords);
-        if(!failedRecords.isEmpty()) {
+        if (!failedRecords.isEmpty()) {
             failedEvent.accept(failedRecords.stream().map(RecordStatus::failedAuditLogMessage).collect(Collectors.toList()));
         }
     }
