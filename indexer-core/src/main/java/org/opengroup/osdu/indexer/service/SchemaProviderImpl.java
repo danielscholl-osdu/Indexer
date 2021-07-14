@@ -58,18 +58,7 @@ public class SchemaProviderImpl implements SchemaService {
 
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        String schemaServiceSchema;
-
-        try {
-            schemaServiceSchema = getFromSchemaService(kind);
-        } catch (SchemaProcessingException ex) {
-            log.error(ex.getMessage(), ex);
-            return null;
-        } catch (RuntimeException ex) {
-            log.error(String.format("Failed to get the schema from the Schema service, kind: %s | message: %s", kind, ex.getMessage()), ex);
-            return null;
-        }
-
+        String schemaServiceSchema = getFromSchemaService(kind);
         return Objects.nonNull(schemaServiceSchema) ? schemaServiceSchema : getFromStorageService(kind);
     }
 

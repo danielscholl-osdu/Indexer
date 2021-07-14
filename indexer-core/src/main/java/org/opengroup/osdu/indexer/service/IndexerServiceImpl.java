@@ -15,7 +15,6 @@
 package org.opengroup.osdu.indexer.service;
 
 import com.google.gson.Gson;
-
 import com.google.gson.GsonBuilder;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -30,33 +29,34 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
-import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.Constants;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
-import org.opengroup.osdu.indexer.logging.AuditLogger;
-import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
+import org.opengroup.osdu.core.common.model.entitlements.Acl;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
+import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.core.common.search.IndicesService;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.beanutils.NestedNullException;
+import org.opengroup.osdu.core.common.search.IndicesService;
+import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
+import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Service
@@ -221,8 +221,11 @@ public class IndexerServiceImpl implements IndexerService {
             for (Map.Entry<String, Map<String, OperationType>> entry : upsertRecordMap.entrySet()) {
 
                 String kind = entry.getKey();
-                IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, false);
-                if (schemaObj.isDataSchemaMissing()) {
+                List<String> errors = new ArrayList<>();
+                IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, errors);
+                if (!errors.isEmpty()) {
+                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, String.join("|", errors), String.format("error  | kind: %s", kind));
+                } else if (schemaObj.isDataSchemaMissing()) {
                     this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, "schema not found", String.format("schema not found | kind: %s", kind));
                 }
 
