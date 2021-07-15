@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.aws.persistence;
 
+import org.opengroup.osdu.core.aws.secrets.SecretsManager;
 import org.opengroup.osdu.core.aws.ssm.ParameterStorePropertySource;
 import org.opengroup.osdu.core.aws.ssm.SSMConfig;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
@@ -51,11 +52,11 @@ public class ElasticRepositoryImpl implements IElasticRepository {
     @Value("${aws.elasticsearch.host}")
     String hostParameter;
 
-    @Value("${aws.elasticsearch.username}")
-    String usernameParameter;
+    @Value("${aws.elasticsearch.credentials.secret}")
+    String elasticCredentialsSecret;
 
-    @Value("${aws.elasticsearch.password}")
-    String passwordParameter;
+    @Value("${aws.region}")
+    private String amazonRegion;
 
     @Value("${aws.ssm}")
     String ssmEnabledString;
@@ -69,10 +70,11 @@ public class ElasticRepositoryImpl implements IElasticRepository {
             ssm = ssmConfig.amazonSSM();
             host = ssm.getProperty(hostParameter).toString();
             port = Integer.parseInt(ssm.getProperty(portParameter).toString());            
-            username = ssm.getProperty(usernameParameter).toString();            
-            password = ssm.getProperty(passwordParameter).toString();            
+
         }
-        
+        SecretsManager sm = new SecretsManager();
+        username = sm.getSecret(elasticCredentialsSecret,amazonRegion,"username");
+        password = sm.getSecret(elasticCredentialsSecret,amazonRegion,"password");
         //elastic expects username:password format
         usernameAndPassword = String.format("%s:%s", username, password);
     }
