@@ -2,11 +2,8 @@
 
 ### Table of contents <a name="TOC"></a>
 - [Indexer service](#indexer-service)
-  - [Table of contents <a name="TOC"></a>](#table-of-contents)
 - [Get indexing status <a name="get-indexing-status"></a>](#get-indexing-status)
 - [Reindex <a name="reindex"></a>](#reindex)
-- [Copy Index <a name="copy-index"></a>](#copy-index)
-- [Get task status <a name="get-task-status"></a>](#get-task-status)
 - [Schema Service adoption <a name="schema-service-adoption"></a>](#schema-service-adoption)
   - [R3 Schema Support <a name="r3-schema-support"></a>](#r3-schema-support)
 
@@ -56,20 +53,22 @@ The indexer is indexes attributes defined in the schema. Schema can be created a
 
 ## Get indexing status <a name="get-indexing-status"></a>
 
-Indexer service adds internal meta data to each record which registers the status of the indexing. The meta data includes the status and the last indexing date and time. This additional meta block helps to see the details of indexing. The format of the index meta block is as follows:
+Indexer service adds internal metadata to each record which registers the status of the indexing. The meta data includes the status and the last indexing date and time. This additional meta block helps to see the details of indexing. The format of the index meta block is as follows:
 
-```
-"index": {
-    "trace": [
-        String,
-        String
-    ],
-    "statusCode": Integer,
-    "lastUpdateTime": Datetime
+```json
+{
+  "index": {
+      "trace": [
+          String,
+          String
+      ],
+      "statusCode": Integer,
+      "lastUpdateTime": Datetime
+  }
 }
 ```
 Example:
-```
+```json
 {
     "results": [
         {
@@ -97,7 +96,7 @@ Details of the index block:
 
 You can query the index status using the following example query:
 
-```
+```bash
 curl --request POST \
   --url /api/search/v2/query \
   --header 'Authorization: Token' \
@@ -128,7 +127,7 @@ POST /api/indexer/v2/reindex
 
 <details><summary>**Curl**</summary>
 
-```
+```bash
 curl --request POST \
   --url '/api/indexer/v2/reindex' \
   --header 'accept: application/json' \
@@ -143,121 +142,11 @@ curl --request POST \
 
 [Back to table of contents](#TOC)
 
-## Copy Index <a name="copy-index"></a>
-
-Copy Index API can be used copy `kind` index from `common` to a private `data partition` search backend. To call it, kind from `common` partition should be provided as path parameter and private partition-id should be specified in OSDU-Data-Partition-Id header.
-
-__Note__: Copy Index API is intended for __only__ copying `kind` index from `common` cluster to private `partition` cluster, no other combination of data partitions are honored at this time.
-
-```
-POST /api/indexer/v2/copyIndex/copy/{kind}
-OSDU-Data-Partition-Id:OSDU
-```
-
-<details><summary>**Curl**</summary>
-
-```
-curl --request POST \
-  --url '/api/indexer/v2/copyIndex/copy/common:welldb:wellbore:1.0.0' \
-  --header 'accept: application/json' \
-  --header 'authorization: Bearer <JWT>' \
-  --header 'content-type: application/json' \
-  --header 'OSDU-Data-Partition-Id: OSDU'
-```
-</details>
-
-The successful response from the above request will be a `task-id`, this can be later used to track the status of the task via task status API(#get-task-status).
-
-```
-{ 
-  "task": "CrOX4STSQF6kgtSRdERhbw:92863567"
-}
-```
-
-[Back to table of contents](#TOC)
-
-## Get task status <a name="get-task-status"></a>
-
-Status of ongoing or completed index copy request for given `taskId` can retrieved via GET task status api.
-
-```
-GET /api/indexer/v2/copyIndex/taskStatus/{taskId}
-```
-
-<details><summary>**Curl**</summary>
-
-```
-curl --request GET \
-  --url '/api/indexer/v2/copyIndex/taskStatus/[taskid]]' \
-  --header 'accept: application/json' \
-  --header 'authorization: Bearer <JWT>' \
-  --header 'content-type: application/json' \
-  --header 'OSDU-Data-Partition-Id: OSDU'
-```
-</details>
-
-API will respond with status of task.
-
-```
-{
-    "completed": true,
-    "task": {
-        "node": "[nodeid]",
-        "id": 113159669,
-        "type": "transport",
-        "action": "indices:data/write/reindex",
-        "status": {
-            "total": 1530,
-            "updated": 0,
-            "created": 1530,
-            "deleted": 0,
-            "batches": 1,
-            "version_conflicts": 0,
-            "noops": 0,
-            "retries": {
-                "bulk": 0,
-                "search": 0
-            },
-            "throttled_millis": 0,
-            "requests_per_second": -1,
-            "throttled_until_millis": 0
-        },
-        "description": "reindex from [scheme=https host=host-id port=9243 query={\n  \"match_all\" : {\n    \"boost\" : 1.0\n  }\n}][common:welldb:wellbore:1.0.0] to [common:welldb:wellbore:1.0.0]",
-        "start_time_in_millis": 1539735233086,
-        "running_time_in_nanos": 1094744315,
-        "cancellable": true,
-        "headers": {}
-    },
-    "response": {
-        "took": 1084,
-        "timed_out": false,
-        "total": 1530,
-        "updated": 0,
-        "created": 1530,
-        "deleted": 0,
-        "batches": 1,
-        "version_conflicts": 0,
-        "noops": 0,
-        "retries": {
-            "bulk": 0,
-            "search": 0
-        },
-        "throttled_millis": 0,
-        "requests_per_second": -1,
-        "throttled_until_millis": 0,
-        "failures": []
-    }
-}
-``` 
-
-[Back to table of contents](#TOC)
-
 ##Schema Service adoption <a name="schema-service-adoption"></a>
 
 Indexer service is in adaptation process to use schemas from the Schema service instead of Storage Service.
 The Indexer Service retrieves a schema from the Schema Service if the schema is not found on the Storage Service.
-Change affects only Azure implementation so far.
-Later call to the Storage Service will be deprecated and then removed (after the end of the deprecation period).
+Change affects only Azure implementation so far. Later call to the Storage Service will be deprecated and then removed (after the end of the deprecation period).
 
 [Back to table of contents](#TOC)
 
