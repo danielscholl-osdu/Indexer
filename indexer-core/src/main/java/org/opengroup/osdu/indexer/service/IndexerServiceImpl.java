@@ -51,7 +51,12 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -217,8 +222,11 @@ public class IndexerServiceImpl implements IndexerService {
             for (Map.Entry<String, Map<String, OperationType>> entry : upsertRecordMap.entrySet()) {
 
                 String kind = entry.getKey();
-                IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, false);
-                if (schemaObj.isDataSchemaMissing()) {
+                List<String> errors = new ArrayList<>();
+                IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, errors);
+                if (!errors.isEmpty()) {
+                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, String.join("|", errors), String.format("error  | kind: %s", kind));
+                } else if (schemaObj.isDataSchemaMissing()) {
                     this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, "schema not found", String.format("schema not found | kind: %s", kind));
                 }
 

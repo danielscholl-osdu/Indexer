@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.azure.service;
+package org.opengroup.osdu.indexer.service;
 
 import org.apache.http.HttpStatus;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -31,26 +30,36 @@ import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
-import org.opengroup.osdu.indexer.service.IndexSchemaServiceImpl;
-import org.opengroup.osdu.indexer.service.IndexerMappingService;
-import org.opengroup.osdu.indexer.service.SchemaService;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@Ignore
 @RunWith(SpringRunner.class)
 @PrepareForTest({RestHighLevelClient.class})
 public class IndexerSchemaServiceTest {
@@ -128,7 +137,7 @@ public class IndexerSchemaServiceTest {
     }
 
     @Test
-    public void should_return_basic_schema_when_storage_returns_no_schema() {
+    public void should_return_basic_schema_when_storage_returns_no_schema() throws UnsupportedEncodingException, URISyntaxException {
         IndexSchema returnedSchema = this.sut.getIndexerInputSchema(kind, false);
 
         assertNotNull(returnedSchema.getDataSchema());
@@ -235,9 +244,9 @@ public class IndexerSchemaServiceTest {
         try {
             this.sut.processSchemaMessages(schemaMessages);
         } catch (AppException e){
-            assertEquals(e.getError().getCode(), RequestStatus.SCHEMA_CONFLICT);
-            assertEquals(e.getError().getMessage(), "error creating or merging index mapping");
-            assertEquals(e.getError().getReason(), reason);
+            assertEquals(RequestStatus.SCHEMA_CONFLICT, e.getError().getCode());
+            assertEquals("error creating or merging index mapping", e.getError().getMessage());
+            assertEquals(reason, e.getError().getReason());
         } catch (Exception e) {
             fail("Should not throw this exception " + e.getMessage());
         }
@@ -268,9 +277,9 @@ public class IndexerSchemaServiceTest {
         try {
             this.sut.processSchemaMessages(schemaMessages);
         } catch (AppException e){
-            assertEquals(e.getError().getCode(), HttpStatus.SC_FORBIDDEN);
-            assertEquals(e.getError().getMessage(), "blah");
-            assertEquals(e.getError().getReason(), reason);
+            assertEquals(HttpStatus.SC_FORBIDDEN, e.getError().getCode());
+            assertEquals("blah", e.getError().getMessage());
+            assertEquals(reason, e.getError().getReason());
         } catch (Exception e) {
             fail("Should not throw this exception " + e.getMessage());
         }
@@ -365,9 +374,9 @@ public class IndexerSchemaServiceTest {
         try {
             this.sut.syncIndexMappingWithStorageSchema(kind);
         } catch (AppException e) {
-            assertEquals(e.getError().getCode(), HttpStatus.SC_CONFLICT);
-            assertEquals(e.getError().getMessage(), "blah");
-            assertEquals(e.getError().getReason(), "Index deletion error");
+            assertEquals(HttpStatus.SC_CONFLICT, e.getError().getCode());
+            assertEquals("blah", e.getError().getMessage());
+            assertEquals("Index deletion error", e.getError().getReason());
         } catch (Exception e) {
             fail("Should not throw this exception " + e.getMessage());
         }
@@ -403,5 +412,29 @@ public class IndexerSchemaServiceTest {
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
 
         assertFalse(this.sut.isStorageSchemaSyncRequired(kind, false));
+    }
+
+    @Test
+    public void should_returnErrors_givenSchemaProcessingException_getIndexerInputSchemaSchemaTest() throws UnsupportedEncodingException, URISyntaxException {
+        SchemaProcessingException processingException = new SchemaProcessingException("error processing schema");
+        when(schemaService.getSchema(any())).thenThrow(processingException);
+
+        List<String> errors = new ArrayList<>();
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, errors);
+
+        assertNotNull(indexSchema);
+        assertTrue(errors.get(0).contains("error processing schema"));
+    }
+
+    @Test
+    public void should_returnErrors_givenRuntimeException_getIndexerInputSchemaSchemaTest() throws UnsupportedEncodingException, URISyntaxException {
+        RuntimeException exception = new RuntimeException("error processing schema, RuntimeException exception thrown");
+        when(schemaService.getSchema(any())).thenThrow(exception);
+
+        List<String> errors = new ArrayList<>();
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, errors);
+
+        assertNotNull(indexSchema);
+        assertTrue(errors.get(0).contains("error processing schema, RuntimeException exception thrown"));
     }
 }

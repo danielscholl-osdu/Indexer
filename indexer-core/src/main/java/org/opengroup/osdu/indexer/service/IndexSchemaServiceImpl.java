@@ -16,12 +16,6 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -38,18 +32,23 @@ import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     private static final String FLATTENED_SCHEMA = "_flattened";
-    private static final String WELLBORE_MARKER_SET = "WellboreMarkerSet";
-    private static final String MARKERS = "Markers";
-    private static final String WELL_LOG = "WellLog";
-    private static final String CURVES = "Curves";
 
     private final Gson gson = new Gson();
 
@@ -73,14 +72,14 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             schemaMsgs.entrySet().forEach(msg -> {
                 try {
                     processSchemaEvents(restClient, msg);
-                } catch (IOException | ElasticsearchStatusException e) {
+                } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
                     throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
                 }
             });
         }
     }
 
-    private void processSchemaEvents(RestHighLevelClient restClient, Map.Entry<String, OperationType> msg) throws IOException, ElasticsearchStatusException {
+    private void processSchemaEvents(RestHighLevelClient restClient, Map.Entry<String, OperationType> msg) throws IOException, ElasticsearchStatusException, URISyntaxException {
         String kind = msg.getKey();
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
 
@@ -123,51 +122,59 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     }
 
     @Override
-    public IndexSchema getIndexerInputSchema(String kind, boolean invalidateCached) throws AppException {
+    public IndexSchema getIndexerInputSchema(String kind, List<String> errors) throws AppException, UnsupportedEncodingException, URISyntaxException {
+        try {
+            return getIndexerInputSchema(kind, false);
+        } catch (SchemaProcessingException ex) {
+            log.error(ex.getMessage(), ex);
+            errors.add(ex.getMessage());
+        } catch (RuntimeException ex) {
+            String msg = String.format("Failed to get the schema from the Schema service, kind: %s | message: %s", kind, ex.getMessage());
+            log.error(msg, ex);
+            errors.add(msg);
+        }
+        return this.getEmptySchema(kind);
+    }
+
+    @Override
+    public IndexSchema getIndexerInputSchema(String kind, boolean invalidateCached) throws AppException, UnsupportedEncodingException, URISyntaxException {
 
         if (invalidateCached) {
             this.invalidateCache(kind);
         }
 
-        try {
-            String schema = (String) this.schemaCache.get(kind);
+        String schema = (String) this.schemaCache.get(kind);
+        if (Strings.isNullOrEmpty(schema)) {
+            // get from storage
+            schema = this.schemaProvider.getSchema(kind);
             if (Strings.isNullOrEmpty(schema)) {
-                // get from storage
-                schema = getSchema(kind);
-                if (Strings.isNullOrEmpty(schema)) {
-                    Schema basicSchema = Schema.builder().kind(kind).build();
-                    return normalizeSchema(gson.toJson(basicSchema));
-                } else {
-                    // cache the schema
-                    this.schemaCache.put(kind, schema);
-                    // get flatten schema and cache it
-                    IndexSchema flatSchemaObj = normalizeSchema(schema);
-                    if (flatSchemaObj != null) {
-                        this.schemaCache.put(kind + FLATTENED_SCHEMA, gson.toJson(flatSchemaObj));
-                    }
-                    return flatSchemaObj;
-                }
+                return this.getEmptySchema(kind);
             } else {
-                // search flattened schema in memcache
-                String flattenedSchema = (String) this.schemaCache.get(kind + FLATTENED_SCHEMA);
-                if (Strings.isNullOrEmpty(flattenedSchema)) {
-                    Schema basicSchema = Schema.builder().kind(kind).build();
-                    return normalizeSchema(gson.toJson(basicSchema));
+                // cache the schema
+                this.schemaCache.put(kind, schema);
+                // get flatten schema and cache it
+                IndexSchema flatSchemaObj = normalizeSchema(schema);
+                if (flatSchemaObj != null) {
+                    this.schemaCache.put(kind + FLATTENED_SCHEMA, gson.toJson(flatSchemaObj));
                 }
-                return this.gson.fromJson(flattenedSchema, IndexSchema.class);
+                return flatSchemaObj;
             }
-        } catch (AppException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Schema parse/read error", "Error while reading schema via storage service.", e);
+        } else {
+            // search flattened schema in memcache
+            String flattenedSchema = (String) this.schemaCache.get(kind + FLATTENED_SCHEMA);
+            if (Strings.isNullOrEmpty(flattenedSchema)) {
+                return this.getEmptySchema(kind);
+            }
+            return this.gson.fromJson(flattenedSchema, IndexSchema.class);
         }
     }
 
-    private String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
-        return this.schemaProvider.getSchema(kind);
+    private IndexSchema getEmptySchema(String kind) {
+        Schema basicSchema = Schema.builder().kind(kind).build();
+        return normalizeSchema(gson.toJson(basicSchema));
     }
 
-    public void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException {
+    public void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException, URISyntaxException {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
             if (this.indicesService.isIndexExist(restClient, index)) {
@@ -209,7 +216,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 for (SchemaItem schemaItem : schemaObj.getSchema()) {
                     String dataType = schemaItem.getKind();
                     Object elasticDataType = TypeMapper.getIndexerType(dataType, ElasticType.TEXT.getValue());
-                    if(schemaItem.getProperties() != null){
+                    if (schemaItem.getProperties() != null) {
                         HashMap<String, Object> propertiesMap = normalizeInnerProperties(schemaItem);
                         elasticDataType = TypeMapper.getObjectsArrayMapping(dataType, propertiesMap);
                     }
@@ -250,12 +257,12 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         HashMap<String, Object> propertiesMap = new HashMap<>();
         for (SchemaItem propertiesItem : schemaItem.getProperties()) {
             String propertiesItemKind = propertiesItem.getKind();
-            Object propertiesElasticType = TypeMapper.getIndexerType(propertiesItemKind,ElasticType.TEXT.getValue());
-            if(propertiesItem.getProperties() != null){
+            Object propertiesElasticType = TypeMapper.getIndexerType(propertiesItemKind, ElasticType.TEXT.getValue());
+            if (propertiesItem.getProperties() != null) {
                 HashMap<String, Object> innerProperties = normalizeInnerProperties(propertiesItem);
                 propertiesElasticType = TypeMapper.getObjectsArrayMapping(propertiesItemKind, innerProperties);
             }
-            propertiesMap.put(propertiesItem.getPath(),propertiesElasticType);
+            propertiesMap.put(propertiesItem.getPath(), propertiesElasticType);
         }
         return propertiesMap;
     }
