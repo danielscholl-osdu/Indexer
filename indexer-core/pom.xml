@@ -16,7 +16,7 @@
 
 	<properties>
 		<commons-beanutils.version>1.9.4</commons-beanutils.version>
-		<osdu.oscorecommon.version>0.10.0</osdu.oscorecommon.version>
+		<osdu.oscorecommon.version>0.11.0-rc1</osdu.oscorecommon.version>
 	</properties>
 
 	<dependencies>
