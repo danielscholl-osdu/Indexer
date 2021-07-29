@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.RequestScope;
+import springfox.documentation.annotations.ApiIgnore;
 
 @Log
 @RestController
@@ -51,6 +52,7 @@ public class CleanupIndiciesApi {
   @Autowired
   private AuditLogger auditLogger;
 
+  @ApiIgnore
   @PostMapping(path = "/index-cleanup", consumes = "application/json")
   @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
   public ResponseEntity cleanupIndices(@NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
