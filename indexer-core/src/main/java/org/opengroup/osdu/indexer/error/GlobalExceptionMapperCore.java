@@ -83,6 +83,12 @@ public class GlobalExceptionMapperCore extends ResponseEntityExceptionHandler {
             this.logger.warning(exceptionMsg, e);
         }
 
-        return new ResponseEntity<Object>(e.getError(), HttpStatus.resolve(e.getError().getCode()));
+        // Support for non standard HttpStatus Codes
+        HttpStatus httpStatus = HttpStatus.resolve(e.getError().getCode());
+        if (httpStatus == null) {
+            return ResponseEntity.status(e.getError().getCode()).body(e);
+        } else {
+            return new ResponseEntity<>(e.getError(), httpStatus);
+        }
     }
 }
