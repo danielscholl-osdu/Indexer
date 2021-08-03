@@ -17,7 +17,6 @@ package org.opengroup.osdu.indexer.service;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
@@ -41,10 +40,6 @@ import org.springframework.web.context.annotation.RequestScope;
 @Service
 @RequestScope
 public class AttributeParsingServiceImpl implements IAttributeParsingService {
-
-    private static final String GEOJSON = "GeoJSON";
-    private static final String GEOMETRY_COLLECTION = "geometrycollection";
-    private static final String GEOMETRIES = "geometries";
 
     @Inject
     private NumberParser numberParser;
@@ -159,9 +154,7 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
     }
 
     @Override
-    public void tryParseGeopoint(String recordId, String attributeName, Map<String, Object> storageRecordData, Map<String, Object> dataMap) {
-
-        Object attributeVal = storageRecordData.get(attributeName);
+    public void tryParseGeopoint(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
 
         try {
             Type type = new TypeToken<Map<String, Double>>() {}.getType();
@@ -174,16 +167,6 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
             if (position == null || position.isEmpty()) return;
 
             dataMap.put(attributeName, position);
-
-            // check if geo shape is not there and if it is not then create it in the schema as well as create the data.
-            LinkedTreeMap<String, Object> map = (LinkedTreeMap) storageRecordData.get(GEOJSON);
-            if (map == null || map.isEmpty()) {
-                Map<String, Object> geometry = this.geometryConversionService.getGeopointGeoJson(positionMap);
-
-                if (geometry == null) return;
-
-                dataMap.put(DATA_GEOJSON_TAG, geometry);
-            }
         } catch (JsonSyntaxException | IllegalArgumentException e) {
             String parsingError = String.format("geo-point parsing error: %s attribute: %s | value: %s", e.getMessage(), attributeName, attributeVal);
             jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, parsingError, String.format("record-id: %s | %s", recordId, parsingError));
