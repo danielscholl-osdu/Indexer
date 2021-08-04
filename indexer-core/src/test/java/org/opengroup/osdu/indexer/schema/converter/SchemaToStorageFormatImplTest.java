@@ -60,6 +60,11 @@ public class SchemaToStorageFormatImplTest {
         testSingleFile("/converter/bad-schema/wrong-definitions-and-missed-type.json", KIND);
     }
 
+    @Test(expected = SchemaProcessingException.class)
+    public void wrongArrayDefinitions() {
+        testSingleFile("/converter/bad-schema/wrong-array.json", KIND);
+    }
+
     @Test
     public void firstSchemaPassed() {
         testSingleFile("/converter/basic/schema.json", "osdu:osdu:Wellbore:1.0.0");

@@ -14,6 +14,15 @@
 
 package org.opengroup.osdu.indexer.schema.converter;
 
+import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.search.Preconditions;
+import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
+import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.schema.converter.tags.*;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,18 +33,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.http.HttpStatus;
-import org.opengroup.osdu.core.common.Constants;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.search.Preconditions;
-import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
-import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
-import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
-import org.opengroup.osdu.indexer.schema.converter.tags.AllOfItem;
-import org.opengroup.osdu.indexer.schema.converter.tags.Definition;
-import org.opengroup.osdu.indexer.schema.converter.tags.Definitions;
-import org.opengroup.osdu.indexer.schema.converter.tags.Items;
-import org.opengroup.osdu.indexer.schema.converter.tags.TypeProperty;
 
 public class PropertiesProcessor {
 
@@ -185,9 +182,14 @@ public class PropertiesProcessor {
             }
 
             if ("array".equals(entry.getValue().getType())) {
-
                 Items items = entry.getValue().getItems();
-                if(Objects.nonNull(items) && items.isComplexTypeItems()){
+
+                if (items == null) {
+                    errors.add(String.format("Invalid array attribute: '%s', missing or null 'items'", entry.getKey()));
+                    return Stream.empty();
+                }
+
+                if (Objects.nonNull(items) && items.isComplexTypeItems()) {
                     return processComplexTypeItems(entry, items);
                 }
 
@@ -215,7 +217,7 @@ public class PropertiesProcessor {
             if (Objects.nonNull(entry.getValue().getRef())) {
                 PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions
                         , pathPrefixWithDot + entry.getKey(), new SchemaConverterPropertiesConfig());
-                Stream<Map<String, Object>> refResult =  propertiesProcessor.processRef(entry.getValue().getRef());
+                Stream<Map<String, Object>> refResult = propertiesProcessor.processRef(entry.getValue().getRef());
                 errors.addAll(propertiesProcessor.getErrors());
                 return refResult;
             }
@@ -232,28 +234,28 @@ public class PropertiesProcessor {
         Map<String, String> indexHint = entry.getValue().getIndexHint();
 
         String indexingType = Objects.isNull(indexHint) ?
-            schemaConverterConfig.getDefaultObjectArraysType() :
-            indexHint.getOrDefault(TYPE_KEY,schemaConverterConfig.getDefaultObjectArraysType());
+                schemaConverterConfig.getDefaultObjectArraysType() :
+                indexHint.getOrDefault(TYPE_KEY, schemaConverterConfig.getDefaultObjectArraysType());
 
-        if(schemaConverterConfig.getProcessedArraysTypes().contains(indexingType)){
+        if (schemaConverterConfig.getProcessedArraysTypes().contains(indexingType)) {
             PropertiesProcessor propertiesProcessor = new PropertiesProcessor(definitions, new SchemaConverterPropertiesConfig());
 
             Stream<Map<String, Object>> propertiesStream = Stream.empty();
 
-            if(Objects.nonNull(items.getProperties())){
+            if (Objects.nonNull(items.getProperties())) {
                 propertiesStream = items.getProperties().entrySet().stream().flatMap(propertiesProcessor::processPropertyEntry);
             }
-            if (Objects.nonNull(items.getRef())){
+            if (Objects.nonNull(items.getRef())) {
                 propertiesStream = Stream.concat(propertiesStream, propertiesProcessor.processRef(items.getRef()));
             }
-            if(Objects.nonNull(items.getAllOf())){
+            if (Objects.nonNull(items.getAllOf())) {
                 propertiesStream = Stream.concat(propertiesStream, items.getAllOf().stream().flatMap(propertiesProcessor::processItem));
             }
             return storageSchemaObjectArrayEntry(
-                indexingType,
-                entry.getKey(),
-                propertiesStream);
-        }else {
+                    indexingType,
+                    entry.getKey(),
+                    propertiesStream);
+        } else {
             return storageSchemaEntry(indexingType, pathPrefixWithDot + entry.getKey());
         }
     }
@@ -300,14 +302,14 @@ public class PropertiesProcessor {
         return Stream.of(map);
     }
 
-    private Stream<Map<String, Object>> storageSchemaObjectArrayEntry(String kind, String path,Stream<Map<String, Object>> mapStream) {
+    private Stream<Map<String, Object>> storageSchemaObjectArrayEntry(String kind, String path, Stream<Map<String, Object>> mapStream) {
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
         Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
 
         Map<String, Object> map = new HashMap<>();
         map.put("kind", kind);
         map.put("path", path);
-        map.put(Constants.PROPERTIES,mapStream.collect(Collectors.toList()));
+        map.put(Constants.PROPERTIES, mapStream.collect(Collectors.toList()));
         return Stream.of(map);
     }
 
