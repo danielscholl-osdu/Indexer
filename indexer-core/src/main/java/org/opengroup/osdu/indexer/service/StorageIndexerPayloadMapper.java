@@ -123,7 +123,7 @@ public class StorageIndexerPayloadMapper {
 					this.attributeParsingService.tryParseDate(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case GEO_POINT:
-					this.attributeParsingService.tryParseGeopoint(recordId, schemaPropertyName, storageRecordData, dataCollectorMap);
+					this.attributeParsingService.tryParseGeopoint(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
 					break;
 				case GEO_SHAPE:
 					this.attributeParsingService.tryParseGeojson(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
