@@ -303,14 +303,11 @@ public class AttributeParsingServiceImplTest {
         positionMap.put("longitude", 10.45);
         positionMap.put("latitude", 90.0);
 
-        Map<String, Object> storageData = new HashMap<>();
-        storageData.put("location", positionMap);
-
         when(this.geometryConversionService.tryGetGeopoint(positionMap)).thenReturn(positionMap);
 
         Map<String, Object> dataMap = new HashMap<>();
 
-        this.sut.tryParseGeopoint("", "location", storageData, dataMap);
+        this.sut.tryParseGeopoint("", "location", positionMap, dataMap);
 
         assertFalse(dataMap.isEmpty());
     }
