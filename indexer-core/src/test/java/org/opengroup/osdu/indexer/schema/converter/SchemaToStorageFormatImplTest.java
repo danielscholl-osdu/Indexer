@@ -126,6 +126,11 @@ public class SchemaToStorageFormatImplTest {
     }
 
     @Test
+    public void nestedIndexHints() {
+        testSingleFile("/converter/index-hints/nested-type-schema.json", "osdu:osdu:Wellbore:1.0.0");
+    }
+
+    @Test
     public void folderPassed() throws URISyntaxException, IOException {
 
         String folder = "/converter/R3-json-schema";
