@@ -146,6 +146,13 @@ public class GeoShapeParserTest {
     }
 
     @Test
+    public void should_parseValidFeatureCollection_withZCoordinate() {
+        String shapeJson = "{\"type\":\"FeatureCollection\",\"bbox\":null,\"features\":[{\"type\":\"Feature\",\"bbox\":null,\"geometry\":{\"type\":\"Point\",\"bbox\":null,\"coordinates\":[5.7500000010406245,59.000000000399105, 1.0]},\"properties\":{}}],\"properties\":{},\"persistableReferenceCrs\":null,\"persistableReferenceUnitZ\":\"{\\\"scaleOffset\\\":{\\\"scale\\\":1.0,\\\"offset\\\":0.0},\\\"symbol\\\":\\\"m\\\",\\\"baseMeasurement\\\":{\\\"ancestry\\\":\\\"Length\\\",\\\"type\\\":\\\"UM\\\"},\\\"type\\\":\\\"USO\\\"}\"}";
+
+        this.validateInput(this.sut::parseGeoJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
     public void should_throwException_parseUnsupportedType_feature() {
         String shapeJson = "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-80.724878,35.265454],[-80.722646,35.260338],[-80.720329,35.260618],[-80.718698,35.260267],[-80.715093,35.260548],[-80.71681,35.255361],[-80.710887,35.255361],[-80.703248,35.265033],[-80.704793,35.268397],[-80.70857,35.268257],[-80.712518,35.270359],[-80.715179,35.267696],[-80.721359,35.267276],[-80.724878,35.265454]]]},\"properties\":{\"name\":\"Plaza Road Park\"}}";
 
