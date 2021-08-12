@@ -14,16 +14,14 @@ variables:
   GCP_DOMAIN: cloud.slb-ds.com
   GCP_STORAGE_URL: https://osdu-indexer-dot-opendes.appspot.com/api/storage/v2/
 
-  OSDU_GCP_APPLICATION_NAME: os-indexer
   OSDU_GCP_SERVICE: indexer
   OSDU_GCP_VENDOR: gcp
   OSDU_GCP_QUEUE_SA_EMAIL: pub-sub-indexer-queue@nice-etching-277309.iam.gserviceaccount.com
-  OSDU_GCP_SERVICE_ACCOUNT: osdu-gcp-sa@nice-etching-277309.iam.gserviceaccount.com
-  OSDU_SECURITY_HTTPS_CERTIFICATE_TRUST: 'true'
-  OSDU_GCP_STORAGE_RECORDS_BATCH_SIZE: 20
-  OSDU_GCP_DATA_GROUP: osdu
-  OSDU_GCP_ENV_VARS: AUTHORIZE_API=$OSDU_GCP_ENTITLEMENTS_V2_URL,GOOGLE_CLOUD_PROJECT=$OSDU_GCP_PROJECT,REDIS_SEARCH_HOST=$REDIS_SEARCH_HOST,REDIS_GROUP_HOST=$REDIS_GROUP_HOST,SECURITY_HTTPS_CERTIFICATE_TRUST=$OSDU_SECURITY_HTTPS_CERTIFICATE_TRUST,INDEXER_HOST=$OSDU_GCP_INDEXER_HOST,STORAGE_QUERY_RECORD_HOST=$OSDU_GCP_STORAGE_QUERY_RECORD_HOST,STORAGE_SCHEMA_HOST=$OSDU_GCP_STORAGE_SCHEMA_HOST,STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST=$OSDU_GCP_STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST,STORAGE_HOSTNAME=$OSDU_GCP_STORAGE_HOSTNAME,STORAGE_RECORDS_BATCH_SIZE=$OSDU_GCP_STORAGE_RECORDS_BATCH_SIZE,INDEXER_QUEUE_HOST=$OSDU_GCP_INDEXER_QUEUE_HOST,LEGALTAG_API=$OSDU_GCP_LEGALTAG_API,CRS_API=$OSDU_GCP_CRS_API,DATA_GROUP=$OSDU_GCP_DATA_GROUP,GOOGLE_AUDIENCES=$GOOGLE_AUDIENCE,PARTITION_API=$OSDU_GCP_PARTITION_API,INDEXER_QUE_SERVICE_MAIL=$OSDU_GCP_QUEUE_SA_EMAIL,SCHEMA_HOST=$OSDU_GCP_SCHEMA_URL/api/schema-service/v1/schema --vpc-connector=$OSDU_GCP_VPC_CONNECTOR
-  OSDU_GCP_TEST_SUBDIR: testing/$OSDU_GCP_SERVICE-test-$OSDU_GCP_VENDOR
+  OSDU_GCP_K8S_ACCOUNT: workload-identity-indexer
+  OSDU_GCP_HELM_CONFIG_SERVICE_VARS: "--set data.log_level=INFO --set data.schema_host=$OSDU_GCP_SCHEMA_URL  --set data.google_cloud_project=$OSDU_GCP_PROJECT --set data.redis_search_host=$REDIS_SEARCH_HOST --set data.redis_group_host=$REDIS_GROUP_HOST --set data.indexer_queue_host=$OSDU_GCP_INDEXER_QUEUE_URL --set data.crs_api=$OSDU_GCP_CRS_API --set data.partition_api=$OSDU_GCP_PARTITION_API --set data.google_audiences=$GOOGLE_AUDIENCE --set data.indexer_que_service_mail=$OSDU_GCP_QUEUE_SA_EMAIL"
+  OSDU_GCP_HELM_DEPLOYMENT_SERVICE_VARS: "--set data.image=$CI_REGISTRY_IMAGE/osdu-gcp:$CI_COMMIT_SHORT_SHA --set data.serviceAccountName=$OSDU_GCP_K8S_ACCOUNT --set data.limits_cpu=1 --set data.limits_memory=1G"
+  OSDU_GCP_HELM_CONFIG_SERVICE: indexer-config
+  OSDU_GCP_HELM_DEPLOYMENT_SERVICE: indexer-deploy
   OSDU_GCP_HELM_PACKAGE_CHARTS: "devops/gcp/deploy devops/gcp/configmap"
 
   IBM_BUILD_SUBDIR: provider/indexer-ibm
@@ -60,7 +58,7 @@ include:
 
   - project: 'osdu/platform/ci-cd-pipelines'
     ref: "master"
-    file: 'cloud-providers/osdu-gcp-cloudrun.yml'
+    file: 'cloud-providers/osdu-gcp-gke.yml'
 
 
 aws-test-java:
