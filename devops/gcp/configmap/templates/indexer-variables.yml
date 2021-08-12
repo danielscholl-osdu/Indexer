@@ -6,6 +6,8 @@ metadata:
   name: "{{ .Values.conf.configmap }}"
   namespace: "{{ .Release.Namespace }}"
 data:
+  KEY_RING: "{{ .Values.data.key_ring }}"
+  KMS_KEY: "{{ .Values.data.kms_key }}"
   LOG_LEVEL: "{{ .Values.data.log_level }}"
   SCHEMA_HOST: "{{ .Values.data.schema_host }}"
   AUTHORIZE_API: "{{ .Values.data.authorize_api }}"
@@ -13,7 +15,6 @@ data:
   REDIS_SEARCH_HOST: "{{ .Values.data.redis_search_host }}"
   REDIS_GROUP_HOST: "{{ .Values.data.redis_group_host }}"
   SECURITY_HTTPS_CERTIFICATE_TRUST: "{{ .Values.data.security_https_certificate_trust }}"
-  INDEXER_HOST: "{{ .Values.data.indexer_host }}"
   STORAGE_QUERY_RECORD_HOST: "{{ .Values.data.storage_query_record_host }}"
   STORAGE_SCHEMA_HOST: "{{ .Values.data.storage_schema_host }}"
   STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST: "{{ .Values.data.storage_query_record_for_conversion_host }}"
