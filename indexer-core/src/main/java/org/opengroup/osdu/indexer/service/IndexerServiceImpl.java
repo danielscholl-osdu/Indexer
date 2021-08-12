@@ -322,12 +322,8 @@ public class IndexerServiceImpl implements IndexerService {
             if (storageRecord.getTags() != null) {
                 document.setTags(storageRecord.getTags());
             }
-            if (!Strings.isNullOrEmpty(storageRecord.getCreateUser())) {
-                document.setCreateUser(storageRecord.getCreateUser());
-            }
-            if (!Strings.isNullOrEmpty(storageRecord.getCreateTime())) {
-                document.setCreateTime(storageRecord.getCreateTime());
-            }
+            document.setCreateUser(storageRecord.getCreateUser());
+            document.setCreateTime(storageRecord.getCreateTime());
             if (!Strings.isNullOrEmpty(storageRecord.getModifyUser())) {
                 document.setModifyUser(storageRecord.getModifyUser());
             }
@@ -497,12 +493,8 @@ public class IndexerServiceImpl implements IndexerService {
         if (record.getAncestry() != null) {
             indexerPayload.put(RecordMetaAttribute.ANCESTRY.getValue(), record.getAncestry());
         }
-        if (!Strings.isNullOrEmpty(record.getCreateUser())) {
-            indexerPayload.put(RecordMetaAttribute.CREATE_USER.getValue(), record.getCreateUser());
-        }
-        if (!Strings.isNullOrEmpty(record.getCreateTime())) {
-            indexerPayload.put(RecordMetaAttribute.CREATE_TIME.getValue(), record.getCreateTime());
-        }
+        indexerPayload.put(RecordMetaAttribute.CREATE_USER.getValue(), record.getCreateUser());
+        indexerPayload.put(RecordMetaAttribute.CREATE_TIME.getValue(), record.getCreateTime());
         if (!Strings.isNullOrEmpty(record.getModifyUser())) {
             indexerPayload.put(RecordMetaAttribute.MODIFY_USER.getValue(), record.getModifyUser());
         }
