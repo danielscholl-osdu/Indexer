@@ -253,7 +253,7 @@ public class PropertiesProcessor {
             }
             return storageSchemaObjectArrayEntry(
                     indexingType,
-                    entry.getKey(),
+                    pathPrefixWithDot + entry.getKey(),
                     propertiesStream);
         } else {
             return storageSchemaEntry(indexingType, pathPrefixWithDot + entry.getKey());
