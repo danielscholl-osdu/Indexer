@@ -2,11 +2,11 @@
   "schemaInfo": {
     "schemaIdentity": {
       "authority": "tenant1",
-      "source": "wks",
+      "source": "indexer",
       "entityType": "master-data--Wellbore",
-      "schemaVersionMajor": "2",
+      "schemaVersionMajor": "1",
       "schemaVersionMinor": "0",
-      "schemaVersionPatch": "3"
+      "schemaVersionPatch": "0"
     },
     "status": "DEVELOPMENT"
   },
