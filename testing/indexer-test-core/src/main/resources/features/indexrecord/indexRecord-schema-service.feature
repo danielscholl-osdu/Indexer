@@ -7,7 +7,7 @@ Feature: Indexing of the documents
       | tenant1:indexer:test-data--Integration:1.0.0    | tenant1-indexer-test-data--integration-1.0.0    | index_records_1                |
       | tenant1:indexer:test-data--Integration:2.0.0    | tenant1-indexer-test-data--integration-2.0.0    | index_records_2                |
       | tenant1:indexer:test-data--Integration:3.0.0    | tenant1-indexer-test-data--integration-3.0.0    | index_records_3                |
-      | tenant1:indexer:master-data--Wellbore:1.0.0         | tenant1-indexer-master-data--wellbore-1.0.0         | r3-index_record_wks_master     |
+      | tenant1:wks:master-data--Wellbore:2.0.3         | tenant1-wks-master-data--wellbore-2.0.3         | r3-index_record_wks_master     |
       | tenant1:wks:ArraysOfObjectsTestCollection:4.0.0 | tenant1-wks-arraysofobjectstestcollection-4.0.0 | r3-index_record_arrayofobjects |
 
   Scenario Outline: Ingest the record and Index in the Elastic Search
@@ -43,7 +43,7 @@ Feature: Indexing of the documents
 
     Examples:
       | kind                                      | recordFile                   | number | index                                     | acl                            | field                                   | top_left_latitude | top_left_longitude | bottom_right_latitude | bottom_right_longitude |
-      | "tenant1:indexer:master-data--Wellbore:1.0.0" | "r3-index_record_wks_master" | 1      | "tenant1-indexer-master-data--wellbore-1.0.0" | "data.default.viewers@tenant1" | "data.SpatialLocation.Wgs84Coordinates" | 52                | -100               | 0                     | 100                    |
+      | "tenant1:wks:master-data--Wellbore:2.0.3" | "r3-index_record_wks_master" | 1      | "tenant1-wks-master-data--wellbore-2.0.3" | "data.default.viewers@tenant1" | "data.SpatialLocation.Wgs84Coordinates" | 52                | -100               | 0                     | 100                    |
 
   Scenario Outline: Ingest the r3-record with arrays of objects and hints in schema and Index in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
