@@ -34,9 +34,9 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <cucumber.version>1.2.5</cucumber.version>
-        <azure.keyvault.version>4.1.0</azure.keyvault.version>
         <junit.jupiter.version>5.6.0</junit.jupiter.version>
         <elasticsearch.version>7.8.1</elasticsearch.version>
+        <os-core-common.version>0.11.0-SNAPSHOT</os-core-common.version>
     </properties>
 
     <dependencies>
@@ -46,8 +46,25 @@
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-test-core</artifactId>
             <version>0.11.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-jdk14</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>org.opengroup.osdu</groupId>
+            <artifactId>os-core-common</artifactId>
+            <version>${os-core-common.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-common</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <!-- Azure dependencies -->
         <!--Added dependency for utilizing azure service principle class-->
         <dependency>
@@ -59,6 +76,10 @@
                 <exclusion>
                     <groupId>com.azure</groupId>
                     <artifactId>azure-core-http-netty</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -72,11 +93,10 @@
             <artifactId>netty-transport</artifactId>
             <version>4.1.15.Final</version>
         </dependency>
-
         <dependency>
             <groupId>com.azure</groupId>
-            <artifactId>azure-security-keyvault-secrets</artifactId>
-            <version>${azure.keyvault.version}</version>
+            <artifactId>azure-core-http-netty</artifactId>
+            <version>1.2.0</version>
         </dependency>
 
         <!-- Testing -->
@@ -169,9 +189,29 @@
 
         <!--Logging-->
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.30</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.13.3</version>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.12.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.12.2</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
