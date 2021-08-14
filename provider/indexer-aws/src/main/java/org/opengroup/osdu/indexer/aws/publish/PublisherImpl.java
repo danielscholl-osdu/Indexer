@@ -18,6 +18,7 @@ import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.AmazonSNS;
 
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
 import org.opengroup.osdu.core.aws.sns.PublishRequestBuilder;
@@ -40,11 +41,11 @@ public class PublisherImpl implements IPublisher {
     private String amazonSNSRegion;
 
     @Inject
-    public void init(){
+    public void init() throws K8sParameterNotFoundException {
         AmazonSNSConfig snsConfig = new AmazonSNSConfig(amazonSNSRegion);
         snsClient = snsConfig.AmazonSNS();
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
-        amazonSNSTopic = provider.getPropertyAsString("indexer-sns-topic-arn");
+        amazonSNSTopic = provider.getParameterAsString("indexer-sns-topic-arn");
     }
 
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception

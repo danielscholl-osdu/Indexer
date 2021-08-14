@@ -15,6 +15,8 @@
 package org.opengroup.osdu.indexer.aws.persistence;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
@@ -49,10 +51,10 @@ public class ElasticRepositoryImpl implements IElasticRepository {
     private String amazonRegion;
 
     @PostConstruct
-    private void postConstruct() {
+    private void postConstruct() throws K8sParameterNotFoundException, JsonProcessingException {
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
         host = provider.getParameterAsStringOrDefault("elasticsearch_host", host);
-        port = Integer.parseInt(provider.getParameterAsStringOrDefault("elasticsearch_port", port));
+        port = Integer.parseInt(provider.getParameterAsStringOrDefault("elasticsearch_port", String.valueOf(port)));
         Map<String, String> val = provider.getCredentialsAsMap("elasticsearch_credentials");
         if (val != null){
             username = val.get("username");
