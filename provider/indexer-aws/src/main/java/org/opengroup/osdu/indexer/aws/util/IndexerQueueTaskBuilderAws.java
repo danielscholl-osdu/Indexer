@@ -20,6 +20,7 @@ import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
@@ -50,7 +51,7 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
     private String region;
 
     @Inject
-    public void init() {
+    public void init() throws K8sParameterNotFoundException {
         AmazonSQSConfig config = new AmazonSQSConfig(region);
         sqsClient = config.AmazonSQS();
         gson =new Gson();
