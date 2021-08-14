@@ -24,12 +24,12 @@
 
   <modelVersion>4.0.0</modelVersion>
   <artifactId>indexer-aws</artifactId>
-  <description>Storage service on AWS</description>
+  <description>Indexer service on AWS</description>
   <packaging>jar</packaging>
     <version>0.11.0-SNAPSHOT</version>
 
   <properties>
-      <aws.version>1.11.637</aws.version>
+      <aws.version>1.11.1018</aws.version>
       <deployment.environment>dev</deployment.environment>
   </properties>
 
@@ -47,19 +47,19 @@
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
         <artifactId>os-core-lib-aws</artifactId>
-        <version>0.3.16</version>
+        <version>0.11.0-SNAPSHOT</version>
     </dependency>
 
     <!-- AWS managed packages -->
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-core</artifactId>
-      <version>1.11.651</version>
+      <version>${aws.version}</version>
     </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk</artifactId>
-      <version>1.11.327</version>
+      <version>${aws.version}</version>
     </dependency>
 
     <!-- Third party Apache 2.0 license packages -->

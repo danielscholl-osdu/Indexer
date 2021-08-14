@@ -14,16 +14,16 @@
 
 package org.opengroup.osdu.indexer.aws.persistence;
 
-import org.opengroup.osdu.core.aws.secrets.SecretsManager;
-import org.opengroup.osdu.core.aws.ssm.ParameterStorePropertySource;
-import org.opengroup.osdu.core.aws.ssm.SSMConfig;
+
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
+import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Map;
 
 @Component
 public class ElasticRepositoryImpl implements IElasticRepository {
@@ -45,36 +45,20 @@ public class ElasticRepositoryImpl implements IElasticRepository {
 
     String usernameAndPassword;
 
-
-    @Value("${aws.elasticsearch.port}")
-    String portParameter;
-
-    @Value("${aws.elasticsearch.host}")
-    String hostParameter;
-
-    @Value("${aws.elasticsearch.credentials.secret}")
-    String elasticCredentialsSecret;
-
     @Value("${aws.region}")
     private String amazonRegion;
 
-    @Value("${aws.ssm}")
-    String ssmEnabledString;
-
-    private ParameterStorePropertySource ssm;
-
     @PostConstruct
     private void postConstruct() {
-        if( Boolean.parseBoolean(ssmEnabledString)) {
-            SSMConfig ssmConfig = new SSMConfig();
-            ssm = ssmConfig.amazonSSM();
-            host = ssm.getProperty(hostParameter).toString();
-            port = Integer.parseInt(ssm.getProperty(portParameter).toString());            
-
+        K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
+        host = provider.getParameterAsStringOrDefault("elasticsearch_host", host);
+        port = Integer.parseInt(provider.getParameterAsStringOrDefault("elasticsearch_port", port));
+        Map<String, String> val = provider.getCredentialsAsMap("elasticsearch_credentials");
+        if (val != null){
+            username = val.get("username");
+            password = val.get("password");
         }
-        SecretsManager sm = new SecretsManager();
-        username = sm.getSecret(elasticCredentialsSecret,amazonRegion,"username");
-        password = sm.getSecret(elasticCredentialsSecret,amazonRegion,"password");
+
         //elastic expects username:password format
         usernameAndPassword = String.format("%s:%s", username, password);
     }
