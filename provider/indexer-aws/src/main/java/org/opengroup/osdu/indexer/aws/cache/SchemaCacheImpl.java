@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.aws.cache;
 
+import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,19 +23,29 @@ import org.springframework.stereotype.Component;
 @Component
 public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoCloseable {
 
-    private RedisCache<String, String> cache;
-
+    private ICache<String, String> cache;
+    private Boolean local = false;
     public SchemaCacheImpl(@Value("${aws.elasticache.cluster.endpoint}") final String REDIS_SEARCH_HOST,
                        @Value("${aws.elasticache.cluster.port}") final String REDIS_SEARCH_PORT,
                        @Value("${aws.elasticache.cluster.key}") final String REDIS_SEARCH_KEY,
                        @Value("${aws.elasticache.cluster.schema.expiration}") final String SCHEMA_CACHE_EXPIRATION) {
         cache = new RedisCache<>(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT), REDIS_SEARCH_KEY,
                 Integer.parseInt(SCHEMA_CACHE_EXPIRATION) * 60, String.class, String.class);
+        if (cache.getClass() == RedisCache.class){
+            local = false;
+        }else{
+            local = true;
+        }
     }
 
     @Override
     public void close() throws Exception {
-        this.cache.close();
+        if (this.local){
+            // do nothing, this is using local dummy cache
+        }else {
+            // cast to redis cache so it can be closed
+            ((RedisCache)this.cache).close();
+        }
     }
 
     @Override
