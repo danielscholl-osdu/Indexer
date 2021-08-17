@@ -11,7 +11,7 @@ public class GcpElasticUtils extends ElasticUtils {
 
     @Override
     public void deleteIndex(String index) {
-//        indexerClientUtil.deleteIndex(convertIndexToKindName(index));
+        indexerClientUtil.deleteIndex(convertIndexToKindName(index));
     }
 
     private String convertIndexToKindName(String index) {

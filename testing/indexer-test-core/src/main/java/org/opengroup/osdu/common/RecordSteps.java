@@ -152,7 +152,6 @@ public class RecordSteps extends TestsBase {
     public void i_can_validate_indexed_attributes(String index, String kind) throws Throwable {
         String authority = tenantMap.get(kind.substring(0, kind.indexOf(":")));
         index = generateActualName(index, timeStamp);
-        log.log(Level.INFO, String.format("Search by authority: %s", authority));
         List<Map<String, Object>> hits = elasticUtils.fetchRecordsByAttribute(index, "authority", authority);
 
         assertTrue(hits.size() > 0);
