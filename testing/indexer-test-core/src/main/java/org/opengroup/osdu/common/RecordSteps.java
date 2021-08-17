@@ -98,6 +98,7 @@ public class RecordSteps extends TestsBase {
         try {
             String fileContent = FileHandler.readFile(String.format("%s.%s", record, "json"));
             records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
+            String createTime = java.time.Instant.now().toString();
 
             for (Map<String, Object> testRecord : records) {
                 testRecord.put("kind", actualKind);
@@ -106,6 +107,13 @@ public class RecordSteps extends TestsBase {
                 String[] x_acl = {generateActualName(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
                 Acl acl = Acl.builder().viewers(x_acl).owners(x_acl).build();
                 testRecord.put("acl", acl);
+                String[] kindParts = kind.split(":");
+                String authority = tenantMap.get(kindParts[0]);
+                String source = kindParts[1];
+                testRecord.put("authority", authority);
+                testRecord.put("source", source);
+                testRecord.put("createUser", "TestUser");
+                testRecord.put("createTime", createTime);
             }
             String payLoad = new Gson().toJson(records);
             log.log(Level.INFO, "Start ingesting records={0}", payLoad);
