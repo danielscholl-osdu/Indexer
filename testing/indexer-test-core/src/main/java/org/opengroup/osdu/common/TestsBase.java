@@ -18,6 +18,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.opengroup.osdu.util.Config.*;
 
 @Log
@@ -109,7 +110,7 @@ public abstract class TestsBase {
 
     private <T extends ResponseBase> T getResponse(ClientResponse clientResponse, Class<T> typeParameterClass) {
         log.info(String.format("Response status: %s, type: %s", clientResponse.getStatus(), clientResponse.getType().toString()));
-        assertEquals(MediaType.APPLICATION_JSON, clientResponse.getType().toString());
+        assertTrue(clientResponse.getType().toString().contains(MediaType.APPLICATION_JSON));
         String responseEntity = clientResponse.getEntity(String.class);
 
         T response = new Gson().fromJson(responseEntity, typeParameterClass);

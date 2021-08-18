@@ -40,6 +40,7 @@ public class GSuiteSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) throws Exception {
         web.ignoring().antMatchers("/api-docs")
+                .antMatchers("/info")
                 .antMatchers("/swagger");
     }
 

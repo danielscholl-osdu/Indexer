@@ -1,7 +1,4 @@
-/* Licensed Materials - Property of IBM              */		
-/* (c) Copyright IBM Corp. 2020. All Rights Reserved.*/
-
-package org.opengroup.osdu.indexer.ibm.di;
+package org.opengroup.osdu.indexer.aws.di;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,19 +14,20 @@ import org.springframework.web.context.annotation.RequestScope;
 @RequestScope
 @Component
 public class TenantInfoService implements ITenantInfoService {
-    @Inject
-    private ITenantFactory tenantFactory;
 
-    @Inject
-    private DpsHeaders headers;
+  @Inject
+  private ITenantFactory tenantFactory;
 
-    @Override
-    public TenantInfo getTenantInfo() {
-        return tenantFactory.getTenantInfo(headers.getPartitionId());
-    }
+  @Inject
+  private DpsHeaders headers;
 
-    @Override
-    public List<TenantInfo> getAllTenantInfos() {
-        return new ArrayList<>(tenantFactory.listTenantInfo());
-    }
+  @Override
+  public TenantInfo getTenantInfo() {
+    return tenantFactory.getTenantInfo(headers.getPartitionId());
+  }
+
+  @Override
+  public List<TenantInfo> getAllTenantInfos() {
+    return new ArrayList<>(tenantFactory.listTenantInfo());
+  }
 }

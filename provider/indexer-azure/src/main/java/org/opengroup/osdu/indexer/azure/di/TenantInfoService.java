@@ -14,6 +14,8 @@
 
 package org.opengroup.osdu.indexer.azure.di;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.multitenancy.ITenantInfoService;
@@ -35,5 +37,10 @@ public class TenantInfoService implements ITenantInfoService {
     @Override
     public TenantInfo getTenantInfo() {
         return tenantFactory.getTenantInfo(headers.getPartitionId());
+    }
+
+    @Override
+    public List<TenantInfo> getAllTenantInfos() {
+        return new ArrayList<>(tenantFactory.listTenantInfo());
     }
 }

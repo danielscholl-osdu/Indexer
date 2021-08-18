@@ -10,5 +10,3 @@ running the `os-indexer` Azure implementation
 ## GCP Implementation
 
 All documentation for the GCP implementation of `os-indexer` lives [here](./provider/indexer-gcp/README.md)
-
-
