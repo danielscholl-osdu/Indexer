@@ -16,7 +16,7 @@
 
 	<properties>
 		<commons-beanutils.version>1.9.4</commons-beanutils.version>
-		<osdu.oscorecommon.version>0.10.0</osdu.oscorecommon.version>
+		<os-core-common.version>0.11.0-SNAPSHOT</os-core-common.version>
 	</properties>
 
 	<dependencies>
@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>org.opengroup.osdu</groupId>
 			<artifactId>os-core-common</artifactId>
-			<version>${osdu.oscorecommon.version}</version>
+			<version>${os-core-common.version}</version>
 		</dependency>
 
 		<!-- spring boot dependencies -->
