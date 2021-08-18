@@ -26,7 +26,6 @@ import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
 import org.opengroup.osdu.core.common.provider.interfaces.IKmsClient;
 import org.opengroup.osdu.core.common.search.Preconditions;
-import org.opengroup.osdu.core.gcp.multitenancy.DatastoreFactory;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -52,7 +51,7 @@ public class ElasticRepositoryDatastore implements IElasticRepository {
     @Override
     public ClusterSettings getElasticClusterSettings(TenantInfo tenantInfo) {
 
-        Datastore googleDatastore = this.datastoreFactory.getDatastore(tenantInfo);
+        Datastore googleDatastore = this.datastoreFactory.getDatastoreInstance(tenantInfo);
         Key key = googleDatastore.newKeyFactory().setKind(properties.getElasticDatastoreKind()).newKey(properties.getElasticDatastoreId());
         Entity datastoreEntity = googleDatastore.get(key);
 
