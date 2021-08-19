@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.gcp.model.AppEngineHeaders;
+import org.opengroup.osdu.core.gcp.model.CloudTaskHeaders;
 import org.opengroup.osdu.core.gcp.util.TraceIdExtractor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -43,10 +43,10 @@ public class DpsHeaderFactoryGcp extends DpsHeaders {
         .stream()
         .collect(Collectors.toMap(h -> h, request::getHeader));
 
-    String traceContext = headers.get(AppEngineHeaders.CLOUD_TRACE_CONTEXT);
+    String traceContext = headers.get(CloudTaskHeaders.CLOUD_TRACE_CONTEXT);
 
     if (!Strings.isNullOrEmpty(traceContext)) {
-      headers.put(AppEngineHeaders.TRACE_ID, TraceIdExtractor.getTraceId(traceContext));
+      headers.put(CloudTaskHeaders.TRACE_ID, TraceIdExtractor.getTraceId(traceContext));
     }
 
     this.addFromMap(headers);
