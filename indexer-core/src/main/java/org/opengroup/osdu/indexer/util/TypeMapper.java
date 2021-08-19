@@ -49,6 +49,12 @@ public class TypeMapper {
         metaAttributeIndexerType.put(RecordMetaAttribute.LEGAL.getValue(), getLegalIndexerMapping());
         metaAttributeIndexerType.put(RecordMetaAttribute.ANCESTRY.getValue(), getAncestryIndexerMapping());
         metaAttributeIndexerType.put(RecordMetaAttribute.INDEX_STATUS.getValue(), getIndexStatusMapping());
+        metaAttributeIndexerType.put(RecordMetaAttribute.AUTHORITY.getValue(), ElasticType.CONSTANT_KEYWORD.getValue());
+        metaAttributeIndexerType.put(RecordMetaAttribute.SOURCE.getValue(), ElasticType.CONSTANT_KEYWORD.getValue());
+        metaAttributeIndexerType.put(RecordMetaAttribute.CREATE_USER.getValue(), ElasticType.KEYWORD.getValue());
+        metaAttributeIndexerType.put(RecordMetaAttribute.MODIFY_USER.getValue(), ElasticType.KEYWORD.getValue());
+        metaAttributeIndexerType.put(RecordMetaAttribute.CREATE_TIME.getValue(), ElasticType.DATE.getValue());
+        metaAttributeIndexerType.put(RecordMetaAttribute.MODIFY_TIME.getValue(), ElasticType.DATE.getValue());
 
         storageToIndexerType.put(StorageType.LINK.getValue(), ElasticType.KEYWORD.getValue());
         storageToIndexerType.put(StorageType.LINK_ARRAY.getValue(), ElasticType.KEYWORD_ARRAY.getValue());
