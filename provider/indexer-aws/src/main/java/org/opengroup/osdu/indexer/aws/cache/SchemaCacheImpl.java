@@ -14,6 +14,9 @@
 
 package org.opengroup.osdu.indexer.aws.cache;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.opengroup.osdu.core.aws.cache.AwsElasticCache;
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
@@ -25,12 +28,8 @@ public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoClosea
 
     private ICache<String, String> cache;
     private Boolean local = false;
-    public SchemaCacheImpl(@Value("${aws.elasticache.cluster.endpoint}") final String REDIS_SEARCH_HOST,
-                       @Value("${aws.elasticache.cluster.port}") final String REDIS_SEARCH_PORT,
-                       @Value("${aws.elasticache.cluster.key}") final String REDIS_SEARCH_KEY,
-                       @Value("${aws.elasticache.cluster.schema.expiration}") final String SCHEMA_CACHE_EXPIRATION) {
-        cache = new RedisCache<>(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT), REDIS_SEARCH_KEY,
-                Integer.parseInt(SCHEMA_CACHE_EXPIRATION) * 60, String.class, String.class);
+    public SchemaCacheImpl(@Value("${aws.elasticache.cluster.schema.expiration}") final String SCHEMA_CACHE_EXPIRATION) throws K8sParameterNotFoundException, JsonProcessingException {
+        cache = AwsElasticCache.RedisCache(Integer.parseInt(SCHEMA_CACHE_EXPIRATION) * 60, String.class, String.class);
         if (cache.getClass() == RedisCache.class){
             local = false;
         }else{
