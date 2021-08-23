@@ -15,7 +15,7 @@
 package org.opengroup.osdu.indexer.aws.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.opengroup.osdu.core.aws.cache.AwRedisCache;
+import org.opengroup.osdu.core.aws.cache.AwsRedisCache;
 import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.cache.RedisCache;
