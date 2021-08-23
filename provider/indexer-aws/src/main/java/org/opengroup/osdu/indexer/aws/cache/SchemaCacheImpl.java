@@ -15,12 +15,10 @@
 package org.opengroup.osdu.indexer.aws.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.opengroup.osdu.core.aws.cache.AwsRedisCache;
 import org.opengroup.osdu.core.aws.cache.DummyCache;
 import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.cache.ICache;
-import org.opengroup.osdu.core.common.cache.MultiTenantCache;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.core.common.cache.VmCache;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
@@ -31,11 +29,11 @@ import java.util.Map;
 
 @Component
 public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoCloseable {
-    @Value("${aws.elasticache.cluster.schema.endpoint}")
+    @Value("${aws.elasticache.cluster.endpoint}")
     String REDIS_SEARCH_HOST;
-    @Value("${aws.elasticache.cluster.schema.port}")
+    @Value("${aws.elasticache.cluster.port}")
     String REDIS_SEARCH_PORT;
-    @Value("${aws.elasticache.cluster.schema.key}")
+    @Value("${aws.elasticache.cluster.key}")
     String REDIS_SEARCH_KEY;
     @Value("${aws.elasticache.cluster.schema.expiration}")
     String SCHEMA_CACHE_EXPIRATION;
