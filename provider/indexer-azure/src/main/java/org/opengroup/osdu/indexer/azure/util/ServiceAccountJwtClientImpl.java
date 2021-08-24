@@ -14,21 +14,47 @@
 
 package org.opengroup.osdu.indexer.azure.util;
 
+import org.apache.http.HttpStatus;
 import org.opengroup.osdu.azure.util.AzureServicePrincipleTokenService;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
+import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
+import javax.inject.Inject;
+
 @Component
 @RequestScope
 public class ServiceAccountJwtClientImpl implements IServiceAccountJwtClient {
+
+    @Inject
+    private ITenantFactory tenantInfoServiceProvider;
+
+    @Inject
+    private DpsHeaders dpsHeaders;
+
+    @Inject
+    private JaxRsDpsLog log;
 
     @Autowired
     private AzureServicePrincipleTokenService tokenService;
 
     @Override
     public String getIdToken(String partitionId){
+
+        TenantInfo tenant = this.tenantInfoServiceProvider.getTenantInfo(partitionId);
+        if (tenant == null) {
+            this.log.error("Invalid tenant name receiving from azure");
+            throw new AppException(HttpStatus.SC_BAD_REQUEST, "Invalid tenant Name", "Invalid tenant Name from azure");
+        }
+
+        this.dpsHeaders.put(DpsHeaders.USER_EMAIL, tenant.getServiceAccount());
+
         return "Bearer " + this.tokenService.getAuthorizationToken();
     }
 }
