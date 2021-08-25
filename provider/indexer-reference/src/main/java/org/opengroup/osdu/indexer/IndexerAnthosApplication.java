@@ -17,7 +17,6 @@
 
 package org.opengroup.osdu.indexer;
 
-import org.opengroup.osdu.core.gcp.multitenancy.TenantFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -25,13 +24,11 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
 
 @SpringBootApplication(exclude = {MongoAutoConfiguration.class, SecurityAutoConfiguration.class,
     ManagementWebSecurityAutoConfiguration.class})
 @Configuration
-@ComponentScan(value = {"org.opengroup.osdu"}, excludeFilters = {
-    @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = TenantFactory.class)})
+@ComponentScan(value = {"org.opengroup.osdu"})
 public class IndexerAnthosApplication {
 
   public static void main(String[] args) {

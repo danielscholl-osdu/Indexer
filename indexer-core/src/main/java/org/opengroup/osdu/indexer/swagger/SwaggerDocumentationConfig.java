@@ -31,16 +31,8 @@ public class SwaggerDocumentationConfig {
         ParameterBuilder builder = new ParameterBuilder();
         List<Parameter> parameters = new ArrayList<>();
         builder.name(DpsHeaders.DATA_PARTITION_ID)
-                .description("tenant")
+                .description("data partition id")
                 .defaultValue("common")
-                .modelRef(new ModelRef("string"))
-                .parameterType("header")
-                .required(true)
-                .build();
-        parameters.add(builder.build());
-        builder.name("slb-frame-of-reference")
-                .description("reference")
-                .defaultValue("none")
                 .modelRef(new ModelRef("string"))
                 .parameterType("header")
                 .required(true)

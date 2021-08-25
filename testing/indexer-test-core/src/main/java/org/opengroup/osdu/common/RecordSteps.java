@@ -48,7 +48,7 @@ public class RecordSteps extends TestsBase {
     public RecordSteps(HTTPClient httpClient, ElasticUtils elasticUtils) {
         super(httpClient, elasticUtils);
     }
-    
+
     /******************One time cleanup for whole feature**************/
     public void tearDown() {
         for (String kind : inputIndexMap.keySet()) {
@@ -98,14 +98,22 @@ public class RecordSteps extends TestsBase {
         try {
             String fileContent = FileHandler.readFile(String.format("%s.%s", record, "json"));
             records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {}.getType());
+            String createTime = java.time.Instant.now().toString();
 
             for (Map<String, Object> testRecord : records) {
                 testRecord.put("kind", actualKind);
-                testRecord.put("id", generateRecordId(testRecord));                
+                testRecord.put("id", generateRecordId(testRecord));
                 testRecord.put("legal", generateLegalTag());
                 String[] x_acl = {generateActualName(dataGroup,timeStamp)+"."+getEntitlementsDomain()};
                 Acl acl = Acl.builder().viewers(x_acl).owners(x_acl).build();
                 testRecord.put("acl", acl);
+                String[] kindParts = kind.split(":");
+                String authority = tenantMap.get(kindParts[0]);
+                String source = kindParts[1];
+                testRecord.put("authority", authority);
+                testRecord.put("source", source);
+                testRecord.put("createUser", "TestUser");
+                testRecord.put("createTime", createTime);
             }
             String payLoad = new Gson().toJson(records);
             log.log(Level.INFO, "Start ingesting records={0}", payLoad);
@@ -126,15 +134,34 @@ public class RecordSteps extends TestsBase {
         assertEquals(expectedCount, numOfIndexedDocuments);
     }
 
-    public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String type, String index) throws Throwable {
+    public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String kind, String index) throws Throwable {
         index = generateActualName(index, timeStamp);
         Map<String, MappingMetadata> elasticMapping = elasticUtils.getMapping(index);
         assertNotNull(elasticMapping);
 
+        String[] kindParts = kind.split(":");
+        String authority = tenantMap.get(kindParts[0]);
+        String source = kindParts[1];
+        expectedMapping = expectedMapping.replaceAll("<authority-id>", authority).replaceAll("<source-id>", source);
         MappingMetadata typeMapping = elasticMapping.get(index);
         Map<String, Object> mapping = typeMapping.sourceAsMap();
         assertNotNull(mapping);
         assertTrue(areJsonEqual(expectedMapping, mapping.toString()));
+    }
+
+    public void i_can_validate_indexed_attributes(String index, String kind) throws Throwable {
+        String authority = tenantMap.get(kind.substring(0, kind.indexOf(":")));
+        index = generateActualName(index, timeStamp);
+        List<Map<String, Object>> hits = elasticUtils.fetchRecordsByAttribute(index, "authority", authority);
+
+        assertTrue(hits.size() > 0);
+        for (Map<String, Object> result : hits) {
+            assertTrue(result.containsKey("authority"));
+            assertEquals(authority, result.get("authority"));
+            assertTrue(result.containsKey("source"));
+            assertTrue(result.containsKey("createUser"));
+            assertTrue(result.containsKey("createTime"));
+        }
     }
 
     public void iShouldGetTheNumberDocumentsForTheIndexInTheElasticSearchWithOutSkippedAttribute(int expectedCount, String index, String skippedAttributes) throws Throwable {
@@ -228,7 +255,7 @@ public class RecordSteps extends TestsBase {
         log.info(String.format("difference: %s", result.entriesDiffering()));
         return false;
     }
-    
+
     @Override
     protected String getApi() {
         return null;

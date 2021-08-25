@@ -20,14 +20,13 @@ In order to run the service locally or remotely, you will need to have the follo
 | `LOG_PREFIX` | `service` | Logging prefix | no | - |
 | `SERVER_SERVLET_CONTEXPATH` | `/api/indexer/v2` | Servlet context path | no | - |
 | `AUTHORIZE_API` | ex `https://entitlements.com/entitlements/v1` | Entitlements API endpoint | no | output of infrastructure deployment |
-| `ENTITLEMENTS_HOST` | ex `https://entitlements.com/entitlements/v1` | Entitlements API endpoint | no | output of infrastructure deployment |
 | `LEGALTAG_API` | ex `https://legal.com/api/legal/v1` | Legal API endpoint | no | output of infrastructure deployment |
-| `INDEXER_HOST` | ex `os-indexer-dot-opendes.appspot.com` | Indexer Host | no | output of infrastructure deployment |
 | `INDEXER_QUEUE_HOST` | ex `https://os-indexer-queue-dot-opendes.appspot.com/_dps/task-handlers/enqueue` | Indexer-Queue API endpoint | no | output of infrastructure deployment |
 | `CRS_API` | ex `https://crs-converter-gae-dot-opendes.appspot.com/api/crs/v1` | CRS API endpoint | no | https://console.cloud.google.com/memorystore/redis/instances |
 | `STORAGE_HOSTNAME` | ex `os-storage-dot-opendes.appspot.com` | Storage Host | no | output of infrastructure deployment |
 | `STORAGE_SCHEMA_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/schemas` | Storage API endpoint 'schemas' | no | https://console.cloud.google.com/apis/credentials |
 | `STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/query/records:batch` | Storage API endpoint 'records'  | no | https://console.cloud.google.com/iam-admin/serviceaccounts |
+| `STORAGE_QUERY_RECORD_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/query/records` | Storage API endpoint 'query/records'  | no | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `REDIS_SEARCH_HOST` | ex `127.0.0.1` | Redis host for search | no | https://console.cloud.google.com/memorystore/redis/instances |
 | `REDIS_GROUP_HOST` | ex `127.0.0.1` | Redis host for groups | no | https://console.cloud.google.com/memorystore/redis/instances |
 | `REDIS_SEARCH_PORT` | ex `6379` | Redis host for search | no | https://console.cloud.google.com/memorystore/redis/instances |
@@ -36,6 +35,8 @@ In order to run the service locally or remotely, you will need to have the follo
 | `GOOGLE_APPLICATION_CREDENTIALS` | ex `/path/to/directory/service-key.json` | Service account credentials, you only need this if running locally | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `security.https.certificate.trust` | ex `false` | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false | output of infrastructure deployment |
 | `indexer.que.service.mail` | ex `default@iam.gserviceaccount.com` | Indexer Que environment service account mail, required if Indexer Que deployed in cloud task mode, to validate token from it | yes | - |
+| `SCHEMA_HOST` | ex `https://os-schema-dot-opendes.appspot.com/api/schema-service/v1/schema` | Schema API endpoint | no | output of infrastructure deployment |
+| `PARTITION_API` | ex `https://localhost:8081/api/partition/v1` | Partition API endpoint | no | output of infrastructure deployment |
 
 ### Run Locally
 Check that maven is installed:
@@ -131,14 +132,12 @@ You will need to have the following environment variables defined.
 
 | name | value | description | sensitive? | source |
 | ---  | ---   | ---         | ---        | ---    |
-| `ENTITLEMENTS_HOST` | ex `https://entitlements.com/entitlements/v1` | Entitlements API endpoint | no | output of infrastructure deployment |
 | `ELASTIC_PASSWORD` | `********` | Password for Elasticsearch | yes | output of infrastructure deployment |
 | `ELASTIC_USER_NAME` | `********` | User name for Elasticsearch | yes | output of infrastructure deployment |
 | `ELASTIC_HOST` | ex `elastic.domain.com` | Host Elasticsearch | yes | output of infrastructure deployment |
 | `ELASTIC_PORT` | ex `9243` | Port Elasticsearch | yes | output of infrastructure deployment |
 | `GCLOUD_PROJECT` | ex `opendes` | Google Cloud Project Id| no | output of infrastructure deployment |
 | `INDEXER_HOST` | ex `https://os-indexer-dot-opendes.appspot.com/api/indexer/v2/` | Indexer API endpoint | no | output of infrastructure deployment |
-| `DATA_GROUP` | `opendes` | The service account to this group and substitute | no | - |
 | `ENTITLEMENTS_DOMAIN` | ex `opendes-gcp.projects.com` | OSDU R2 to run tests under  | no | - |
 | `INTEGRATION_TEST_AUDIENCE` | `********` | client application ID | yes | https://console.cloud.google.com/apis/credentials |
 | `OTHER_RELEVANT_DATA_COUNTRIES` | ex `US` | valid legal tag with a other relevant data countries | no | - |
@@ -146,11 +145,8 @@ You will need to have the following environment variables defined.
 | `DEFAULT_DATA_PARTITION_ID_TENANT1` | ex `opendes` | HTTP Header 'Data-Partition-ID'  | no | - |
 | `SEARCH_INTEGRATION_TESTER` | `********` | Service account for API calls. Note: this user must have entitlements configured already | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `SEARCH_HOST` | ex `http://localhost:8080/api/search/v2/` | Endpoint of search service | no | - |
-| `STORAGE_HOST` | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/schemas` | Storage API endpoint | Storage Host | no | output of infrastructure deployment |
+| `STORAGE_HOST` | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/` | Storage API endpoint | no | output of infrastructure deployment |
 | `SECURITY_HTTPS_CERTIFICATE_TRUST` | ex `false` | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false | output of infrastructure deployment |
-| `GOOGLE_AUDIENCES` | ex `*****.apps.googleusercontent.com` | Client ID for getting access to cloud resources | yes | https://console.cloud.google.com/apis/credentials |
-| `PARTITION_API` | ex `http://localhost:8081/api/partition/v1` | Partition service endpoint | no | - |
-
 
 **Entitlements configuration for integration accounts**
 
@@ -201,9 +197,9 @@ Create king ring and key in the ***master project***
     		--purpose encryption
 ```
 
-Add **Cloud KMS CryptoKey Encrypter/Decrypter** role to the **App Engine default service account** of the ***master project*** through IAM - Role tab
+Add **Cloud KMS CryptoKey Encrypter/Decrypter** role to the **default service account** of the ***master project*** through IAM - Role tab
 
-Add **Cloud KMS Encrypt/Decrypt** role to the **App Engine default service account** of ***master project***
+Add **Cloud KMS Encrypt/Decrypt** role to the **default service account** of ***master project*** through IAM - Role tab
 
 #### Memory Store (Redis Instance) Setup
 

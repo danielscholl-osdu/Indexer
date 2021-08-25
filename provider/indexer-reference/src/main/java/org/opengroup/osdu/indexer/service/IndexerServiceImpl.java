@@ -64,7 +64,6 @@ import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -141,6 +140,10 @@ public class IndexerServiceImpl implements IndexerService {
         List<String> deleteFailureRecordIds = processDeleteRecords(deleteRecordMap);
         retryRecordIds.addAll(deleteFailureRecordIds);
       }
+
+      auditLogger.indexStarted(recordInfos.stream()
+          .map(RecordInfo::getKind)
+          .collect(Collectors.toList()));
 
       // process schema change messages
       Map<String, OperationType> schemaMsgs = RecordInfo.getSchemaMsgs(recordInfos);
@@ -245,8 +248,13 @@ public class IndexerServiceImpl implements IndexerService {
       for (Map.Entry<String, Map<String, OperationType>> entry : upsertRecordMap.entrySet()) {
 
         String kind = entry.getKey();
-        IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, false);
-        if (schemaObj.isDataSchemaMissing()) {
+        List<String> errors = new ArrayList<>();
+        IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, errors);
+        if (!errors.isEmpty()) {
+          this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN,
+              HttpStatus.SC_BAD_REQUEST, String.join("|", errors),
+              String.format("error  | kind: %s", kind));
+        } else if (schemaObj.isDataSchemaMissing()) {
           this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN,
               HttpStatus.SC_NOT_FOUND, "schema not found",
               String.format("schema not found | kind: %s", kind));
@@ -360,6 +368,9 @@ public class IndexerServiceImpl implements IndexerService {
       document.setVersion(storageRecord.getVersion());
       document.setAcl(storageRecord.getAcl());
       document.setLegal(storageRecord.getLegal());
+      if (storageRecord.getTags() != null) {
+        document.setTags(storageRecord.getTags());
+      }
       RecordStatus recordStatus = this.jobStatus.getJobStatusByRecordId(storageRecord.getId());
       if (recordStatus.getIndexProgress().getStatusCode() == 0) {
         recordStatus.getIndexProgress().setStatusCode(HttpStatus.SC_OK);
@@ -439,11 +450,11 @@ public class IndexerServiceImpl implements IndexerService {
       String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKind());
 
       if (operation == OperationType.create) {
-        IndexRequest indexRequest = new IndexRequest(index, record.getType(), record.getId())
+        IndexRequest indexRequest = new IndexRequest(index).id(record.getId())
             .source(this.gson.toJson(sourceMap), XContentType.JSON);
         bulkRequest.add(indexRequest);
       } else if (operation == OperationType.update) {
-        UpdateRequest updateRequest = new UpdateRequest(index, record.getType(), record.getId())
+        UpdateRequest updateRequest = new UpdateRequest(index, record.getId())
             .upsert(this.gson.toJson(sourceMap), XContentType.JSON);
         bulkRequest.add(updateRequest);
       }
@@ -465,7 +476,7 @@ public class IndexerServiceImpl implements IndexerService {
       String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKey());
 
       for (String id : record.getValue()) {
-        DeleteRequest deleteRequest = new DeleteRequest(index, type, id);
+        DeleteRequest deleteRequest = new DeleteRequest(index, id);
         bulkRequest.add(deleteRequest);
       }
     }
@@ -547,6 +558,7 @@ public class IndexerServiceImpl implements IndexerService {
     indexerPayload.put(RecordMetaAttribute.TYPE.getValue(), record.getType());
     indexerPayload.put(RecordMetaAttribute.VERSION.getValue(), record.getVersion());
     indexerPayload.put(RecordMetaAttribute.ACL.getValue(), record.getAcl());
+    indexerPayload.put(RecordMetaAttribute.TAGS.getValue(), record.getTags());
     indexerPayload.put(RecordMetaAttribute.X_ACL.getValue(), Acl.flattenAcl(record.getAcl()));
     indexerPayload.put(RecordMetaAttribute.LEGAL.getValue(), record.getLegal());
     indexerPayload.put(RecordMetaAttribute.INDEX_STATUS.getValue(), record.getIndexProgress());

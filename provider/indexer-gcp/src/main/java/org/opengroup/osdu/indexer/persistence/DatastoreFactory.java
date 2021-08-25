@@ -26,23 +26,18 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
+import org.opengroup.osdu.core.gcp.multitenancy.credentials.DatastoreCredential;
 import org.opengroup.osdu.indexer.cache.DatastoreCredentialCache;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.threeten.bp.Duration;
 
-@Component
+@Component("indexerDatastoreFactory")
 public class DatastoreFactory {
 
   @Inject
   private DatastoreCredentialCache cache;
 
-  @Autowired
-  public DatastoreFactory(DatastoreCredentialCache cache) {
-    this.cache = cache;
-  }
-
-  private static Map<String, Datastore> DATASTORE_CLIENTS = new HashMap<>();
+  private static Map<String, Datastore> datastoreClients = new HashMap<>();
 
   private static final RetrySettings RETRY_SETTINGS = RetrySettings.newBuilder()
       .setMaxAttempts(6)
@@ -60,16 +55,16 @@ public class DatastoreFactory {
       .build();
 
   public Datastore getDatastoreInstance(TenantInfo tenantInfo) {
-    if (DATASTORE_CLIENTS.get(tenantInfo.getName()) == null) {
+    if (datastoreClients.get(tenantInfo.getName()) == null) {
       Datastore googleDatastore = DatastoreOptions.newBuilder()
-          .setCredentials(new DatastoreCredential(tenantInfo, this.cache))
+          .setCredentials(new DatastoreCredential(tenantInfo))
           .setRetrySettings(RETRY_SETTINGS)
           .setTransportOptions(TRANSPORT_OPTIONS)
           .setNamespace(tenantInfo.getName())
           .setProjectId(tenantInfo.getProjectId())
           .build().getService();
-      DATASTORE_CLIENTS.put(tenantInfo.getName(), googleDatastore);
+      datastoreClients.put(tenantInfo.getName(), googleDatastore);
     }
-    return DATASTORE_CLIENTS.get(tenantInfo.getName());
+    return datastoreClients.get(tenantInfo.getName());
   }
 }

@@ -52,6 +52,7 @@ import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.client.indices.GetMappingsResponse;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.locationtech.jts.geom.Coordinate;
 import org.elasticsearch.common.geo.builders.EnvelopeBuilder;
@@ -238,6 +239,24 @@ public class ElasticUtils {
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
+        }
+    }
+
+    public List<Map<String, Object>> fetchRecordsByAttribute(String index, String attributeKey, String attributeValue) throws IOException {
+        List<Map<String, Object>> out = new ArrayList<>();
+        try {
+            try (RestHighLevelClient client = this.createClient(username, password, host)) {
+                SearchRequest request = new SearchRequest(index);
+                SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+                sourceBuilder.query(boolQuery().must(termsQuery(attributeKey, attributeValue)));
+                request.source(sourceBuilder);
+                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
+                for(SearchHit searchHit : searchResponse.getHits()) out.add(searchHit.getSourceAsMap());
+                return out;
+            }
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return out;
         }
     }
 
