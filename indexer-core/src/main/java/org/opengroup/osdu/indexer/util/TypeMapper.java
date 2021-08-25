@@ -106,13 +106,15 @@ public class TypeMapper {
             return Records.Type.builder().type(getArrayMemberType(indexerType.toString())).build();
         }
 
-        if(isMap(indexerType)){
-            Map<String,Object> type = (Map<String, Object>) indexerType;
+        if (isMap(indexerType)) {
+            Map<String, Object> type = (Map<String, Object>) indexerType;
             Map<String, Object> propertiesMap = (Map<String, Object>) type.get(Constants.PROPERTIES);
-            for (Map.Entry<String,Object> entry : propertiesMap.entrySet()){
-                if(isMap(entry.getValue())){
+            for (Map.Entry<String, Object> entry : propertiesMap.entrySet()) {
+                if (isMap(entry.getValue())) {
                     entry.setValue(getDataAttributeIndexerMapping(entry.getValue()));
-                }else {
+                } else if(ElasticType.TEXT.getValue().equalsIgnoreCase(String.valueOf(entry.getValue()))) {
+                    entry.setValue(getTextIndexerMapping());
+                } else {
                     entry.setValue(Records.Type.builder().type(entry.getValue().toString()).build());
                 }
             }

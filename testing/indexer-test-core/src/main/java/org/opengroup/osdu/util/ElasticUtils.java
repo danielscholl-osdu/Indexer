@@ -300,7 +300,7 @@ public class ElasticUtils {
             SearchRequest searchRequest = new SearchRequest(index);
 
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(nestedQuery(path,boolQuery().must(matchQuery(firstNestedField,firstNestedValue)).must(matchQuery(secondNestedField,secondNestedValue)), ScoreMode.Avg));
+            searchSourceBuilder.query(nestedQuery(path,boolQuery().must(matchQuery(firstNestedField,firstNestedValue)).must(termQuery(secondNestedField + ".keyword",secondNestedValue)), ScoreMode.Avg));
 
             searchRequest.source(searchSourceBuilder);
 
