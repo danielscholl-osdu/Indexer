@@ -29,13 +29,13 @@ import java.util.Map;
 
 @Component
 public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoCloseable {
-    @Value("${aws.elasticache.cluster.endpoint}")
+    @Value("${aws.elasticache.cluster.endpoint:null}")
     String REDIS_SEARCH_HOST;
-    @Value("${aws.elasticache.cluster.port}")
+    @Value("${aws.elasticache.cluster.port:null}")
     String REDIS_SEARCH_PORT;
-    @Value("${aws.elasticache.cluster.key}")
+    @Value("${aws.elasticache.cluster.key:null}")
     String REDIS_SEARCH_KEY;
-    @Value("${aws.elasticache.cluster.schema.expiration}")
+    @Value("${aws.elasticache.cluster.schema.expiration:null}")
     String SCHEMA_CACHE_EXPIRATION;
     private ICache<String, String> cache;
     private Boolean local = false;
