@@ -14,27 +14,64 @@
 
 package org.opengroup.osdu.indexer.aws.cache;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.cache.RedisCache;
+import org.opengroup.osdu.core.common.cache.VmCache;
+import org.opengroup.osdu.core.aws.cache.DummyCache;
+import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 public class IndexCacheImpl implements IIndexCache<String, Boolean>, AutoCloseable {
 
-    private RedisCache<String, Boolean> cache;
-
-    public IndexCacheImpl(@Value("${aws.elasticache.cluster.endpoint}") final String REDIS_SEARCH_HOST,
-                      @Value("${aws.elasticache.cluster.port}") final String REDIS_SEARCH_PORT,
-                      @Value("${aws.elasticache.cluster.key}") final String REDIS_SEARCH_KEY,
-                      @Value("${aws.elasticache.cluster.index.expiration}") final String INDEX_CACHE_EXPIRATION) {
-        cache = new RedisCache<>(REDIS_SEARCH_HOST, Integer.parseInt(REDIS_SEARCH_PORT), REDIS_SEARCH_KEY,
-                Integer.parseInt(INDEX_CACHE_EXPIRATION) * 60, String.class, Boolean.class);
+    private ICache<String, Boolean> cache;
+    private Boolean local;
+    @Value("${aws.elasticache.cluster.endpoint}")
+    String REDIS_SEARCH_HOST;
+    @Value("${aws.elasticache.cluster.port}")
+    String REDIS_SEARCH_PORT;
+    @Value("${aws.elasticache.cluster.key}")
+    String REDIS_SEARCH_KEY;
+    @Value("${aws.elasticache.cluster.index.expiration}")
+    String INDEX_CACHE_EXPIRATION;
+    public IndexCacheImpl() throws K8sParameterNotFoundException, JsonProcessingException {
+        int expTimeSeconds = 60 * 60;
+        K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
+        if (provider.getLocalMode()){
+            if (Boolean.parseBoolean(System.getenv("DISABLE_CACHE"))){
+                cache = new DummyCache<>();
+            }else{
+                cache = new VmCache<String,Boolean>(expTimeSeconds, 10);
+            }
+        }else {
+            String host = provider.getParameterAsStringOrDefault("CACHE_CLUSTER_ENDPOINT", REDIS_SEARCH_HOST);
+            int port = Integer.parseInt(provider.getParameterAsStringOrDefault("CACHE_CLUSTER_PORT", REDIS_SEARCH_PORT));
+            Map<String, String > credential =provider.getCredentialsAsMap("CACHE_CLUSTER_KEY");
+            String password;
+            if (credential !=null){
+                password = credential.get("token");
+            }else{
+                password = REDIS_SEARCH_KEY;
+            }
+            cache = new RedisCache<String, Boolean>(host, port, password, expTimeSeconds, String.class,Boolean.class);
+        }
+        local = cache instanceof AutoCloseable;
     }
 
     @Override
     public void close() throws Exception {
-        this.cache.close();
+        if (local){
+
+        }else{
+            ((AutoCloseable)this.cache).close();
+        }
+
     }
 
     @Override
