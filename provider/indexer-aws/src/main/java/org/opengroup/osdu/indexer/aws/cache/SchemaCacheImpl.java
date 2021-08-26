@@ -35,12 +35,12 @@ public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoClosea
     String REDIS_SEARCH_PORT;
     @Value("${aws.elasticache.cluster.key:null}")
     String REDIS_SEARCH_KEY;
-    @Value("${aws.elasticache.cluster.schema.expiration:null}")
+    @Value("${aws.elasticache.cluster.schema.expiration:60}")
     String SCHEMA_CACHE_EXPIRATION;
     private ICache<String, String> cache;
     private Boolean local = false;
     public SchemaCacheImpl() throws K8sParameterNotFoundException, JsonProcessingException {
-        int expTimeSeconds = Integer.parseInt(SCHEMA_CACHE_EXPIRATION) * 60;
+        int expTimeSeconds = 60 * 60;
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
         if (provider.getLocalMode()){
             if (Boolean.parseBoolean(System.getenv("DISABLE_CACHE"))){
