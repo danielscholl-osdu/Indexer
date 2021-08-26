@@ -35,7 +35,7 @@ public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoClosea
     String REDIS_SEARCH_PORT;
     @Value("${aws.elasticache.cluster.key}")
     String REDIS_SEARCH_KEY;
-    @Value("${aws.elasticache.cluster.schema.expiration:60}")
+    @Value("${aws.elasticache.cluster.schema.expiration}")
     String SCHEMA_CACHE_EXPIRATION;
     private ICache<String, String> cache;
     private Boolean local = false;
