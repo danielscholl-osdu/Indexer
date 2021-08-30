@@ -29,4 +29,6 @@ public interface IndexerMappingService extends IMappingService {
     Map<String, Object> getIndexMappingFromRecordSchema(IndexSchema schema);
 
     void updateIndexMappingForIndicesOfSameType(Set<String> indices, String fieldName) throws Exception;
+
+    void syncIndexMappingIfNeeded(RestHighLevelClient restClient, String index) throws Exception;
 }

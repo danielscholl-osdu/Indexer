@@ -99,4 +99,9 @@ public class Steps extends SchemaServiceRecordSteps {
         throws Throwable {
         super.i_should_get_object_in_search_response_without_hints_in_schema(objectInnerField ,index, recordFile, acl, kind);
     }
+
+    @When("^I create index with \"(.*?)\" for a given \"(.*?)\" and \"(.*?)\"$")
+    public void i_create_index_with_mapping_file_for_a_given_kind(String mappingFile, String index, String kind) throws Throwable {
+        super.i_create_index_with_mapping_file_for_a_given_kind(mappingFile, index, kind);
+    }
 }

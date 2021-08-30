@@ -365,8 +365,11 @@ public class IndexerServiceImpl implements IndexerService {
         for (IndexSchema schema : schemas) {
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
 
-            // check if index exist
-            if (this.indicesService.isIndexExist(restClient, index)) continue;
+            // check if index exist and sync meta attribute schema if missing
+            if (this.indicesService.isIndexExist(restClient, index)) {
+                this.mappingService.syncIndexMappingIfNeeded(restClient, index);
+                continue;
+            }
 
             // create index
             Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schema);

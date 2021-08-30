@@ -218,6 +218,13 @@ public class RecordSteps extends TestsBase {
         assertEquals(expectedRecordData.getData().get(objectField),actualRecordData.getData().get(objectField));
     }
 
+    public void i_create_index_with_mapping_file_for_a_given_kind(String mappingFile, String index, String kind) throws Throwable {
+        TestIndex testIndex = getInputIndexMap().get(kind);
+        testIndex.setMappingFile(mappingFile);
+        this.getInputIndexMap().put(kind, testIndex);
+        testIndex.addIndex();
+    }
+
     private long createIndex(String index) throws InterruptedException, IOException {
         long numOfIndexedDocuments = 0;
         int iterator;

@@ -15,12 +15,8 @@
 package org.opengroup.osdu.indexer.service;
 
 import com.google.gson.Gson;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import javax.inject.Inject;
+import com.google.gson.reflect.TypeToken;
+import com.lambdaworks.redis.RedisException;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -39,10 +35,18 @@ import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
+import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.core.common.search.IMappingService;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.*;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IndexerMappingService {
@@ -51,7 +55,12 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
     private JaxRsDpsLog log;
     @Inject
     private ElasticClientHandler elasticClientHandler;
-    private TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
+    @Autowired
+    private IIndexCache indexCache;
+    @Autowired
+    private IMappingService mappingService;
+
+    private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
 
     /**
@@ -149,6 +158,53 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         }
     }
 
+    @Override
+    public void syncIndexMappingIfNeeded(RestHighLevelClient restClient, String index) throws Exception {
+        final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
+
+        try {
+            Boolean mappingSynced = (Boolean) this.indexCache.get(cacheKey);
+            if (mappingSynced != null && mappingSynced) return;
+        } catch (RedisException ex) {
+            //In case the format of cache changes then clean the cache
+            this.indexCache.delete(cacheKey);
+        }
+
+        String jsonResponse = this.mappingService.getIndexMapping(restClient, index);
+        Type type = new TypeToken<Map<String, Object>>() {}.getType();
+        Map<String, Object> mappings = new Gson().fromJson(jsonResponse, type);
+
+        if (mappings == null || mappings.isEmpty()) return;
+
+        Map<String, Object> props = (Map<String, Object>) mappings.get("properties");
+
+        if (props == null || props.isEmpty()) return;
+
+        List<String> missing = new ArrayList<>();
+        for (String attribute : TypeMapper.getMetaAttributesKeys()) {
+            if (props.containsKey(attribute)) continue;
+            missing.add(attribute);
+        }
+
+        if (missing.isEmpty()) {
+            this.indexCache.put(cacheKey, true);
+            return;
+        }
+
+        Map<String, Object> properties = new HashMap<>();
+        for (String attribute : missing) {
+            properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute));
+        }
+
+        Map<String, Object> documentMapping = new HashMap<>();
+        documentMapping.put(Constants.PROPERTIES, properties);
+
+        String mapping = new Gson().toJson(documentMapping, Map.class);
+        this.createMappingWithJson(restClient, index, "_doc", mapping, true);
+
+        this.indexCache.put(cacheKey, true);
+    }
+
     private boolean updateMappingToEnableKeywordIndexingForField(RestHighLevelClient client, Set<String> indicesSet, String fieldName) throws IOException {
         String[] indices = indicesSet.toArray(new String[indicesSet.size()]);
         Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> indexMappingMap = getIndexFieldMap(new String[]{"data."+fieldName}, client, indices);
@@ -186,7 +242,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error", "Error getting indices.", String.format("Failed to get indices error: %s", Arrays.toString(indices)));
         }
     }
-    
+
     private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(
             RestHighLevelClient client, String index, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping, String fieldName) throws IOException {
 
