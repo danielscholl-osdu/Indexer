@@ -17,8 +17,8 @@ package org.opengroup.osdu.indexer.aws.publish;
 import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.AmazonSNS;
-import org.opengroup.osdu.core.aws.ssm.ParameterStorePropertySource;
-import org.opengroup.osdu.core.aws.ssm.SSMConfig;
+
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
 import org.opengroup.osdu.core.aws.sns.PublishRequestBuilder;
@@ -26,7 +26,7 @@ import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
+import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,25 +35,17 @@ import java.util.Map;
 public class PublisherImpl implements IPublisher {
 
     AmazonSNS snsClient;
-
-    private ParameterStorePropertySource ssm;
-
     private String amazonSNSTopic;
 
     @Value("${aws.region}")
     private String amazonSNSRegion;
 
-    @Value("${aws.indexer.sns.topic.arn}")
-    private String parameter;
-
-
     @Inject
-    public void init(){
+    public void init() throws K8sParameterNotFoundException {
         AmazonSNSConfig snsConfig = new AmazonSNSConfig(amazonSNSRegion);
         snsClient = snsConfig.AmazonSNS();
-        SSMConfig ssmConfig = new SSMConfig();
-        ssm = ssmConfig.amazonSSM();
-        amazonSNSTopic = ssm.getProperty(parameter).toString();
+        K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
+        amazonSNSTopic = provider.getParameterAsString("indexer-sns-topic-arn");
     }
 
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception

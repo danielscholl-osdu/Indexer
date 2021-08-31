@@ -19,8 +19,8 @@ import org.opengroup.osdu.core.aws.sqs.AmazonSQSConfig;
 import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
-import org.opengroup.osdu.core.aws.ssm.ParameterStorePropertySource;
-import org.opengroup.osdu.core.aws.ssm.SSMConfig;
+import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
@@ -41,8 +41,6 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
     private AmazonSQS sqsClient;
 
-    private ParameterStorePropertySource ssm;
-
     private String storageQueue;
     private String dlq;
     private final String retryString = "retry";
@@ -52,20 +50,14 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
     @Value("${aws.region}")
     private String region;
 
-    @Value("${aws.storage.sqs.queue.url}")
-    String sqsStorageQueueParameter;
-    @Value("${aws.indexer.sqs.dlq.url}")
-    String deadLetterQueueParameter;
-
     @Inject
-    public void init() {
+    public void init() throws K8sParameterNotFoundException {
         AmazonSQSConfig config = new AmazonSQSConfig(region);
         sqsClient = config.AmazonSQS();
         gson =new Gson();
-        SSMConfig ssmConfig = new SSMConfig();
-        ssm = ssmConfig.amazonSSM();
-        storageQueue = ssm.getProperty(sqsStorageQueueParameter).toString();
-        dlq = ssm.getProperty(deadLetterQueueParameter).toString();
+        K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
+        storageQueue = provider.getParameterAsString("storage-sqs-url");
+        dlq =  provider.getParameterAsString("indexer-deadletter-queue-sqs-url");
     }
 
     @Override
