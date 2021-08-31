@@ -159,7 +159,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
     }
 
     @Override
-    public void syncIndexMappingIfNeeded(RestHighLevelClient restClient, String index) throws Exception {
+    public void syncIndexMappingIfRequired(RestHighLevelClient restClient, String index) throws Exception {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
 
         try {

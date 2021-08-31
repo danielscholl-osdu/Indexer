@@ -64,4 +64,4 @@ Feature: Indexing of the documents
 
     Examples:
       | kind                                       | index                                      | recordFile                  | mappingFile                       | acl                            |
-      | "tenant1:indexer:test-mapping--Sync:1.0.0" | "tenant1-indexer-test-mapping--sync-1.0.0" | "index_record_sync_mapping" | "index_record_sync_mapping.index" | "data.default.viewers@tenant1" |
+      | "tenant1:indexer:test-mapping--Sync:1.0.0" | "tenant1-indexer-test-mapping--sync-1.0.0" | "index_record_sync_mapping" | "index_record_sync_mapping" | "data.default.viewers@tenant1" |

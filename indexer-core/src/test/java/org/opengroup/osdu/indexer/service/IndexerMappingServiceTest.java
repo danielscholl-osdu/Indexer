@@ -27,6 +27,8 @@ import org.mockito.Mock;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
+import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.core.common.search.IMappingService;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.powermock.api.mockito.PowerMockito;
@@ -41,6 +43,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -65,6 +70,10 @@ public class IndexerMappingServiceTest {
     private JaxRsDpsLog log;
     @Mock
     private ElasticClientHandler elasticClientHandler;
+    @Mock
+    private IIndexCache indexCache;
+    @Mock
+    private IMappingService mappingService;
     @InjectMocks
     private IndexerMappingServiceImpl sut;
 
@@ -162,5 +171,44 @@ public class IndexerMappingServiceTest {
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
+    }
+
+    @Test
+    public void should_returnCachedStatus_givenUpdatedIndex() throws Exception {
+        final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
+        when(this.indexCache.get(cacheKey)).thenReturn(true);
+
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index);
+
+        verifyNoMoreInteractions(this.mappingService);
+    }
+
+    @Test
+    public void should_applyNoUpdate_givenUpdateIndex() throws Exception {
+        final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
+        final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
+        when(this.mappingService.getIndexMapping(restHighLevelClient, index)).thenReturn(mapping);
+
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index);
+
+        verify(this.indexCache, times(1)).get(cacheKey);
+        verify(this.indexCache, times(1)).put(cacheKey, true);
+    }
+
+    @Test
+    public void should_applyUpdate_givenExistingIndex() throws Exception {
+        final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
+        final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"namespace\":{\"type\":\"keyword\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
+        when(this.mappingService.getIndexMapping(restHighLevelClient, index)).thenReturn(mapping);
+
+        AcknowledgedResponse mappingResponse = new AcknowledgedResponse(true);
+        doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
+        doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
+
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index);
+
+        verify(this.indexCache, times(1)).get(cacheKey);
+        verify(this.indexCache, times(1)).put(cacheKey, true);
+        verify(this.indicesClient, times(1)).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
     }
 }

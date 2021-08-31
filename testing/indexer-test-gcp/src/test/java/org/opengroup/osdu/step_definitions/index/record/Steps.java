@@ -36,6 +36,11 @@ public class Steps extends SchemaServiceRecordSteps {
         super.i_ingest_records_with_the_for_a_given(record, dataGroup, kind);
     }
 
+    @When("^I create index with \"(.*?)\" for a given \"(.*?)\" and \"(.*?)\"$")
+    public void i_create_index_with_mapping_file_for_a_given_kind(String mappingFile, String index, String kind) throws Throwable {
+        super.i_create_index_with_mapping_file_for_a_given_kind(mappingFile, index, kind);
+    }
+
     @Then("^I should get the (\\d+) documents for the \"([^\"]*)\" in the Elastic Search$")
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search(int expectedCount, String index) throws Throwable {
         super.i_should_get_the_documents_for_the_in_the_Elastic_Search(expectedCount, index);
