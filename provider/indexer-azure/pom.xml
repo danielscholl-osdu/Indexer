@@ -41,7 +41,7 @@
         <nimbus-jose-jwt.version>8.2</nimbus-jose-jwt.version>
         <indexer-core.version>0.12.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
-        <osdu.corelibazure.version>0.10.1</osdu.corelibazure.version>
+        <osdu.corelibazure.version>0.11.0-rc5</osdu.corelibazure.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
         <java-jwt.version>3.8.1</java-jwt.version>
         <powermock.version>2.0.2</powermock.version>
