@@ -63,5 +63,5 @@ Feature: Indexing of the documents
     Then I can validate indexed meta attributes for the <index> and given <kind>
 
     Examples:
-      | kind                                       | index                                      | recordFile                  | mappingFile                       | acl                            |
+      | kind                                       | index                                      | recordFile                  | mappingFile                 | acl                            |
       | "tenant1:indexer:test-mapping--Sync:1.0.0" | "tenant1-indexer-test-mapping--sync-1.0.0" | "index_record_sync_mapping" | "index_record_sync_mapping" | "data.default.viewers@tenant1" |
