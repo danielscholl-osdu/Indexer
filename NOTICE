@@ -1124,7 +1124,7 @@ The following software have components provided under the terms of this license:
 - Netty/Codec/HTTP (from https://repo1.maven.org/maven2/io/netty/netty-codec-http)
 - Netty/Common (from https://repo1.maven.org/maven2/io/netty/netty-common)
 - Netty/Common (from https://repo1.maven.org/maven2/io/netty/netty-common)
-- Plexus Default Interactivity Handler (from )
+- Plexus Default Interactivity Handler (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-interactivity-api)
 - Project Lombok (from https://projectlombok.org)
 - SLF4J API Module (from http://www.slf4j.org)
 - Spongy Castle (from http://rtyley.github.io/spongycastle/)
