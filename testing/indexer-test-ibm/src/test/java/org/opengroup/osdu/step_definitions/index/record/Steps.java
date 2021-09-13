@@ -138,7 +138,7 @@ public class Steps extends SchemaServiceRecordSteps {
 		
 		HttpRequest rq = HttpRequest.post(recordChangeMessage).url(url).headers(dpsHeaders.getHeaders()).build();
 		HttpResponse result = httpClient.send(rq);
-		if(result.hasException().equals(false) && result.getResponseCode() == 500) {
+        if(result.hasException() == false && result.getResponseCode() == 500) {
 			assertTrue(result.getResponseCode() == 500);
 		} else {
 			AppError error = gson.fromJson(result.getBody(), AppError.class);

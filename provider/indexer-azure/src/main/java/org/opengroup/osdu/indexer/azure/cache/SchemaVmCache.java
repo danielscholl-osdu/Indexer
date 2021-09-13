@@ -17,14 +17,16 @@ package org.opengroup.osdu.indexer.azure.cache;
 import org.opengroup.osdu.core.common.cache.VmCache;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SchemaCache implements ISchemaCache<String, String> {
+@ConditionalOnProperty(value = "runtime.env.local", havingValue = "true")
+public class SchemaVmCache implements ISchemaCache<String, String> {
     private VmCache<String, String> cache;
 
-    public SchemaCache(@Value("${SCHEMA_CACHE_EXPIRATION}") final String SCHEMA_CACHE_EXPIRATION,
-                       @Value("${MAX_CACHE_VALUE_SIZE}") final String MAX_CACHE_VALUE_SIZE) {
+    public SchemaVmCache(@Value("${SCHEMA_CACHE_EXPIRATION}") final String SCHEMA_CACHE_EXPIRATION,
+                         @Value("${MAX_CACHE_VALUE_SIZE}") final String MAX_CACHE_VALUE_SIZE) {
         cache = new VmCache<>(Integer.parseInt(SCHEMA_CACHE_EXPIRATION) * 60,
                 Integer.parseInt(MAX_CACHE_VALUE_SIZE));
     }
