@@ -342,7 +342,7 @@ The following software have components provided under the terms of this license:
 - Doxia :: XDoc Module (from http://maven.apache.org/doxia/doxia/doxia-modules/doxia-module-xdoc/)
 - Doxia :: XHTML Module (from http://maven.apache.org/doxia/doxia/doxia-modules/doxia-module-xhtml/)
 - Doxia Sitetools :: Decoration Model (from http://maven.apache.org/doxia/doxia-sitetools/doxia-decoration-model/)
-- Doxia Sitetools :: Site Renderer Component (from http://maven.apache.org/doxia/doxia-sitetools/doxia-site-renderer/)
+- Doxia Sitetools :: Site Renderer (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-site-renderer)
 - Elastic JNA Distribution (from https://github.com/java-native-access/jna)
 - Expression Language 3.0 (from http://uel.java.net)
 - FindBugs-jsr305 (from http://findbugs.sourceforge.net/)
