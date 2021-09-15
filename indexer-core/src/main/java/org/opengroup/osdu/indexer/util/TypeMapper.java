@@ -14,8 +14,10 @@
 
 package org.opengroup.osdu.indexer.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.model.entitlements.AclRole;
@@ -87,6 +89,10 @@ public class TypeMapper {
 
     public static Object getIndexerType(RecordMetaAttribute attribute) {
         return metaAttributeIndexerType.getOrDefault(attribute.getValue(), null);
+    }
+
+    public static List<String> getMetaAttributesKeys() {
+        return new ArrayList<>(metaAttributeIndexerType.keySet());
     }
 
     public static Object getMetaAttributeIndexerMapping(String key) {

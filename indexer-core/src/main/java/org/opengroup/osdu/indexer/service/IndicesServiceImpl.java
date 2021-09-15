@@ -62,7 +62,7 @@ public class IndicesServiceImpl implements IndicesService {
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Autowired
-    private IIndexCache indicesExistCache;
+    private IIndexCache indexCache;
     @Autowired
     private JaxRsDpsLog log;
 
@@ -99,14 +99,14 @@ public class IndicesServiceImpl implements IndicesService {
             CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
             // cache the index status
             boolean indexStatus = response.isAcknowledged() && response.isShardsAcknowledged();
-            if (indexStatus) this.indicesExistCache.put(index, true);
+            if (indexStatus) this.indexCache.put(index, true);
 
             return indexStatus;
         } catch (ElasticsearchStatusException e) {
             if (e.status() == RestStatus.BAD_REQUEST && (e.getMessage().contains("resource_already_exists_exception"))) {
                 log.info("Index already exists. Ignoring error...");
                 // cache the index status
-                this.indicesExistCache.put(index, true);
+                this.indexCache.put(index, true);
                 return true;
             }
             throw e;
@@ -123,15 +123,15 @@ public class IndicesServiceImpl implements IndicesService {
     public boolean isIndexExist(RestHighLevelClient client, String index) throws IOException {
         try {
             try {
-                Boolean isIndexExist = (Boolean) this.indicesExistCache.get(index);
+                Boolean isIndexExist = (Boolean) this.indexCache.get(index);
                 if (isIndexExist != null && isIndexExist) return true;
             } catch (RedisException ex) {
                 //In case the format of cache changes then clean the cache
-                this.indicesExistCache.delete(index);
+                this.indexCache.delete(index);
             }
             GetIndexRequest request = new GetIndexRequest(index);
             boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
-            if (exists) this.indicesExistCache.put(index, true);
+            if (exists) this.indexCache.put(index, true);
             return exists;
         } catch (ElasticsearchException exception) {
             if (exception.status() == RestStatus.NOT_FOUND) return false;
@@ -152,7 +152,7 @@ public class IndicesServiceImpl implements IndicesService {
     public boolean deleteIndex(RestHighLevelClient client, String index) throws ElasticsearchException, IOException, AppException {
         boolean responseStatus = removeIndexInElasticsearch(client, index);
         if (responseStatus) {
-            this.indicesExistCache.delete(index);
+            this.clearCacheOnIndexDeletion(index);
         }
         return responseStatus;
     }
@@ -224,5 +224,11 @@ public class IndicesServiceImpl implements IndicesService {
         String str = EntityUtils.toString(response.getEntity());
         final Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
         return new Gson().fromJson(str, typeOf);
+    }
+
+    private void clearCacheOnIndexDeletion(String index) {
+        final String syncCacheKey = String.format("metaAttributeMappingSynced-%s", index);
+        this.indexCache.delete(index);
+        this.indexCache.delete(syncCacheKey);
     }
 }
