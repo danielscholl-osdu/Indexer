@@ -152,6 +152,7 @@ public class RecordSteps extends TestsBase {
     public void i_can_validate_indexed_attributes(String index, String kind) throws Throwable {
         String authority = tenantMap.get(kind.substring(0, kind.indexOf(":")));
         index = generateActualName(index, timeStamp);
+        long numOfIndexedDocuments = createIndex(index);
         List<Map<String, Object>> hits = elasticUtils.fetchRecordsByAttribute(index, "authority", authority);
 
         assertTrue(hits.size() > 0);
@@ -216,6 +217,14 @@ public class RecordSteps extends TestsBase {
         RecordData actualRecordData = mapper.readValue(elasticRecordData, RecordData.class);
 
         assertEquals(expectedRecordData.getData().get(objectField),actualRecordData.getData().get(objectField));
+    }
+
+    public void i_create_index_with_mapping_file_for_a_given_kind(String mappingFile, String index, String kind) throws Throwable {
+        String actualKind = generateActualName(kind, timeStamp);
+        TestIndex testIndex = getInputIndexMap().get(actualKind);
+        testIndex.setMappingFile(mappingFile);
+        this.getInputIndexMap().put(actualKind, testIndex);
+        testIndex.addIndex();
     }
 
     private long createIndex(String index) throws InterruptedException, IOException {
