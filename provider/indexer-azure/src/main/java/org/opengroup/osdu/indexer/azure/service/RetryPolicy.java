@@ -28,6 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.function.Predicate;
 
 /**
  * This class handles retry configuration logic for calls made to <prefix>/storage/v2/query/records:batch
@@ -50,23 +51,25 @@ public class RetryPolicy {
     /**
      * @return RetryConfig with 3 attempts and 1 sec wait time
      */
-    public RetryConfig retryConfig() {
+    public RetryConfig retryConfig(Predicate<HttpResponse> predicate) {
         return RetryConfig.<HttpResponse>custom()
                 .maxAttempts(attempts)
                 .waitDuration(Duration.ofMillis(waitDuration))
-                .retryOnResult(response -> isRetryRequired(response))
+                .retryOnResult(predicate)
                 .build();
     }
 
     /**
      * Unfound records get listed under a JsonArray "notFound" in the http json response
+     *
      * @param response
      * @return if there are elements in "notFound" returns true, else false
      */
-    private boolean isRetryRequired(HttpResponse response) {
+    public boolean batchRetryPolicy(HttpResponse response) {
         if (response == null || response.getBody().isEmpty()) {
             return false;
         }
+
         JsonObject jsonObject = new JsonParser().parse(response.getBody()).getAsJsonObject();
         JsonElement notFoundElement = (JsonArray) jsonObject.get(RECORD_NOT_FOUND);
         if (notFoundElement == null ||
@@ -77,5 +80,31 @@ public class RetryPolicy {
         }
         log.info("Retry is set true");
         return true;
+    }
+
+    public boolean schemaRetryPolicy(HttpResponse response) {
+        if (response == null || response.getBody().isEmpty()) {
+            return false;
+        }
+
+        if (response.getResponseCode() == 404) {
+            log.info("Retry is set true");
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean defaultRetryPolicy(HttpResponse response) {
+        if (response == null || response.getBody().isEmpty()) {
+            return false;
+        }
+
+        if (response.getResponseCode() > 501) {
+            log.info("Retry is set true");
+            return true;
+        }
+
+        return false;
     }
 }

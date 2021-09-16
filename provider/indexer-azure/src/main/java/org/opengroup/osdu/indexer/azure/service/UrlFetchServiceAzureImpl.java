@@ -41,6 +41,7 @@ import java.util.function.Supplier;
 public class UrlFetchServiceAzureImpl implements IUrlFetchService {
 
     public static final String STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST_URL = "storage/v2/query/records:batch";
+    public static final String SCHEMA_SERVICE_HOST_URL = "api/schema-service/v1/schema";
 
     @Autowired
     private RetryPolicy policy;
@@ -50,6 +51,7 @@ public class UrlFetchServiceAzureImpl implements IUrlFetchService {
 
     @Autowired
     private JaxRsDpsLog logger;
+
     /**
      * this method invokes retryFunction only for <prefix>/storage/v2/query/records:batch
      * calls otherwise invokes UrlFetchService.sendRequest(FetchServiceHttpRequest request)
@@ -60,14 +62,7 @@ public class UrlFetchServiceAzureImpl implements IUrlFetchService {
      */
     @Override
     public HttpResponse sendRequest(FetchServiceHttpRequest httpRequest) throws URISyntaxException {
-        HttpResponse output;
-        if (httpRequest.getUrl().contains(STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST_URL)) {
-            output = this.retryFunction(httpRequest);
-            if (output != null) {
-                return output;
-            }
-        }
-        return this.urlFetchService.sendRequest(httpRequest);
+        return this.retryFunction(httpRequest);
     }
 
     /**
@@ -78,7 +73,15 @@ public class UrlFetchServiceAzureImpl implements IUrlFetchService {
      * @return null if URISyntaxException is caught else returns HttpResponse
      */
     private HttpResponse retryFunction(FetchServiceHttpRequest request) {
-        RetryConfig config = this.policy.retryConfig();
+        RetryConfig config;
+        if (request.getUrl().contains(STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST_URL)) {
+            config = this.policy.retryConfig(response -> this.policy.batchRetryPolicy(response));
+        } else if (request.getUrl().contains(SCHEMA_SERVICE_HOST_URL)) {
+            config = this.policy.retryConfig(response -> this.policy.schemaRetryPolicy(response));
+        } else {
+            config = this.policy.retryConfig(response -> this.policy.defaultRetryPolicy(response));
+        }
+
         RetryRegistry registry = RetryRegistry.of(config);
         Retry retry = registry.retry("retryPolicy", config);
 

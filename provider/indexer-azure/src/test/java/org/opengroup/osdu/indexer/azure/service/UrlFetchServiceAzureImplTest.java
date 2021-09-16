@@ -14,8 +14,6 @@
 
 package org.opengroup.osdu.indexer.azure.service;
 
-import io.github.resilience4j.retry.RetryConfig;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -26,12 +24,8 @@ import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 
-import java.time.Duration;
-
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -95,45 +89,43 @@ public class UrlFetchServiceAzureImplTest {
             " \"conversionStatuses\":[]\n" +
             "}";
 
-    private static final String url = "https://demo/api/storage/v2/query/records:batch";
-    private static final String url2 = "https://demo/api/storage/v2/schemas";
-
-    @Before
-    public void setUp() {
-        when(this.retryPolicy.retryConfig()).thenReturn(new RetryPolicy().retryConfig());
-    }
+    private static final String BATCH_API_URL = "https://demo/api/storage/v2/query/records:batch";
+    private static final String STORAGE_API_URL = "https://demo/api/storage/v2/schemas";
+    private static final String SCHEMA_API_URL = "https://demo/api/schema-service/v1/schema/osdu:file:gom:1.0.0";
 
     @Test
     public void shouldRetry_ForJSON1_when_storageQueryRecordCallIsMade() throws Exception {
         response.setBody(JSON1);
-        httpRequest.setUrl(url);
-
-        when(urlFetchServiceAzure.sendRequest(httpRequest)).thenReturn(response);
+        httpRequest.setUrl(BATCH_API_URL);
+        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy().retryConfig(response -> this.retryPolicy.batchRetryPolicy(response)));
+        when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
 
         urlFetchServiceAzure.sendRequest(httpRequest);
+
         verify(urlFetchService, atMost(4)).sendRequest(httpRequest);
     }
 
     @Test
-    public void shouldNotRetry_ForJSON2_when_storageQueryRecordCallIsMade() throws Exception {
-        response.setBody(JSON2);
-        httpRequest.setUrl(url);
-
-        when(urlFetchServiceAzure.sendRequest(httpRequest)).thenReturn(response);
-
-        urlFetchServiceAzure.sendRequest(httpRequest);
-        verify(urlFetchService, atMost(2)).sendRequest(httpRequest);
-    }
-
-
-    @Test
-    public void retryFunction_shouldNotBeCalled() throws Exception {
-        httpRequest.setUrl(url2);
-
+    public void shouldRetry_ForJSON1_when_schemaRecordCallIsMade() throws Exception {
+        response.setBody(JSON1);
+        httpRequest.setUrl(SCHEMA_API_URL);
+        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy().retryConfig(response -> this.retryPolicy.schemaRetryPolicy(response)));
         when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
 
         urlFetchServiceAzure.sendRequest(httpRequest);
-        verify(urlFetchService, times(1)).sendRequest(httpRequest);
+
+        verify(urlFetchService, atMost(4)).sendRequest(httpRequest);
     }
 
+    @Test
+    public void shouldRetry_when_anyOtherCallIsMade() throws Exception {
+        response.setBody(JSON2);
+        httpRequest.setUrl(STORAGE_API_URL);
+        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy().retryConfig(response -> this.retryPolicy.defaultRetryPolicy(response)));
+        when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
+
+        urlFetchServiceAzure.sendRequest(httpRequest);
+
+        verify(urlFetchService, atMost(4)).sendRequest(httpRequest);
+    }
 }
