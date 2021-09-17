@@ -66,9 +66,9 @@ public class RetryPolicy {
      * @return if there are elements in "notFound" returns true, else false
      */
     public boolean batchRetryPolicy(HttpResponse response) {
-        if (response == null || response.getBody().isEmpty()) {
-            return false;
-        }
+        if (retryOnEmptyResponse(response)) return false;
+
+        if (defaultResponseRetry(response)) return true;
 
         JsonObject jsonObject = new JsonParser().parse(response.getBody()).getAsJsonObject();
         JsonElement notFoundElement = (JsonArray) jsonObject.get(RECORD_NOT_FOUND);
@@ -78,17 +78,17 @@ public class RetryPolicy {
                 notFoundElement.getAsJsonArray().isJsonNull()) {
             return false;
         }
-        log.info("Retry is set true");
+        log.info("Storage batch API retry");
         return true;
     }
 
     public boolean schemaRetryPolicy(HttpResponse response) {
-        if (response == null || response.getBody().isEmpty()) {
-            return false;
-        }
+        if (retryOnEmptyResponse(response)) return false;
+
+        if (defaultResponseRetry(response)) return true;
 
         if (response.getResponseCode() == 404) {
-            log.info("Retry is set true");
+            log.info("Schema API retry");
             return true;
         }
 
@@ -96,15 +96,19 @@ public class RetryPolicy {
     }
 
     public boolean defaultRetryPolicy(HttpResponse response) {
-        if (response == null || response.getBody().isEmpty()) {
-            return false;
-        }
+        if (retryOnEmptyResponse(response)) return false;
 
-        if (response.getResponseCode() > 501) {
-            log.info("Retry is set true");
-            return true;
-        }
+        return defaultResponseRetry(response);
+    }
 
-        return false;
+    private boolean retryOnEmptyResponse(HttpResponse response) {
+        return response == null || response.getBody().isEmpty();
+    }
+
+    private boolean defaultResponseRetry(HttpResponse response) {
+        if (response.getResponseCode() <= 501) return false;
+
+        log.info(String.format("Default retry, response code: %s", response.getResponseCode()));
+        return true;
     }
 }
