@@ -17,34 +17,28 @@
 
 package org.opengroup.osdu.indexer.util;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
+
 import com.google.common.base.Strings;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
+import java.util.Map;
 import java.util.logging.Level;
+import javax.inject.Inject;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.Constants;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
+import org.opengroup.osdu.core.common.model.entitlements.AuthorizationResponse;
 import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.DeploymentEnvironment;
-import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
+import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
+import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
+import org.opengroup.osdu.core.common.provider.interfaces.IAuthorizationService;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
 import org.opengroup.osdu.core.gcp.model.CloudTaskHeaders;
-import org.springframework.beans.factory.annotation.Value;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
-
-import javax.inject.Inject;
-import java.util.Map;
-
-import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
 
 
 @Log
@@ -64,8 +58,8 @@ public class RequestInfoImpl implements IRequestInfo {
     @Inject
     private IndexerConfigurationProperties properties;
 
-    @Value("${indexer.que.service.mail}")
-    private String indexerQueServiceMail;
+    @Inject
+    private IAuthorizationService authorizationService;
 
     private static final String EXPECTED_CRON_HEADER_VALUE = "true";
 
@@ -106,39 +100,20 @@ public class RequestInfoImpl implements IRequestInfo {
     @Override
     public boolean isTaskQueueRequest() {
         if(this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.CLOUD_TASK_QUEUE_NAME)){
-            log.log(Level.INFO,"Request acknowledged as Cloud task, proceeding token validation");
+            log.log(Level.INFO,"Request confirmed as cloud task, token validation in progress");
             return isCloudTaskRequest();
         }
         if(this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.APPENGINE_TASK_QUEUE_NAME)){
-            log.log(Level.INFO,"Request acknowledged as AppEngine task, proceeding headers validation");
+            log.log(Level.INFO,"Request confirmed as AppEngine, headers validation in progress");
             return isAppEngineTaskRequest();
         }
         return false;
     }
 
     private boolean isCloudTaskRequest() {
-        log.log(Level.INFO,dpsHeaders.getHeaders().toString());
-        try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance())
-                .setIssuers(Arrays.asList(
-                    "accounts.google.com", "https://accounts.google.com",
-                    "googleapis.com", "https://www.googleapis.com/auth/userinfo.profile"
-                    )
-                ).build();
-            String authorization = dpsHeaders.getAuthorization().replace("Bearer ", "");
-
-            GoogleIdToken googleIdToken = verifier.verify(authorization);
-            if(googleIdToken.getPayload().getEmail().equals(indexerQueServiceMail)){
-                return true;
-            }
-            log.log(Level.WARNING,"Token email doesn't match with variable \"indexer.que.service.mail\"");
-            return false;
-
-        } catch (GeneralSecurityException | IOException e) {
-            log.log(Level.WARNING,"Not valid or expired cloud task token provided");
-            return false;
-        }
+        AuthorizationResponse authResponse = authorizationService.authorizeAny(dpsHeaders, SearchServiceRole.ADMIN);
+        dpsHeaders.put(DpsHeaders.USER_EMAIL, authResponse.getUser());
+        return true;
     }
 
     private boolean isAppEngineTaskRequest(){

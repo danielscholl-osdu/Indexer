@@ -15,27 +15,31 @@
 package org.opengroup.osdu.indexer.azure.cache;
 
 import org.opengroup.osdu.core.common.cache.VmCache;
-import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.core.common.model.search.IdToken;
+import org.opengroup.osdu.core.common.provider.interfaces.IJwtCache;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-public class IndexCache implements IIndexCache<String, Boolean> {
-    private VmCache<String, Boolean> cache;
+@ConditionalOnProperty(value = "runtime.env.local", havingValue = "true")
+public class JwtVmCache implements IJwtCache<String, IdToken> {
+    private VmCache<String, IdToken> cache;
 
-    public IndexCache(@Value("${INDEX_CACHE_EXPIRATION}") final String INDEX_CACHE_EXPIRATION,
-                      @Value("${MAX_CACHE_VALUE_SIZE}") final String MAX_CACHE_VALUE_SIZE) {
-        cache = new VmCache<>(Integer.parseInt(INDEX_CACHE_EXPIRATION) * 60,
-                Integer.parseInt(MAX_CACHE_VALUE_SIZE));
+    // Azure service account id_token can be requested only for 1 hr
+    private final static int EXPIRED_AFTER = 59;
+
+    public JwtVmCache(@Value("${MAX_CACHE_VALUE_SIZE}") final String MAX_CACHE_VALUE_SIZE) {
+        cache = new VmCache<>(EXPIRED_AFTER * 60, Integer.parseInt(MAX_CACHE_VALUE_SIZE));
     }
 
     @Override
-    public void put(String s, Boolean o) {
+    public void put(String s, IdToken o) {
         this.cache.put(s, o);
     }
 
     @Override
-    public Boolean get(String s) {
+    public IdToken get(String s) {
         return this.cache.get(s);
     }
 

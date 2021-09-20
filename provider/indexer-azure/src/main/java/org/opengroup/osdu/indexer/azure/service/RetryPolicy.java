@@ -28,6 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.function.Predicate;
 
 /**
  * This class handles retry configuration logic for calls made to <prefix>/storage/v2/query/records:batch
@@ -50,23 +51,25 @@ public class RetryPolicy {
     /**
      * @return RetryConfig with 3 attempts and 1 sec wait time
      */
-    public RetryConfig retryConfig() {
+    public RetryConfig retryConfig(Predicate<HttpResponse> predicate) {
         return RetryConfig.<HttpResponse>custom()
                 .maxAttempts(attempts)
                 .waitDuration(Duration.ofMillis(waitDuration))
-                .retryOnResult(response -> isRetryRequired(response))
+                .retryOnResult(predicate)
                 .build();
     }
 
     /**
      * Unfound records get listed under a JsonArray "notFound" in the http json response
+     *
      * @param response
      * @return if there are elements in "notFound" returns true, else false
      */
-    private boolean isRetryRequired(HttpResponse response) {
-        if (response == null || response.getBody().isEmpty()) {
-            return false;
-        }
+    public boolean batchRetryPolicy(HttpResponse response) {
+        if (retryOnEmptyResponse(response)) return false;
+
+        if (defaultResponseRetry(response)) return true;
+
         JsonObject jsonObject = new JsonParser().parse(response.getBody()).getAsJsonObject();
         JsonElement notFoundElement = (JsonArray) jsonObject.get(RECORD_NOT_FOUND);
         if (notFoundElement == null ||
@@ -75,7 +78,37 @@ public class RetryPolicy {
                 notFoundElement.getAsJsonArray().isJsonNull()) {
             return false;
         }
-        log.info("Retry is set true");
+        log.info("Storage batch API retry");
+        return true;
+    }
+
+    public boolean schemaRetryPolicy(HttpResponse response) {
+        if (retryOnEmptyResponse(response)) return false;
+
+        if (defaultResponseRetry(response)) return true;
+
+        if (response.getResponseCode() == 404) {
+            log.info("Schema API retry");
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean defaultRetryPolicy(HttpResponse response) {
+        if (retryOnEmptyResponse(response)) return false;
+
+        return defaultResponseRetry(response);
+    }
+
+    private boolean retryOnEmptyResponse(HttpResponse response) {
+        return response == null || response.getBody().isEmpty();
+    }
+
+    private boolean defaultResponseRetry(HttpResponse response) {
+        if (response.getResponseCode() <= 501) return false;
+
+        log.info(String.format("Default retry, response code: %s", response.getResponseCode()));
         return true;
     }
 }

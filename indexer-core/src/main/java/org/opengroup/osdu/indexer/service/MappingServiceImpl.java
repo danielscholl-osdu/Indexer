@@ -19,10 +19,11 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.client.indices.GetMappingsResponse;
+import org.elasticsearch.common.unit.TimeValue;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.core.common.search.IMappingService;
+import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ public class MappingServiceImpl implements IMappingService {
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
 
-//    private TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
+    private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
     /*
      * Get index schema
@@ -82,10 +83,9 @@ public class MappingServiceImpl implements IMappingService {
         try {
             GetMappingsRequest request = new GetMappingsRequest();
             request.indices(index);
-            // TODO: enable this once server is migrated > v6.6.2
-            // request.masterNodeTimeout(REQUEST_TIMEOUT);
+            request.setTimeout(REQUEST_TIMEOUT);
             GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
-            return response.toString();
+            return response.mappings().get(index).getSourceAsMap().toString();
         } catch (IOException e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)), e);
         }
