@@ -80,6 +80,12 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
     }
 
     @Override
+    public void createReIndexTask(String payload, DpsHeaders headers) {
+        headers.addCorrelationIdIfMissing();
+        publishAllRecordsToServiceBus(payload, headers);
+    }
+
+    @Override
     public void createReIndexTask(String payload, Long countdownMillis, DpsHeaders headers) {
         headers.addCorrelationIdIfMissing();
         publishAllRecordsToServiceBus(payload, headers);
