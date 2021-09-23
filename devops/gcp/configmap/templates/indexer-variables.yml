@@ -20,6 +20,7 @@ data:
   STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST: "{{ .Values.data.storage_query_record_for_conversion_host }}"
   STORAGE_HOSTNAME: "{{ .Values.data.storage_hostname }}"
   STORAGE_RECORDS_BATCH_SIZE: "{{ .Values.data.storage_records_batch_size }}"
+  STORAGE_QUERY_KINDS_HOST: "{{ .Values.data.storage_query_kinds_host }}"
   INDEXER_QUEUE_HOST: "{{ .Values.data.indexer_queue_host }}"
   LEGALTAG_API: "{{ .Values.data.legaltag_api }}"
   CRS_API: "{{ .Values.data.crs_api }}"
