@@ -5,7 +5,7 @@
 data:
   key_ring: "csqp"
   kms_key: "searchService"
-  log_level: "INFO"  
+  log_level: "INFO"
   schema_host: ""
   authorize_api: "http://entitlements/api/entitlements/v2/"
   google_cloud_project: ""
@@ -17,12 +17,14 @@ data:
   storage_query_record_for_conversion_host: "http://storage/api/storage/v2/query/records:batch"
   storage_hostname: "storage"
   storage_records_batch_size: "20"
+  storage_query_kinds_host: "http://storage/api/storage/v2/query/kinds"
   indexer_queue_host: ""
   legaltag_api: "http://legal/api/legal/v1"
   crs_api: ""
   partition_api: "http://partition/api/partition/v1/"
   google_audiences: ""
-  indexer_que_service_mail: ""  
+  indexer_que_service_mail: ""
+
 
 conf:
   configmap: "indexer-config"
