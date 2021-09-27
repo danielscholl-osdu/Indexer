@@ -14,6 +14,8 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -31,6 +33,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -85,7 +89,8 @@ public class MappingServiceImpl implements IMappingService {
             request.indices(index);
             request.setTimeout(REQUEST_TIMEOUT);
             GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
-            return response.mappings().get(index).getSourceAsMap().toString();
+            Type type = new TypeToken<Map<String, Object>>() {}.getType();
+            return new Gson().toJson(response.mappings().get(index).getSourceAsMap(), type);
         } catch (IOException e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)), e);
         }
