@@ -46,6 +46,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
+
 @Log
 @Component
 @RequestScope
@@ -67,6 +69,9 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
     @Inject
     private StorageService storageService;
+
+    @Inject
+    private RequestInfoImpl requestInfo;
 
     @Override
     public void createWorkerTask(String payload, DpsHeaders headers) {
@@ -103,6 +108,8 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
         try {
             do {
+                headers.put(AUTHORIZATION, this.requestInfo.checkOrGetAuthorizationHeader());
+
                 if (recordQueryResponse != null) {
                     recordReindexRequest = RecordReindexRequest.builder().cursor(recordQueryResponse.getCursor()).kind(recordKind).build();
                 }
