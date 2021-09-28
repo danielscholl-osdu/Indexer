@@ -34,7 +34,6 @@ public class FeatureCollectionSerializer extends JsonSerializer<FeatureCollectio
 
         jsonGenerator.writeArrayFieldStart("geometries");
         for (Feature feature : value.getFeatures()) {
-            jsonGenerator.writeStartObject();
             if (feature.getGeometry() instanceof GeometryCollection) {
                 GeometryCollection geometryCollection = (GeometryCollection) feature.getGeometry();
                 for (GeoJsonObject shape : geometryCollection.getGeometries()) {
@@ -43,7 +42,6 @@ public class FeatureCollectionSerializer extends JsonSerializer<FeatureCollectio
             } else {
                 serializeGeoShape(feature.getGeometry(), jsonGenerator);
             }
-            jsonGenerator.writeEndObject();
         }
         jsonGenerator.writeEndArray();
 
@@ -59,23 +57,35 @@ public class FeatureCollectionSerializer extends JsonSerializer<FeatureCollectio
 
     private void serializeGeoShape(GeoJsonObject geoJsonObject, JsonGenerator jsonGenerator) throws IOException {
         if (geoJsonObject instanceof Point) {
+            jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("type", "point");
             jsonGenerator.writeObjectField("coordinates", ((Point) geoJsonObject).getCoordinates());
+            jsonGenerator.writeEndObject();
         } else if (geoJsonObject instanceof LineString) {
+            jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("type", "linestring");
             jsonGenerator.writeObjectField("coordinates", ((LineString) geoJsonObject).getCoordinates());
+            jsonGenerator.writeEndObject();
         } else if (geoJsonObject instanceof Polygon) {
+            jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("type", "polygon");
             jsonGenerator.writeObjectField("coordinates", ((Polygon) geoJsonObject).getCoordinates());
+            jsonGenerator.writeEndObject();
         } else if (geoJsonObject instanceof MultiPoint) {
+            jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("type", "multipoint");
             jsonGenerator.writeObjectField("coordinates", ((MultiPoint) geoJsonObject).getCoordinates());
+            jsonGenerator.writeEndObject();
         } else if (geoJsonObject instanceof MultiLineString) {
+            jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("type", "multilinestring");
             jsonGenerator.writeObjectField("coordinates", ((MultiLineString) geoJsonObject).getCoordinates());
+            jsonGenerator.writeEndObject();
         } else if (geoJsonObject instanceof MultiPolygon) {
+            jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("type", "multipolygon");
             jsonGenerator.writeObjectField("coordinates", ((MultiPolygon) geoJsonObject).getCoordinates());
+            jsonGenerator.writeEndObject();
         }
     }
 }
