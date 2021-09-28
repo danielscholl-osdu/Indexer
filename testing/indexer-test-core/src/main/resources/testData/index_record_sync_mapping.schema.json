@@ -4,7 +4,7 @@
       "authority": "tenant1",
       "source": "indexer",
       "entityType": "test-mapping--Sync",
-      "schemaVersionMajor": "1",
+      "schemaVersionMajor": "2",
       "schemaVersionMinor": "0",
       "schemaVersionPatch": "0"
     },

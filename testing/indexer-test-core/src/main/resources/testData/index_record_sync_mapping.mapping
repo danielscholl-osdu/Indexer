@@ -20,7 +20,7 @@
 		},
 		"data": {
 			"properties": {
-				"FullName": {
+				"Full Name": {
 					"type": "text",
 					"fields": {
 						"keyword": {
