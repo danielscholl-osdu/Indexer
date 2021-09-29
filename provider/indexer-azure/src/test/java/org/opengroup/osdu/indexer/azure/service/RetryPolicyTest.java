@@ -131,7 +131,7 @@ public class RetryPolicyTest {
 
     @Test
     public void retry_should_be_true_for_jsonResponseWithNotFound() {
-        RetryConfig config = this.retryPolicy.retryConfig();
+        RetryConfig config = this.retryPolicy.retryConfig(response -> this.retryPolicy.batchRetryPolicy(response));
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE_WITH_NOT_FOUND);
         assert retry != null;
@@ -142,7 +142,7 @@ public class RetryPolicyTest {
 
     @Test
     public void retry_should_be_false_for_jsonResponse1WithOut_NotFound() {
-        RetryConfig config = this.retryPolicy.retryConfig();
+        RetryConfig config = this.retryPolicy.retryConfig(response -> this.retryPolicy.batchRetryPolicy(response));
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
         boolean value = retry.test(response);
@@ -152,7 +152,7 @@ public class RetryPolicyTest {
 
     @Test
     public void retry_should_be_false_for_jsonResponse2WithOut_NotFound() {
-        RetryConfig config = this.retryPolicy.retryConfig();
+        RetryConfig config = this.retryPolicy.retryConfig(response -> this.retryPolicy.batchRetryPolicy(response));
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE2_WITHOUT_NOT_FOUND);
         boolean value = retry.test(response);

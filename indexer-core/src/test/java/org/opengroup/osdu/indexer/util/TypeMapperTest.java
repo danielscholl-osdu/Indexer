@@ -5,7 +5,10 @@ import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TypeMapperTest {
 
@@ -37,5 +40,15 @@ public class TypeMapperTest {
         assertEquals(ElasticType.KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_USER));
         assertEquals(ElasticType.DATE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_TIME));
         assertEquals(ElasticType.DATE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_TIME));
+    }
+
+    @Test
+    public void validate_meta_attributes() {
+        List<String> keys = TypeMapper.getMetaAttributesKeys();
+
+        String[] meta = new String[] {"id", "kind", "authority", "source", "namespace", "type", "version", "acl", "tags", "legal", "ancestry", "createUser", "modifyUser", "createTime", "modifyTime", "index"};
+        for(String attributeKey : meta) {
+            assertTrue(keys.contains(attributeKey));
+        }
     }
 }

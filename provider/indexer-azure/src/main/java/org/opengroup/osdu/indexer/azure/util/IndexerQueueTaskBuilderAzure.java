@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
 
 @Log
 @Component
@@ -69,11 +70,24 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
     @Inject
     private StorageService storageService;
 
+    @Inject
+    private RequestInfoImpl requestInfo;
+
+    @Override
+    public void createWorkerTask(String payload, DpsHeaders headers) {
+        createTask(payload, headers);
+    }
 
     @Override
     public void createWorkerTask(String payload, Long countdownMillis, DpsHeaders headers) {
         headers.addCorrelationIdIfMissing();
         createTask(payload, headers);
+    }
+
+    @Override
+    public void createReIndexTask(String payload, DpsHeaders headers) {
+        headers.addCorrelationIdIfMissing();
+        publishAllRecordsToServiceBus(payload, headers);
     }
 
     @Override
@@ -94,6 +108,8 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
         try {
             do {
+                headers.put(AUTHORIZATION, this.requestInfo.checkOrGetAuthorizationHeader());
+
                 if (recordQueryResponse != null) {
                     recordReindexRequest = RecordReindexRequest.builder().cursor(recordQueryResponse.getCursor()).kind(recordKind).build();
                 }
@@ -151,7 +167,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         message.setContentType("application/json");
 
         try {
-            logger.debug("Indexer publishes message to Service Bus " + headers.getCorrelationId());
+            logger.info("Indexer publishes message to Service Bus " + headers.getCorrelationId());
             topicClientFactory.getClient(headers.getPartitionId(), serviceBusReindexTopicName).send(message);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

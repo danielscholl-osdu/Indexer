@@ -14,15 +14,18 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.client.indices.GetMappingsResponse;
+import org.elasticsearch.common.unit.TimeValue;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.core.common.search.IMappingService;
+import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -43,7 +48,7 @@ public class MappingServiceImpl implements IMappingService {
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
 
-//    private TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
+    private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
     /*
      * Get index schema
@@ -82,10 +87,10 @@ public class MappingServiceImpl implements IMappingService {
         try {
             GetMappingsRequest request = new GetMappingsRequest();
             request.indices(index);
-            // TODO: enable this once server is migrated > v6.6.2
-            // request.masterNodeTimeout(REQUEST_TIMEOUT);
+            request.setTimeout(REQUEST_TIMEOUT);
             GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
-            return response.toString();
+            Type type = new TypeToken<Map<String, Object>>() {}.getType();
+            return new Gson().toJson(response.mappings().get(index).getSourceAsMap(), type);
         } catch (IOException e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)), e);
         }

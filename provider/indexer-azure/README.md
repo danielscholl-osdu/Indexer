@@ -39,6 +39,7 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 
 | name | value | description | sensitive? | source |
 | ---  | ---   | ---         | ---        | ---    |
+| `runtime.env.local` | false (change this to `true` when running locally) | Var to check if app is running locally | no | - |
 | `server.servlet.contextPath` | `/api/indexer/v2/` | Servlet context path | no | - |
 | `schema_service_url` | ex `https://schema.azurewebsites.net` | Endpoint of schema service | no | output of infrastructure deployments |
 | `SCHEMA_HOST` | `${schema_service_url}/schema` | Endpoint of schema API | no | - |
