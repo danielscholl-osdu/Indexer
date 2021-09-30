@@ -17,23 +17,30 @@
 
 package org.opengroup.osdu.indexer.cache;
 
+import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.Objects;
+import javax.inject.Inject;
+import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.cache.RedisCache;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCache;
+import org.opengroup.osdu.core.common.provider.interfaces.IKmsClient;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
 
 @Component
 public class ElasticCredentialsCache implements IElasticCredentialsCache<String, ClusterSettings>, AutoCloseable {
 
-    private RedisCache<String, ClusterSettings> cache;
+    private IKmsClient kmsClient;
+    private RedisCache<String, String> cache;
 
     @Inject
-    public ElasticCredentialsCache(final IndexerConfigurationProperties properties) {
-        cache = new RedisCache<>(properties.getRedisSearchHost(), Integer.parseInt(properties.getRedisSearchPort()),
-                properties.getElasticCacheExpiration() * 60, String.class, ClusterSettings.class);
+    public ElasticCredentialsCache(final IndexerConfigurationProperties properties, final IKmsClient kmsClient) {
+        this.cache = new RedisCache<>(properties.getRedisSearchHost(), Integer.parseInt(properties.getRedisSearchPort()),
+            properties.getElasticCacheExpiration() * 60, String.class, String.class);
+        this.kmsClient = kmsClient;
     }
 
     @Override
@@ -43,12 +50,27 @@ public class ElasticCredentialsCache implements IElasticCredentialsCache<String,
 
     @Override
     public void put(String s, ClusterSettings o) {
-        this.cache.put(s,o);
+        try {
+            String jsonSettings = new Gson().toJson(o);
+            String encryptString = kmsClient.encryptString(jsonSettings);
+            this.cache.put(s, encryptString);
+        } catch (IOException e) {
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal server error", "Unable to encrypt settings before being cached", e);
+        }
     }
 
     @Override
     public ClusterSettings get(String s) {
-        return this.cache.get(s);
+        try {
+            String encryptedSettings = this.cache.get(s);
+            if (Objects.isNull(encryptedSettings) || encryptedSettings.isEmpty()) {
+                return null;
+            }
+            String jsonSettings = this.kmsClient.decryptString(encryptedSettings);
+            return new Gson().fromJson(jsonSettings, ClusterSettings.class);
+        } catch (IOException e) {
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal server error", "Unable to decrypt settings from cache", e);
+        }
     }
 
     @Override
