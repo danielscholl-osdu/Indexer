@@ -29,7 +29,6 @@ import java.io.Serializable;
 @Getter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-@AllArgsConstructor
 @JsonDeserialize(using = PositionDeserializer.class)
 @JsonSerialize(using = PositionSerializer.class)
 public class Position implements Serializable {
@@ -42,6 +41,12 @@ public class Position implements Serializable {
     public Position(double longitude, double latitude) {
         this.setLongitude(longitude);
         this.setLatitude(latitude);
+    }
+
+    public Position(double longitude, double latitude, double altitude) {
+        this.setLongitude(longitude);
+        this.setLatitude(latitude);
+        this.altitude = altitude;
     }
 
     public void setLongitude(double longitude) {
