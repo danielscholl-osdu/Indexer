@@ -17,6 +17,8 @@ package org.opengroup.osdu.indexer.error;
 import javax.validation.ValidationException;
 
 import javassist.NotFoundException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
@@ -28,6 +30,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.opengroup.osdu.core.common.model.http.AppException;
+
+import java.io.IOException;
 
 @Order(Ordered.HIGHEST_PRECEDENCE - 1)
 @ControllerAdvice
@@ -57,6 +61,17 @@ public class GlobalExceptionMapperCore extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException e) {
         return this.getErrorResponse(
                 new AppException(HttpStatus.FORBIDDEN.value(), "Access denied", e.getMessage(), e));
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<Object> handleIOException(IOException e) {
+        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
+            this.logger.warning("Client closed the connection while request still being processed");
+            return null;
+        } else {
+            return this.getErrorResponse(
+                    new AppException(HttpStatus.SERVICE_UNAVAILABLE.value(), "Unknown error", e.getMessage(), e));
+        }
     }
 
     @ExceptionHandler(Exception.class)
