@@ -52,8 +52,14 @@ spec:
             cpu: "500m"
         readinessProbe:
           httpGet:
-            path: /api/indexer/v2/swagger-ui.html
-            port: 80
+            path: /actuator/health
+            port: 8081
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 250
+          periodSeconds: 10
         volumeMounts:
         - name: azure-keyvault
           mountPath: "/mnt/azure-keyvault"
