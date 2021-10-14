@@ -301,6 +301,9 @@ The following software have components provided under the terms of this license:
 - Apache Geronimo JMS Spec 2.0 (from http://geronimo.apache.org/maven/${siteId}/${version})
 - Apache HTTP transport v2 for the Google HTTP Client Library for Java. (from https://repo1.maven.org/maven2/com/google/http-client/google-http-client-apache-v2)
 - Apache HttpAsyncClient (from http://hc.apache.org/httpcomponents-asyncclient)
+- Apache HttpClient (from http://hc.apache.org/httpcomponents-client)
+- Apache HttpClient Cache (from http://hc.apache.org/httpcomponents-client)
+- Apache HttpCore (from http://hc.apache.org/httpcomponents-core-ga)
 - Apache HttpCore NIO (from http://hc.apache.org/httpcomponents-core-ga)
 - Apache Log4j API (from https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api)
 - Apache Log4j Core (from https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core)
@@ -383,9 +386,6 @@ The following software have components provided under the terms of this license:
 - HPPC Collections (from https://repo1.maven.org/maven2/com/carrotsearch/hppc)
 - HTTP functionality for the Reactor Netty library (from https://github.com/reactor/reactor-netty)
 - Hibernate Validator Engine (from https://repo1.maven.org/maven2/org/hibernate/validator/hibernate-validator)
-- HttpClient (from http://hc.apache.org/httpcomponents-client)
-- HttpClient Cache (from http://hc.apache.org/httpcomponents-client)
-- HttpCore (from http://hc.apache.org/httpcomponents-core-ga)
 - IBM COS Java SDK for Amazon S3 (from https://github.com/ibm/ibm-cos-sdk-java)
 - IBM COS Java SDK for COS KMS (from https://github.com/ibm/ibm-cos-sdk-java)
 - IBM COS SDK For Java (from https://github.com/ibm/ibm-cos-sdk-java)
@@ -559,7 +559,7 @@ The following software have components provided under the terms of this license:
 - Proton-J (from https://repo1.maven.org/maven2/org/apache/qpid/proton-j)
 - QpidJMS Client (from )
 - RabbitMQ Java Client (from http://www.rabbitmq.com)
-- Reactive Streams Netty driver (from https://github.com/reactor/reactor-netty)
+- Reactor Netty with all modules (from https://github.com/reactor/reactor-netty)
 - Retrofit (from https://repo1.maven.org/maven2/com/squareup/retrofit2/retrofit)
 - Servlet Specification 2.5 API (from http://jetty.mortbay.org)
 - SnakeYAML (from http://www.snakeyaml.org)
@@ -567,7 +567,8 @@ The following software have components provided under the terms of this license:
 - Spring AMQP Core (from https://projects.spring.io/spring-amqp)
 - Spring AOP (from https://github.com/spring-projects/spring-framework)
 - Spring Beans (from https://github.com/spring-projects/spring-framework)
-- Spring Boot Configuration Processor (from https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-tools/spring-boot-configuration-processor)
+- Spring Boot Test Starter (from https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-test)
+- Spring Boot Web Starter (from https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-web)
 - Spring Commons Logging Bridge (from https://github.com/spring-projects/spring-framework)
 - Spring Context (from https://github.com/spring-projects/spring-framework)
 - Spring Core (from https://github.com/spring-projects/spring-framework)
@@ -581,8 +582,8 @@ The following software have components provided under the terms of this license:
 - Spring Plugin Core (from https://repo1.maven.org/maven2/org/springframework/plugin/spring-plugin-core)
 - Spring RabbitMQ Support (from https://projects.spring.io/spring-amqp)
 - Spring Retry (from https://www.springsource.org)
-- Spring Security JWT Library (from https://github.com/spring-projects/spring-security-oauth)
-- Spring Security JWT Library (from https://github.com/spring-projects/spring-security-oauth)
+- Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
+- Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
 - Spring TestContext Framework (from https://github.com/spring-projects/spring-framework)
 - Spring Transaction (from https://github.com/spring-projects/spring-framework)
 - Spring Web (from https://github.com/spring-projects/spring-framework)
@@ -598,8 +599,6 @@ The following software have components provided under the terms of this license:
 - Zipkin Reporter: Core (from https://repo1.maven.org/maven2/io/zipkin/reporter2/zipkin-reporter)
 - aalto-xml (from )
 - aggs-matrix-stats (from https://github.com/elastic/elasticsearch)
-- asm (from http://asm.ow2.io/)
-- asm (from http://asm.ow2.io/)
 - commons-digester (from https://repo1.maven.org/maven2/commons-digester/commons-digester)
 - compiler (from http://github.com/spullara/mustache.java)
 - datastore-v1-proto-client (from https://repo1.maven.org/maven2/com/google/cloud/datastore/datastore-v1-proto-client)
@@ -661,13 +660,13 @@ The following software have components provided under the terms of this license:
 - jersey-spring4 (from https://repo1.maven.org/maven2/org/glassfish/jersey/ext/jersey-spring4)
 - jose4j (from https://bitbucket.org/b_c/jose4j/)
 - lang-mustache (from https://github.com/elastic/elasticsearch)
-- lettuce (from https://github.com/lettuce-io/lettuce-core/wiki)
+- lettuce (from http://github.com/mp911de/lettuce/wiki)
 - mapper-extras (from https://github.com/elastic/elasticsearch)
 - micrometer-core (from https://github.com/micrometer-metrics/micrometer)
 - micrometer-registry-azure-monitor (from https://github.com/micrometer-metrics/micrometer)
-- mockito-core (from https://github.com/mockito/mockito)
-- mockito-core (from https://github.com/mockito/mockito)
-- mockito-core (from https://github.com/mockito/mockito)
+- mockito-core (from http://mockito.org)
+- mockito-core (from http://mockito.org)
+- mockito-core (from http://mockito.org)
 - nio-multipart-parser (from )
 - nio-stream-storage (from https://github.com/synchronoss/nio-stream-storage)
 - okhttp (from https://github.com/square/okhttp)
@@ -694,14 +693,14 @@ The following software have components provided under the terms of this license:
 - proto-google-iam-v1 (from https://github.com/googleapis/java-iam/proto-google-iam-v1)
 - proto-google-iam-v1 (from https://github.com/googleapis/java-iam/proto-google-iam-v1)
 - rank-eval (from https://github.com/elastic/elasticsearch)
-- resilience4j (from https://resilience4j.readme.io)
-- resilience4j (from https://github.com/resilience4j/resilience4j)
-- resilience4j (from https://resilience4j.readme.io)
-- resilience4j (from https://resilience4j.readme.io)
 - resilience4j (from https://github.com/resilience4j/resilience4j)
 - resilience4j (from https://resilience4j.readme.io)
 - resilience4j (from https://github.com/resilience4j/resilience4j)
 - resilience4j (from https://resilience4j.readme.io)
+- resilience4j (from https://resilience4j.readme.io)
+- resilience4j (from https://resilience4j.readme.io)
+- resilience4j (from https://resilience4j.readme.io)
+- resilience4j (from https://github.com/resilience4j/resilience4j)
 - rest (from https://github.com/elastic/elasticsearch)
 - rest-high-level (from https://github.com/elastic/elasticsearch)
 - rxjava (from https://github.com/ReactiveX/RxJava)
@@ -710,6 +709,7 @@ The following software have components provided under the terms of this license:
 - spring-boot-actuator (from https://spring.io/projects/spring-boot)
 - spring-boot-actuator-autoconfigure (from https://spring.io/projects/spring-boot)
 - spring-boot-autoconfigure (from https://spring.io/projects/spring-boot)
+- spring-boot-configuration-processor (from https://spring.io/projects/spring-boot)
 - spring-boot-dependencies (from https://spring.io/projects/spring-boot)
 - spring-boot-starter (from https://spring.io/projects/spring-boot)
 - spring-boot-starter-actuator (from https://spring.io/projects/spring-boot)
@@ -722,22 +722,20 @@ The following software have components provided under the terms of this license:
 - spring-boot-starter-logging (from https://spring.io/projects/spring-boot)
 - spring-boot-starter-reactor-netty (from https://spring.io/projects/spring-boot)
 - spring-boot-starter-security (from https://spring.io/projects/spring-boot)
-- spring-boot-starter-test (from https://spring.io/projects/spring-boot)
 - spring-boot-starter-tomcat (from https://spring.io/projects/spring-boot)
 - spring-boot-starter-validation (from https://spring.io/projects/spring-boot)
-- spring-boot-starter-web (from https://spring.io/projects/spring-boot)
 - spring-boot-starter-webflux (from https://spring.io/projects/spring-boot)
 - spring-boot-test (from https://spring.io/projects/spring-boot)
 - spring-boot-test-autoconfigure (from https://spring.io/projects/spring-boot)
-- spring-security-config (from https://spring.io/spring-security)
-- spring-security-core (from https://spring.io/spring-security)
-- spring-security-oauth2-client (from https://spring.io/spring-security)
-- spring-security-oauth2-core (from https://spring.io/spring-security)
-- spring-security-oauth2-jose (from https://spring.io/spring-security)
-- spring-security-oauth2-jose (from https://spring.io/spring-security)
-- spring-security-oauth2-resource-server (from https://spring.io/spring-security)
+- spring-security-config (from http://spring.io/spring-security)
+- spring-security-core (from http://spring.io/spring-security)
+- spring-security-oauth2-client (from https://spring.io/projects/spring-security)
+- spring-security-oauth2-core (from https://spring.io/projects/spring-security)
+- spring-security-oauth2-jose (from https://spring.io/projects/spring-security)
+- spring-security-oauth2-jose (from https://spring.io/projects/spring-security)
+- spring-security-oauth2-resource-server (from https://spring.io/projects/spring-security)
 - spring-security-test (from https://spring.io/spring-security)
-- spring-security-web (from https://spring.io/spring-security)
+- spring-security-web (from http://spring.io/spring-security)
 - springfox-core (from https://github.com/springfox/springfox)
 - springfox-schema (from https://github.com/springfox/springfox)
 - springfox-spi (from https://github.com/springfox/springfox)
@@ -768,7 +766,6 @@ The following software have components provided under the terms of this license:
 - GAX (Google Api eXtensions) for Java (from https://github.com/googleapis/gax-java)
 - GAX (Google Api eXtensions) for Java (from https://github.com/googleapis/gax-java)
 - Lucene Common Analyzers (from https://repo1.maven.org/maven2/org/apache/lucene/lucene-analyzers-common)
-- Lucene Core (from https://repo1.maven.org/maven2/org/apache/lucene/lucene-core)
 - Plexus Common Utilities (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils)
 - Reflections (from http://github.com/ronmamo/reflections)
 - Stax2 API (from http://github.com/FasterXML/stax2-api)
@@ -918,20 +915,11 @@ The following software have components provided under the terms of this license:
 - System Rules (from http://stefanbirkner.github.io/system-rules/)
 
 ========================================================================
-DOC
-========================================================================
-The following software have components provided under the terms of this license:
-
-- JDOM (from http://www.jdom.org)
-- Lucene Core (from https://repo1.maven.org/maven2/org/apache/lucene/lucene-core)
-- Woodstox (from https://github.com/FasterXML/woodstox)
-
-========================================================================
 EPL-1.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- AspectJ Weaver (from https://www.eclipse.org/aspectj/)
+- AspectJ weaver (from http://www.aspectj.org)
 - Logback Classic Module (from https://repo1.maven.org/maven2/ch/qos/logback/logback-classic)
 - Logback Contrib :: JSON :: Classic (from https://repo1.maven.org/maven2/ch/qos/logback/contrib/logback-json-classic)
 - Logback Contrib :: JSON :: Core (from https://repo1.maven.org/maven2/ch/qos/logback/contrib/logback-json-core)
@@ -1030,21 +1018,6 @@ The following software have components provided under the terms of this license:
 
 - Project Lombok (from https://projectlombok.org)
 - javax.ws.rs-api (from http://jax-rs-spec.java.net)
-
-========================================================================
-ImageMagick
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Stax2 API (from http://github.com/FasterXML/stax2-api)
-- Woodstox (from https://github.com/FasterXML/woodstox)
-
-========================================================================
-Info-ZIP
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Apache Ant Core (from http://ant.apache.org/)
 
 ========================================================================
 JSON
@@ -1149,12 +1122,12 @@ The following software have components provided under the terms of this license:
 - documentdb-bulkexecutor (from http://azure.microsoft.com/en-us/services/documentdb/)
 - java jwt (from https://github.com/auth0/java-jwt)
 - micrometer-core (from https://github.com/micrometer-metrics/micrometer)
-- mockito-core (from https://github.com/mockito/mockito)
-- mockito-core (from https://github.com/mockito/mockito)
-- mockito-core (from https://github.com/mockito/mockito)
+- mockito-core (from http://mockito.org)
+- mockito-core (from http://mockito.org)
+- mockito-core (from http://mockito.org)
 - msal4j (from https://github.com/AzureAD/microsoft-authentication-library-for-java)
 - msal4j-persistence-extension (from https://github.com/AzureAD/microsoft-authentication-extensions-for-java)
-- spring-security-core (from https://spring.io/spring-security)
+- spring-security-core (from http://spring.io/spring-security)
 
 ========================================================================
 MPL-1.1
@@ -1226,13 +1199,6 @@ The following software have components provided under the terms of this license:
 - Lucene Core (from https://repo1.maven.org/maven2/org/apache/lucene/lucene-core)
 
 ========================================================================
-TCL
-========================================================================
-The following software have components provided under the terms of this license:
-
-- HK2 API module (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-api)
-
-========================================================================
 W3C
 ========================================================================
 The following software have components provided under the terms of this license:
@@ -1249,13 +1215,6 @@ WTFPL
 The following software have components provided under the terms of this license:
 
 - Reflections (from http://github.com/ronmamo/reflections)
-
-========================================================================
-X11
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Lucene Core (from https://repo1.maven.org/maven2/org/apache/lucene/lucene-core)
 
 ========================================================================
 public-domain
@@ -1280,8 +1239,8 @@ The following software have components provided under the terms of this license:
 - Microsoft Azure client library for Blob Storage (from https://github.com/Azure/azure-sdk-for-java)
 - Project Lombok (from https://projectlombok.org)
 - RabbitMQ Java Client (from http://www.rabbitmq.com)
-- Spring Security JWT Library (from https://github.com/spring-projects/spring-security-oauth)
-- Spring Security JWT Library (from https://github.com/spring-projects/spring-security-oauth)
+- Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
+- Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
 - Spring Web (from https://github.com/spring-projects/spring-framework)
 - azure-documentdb (from https://azure.microsoft.com/en-us/services/cosmos-db/)
 - msal4j (from https://github.com/AzureAD/microsoft-authentication-library-for-java)
@@ -1301,7 +1260,6 @@ The following software have components provided under the terms of this license:
 - Checker Qual (from https://checkerframework.org)
 - JSON in Java (from https://github.com/douglascrockford/JSON-java)
 - JTidy (from http://jtidy.sourceforge.net)
-- JUnit (from http://junit.org)
 - Jakarta Activation API jar (from https://repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api)
 - Spongy Castle (from http://rtyley.github.io/spongycastle/)
