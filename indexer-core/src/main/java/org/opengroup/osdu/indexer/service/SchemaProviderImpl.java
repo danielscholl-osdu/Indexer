@@ -16,21 +16,30 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.api.client.http.HttpMethods;
 import org.apache.http.HttpStatus;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
+import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
+import org.opengroup.osdu.core.common.model.indexer.SchemaOperationType;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
+import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -38,6 +47,7 @@ import java.util.Objects;
  */
 @Component
 public class SchemaProviderImpl implements SchemaService {
+
     @Inject
     private JaxRsDpsLog log;
 
@@ -56,10 +66,44 @@ public class SchemaProviderImpl implements SchemaService {
     @Inject
     private StorageService storageService;
 
+    @Inject
+    private IndexSchemaService indexSchemaService;
+
+    @Inject
+    private ElasticClientHandler elasticClientHandler;
+
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
         String schemaServiceSchema = getFromSchemaService(kind);
         return Objects.nonNull(schemaServiceSchema) ? schemaServiceSchema : getFromStorageService(kind);
+    }
+
+    @Override
+    public void processSchemaMessages(List<SchemaInfo> schemaInfos) throws IOException {
+        Map<String, SchemaOperationType> messages = new HashMap<>();
+        Map<String, SchemaOperationType> createSchemaMessages = SchemaInfo.getCreateSchemaEvents(schemaInfos);
+        if (createSchemaMessages != null) {
+            messages.putAll(createSchemaMessages);
+        }
+
+        Map<String, SchemaOperationType> updateSchemaMessages = SchemaInfo.getUpdateSchemaEvents(schemaInfos);
+        if (updateSchemaMessages != null) {
+            messages.putAll(updateSchemaMessages);
+        }
+
+        if (messages.isEmpty()) {
+            return;
+        }
+
+        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+            messages.entrySet().forEach(msg -> {
+                try {
+                    this.indexSchemaService.processSchemaUpsertEvent(restClient, msg.getKey());
+                } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
+                    throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
+                }
+            });
+        }
     }
 
     protected String getFromSchemaService(String kind) throws UnsupportedEncodingException, URISyntaxException {
@@ -93,7 +137,7 @@ public class SchemaProviderImpl implements SchemaService {
                 .headers(this.requestInfo.getHeadersMap())
                 .url(url)
                 .build();
-        
+
         return this.urlFetchService.sendRequest(request);
     }
 }

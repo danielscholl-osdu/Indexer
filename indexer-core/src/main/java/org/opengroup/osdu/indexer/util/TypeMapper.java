@@ -51,8 +51,8 @@ public class TypeMapper {
         metaAttributeIndexerType.put(RecordMetaAttribute.LEGAL.getValue(), getLegalIndexerMapping());
         metaAttributeIndexerType.put(RecordMetaAttribute.ANCESTRY.getValue(), getAncestryIndexerMapping());
         metaAttributeIndexerType.put(RecordMetaAttribute.INDEX_STATUS.getValue(), getIndexStatusMapping());
-        metaAttributeIndexerType.put(RecordMetaAttribute.AUTHORITY.getValue(), ElasticType.CONSTANT_KEYWORD.getValue());
-        metaAttributeIndexerType.put(RecordMetaAttribute.SOURCE.getValue(), ElasticType.CONSTANT_KEYWORD.getValue());
+        metaAttributeIndexerType.put(RecordMetaAttribute.AUTHORITY.getValue(), getConstantKeywordMap());
+        metaAttributeIndexerType.put(RecordMetaAttribute.SOURCE.getValue(), getConstantKeywordMap());
         metaAttributeIndexerType.put(RecordMetaAttribute.CREATE_USER.getValue(), ElasticType.KEYWORD.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.MODIFY_USER.getValue(), ElasticType.KEYWORD.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.CREATE_TIME.getValue(), ElasticType.DATE.getValue());
@@ -89,6 +89,16 @@ public class TypeMapper {
 
     public static Object getIndexerType(RecordMetaAttribute attribute) {
         return metaAttributeIndexerType.getOrDefault(attribute.getValue(), null);
+    }
+
+    public static Object getConstantIndexerType(RecordMetaAttribute attribute, String defaultValue) {
+        if (RecordMetaAttribute.AUTHORITY != attribute && RecordMetaAttribute.SOURCE != attribute) {
+            return null;
+        }
+
+        Map<String, Object> type = (Map<String, Object>) metaAttributeIndexerType.get(attribute.getValue());
+        type.put("value", defaultValue);
+        return type;
     }
 
     public static List<String> getMetaAttributesKeys() {
@@ -210,5 +220,11 @@ public class TypeMapper {
         Map<String, Object> fieldIndexTypeMap = new HashMap<>();
         fieldIndexTypeMap.put("keyword", keywordMap);
         return fieldIndexTypeMap;
+    }
+
+    private static Map<String, Object> getConstantKeywordMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", "constant_keyword");
+        return map;
     }
 }

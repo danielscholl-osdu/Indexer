@@ -35,6 +35,7 @@ import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
+import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 import org.opengroup.osdu.core.common.search.IMappingService;
 import org.opengroup.osdu.core.common.search.Preconditions;
@@ -114,7 +115,11 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements Ind
         // meta  attribute
         Map<String, Object> metaMapping = new HashMap<>();
         for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
-            metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey()));
+            if (entry.getKey() == RecordMetaAttribute.AUTHORITY.getValue() || entry.getKey() == RecordMetaAttribute.SOURCE.getValue()) {
+                metaMapping.put(entry.getKey(), schema.getMetaSchema().get(entry.getKey()));
+            } else {
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey()));
+            }
         }
 
         // data-source attributes

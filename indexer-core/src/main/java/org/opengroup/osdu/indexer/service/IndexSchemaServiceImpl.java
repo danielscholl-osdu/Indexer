@@ -86,30 +86,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         boolean indexExist = this.indicesService.isIndexExist(restClient, index);
 
         if (msg.getValue() == OperationType.create_schema) {
-            // reset cache and get new schema
-            this.invalidateCache(kind);
-            IndexSchema schemaObj = this.getIndexerInputSchema(kind, true);
-            if (schemaObj.isDataSchemaMissing()) {
-                log.warning(String.format("schema not found for kind: %s", kind));
-                return;
-            }
-
-            if (indexExist) {
-                try {
-                    // merge the mapping
-                    this.mappingService.createMapping(restClient, schemaObj, index, true);
-                } catch (AppException e) {
-                    // acknowledge for TaskQueue and not retry
-                    if (e.getError().getCode() == HttpStatus.SC_BAD_REQUEST) {
-                        throw new AppException(RequestStatus.SCHEMA_CONFLICT, e.getError().getReason(), "error creating or merging index mapping");
-                    }
-                    throw e;
-                }
-            } else {
-                // create index with mapping
-                Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schemaObj);
-                this.indicesService.createIndex(restClient, index, null, schemaObj.getType(), mapping);
-            }
+            this.processSchemaUpsertEvent(restClient, kind);
         } else if (msg.getValue() == OperationType.purge_schema) {
             if (indexExist) {
                 // reset schema cache
@@ -118,6 +95,37 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 // log warning
                 log.warning(String.format("Kind: %s not found", kind));
             }
+        }
+    }
+
+    @Override
+    public void processSchemaUpsertEvent(RestHighLevelClient restClient, String kind) throws IOException, ElasticsearchStatusException, URISyntaxException {
+        String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
+        boolean indexExist = this.indicesService.isIndexExist(restClient, index);
+
+        // reset cache and get new schema
+        this.invalidateCache(kind);
+        IndexSchema schemaObj = this.getIndexerInputSchema(kind, true);
+        if (schemaObj.isDataSchemaMissing()) {
+            log.warning(String.format("schema not found for kind: %s", kind));
+            return;
+        }
+
+        if (indexExist) {
+            try {
+                // merge the mapping
+                this.mappingService.createMapping(restClient, schemaObj, index, true);
+            } catch (AppException e) {
+                // acknowledge for TaskQueue and not retry
+                if (e.getError().getCode() == HttpStatus.SC_BAD_REQUEST) {
+                    throw new AppException(RequestStatus.SCHEMA_CONFLICT, e.getError().getReason(), "error creating or merging index mapping");
+                }
+                throw e;
+            }
+        } else {
+            // create index with mapping
+            Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schemaObj);
+            this.indicesService.createIndex(restClient, index, null, schemaObj.getType(), mapping);
         }
     }
 
@@ -224,6 +232,11 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 }
             }
 
+            String[] parts = schemaObj.getKind().split(":");
+            String authority = parts[0];
+            String source = parts[1];
+            String type = parts[2];
+
             // mandatory attributes
             meta.put(RecordMetaAttribute.ID.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ID));
             meta.put(RecordMetaAttribute.NAMESPACE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.NAMESPACE));
@@ -236,17 +249,14 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             meta.put(RecordMetaAttribute.LEGAL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.LEGAL));
             meta.put(RecordMetaAttribute.ANCESTRY.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ANCESTRY));
             meta.put(RecordMetaAttribute.INDEX_STATUS.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.INDEX_STATUS));
-            meta.put(RecordMetaAttribute.AUTHORITY.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.AUTHORITY));
-            meta.put(RecordMetaAttribute.SOURCE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.SOURCE));
+            meta.put(RecordMetaAttribute.AUTHORITY.getValue(), TypeMapper.getConstantIndexerType(RecordMetaAttribute.AUTHORITY, authority));
+            meta.put(RecordMetaAttribute.SOURCE.getValue(), TypeMapper.getConstantIndexerType(RecordMetaAttribute.SOURCE, source));
             meta.put(RecordMetaAttribute.CREATE_USER.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_USER));
             meta.put(RecordMetaAttribute.CREATE_TIME.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_TIME));
             meta.put(RecordMetaAttribute.MODIFY_USER.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_USER));
             meta.put(RecordMetaAttribute.MODIFY_TIME.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_TIME));
 
-            String kind = schemaObj.getKind();
-            String type = kind.split(":")[2];
-
-            return IndexSchema.builder().dataSchema(data).metaSchema(meta).kind(kind).type(type).build();
+            return IndexSchema.builder().dataSchema(data).metaSchema(meta).kind(schemaObj.getKind()).type(type).build();
 
         } catch (Exception e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Schema normalization error", "An error has occurred while normalizing the schema.", e);

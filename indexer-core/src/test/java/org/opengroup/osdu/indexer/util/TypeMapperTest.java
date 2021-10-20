@@ -34,8 +34,6 @@ public class TypeMapperTest {
         assertEquals(ElasticType.LONG.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.VERSION));
         assertEquals(ElasticType.KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.X_ACL));
 
-        assertEquals(ElasticType.CONSTANT_KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.AUTHORITY));
-        assertEquals(ElasticType.CONSTANT_KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.SOURCE));
         assertEquals(ElasticType.KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_USER));
         assertEquals(ElasticType.KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_USER));
         assertEquals(ElasticType.DATE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_TIME));
