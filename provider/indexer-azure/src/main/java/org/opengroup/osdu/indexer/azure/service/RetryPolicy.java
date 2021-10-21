@@ -18,6 +18,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.RetryConfig;
 import lombok.Data;
 import lombok.extern.java.Log;
@@ -27,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.util.function.Predicate;
 
 /**
@@ -44,8 +44,8 @@ public class RetryPolicy {
     @Autowired
     private JaxRsDpsLog logger;
 
-    private int attempts = 3;
-    private int waitDuration = 1000;
+    private static int MAX_ATTEMPTS = 5;
+    private static int INITIAL_DELAY = 1000;
     private final String RECORD_NOT_FOUND = "notFound";
 
     /**
@@ -53,8 +53,8 @@ public class RetryPolicy {
      */
     public RetryConfig retryConfig(Predicate<HttpResponse> predicate) {
         return RetryConfig.<HttpResponse>custom()
-                .maxAttempts(attempts)
-                .waitDuration(Duration.ofMillis(waitDuration))
+                .maxAttempts(MAX_ATTEMPTS)
+                .intervalFunction(IntervalFunction.ofExponentialBackoff(INITIAL_DELAY, 2))
                 .retryOnResult(predicate)
                 .build();
     }
