@@ -22,6 +22,8 @@ import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Request;
@@ -35,14 +37,13 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.search.IndicesService;
-import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
+import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
@@ -55,7 +56,7 @@ import java.util.Objects;
 
 @Service
 @RequestScope
-public class IndicesServiceImpl implements IndicesService {
+public class IndicesServiceImpl implements IndexerIndicesService {
 
     @Autowired
     private ElasticClientHandler elasticClientHandler;
@@ -93,7 +94,7 @@ public class IndicesServiceImpl implements IndicesService {
             request.settings(settings != null ? settings : DEFAULT_INDEX_SETTINGS);
             if (mapping != null) {
                 String mappingJsonString = new Gson().toJson(mapping, Map.class);
-                request.mapping(mappingJsonString,XContentType.JSON);
+                request.mapping(mappingJsonString, XContentType.JSON);
             }
             request.setTimeout(REQUEST_TIMEOUT);
             CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
@@ -133,6 +134,45 @@ public class IndicesServiceImpl implements IndicesService {
             boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
             if (exists) this.indexCache.put(index, true);
             return exists;
+        } catch (ElasticsearchException exception) {
+            if (exception.status() == RestStatus.NOT_FOUND) return false;
+            throw new AppException(
+                    exception.status().getStatus(),
+                    exception.getMessage(),
+                    String.format("Error getting index: %s status", index),
+                    exception);
+        }
+    }
+
+    /**
+     * Check if an index already exists
+     *
+     * @param index Index name
+     * @return index details if index already exists
+     * @throws IOException if request cannot be processed
+     */
+    public boolean isIndexReady(RestHighLevelClient client, String index) throws IOException {
+        try {
+            try {
+                Boolean isIndexExist = (Boolean) this.indexCache.get(index);
+                if (isIndexExist != null && isIndexExist) return true;
+            } catch (RedisException ex) {
+                //In case the format of cache changes then clean the cache
+                this.indexCache.delete(index);
+            }
+            GetIndexRequest request = new GetIndexRequest(index);
+            boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
+            if (!exists) return false;
+            ClusterHealthRequest indexHealthRequest = new ClusterHealthRequest();
+            indexHealthRequest.indices(index);
+            indexHealthRequest.timeout(REQUEST_TIMEOUT);
+            indexHealthRequest.waitForYellowStatus();
+            ClusterHealthResponse healthResponse = client.cluster().health(indexHealthRequest, RequestOptions.DEFAULT);
+            if (healthResponse.status() == RestStatus.OK) {
+                this.indexCache.put(index, true);
+                return true;
+            }
+            return false;
         } catch (ElasticsearchException exception) {
             if (exception.status() == RestStatus.NOT_FOUND) return false;
             throw new AppException(
@@ -222,7 +262,8 @@ public class IndicesServiceImpl implements IndicesService {
         Request request = new Request("GET", requestUrl);
         Response response = client.getLowLevelClient().performRequest(request);
         String str = EntityUtils.toString(response.getEntity());
-        final Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
+        final Type typeOf = new TypeToken<List<IndexInfo>>() {
+        }.getType();
         return new Gson().fromJson(str, typeOf);
     }
 

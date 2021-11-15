@@ -30,7 +30,7 @@ public class IndexerServiceImplTest {
   private ElasticIndexNameResolver elasticIndexNameResolver;
 
   @Mock
-  private IndicesService indicesService;
+  private IndexerIndicesService indicesService;
 
   private List<RecordInfo> recordInfos = new ArrayList<>();
 

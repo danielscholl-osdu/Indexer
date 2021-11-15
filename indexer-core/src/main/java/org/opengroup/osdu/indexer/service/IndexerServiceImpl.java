@@ -79,7 +79,7 @@ public class IndexerServiceImpl implements IndexerService {
     @Inject
     private IndexSchemaService schemaService;
     @Inject
-    private IndicesService indicesService;
+    private IndexerIndicesService indicesService;
     @Inject
     private IndexerMappingService mappingService;
     @Inject
@@ -366,7 +366,7 @@ public class IndexerServiceImpl implements IndexerService {
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
 
             // check if index exist and sync meta attribute schema if required
-            if (this.indicesService.isIndexExist(restClient, index)) {
+            if (this.indicesService.isIndexReady(restClient, index)) {
                 this.mappingService.syncIndexMappingIfRequired(restClient, index);
                 continue;
             }
