@@ -23,8 +23,11 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.*;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.rest.RestStatus;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +55,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
-@PrepareForTest({RestHighLevelClient.class, IndicesClient.class, EntityUtils.class})
+@PrepareForTest({RestHighLevelClient.class, IndicesClient.class, ClusterClient.class, EntityUtils.class})
 public class IndicesServiceTest {
     @Mock
     private ElasticClientHandler elasticClientHandler;
@@ -74,11 +77,13 @@ public class IndicesServiceTest {
 
     private RestHighLevelClient restHighLevelClient;
     private IndicesClient indicesClient;
+    private ClusterClient clusterClient;
 
     @Before
     public void setup() {
         initMocks(this);
         indicesClient = PowerMockito.mock(IndicesClient.class);
+        clusterClient = PowerMockito.mock(ClusterClient.class);
         restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
     }
 
@@ -218,5 +223,55 @@ public class IndicesServiceTest {
         assertEquals("tenant1-test-hello-1.0.1", indicesList.get(0).getName());
         assertEquals("1", indicesList.get(0).getDocumentCount());
         assertEquals("1551996907769", indicesList.get(0).getCreationDate());
+    }
+
+    @Test
+    public void should_returnTrue_indexExistInCache() throws IOException {
+        when(this.indicesExistCache.get("anyIndex")).thenReturn(true);
+
+        boolean result = this.sut.isIndexExist(any(RestHighLevelClient.class), "anyIndex");
+
+        assertTrue(result);
+    }
+
+    @Test
+    public void should_getIndexExist_whenIndexNotInCache() throws IOException {
+        when(this.indicesExistCache.get("anyIndex")).thenReturn(false);
+
+        doReturn(indicesClient).when(restHighLevelClient).indices();
+        doReturn(true).when(indicesClient).exists(any(GetIndexRequest.class), any(RequestOptions.class));
+
+        boolean result = this.sut.isIndexExist(restHighLevelClient, "anyIndex");
+
+        assertTrue(result);
+        verify(this.indicesExistCache, times(1)).get("anyIndex");
+        verify(this.indicesExistCache, times(1)).put("anyIndex", true);
+    }
+
+    @Test
+    public void should_getIndexReadyStatus_whenIndexInCache() throws IOException {
+        when(this.indicesExistCache.get("anyIndex")).thenReturn(true);
+
+        boolean result = this.sut.isIndexReady(any(RestHighLevelClient.class), "anyIndex");
+
+        assertTrue(result);
+    }
+
+    @Test
+    public void should_getIndexReadyStatus_whenIndexNotInCache() throws IOException {
+        when(this.indicesExistCache.get("anyIndex")).thenReturn(false);
+        doReturn(indicesClient).when(restHighLevelClient).indices();
+        doReturn(true).when(indicesClient).exists(any(GetIndexRequest.class), any(RequestOptions.class));
+
+        ClusterHealthResponse healthResponse = mock(ClusterHealthResponse.class);
+        when(healthResponse.status()).thenReturn(RestStatus.OK);
+        doReturn(clusterClient).when(restHighLevelClient).cluster();
+        doReturn(healthResponse).when(clusterClient).health(any(ClusterHealthRequest.class), any(RequestOptions.class));
+
+        boolean result = this.sut.isIndexReady(restHighLevelClient, "anyIndex");
+
+        assertTrue(result);
+        verify(this.indicesExistCache, times(1)).get("anyIndex");
+        verify(this.indicesExistCache, times(1)).put("anyIndex", true);
     }
 }

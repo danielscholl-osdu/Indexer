@@ -123,13 +123,7 @@ public class IndicesServiceImpl implements IndexerIndicesService {
      */
     public boolean isIndexExist(RestHighLevelClient client, String index) throws IOException {
         try {
-            try {
-                Boolean isIndexExist = (Boolean) this.indexCache.get(index);
-                if (isIndexExist != null && isIndexExist) return true;
-            } catch (RedisException ex) {
-                //In case the format of cache changes then clean the cache
-                this.indexCache.delete(index);
-            }
+            if (this.indexExistInCache(index)) return true;
             GetIndexRequest request = new GetIndexRequest(index);
             boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
             if (exists) this.indexCache.put(index, true);
@@ -145,7 +139,7 @@ public class IndicesServiceImpl implements IndexerIndicesService {
     }
 
     /**
-     * Check if an index already exists
+     * Check if an index ready for indexing
      *
      * @param index Index name
      * @return index details if index already exists
@@ -153,13 +147,7 @@ public class IndicesServiceImpl implements IndexerIndicesService {
      */
     public boolean isIndexReady(RestHighLevelClient client, String index) throws IOException {
         try {
-            try {
-                Boolean isIndexExist = (Boolean) this.indexCache.get(index);
-                if (isIndexExist != null && isIndexExist) return true;
-            } catch (RedisException ex) {
-                //In case the format of cache changes then clean the cache
-                this.indexCache.delete(index);
-            }
+            if (this.indexExistInCache(index)) return true;
             GetIndexRequest request = new GetIndexRequest(index);
             boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
             if (!exists) return false;
@@ -181,6 +169,17 @@ public class IndicesServiceImpl implements IndexerIndicesService {
                     String.format("Error getting index: %s status", index),
                     exception);
         }
+    }
+
+    private boolean indexExistInCache(String index) {
+        try {
+            Boolean isIndexExist = (Boolean) this.indexCache.get(index);
+            if (isIndexExist != null && isIndexExist) return true;
+        } catch (RedisException ex) {
+            //In case the format of cache changes then clean the cache
+            this.indexCache.delete(index);
+        }
+        return false;
     }
 
     /**
