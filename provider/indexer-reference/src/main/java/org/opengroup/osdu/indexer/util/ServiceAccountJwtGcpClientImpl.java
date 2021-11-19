@@ -44,11 +44,9 @@ import org.springframework.web.context.annotation.RequestScope;
 @RequestScope
 public class ServiceAccountJwtGcpClientImpl implements IServiceAccountJwtClient {
 
-  private static final String JWT_AUDIENCE = "https://www.googleapis.com/oauth2/v4/token";
   private static final String SERVICE_ACCOUNT_NAME_FORMAT = "projects/%s/serviceAccounts/%s";
   private final IamCredentialsProvider iamCredentialsProvider = new IamCredentialsProvider();
 
-  private final JsonFactory JSON_FACTORY = new JacksonFactory();
   private final IndexerConfigurationProperties indexerConfigurationProperties;
   private final ITenantFactory tenantInfoServiceProvider;
   private final IJwtCache cacheService;
