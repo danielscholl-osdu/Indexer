@@ -26,7 +26,8 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties
 @Getter
 @Setter
-public class EntitlementsConfigProperties {
+public class IndexerReferenceConfigProperties {
 
-  private String authorizeApi;
+  private String elasticSettingsId;
+
 }

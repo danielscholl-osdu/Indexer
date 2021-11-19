@@ -15,18 +15,28 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.config;
+package org.opengroup.osdu.indexer.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import javax.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Configuration
-@ConfigurationProperties
-@Getter
-@Setter
-public class EntitlementsConfigProperties {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ElasticSettingSchema {
 
-  private String authorizeApi;
+  @NotEmpty
+  private String host;
+
+  @NotEmpty
+  private String port;
+
+  @NotEmpty
+  private String usernameAndPassword;
+
+  @NotEmpty
+  private boolean isHttps;
+
 }
