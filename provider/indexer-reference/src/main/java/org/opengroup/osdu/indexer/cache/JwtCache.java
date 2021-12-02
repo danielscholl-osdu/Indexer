@@ -29,7 +29,7 @@ public class JwtCache implements IJwtCache<String, IdToken>, AutoCloseable {
   RedisCache<String, IdToken> cache;
 
   // google service account id_token can be requested only for 1 hr
-  private final static int EXPIRED_AFTER = 59;
+  private static final int EXPIRED_AFTER = 59;
 
   public JwtCache(IndexerConfigurationProperties indexerConfigurationProperties) {
     cache = new RedisCache<>(indexerConfigurationProperties.getRedisSearchHost(),

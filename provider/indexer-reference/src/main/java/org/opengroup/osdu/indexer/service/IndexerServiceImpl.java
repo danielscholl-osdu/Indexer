@@ -17,6 +17,7 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -75,6 +76,8 @@ public class IndexerServiceImpl implements IndexerService {
       .asList(RestStatus.TOO_MANY_REQUESTS, RestStatus.BAD_GATEWAY,
           RestStatus.SERVICE_UNAVAILABLE));
 
+  public static final String ELASTIC_ERROR_REASON = "Elastic error";
+
   private final Gson gson = new Gson();
 
   @Inject
@@ -111,7 +114,7 @@ public class IndexerServiceImpl implements IndexerService {
       List<RecordInfo> recordInfos) throws Exception {
 
     // this should not happen
-    if (recordInfos.size() == 0) {
+    if (recordInfos.isEmpty()) {
       return null;
     }
 
@@ -121,7 +124,7 @@ public class IndexerServiceImpl implements IndexerService {
     // get auth header with service account Authorization
     this.headers = this.requestInfo.getHeaders();
     String authorization = message.getAttributes().get("authorization");
-    headers.put("authorization", authorization);
+    this.headers.put("authorization", authorization);
     // initialize status for all messages.
     this.jobStatus.initialize(recordInfos);
 
@@ -152,7 +155,7 @@ public class IndexerServiceImpl implements IndexerService {
       }
 
       // process failed records
-      if (retryRecordIds.size() > 0) {
+      if (!retryRecordIds.isEmpty()) {
         retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
       }
     } catch (IOException e) {
@@ -375,6 +378,14 @@ public class IndexerServiceImpl implements IndexerService {
       if (recordStatus.getIndexProgress().getStatusCode() == 0) {
         recordStatus.getIndexProgress().setStatusCode(HttpStatus.SC_OK);
       }
+      document.setCreateUser(storageRecord.getCreateUser());
+      document.setCreateTime(storageRecord.getCreateTime());
+      if (!Strings.isNullOrEmpty(storageRecord.getModifyUser())) {
+        document.setModifyUser(storageRecord.getModifyUser());
+      }
+      if (!Strings.isNullOrEmpty(storageRecord.getModifyTime())) {
+        document.setModifyTime(storageRecord.getModifyTime());
+      }
       document.setIndexProgress(recordStatus.getIndexProgress());
       if (storageRecord.getAncestry() != null) {
         document.setAncestry(storageRecord.getAncestry());
@@ -413,15 +424,16 @@ public class IndexerServiceImpl implements IndexerService {
     for (IndexSchema schema : schemas) {
       String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
 
-      // check if index exist
+      // check if index exist and sync meta attribute schema if required
       if (this.indicesService.isIndexExist(restClient, index)) {
+        this.mappingService.syncIndexMappingIfRequired(restClient, index);
         continue;
       }
 
       // create index
       Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schema);
       if (!this.indicesService.createIndex(restClient, index, null, schema.getType(), mapping)) {
-        throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error",
+        throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ELASTIC_ERROR_REASON,
             "Error creating index.",
             String.format("Failed to get confirmation from elastic server for index: %s", index));
       }
@@ -469,10 +481,6 @@ public class IndexerServiceImpl implements IndexerService {
     bulkRequest.timeout(BULK_REQUEST_TIMEOUT);
 
     for (Map.Entry<String, List<String>> record : deleteRecordMap.entrySet()) {
-
-      String[] kindParts = record.getKey().split(":");
-      String type = kindParts[2];
-
       String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKey());
 
       for (String id : record.getValue()) {
@@ -528,12 +536,12 @@ public class IndexerServiceImpl implements IndexerService {
               bulkRequest.numberOfActions(), succeededResponses, failedResponses));
     } catch (IOException e) {
       // throw explicit 504 for IOException
-      throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, "Elastic error",
+      throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, ELASTIC_ERROR_REASON,
           "Request cannot be completed in specified time.", e);
     } catch (ElasticsearchStatusException e) {
-      throw new AppException(e.status().getStatus(), "Elastic error", e.getMessage(), e);
+      throw new AppException(e.status().getStatus(), ELASTIC_ERROR_REASON, e.getMessage(), e);
     } catch (Exception e) {
-      throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error",
+      throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ELASTIC_ERROR_REASON,
           "Error indexing records.", e);
     }
     return failureRecordIds;
@@ -554,6 +562,8 @@ public class IndexerServiceImpl implements IndexerService {
 
     indexerPayload.put(RecordMetaAttribute.ID.getValue(), record.getId());
     indexerPayload.put(RecordMetaAttribute.KIND.getValue(), record.getKind());
+    indexerPayload.put(RecordMetaAttribute.AUTHORITY.getValue(), record.getAuthority());
+    indexerPayload.put(RecordMetaAttribute.SOURCE.getValue(), record.getSource());
     indexerPayload.put(RecordMetaAttribute.NAMESPACE.getValue(), record.getNamespace());
     indexerPayload.put(RecordMetaAttribute.TYPE.getValue(), record.getType());
     indexerPayload.put(RecordMetaAttribute.VERSION.getValue(), record.getVersion());
@@ -564,6 +574,14 @@ public class IndexerServiceImpl implements IndexerService {
     indexerPayload.put(RecordMetaAttribute.INDEX_STATUS.getValue(), record.getIndexProgress());
     if (record.getAncestry() != null) {
       indexerPayload.put(RecordMetaAttribute.ANCESTRY.getValue(), record.getAncestry());
+    }
+    indexerPayload.put(RecordMetaAttribute.CREATE_USER.getValue(), record.getCreateUser());
+    indexerPayload.put(RecordMetaAttribute.CREATE_TIME.getValue(), record.getCreateTime());
+    if (!Strings.isNullOrEmpty(record.getModifyUser())) {
+      indexerPayload.put(RecordMetaAttribute.MODIFY_USER.getValue(), record.getModifyUser());
+    }
+    if (!Strings.isNullOrEmpty(record.getModifyTime())) {
+      indexerPayload.put(RecordMetaAttribute.MODIFY_TIME.getValue(), record.getModifyTime());
     }
     return indexerPayload;
   }
