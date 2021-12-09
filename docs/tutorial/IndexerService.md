@@ -2,6 +2,8 @@
 
 ### Table of contents <a name="TOC"></a>
 - [Indexer service](#indexer-service)
+- [Introduction](#introduction)
+- [Indexer API access](#indexer-api-access)
 - [Get indexing status <a name="get-indexing-status"></a>](#get-indexing-status)
 - [Reindex <a name="reindex"></a>](#reindex)
 - [Schema Service adoption <a name="schema-service-adoption"></a>](#schema-service-adoption)
@@ -9,12 +11,12 @@
 - [Version info endpoint](#version-info-endpoint)
 
 
-##Introduction <a name="introduction"></a>
+## Introduction <a name="introduction"></a>
 The Indexer API provides a mechanism for indexing documents that contain structured or unstructured data. Documents and indices are saved in a separate persistent store optimized for search operations. The indexer API can index any number of documents.
 
 The indexer is indexes attributes defined in the schema. Schema can be created at the time of record ingestion in Data Ecosystem via Storage Service. The Indexer service also adds number of Data Ecosystem meta attributes such as id, kind, parent, acl, namespace, type, version, legaltags, index to each record at the time of indexing.
 
-##Indexer API access <a name="indexer-api-access"></a>
+## Indexer API access <a name="indexer-api-access"></a>
 
 * Required roles
 
