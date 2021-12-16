@@ -9,5 +9,5 @@ ENV PORT $PORT
 # Copy the jar to the production image from the builder stage.
 COPY provider/indexer-${PROVIDER_NAME}/target/indexer-${PROVIDER_NAME}-*-spring-boot.jar indexer-${PROVIDER_NAME}.jar
 # Run the web service on container startup.
-CMD java -Djava.security.egd=indexer:/dev/./urandom -Dserver.port=${PORT} -jar /app/indexer-${PROVIDER_NAME}.jar
+CMD java -Djava.security.egd=indexer:/dev/./urandom -Dserver.port=${PORT} -Dlog4j.formatMsgNoLookups=true -jar /app/indexer-${PROVIDER_NAME}.jar
 
