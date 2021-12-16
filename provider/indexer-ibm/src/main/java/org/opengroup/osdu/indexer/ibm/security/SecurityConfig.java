@@ -15,20 +15,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .csrf().disable()
-                .authorizeRequests()
-                .antMatchers("/", "/index.html",
-                		"/liveness_check",
-                		"/readiness_check",
-                        "/index-worker", "/_dps/task-handlers", "/_dps/task-handlers/**",
-                        "/reindex",
-                        "/v2/api-docs",
-                        "/swagger-resources/**",
-                        "/configuration/security",
-                        "/swagger",
-                        "/info",
-                        "/swagger-ui.html",
-                        "/webjars/**").permitAll()
-                .anyRequest().anonymous();
+                .csrf().disable();
+                // .authorizeRequests()
+                // .antMatchers("/", "/index.html",
+                // 		"/liveness_check",
+                // 		"/readiness_check",
+                //         "/index-worker", "/_dps/task-handlers", "/_dps/task-handlers/**",
+                //         "/reindex",
+                //         "/v2/api-docs",
+                //         "/swagger-resources/**",
+                //         "/configuration/security",
+                //         "/swagger",
+                //         "/info",
+                //         "/swagger-ui.html",
+                //         "/webjars/**").permitAll()
+                // .anyRequest().anonymous();
     }
 }

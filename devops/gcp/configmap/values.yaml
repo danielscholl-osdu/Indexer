@@ -23,7 +23,6 @@ data:
   crs_api: ""
   partition_api: "http://partition/api/partition/v1/"
   google_audiences: ""
-  indexer_que_service_mail: ""
 
 
 conf:

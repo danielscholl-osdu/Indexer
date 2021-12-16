@@ -26,4 +26,3 @@ data:
   CRS_API: "{{ .Values.data.crs_api }}"
   PARTITION_API: "{{ .Values.data.partition_api }}"
   GOOGLE_AUDIENCES: "{{ .Values.data.google_audiences }}"
-  INDEXER_QUE_SERVICE_MAIL: "{{ .Values.data.indexer_que_service_mail }}"
