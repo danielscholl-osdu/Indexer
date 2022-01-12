@@ -28,7 +28,6 @@ import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -75,7 +74,7 @@ public class IndexerSchemaServiceTest {
     @Mock
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Mock
-    private IndexerMappingService mappingService;
+    private IMappingService mappingService;
     @Mock
     private IndicesService indicesService;
     @Mock
