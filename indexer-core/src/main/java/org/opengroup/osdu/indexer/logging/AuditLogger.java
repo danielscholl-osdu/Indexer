@@ -100,6 +100,10 @@ public class AuditLogger {
         this.writeLog(this.getAuditEvents().getIndexMappingUpdateEvent(resources,false));
     }
 
+    public void getConfigurePartition(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getConfigurePartitionEvent(resources));
+    }
+
     private void writeLog(AuditPayload log) {
         this.logger.audit(log);
     }
