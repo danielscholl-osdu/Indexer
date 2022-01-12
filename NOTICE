@@ -535,6 +535,8 @@ The following software have components provided under the terms of this license:
 - OAuth2 for Spring Security (from https://repo1.maven.org/maven2/org/springframework/security/oauth/spring-security-oauth2)
 - OAuth2 for Spring Security (from https://repo1.maven.org/maven2/org/springframework/security/oauth/spring-security-oauth2)
 - Objenesis (from http://objenesis.org)
+- OkHttp (from https://repo1.maven.org/maven2/com/squareup/okhttp3/okhttp)
+- OkHttp (from https://repo1.maven.org/maven2/com/squareup/okhttp3/okhttp)
 - OkHttp URLConnection (from https://repo1.maven.org/maven2/com/squareup/okhttp3/okhttp-urlconnection)
 - OkHttp URLConnection (from https://repo1.maven.org/maven2/com/squareup/okhttp3/okhttp-urlconnection)
 - Okio (from https://github.com/square/okio/)
@@ -621,7 +623,6 @@ The following software have components provided under the terms of this license:
 - elasticsearch-cli (from https://github.com/elastic/elasticsearch)
 - elasticsearch-core (from https://github.com/elastic/elasticsearch)
 - elasticsearch-geo (from https://github.com/elastic/elasticsearch)
-- elasticsearch-secure-sm (from https://github.com/elastic/elasticsearch)
 - elasticsearch-x-content (from https://github.com/elastic/elasticsearch)
 - error-prone annotations (from https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations)
 - error-prone annotations (from https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations)
@@ -685,8 +686,6 @@ The following software have components provided under the terms of this license:
 - mockito-core (from http://mockito.org)
 - nio-multipart-parser (from )
 - nio-stream-storage (from https://github.com/synchronoss/nio-stream-storage)
-- okhttp (from https://square.github.io/okhttp/)
-- okhttp (from https://square.github.io/okhttp/)
 - okhttp-logging-interceptor (from https://square.github.io/okhttp/)
 - org.conscrypt:conscrypt-openjdk-uber (from https://conscrypt.org/)
 - org.xmlunit:xmlunit-core (from http://www.xmlunit.org/)
@@ -723,6 +722,7 @@ The following software have components provided under the terms of this license:
 - rest (from https://github.com/elastic/elasticsearch)
 - rest-high-level (from https://github.com/elastic/elasticsearch)
 - rxjava (from https://github.com/ReactiveX/RxJava)
+- secure-sm (from https://github.com/elastic/elasticsearch)
 - server (from https://github.com/elastic/elasticsearch)
 - spring-boot-starter (from https://spring.io/projects/spring-boot)
 - spring-boot-starter-data-mongodb (from https://spring.io/projects/spring-boot)
@@ -1148,8 +1148,8 @@ The following software have components provided under the terms of this license:
 
 - Javassist (from http://www.javassist.org/)
 - Javassist (from http://www.javassist.org/)
+- OkHttp (from https://repo1.maven.org/maven2/com/squareup/okhttp3/okhttp)
 - RabbitMQ Java Client (from http://www.rabbitmq.com)
-- okhttp (from https://square.github.io/okhttp/)
 
 ========================================================================
 MS-RL
