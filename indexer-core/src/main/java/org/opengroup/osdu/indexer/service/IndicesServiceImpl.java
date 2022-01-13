@@ -56,7 +56,7 @@ import java.util.Objects;
 
 @Service
 @RequestScope
-public class IndicesServiceImpl implements IndexerIndicesService {
+public class IndicesServiceImpl implements IndicesService {
 
     @Autowired
     private ElasticClientHandler elasticClientHandler;

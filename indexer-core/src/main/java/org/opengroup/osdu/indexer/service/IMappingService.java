@@ -15,14 +15,17 @@
 package org.opengroup.osdu.indexer.service;
 
 import org.elasticsearch.client.RestHighLevelClient;
-import org.opengroup.osdu.core.common.search.IMappingService;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-public interface IndexerMappingService extends IMappingService {
+public interface IMappingService {
+
+    String getIndexMapping(RestHighLevelClient client, String index) throws Exception;
+
+    String getIndexSchema(String index) throws Exception;
 
     String createMapping(RestHighLevelClient client, IndexSchema schema, String index, boolean merge) throws IOException;
 

@@ -13,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -30,7 +29,7 @@ public class IndexerServiceImplTest {
   private ElasticIndexNameResolver elasticIndexNameResolver;
 
   @Mock
-  private IndexerIndicesService indicesService;
+  private IndicesService indicesService;
 
   private List<RecordInfo> recordInfos = new ArrayList<>();
 

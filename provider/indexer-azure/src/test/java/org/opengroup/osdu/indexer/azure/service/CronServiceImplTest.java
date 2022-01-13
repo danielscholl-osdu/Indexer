@@ -28,7 +28,7 @@ import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.service.CronServiceImpl;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.core.common.search.IndicesService;
+import org.opengroup.osdu.indexer.service.IndicesService;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
