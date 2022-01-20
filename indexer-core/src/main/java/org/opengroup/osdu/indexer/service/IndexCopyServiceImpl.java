@@ -30,7 +30,6 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.core.common.model.indexer.IElasticSettingService;
@@ -55,7 +54,7 @@ public class IndexCopyServiceImpl implements IndexCopyService {
     @Inject
     private IElasticSettingService elasticSettingService;
     @Inject
-    private IndexerMappingService mappingService;
+    private IMappingService mappingService;
     @Inject
     private DpsHeaders headersInfo;
     @Inject

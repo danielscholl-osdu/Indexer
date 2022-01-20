@@ -19,9 +19,8 @@ variables:
   OSDU_GCP_SERVICE: indexer
   OSDU_GCP_VENDOR: gcp
   OSDU_GCP_QUEUE_SA_EMAIL: pub-sub-indexer-queue@nice-etching-277309.iam.gserviceaccount.com
-  OSDU_GCP_K8S_ACCOUNT: workload-identity-indexer
   OSDU_GCP_HELM_CONFIG_SERVICE_VARS: "--set data.log_level=INFO --set data.schema_host=$OSDU_GCP_SCHEMA_API/schema  --set data.google_cloud_project=$OSDU_GCP_PROJECT --set data.redis_search_host=$REDIS_SEARCH_HOST --set data.redis_group_host=$REDIS_GROUP_HOST --set data.indexer_queue_host=$OSDU_GCP_INDEXER_QUEUE_URL --set data.crs_api=$OSDU_GCP_CRS_API --set data.partition_api=$OSDU_GCP_PARTITION_API --set data.google_audiences=$GOOGLE_AUDIENCE --set data.indexer_que_service_mail=$OSDU_GCP_QUEUE_SA_EMAIL"
-  OSDU_GCP_HELM_DEPLOYMENT_SERVICE_VARS: "--set data.image=$CI_REGISTRY_IMAGE/osdu-gcp:$CI_COMMIT_SHORT_SHA --set data.serviceAccountName=$OSDU_GCP_K8S_ACCOUNT --set data.limits_cpu=1 --set data.limits_memory=1G"
+  OSDU_GCP_HELM_DEPLOYMENT_SERVICE_VARS: "--set data.image=$CI_REGISTRY_IMAGE/osdu-gcp:$CI_COMMIT_SHORT_SHA --set data.serviceAccountName=$OSDU_GCP_SERVICE-k8s --set data.limits_cpu=1 --set data.limits_memory=1G"
   OSDU_GCP_HELM_CONFIG_SERVICE: indexer-config
   OSDU_GCP_HELM_DEPLOYMENT_SERVICE: indexer-deploy
   OSDU_GCP_HELM_PACKAGE_CHARTS: "devops/gcp/deploy devops/gcp/configmap"

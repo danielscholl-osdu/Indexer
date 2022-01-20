@@ -48,7 +48,6 @@ import org.opengroup.osdu.core.common.model.indexer.IElasticSettingService;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -76,7 +75,7 @@ public class IndexCopyServiceImplTest {
   @Mock
   private IndicesService indicesService;
   @Mock
-  private IndexerMappingService mappingService;
+  private IMappingService mappingService;
   @Mock
   private ElasticClientHandler elasticClientHandler;
   @Mock

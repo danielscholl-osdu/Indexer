@@ -41,7 +41,6 @@ import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -81,7 +80,7 @@ public class IndexerServiceImpl implements IndexerService {
     @Inject
     private IndicesService indicesService;
     @Inject
-    private IndexerMappingService mappingService;
+    private IMappingService mappingService;
     @Inject
     private IPublisher progressPublisher;
     @Inject

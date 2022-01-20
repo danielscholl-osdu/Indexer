@@ -16,7 +16,7 @@
 
 	<properties>
 		<commons-beanutils.version>1.9.4</commons-beanutils.version>
-		<osdu.oscorecommon.version>0.13.0-rc4</osdu.oscorecommon.version>
+		<osdu.oscorecommon.version>0.13.0-rc6</osdu.oscorecommon.version>
 	</properties>
 
 	<dependencies>
@@ -199,18 +199,6 @@
 			<artifactId>cobertura-maven-plugin</artifactId>
 			<version>2.7</version>
 			<scope>test</scope>
-		</dependency>
-
-		<!-- swagger dependencies -->
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger2</artifactId>
-			<version>${springfox-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger-ui</artifactId>
-			<version>${springfox-version}</version>
 		</dependency>
 
 	</dependencies>

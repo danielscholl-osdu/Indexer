@@ -1,5 +1,3 @@
-
-
 // Copyright 2017-2019, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +20,6 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Value;
