@@ -124,7 +124,7 @@ public class IndexerConfigurationProperties {
 		return Boolean.TRUE.toString().equalsIgnoreCase(smartSearchCcsDisabled);
 	}
 
-	public int getStorageGetRecordsByKindBatchSize () {
+	public Integer getStorageGetRecordsByKindBatchSize () {
 		if (this.storageGetRecordsByKindBatchSize!=null) {
 			return this.storageGetRecordsByKindBatchSize;
 		}
