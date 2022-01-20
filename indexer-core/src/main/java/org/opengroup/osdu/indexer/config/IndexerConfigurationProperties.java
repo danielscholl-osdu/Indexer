@@ -47,6 +47,7 @@ public class IndexerConfigurationProperties {
 	private String storageQueryRecordForConversionHost;
 	private String storageQueryRecordHost;
 	private Integer storageRecordsBatchSize;
+	private Integer storageGetRecordsByKindBatchSize;
 	private String storageSchemaHost;
 	private String schemaHost;
 	private String entitlementsHost;
@@ -121,5 +122,12 @@ public class IndexerConfigurationProperties {
 
 	public final Boolean isSmartSearchCcsDisabled() {
 		return Boolean.TRUE.toString().equalsIgnoreCase(smartSearchCcsDisabled);
+	}
+
+	public int getStorageGetRecordsByKindBatchSize () {
+		if (this.storageGetRecordsByKindBatchSize!=null) {
+			return this.storageGetRecordsByKindBatchSize;
+		}
+		return this.storageRecordsBatchSize;
 	}
 }
