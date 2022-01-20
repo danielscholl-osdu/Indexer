@@ -189,7 +189,7 @@ public class StorageServiceImpl implements StorageService {
     public RecordQueryResponse getRecordsByKind(RecordReindexRequest reindexRequest) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(RecordMetaAttribute.KIND.getValue(), reindexRequest.getKind());
-        queryParams.put("limit", configurationProperties.getStorageRecordsBatchSize().toString());
+        queryParams.put("limit", configurationProperties.getStorageGetRecordsByKindBatchSize().toString());
         if (!Strings.isNullOrEmpty(reindexRequest.getCursor())) {
             queryParams.put("cursor", reindexRequest.getCursor());
         }
