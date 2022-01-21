@@ -128,6 +128,7 @@ public class IndexerConfigurationProperties {
 		if (this.storageGetRecordsByKindBatchSize!=null) {
 			return this.storageGetRecordsByKindBatchSize;
 		}
+		// if property is not set, fall back to storageRecordsBatchSize property which is used by all CSPs to set batch size.
 		return this.storageRecordsBatchSize;
 	}
 }
