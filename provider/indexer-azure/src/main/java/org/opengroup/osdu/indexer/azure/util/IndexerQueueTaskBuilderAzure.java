@@ -128,7 +128,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
                     String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
                     createTask(recordChangedMessagePayload, headers);
                 }
-            } while (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageRecordsBatchSize());
+            } while (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageGetRecordsByKindBatchSize());
 
         } catch (AppException e) {
             throw e;
