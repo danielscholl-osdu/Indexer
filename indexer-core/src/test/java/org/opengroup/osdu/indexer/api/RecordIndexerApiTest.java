@@ -25,8 +25,10 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.service.IndexerService;
+import org.opengroup.osdu.indexer.service.SchemaService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.common.model.indexer.SchemaChangedMessages;
 import org.opengroup.osdu.core.common.http.HeadersUtil;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -40,7 +42,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @PrepareForTest({HeadersUtil.class, IndexerQueueTaskBuilder.class, DpsHeaders.class})
 public class RecordIndexerApiTest {
 
-    private final String messageValid = "{\"data\":\"[{\\\"id\\\":\\\"opendes:welldb:wellbore-d9033ae1-fb15-496c-9ba0-880fd1d2b2cf\\\",\\\"kind\\\":\\\"tenant1:welldb:wellbore:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"account-id\":\"opendes\",\"correlation-id\":\"b5a281bd-f59d-4db2-9939-b2d85036fc7e\"},\"messageId\":\"75328163778221\",\"publishTime\":\"2018-05-08T21:48:56.131Z\"}";
+    private final String recordMessageValid = "{\"data\":\"[{\\\"id\\\":\\\"opendes:welldb:wellbore-d9033ae1-fb15-496c-9ba0-880fd1d2b2cf\\\",\\\"kind\\\":\\\"tenant1:welldb:wellbore:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"account-id\":\"opendes\",\"correlation-id\":\"b5a281bd-f59d-4db2-9939-b2d85036fc7e\"},\"messageId\":\"75328163778221\",\"publishTime\":\"2018-05-08T21:48:56.131Z\"}";
+    private final String schemaMessageValid = "{\"data\":\"[{\\\"kind\\\":\\\"tenant1:welldb:wellbore:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"account-id\":\"opendes\",\"correlation-id\":\"b5a281bd-f59d-4db2-9939-b2d85036fc7e\"},\"messageId\":\"75328163778221\",\"publishTime\":\"2018-05-08T21:48:56.131Z\"}";
     private final String messageEmpty = "{}";
     private final String messageWithEmptyData = "{\"data\":\"[]\",\"attributes\":{\"account-id\":\"opendes\",\"correlation-id\":\"b5a281bd-f59d-4db2-9939-b2d85036fc7e\"},\"messageId\":\"75328163778221\",\"publishTime\":\"2018-05-08T21:48:56.131Z\"}";
     private final String messageWithIncorrectJsonFormat = "{\"data\":\"[{}}]\",\"attributes\":{\"account-id\":\"opendes\",\"correlation-id\":\"b5a281bd-f59d-4db2-9939-b2d85036fc7e\"},\"messageId\":\"75328163778221\",\"publishTime\":\"2018-05-08T21:48:56.131Z\"}";
@@ -54,6 +57,8 @@ public class RecordIndexerApiTest {
     private JaxRsDpsLog log;
     @Mock
     private IndexerService indexService;
+    @Mock
+    private SchemaService schemaService;
 
     @Mock
     private DpsHeaders dpsHeaders;
@@ -68,7 +73,7 @@ public class RecordIndexerApiTest {
 
     @Test
     public void should_return200_given_validMessage_indexWorkerTest() throws Exception {
-        should_return200_indexerWorkerTest(messageValid);
+        should_return200_indexerWorkerTest(recordMessageValid);
     }
 
     @Test
@@ -84,6 +89,21 @@ public class RecordIndexerApiTest {
     @Test
     public void should_return400_given_incorrectJsonFormatMessage_indexWorkerTest() {
         should_return400_indexerWorkerTest(messageWithIncorrectJsonFormat, "Unable to parse request payload.");
+    }
+
+    @Test
+    public void should_return200_given_validMessage_schemaWorkerTest() throws Exception {
+        should_return200_schemaWorkerTest(schemaMessageValid);
+    }
+
+    @Test
+    public void should_return200_given_emptyData_schemaWorkerTest() throws Exception {
+        should_return200_schemaWorkerTest(messageWithEmptyData);
+    }
+
+    @Test
+    public void should_return400_given_incorrectJsonFormatMessage_SchemaWorkerTest() {
+        should_return400_schemaWorkerTest(messageWithIncorrectJsonFormat, "Unable to parse request payload.");
     }
 
     private void should_return200_indexerWorkerTest(String message) throws Exception {
@@ -105,5 +125,26 @@ public class RecordIndexerApiTest {
 
     private RecordChangedMessages createRecordChangedMessage(String message) {
         return (new Gson()).fromJson(message, RecordChangedMessages.class);
+    }
+
+    private void should_return200_schemaWorkerTest(String message) throws Exception {
+        ResponseEntity response = this.sut.schemaWorker(createSchemaChangedMessage(message));
+        Assert.assertEquals(HttpStatus.OK.value(), response.getStatusCodeValue());
+    }
+
+    private void should_return400_schemaWorkerTest(String message, String errorMessage) {
+        try {
+            this.sut.schemaWorker(createSchemaChangedMessage(message));
+            fail("Should throw exception");
+        } catch (AppException e) {
+            Assert.assertEquals(HttpStatus.BAD_REQUEST.value(), e.getError().getCode());
+            Assert.assertEquals(errorMessage, e.getError().getMessage());
+        } catch (Exception e) {
+            fail("Should not throw this exception" + e.getMessage());
+        }
+    }
+
+    private SchemaChangedMessages createSchemaChangedMessage(String message) {
+        return (new Gson()).fromJson(message, SchemaChangedMessages.class);
     }
 }
