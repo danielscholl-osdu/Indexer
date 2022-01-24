@@ -31,7 +31,28 @@
   <properties>
       <aws.version>1.11.1018</aws.version>
       <deployment.environment>dev</deployment.environment>
+      <netty.version>4.1.51.Final</netty.version>
+      <jackson.version>2.11.4</jackson.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>${netty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <!-- Internal packages -->
@@ -47,7 +68,7 @@
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
         <artifactId>os-core-lib-aws</artifactId>
-        <version>0.11.0</version>
+        <version>0.13.0-rc3</version>
     </dependency>
 
     <!-- AWS managed packages -->

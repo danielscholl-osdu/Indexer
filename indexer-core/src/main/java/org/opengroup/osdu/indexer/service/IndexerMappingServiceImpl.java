@@ -37,7 +37,6 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
-import org.opengroup.osdu.core.common.search.IMappingService;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
@@ -50,7 +49,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 @Service
-public class IndexerMappingServiceImpl extends MappingServiceImpl implements IndexerMappingService {
+public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMappingService {
 
     @Inject
     private JaxRsDpsLog log;

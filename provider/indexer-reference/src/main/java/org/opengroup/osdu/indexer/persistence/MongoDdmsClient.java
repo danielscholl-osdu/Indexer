@@ -19,7 +19,6 @@ package org.opengroup.osdu.indexer.persistence;
 
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
-import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.indexer.util.MongoClientHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

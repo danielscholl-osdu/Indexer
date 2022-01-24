@@ -22,4 +22,4 @@ image:
   branch: master
   tag: latest
 
-istioDnsHost: ""
+istioDnsHost: "contoso.com"

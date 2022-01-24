@@ -41,11 +41,13 @@ public class AADSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/index-worker", "/_dps/task-handlers", "/_dps/task-handlers/**",
                         "/reindex",
                         "/v2/api-docs",
+                        "/v3/api-docs",
                         "/swagger-resources/**",
                         "/configuration/security",
                         "/swagger",
                         "/info",
                         "/swagger-ui.html",
+                        "/swagger-ui/**",
                         "/webjars/**").permitAll()
                 .anyRequest().authenticated()
                 .and().addFilterBefore(appRoleAuthFilter, UsernamePasswordAuthenticationFilter.class);

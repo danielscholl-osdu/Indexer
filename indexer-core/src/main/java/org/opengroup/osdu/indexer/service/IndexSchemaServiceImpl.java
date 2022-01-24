@@ -30,7 +30,6 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -61,7 +60,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Inject
-    private IndexerMappingService mappingService;
+    private IMappingService mappingService;
     @Inject
     private IndicesService indicesService;
     @Inject
