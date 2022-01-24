@@ -46,7 +46,7 @@
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
         <java-jwt.version>3.8.1</java-jwt.version>
         <powermock.version>2.0.2</powermock.version>
-        <mockito.version>3.0.0</mockito.version>
+        <mockito.version>3.11.2</mockito.version>
         <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
         <spring-security-oauth2.version>2.3.6.RELEASE</spring-security-oauth2.version>
         <spring-boot.version>2.1.18.RELEASE</spring-boot.version>
@@ -59,18 +59,6 @@
     <dependencyManagement>
         <dependencies>
             <!-- Override version defined in parent's POM -->
-            <dependency>
-                <groupId>io.projectreactor.netty</groupId>
-                <artifactId>reactor-netty</artifactId>
-                <version>${reactor-netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <!-- Inherit managed dependencies from core-lib-azure -->
             <dependency>
                 <groupId>org.opengroup.osdu</groupId>
@@ -78,11 +66,6 @@
                 <version>${osdu.corelibazure.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.opengroup.osdu</groupId>
-                <artifactId>os-core-common</artifactId>
-                <version>${osdu.oscorecommon.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -249,6 +232,20 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-all</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
