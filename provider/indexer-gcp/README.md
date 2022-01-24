@@ -27,6 +27,8 @@ In order to run the service locally or remotely, you will need to have the follo
 | `STORAGE_SCHEMA_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/schemas` | Storage API endpoint 'schemas' | no | https://console.cloud.google.com/apis/credentials |
 | `STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/query/records:batch` | Storage API endpoint 'records'  | no | https://console.cloud.google.com/iam-admin/serviceaccounts |
 | `STORAGE_QUERY_RECORD_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/query/records` | Storage API endpoint 'query/records'  | no | https://console.cloud.google.com/iam-admin/serviceaccounts |
+| `STORAGE_RECORDS_BATCH_SIZE` | 20 | Batch size for storage API `POST {endpoint}/query/records:batch` | no | - |
+| `STORAGE_RECORDS_BY_KIND_BATCH_SIZE` | - | Batch size for storage API `GET {endpoint}/query/records`. If this is not present, defaults to value of `STORAGE_RECORDS_BATCH_SIZE` | no | - |
 | `REDIS_SEARCH_HOST` | ex `127.0.0.1` | Redis host for search | no | https://console.cloud.google.com/memorystore/redis/instances |
 | `REDIS_GROUP_HOST` | ex `127.0.0.1` | Redis host for groups | no | https://console.cloud.google.com/memorystore/redis/instances |
 | `REDIS_SEARCH_PORT` | ex `6379` | Redis host for search | no | https://console.cloud.google.com/memorystore/redis/instances |
