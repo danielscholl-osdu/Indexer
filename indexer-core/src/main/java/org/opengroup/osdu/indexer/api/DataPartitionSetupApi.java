@@ -14,7 +14,6 @@
 
 package org.opengroup.osdu.indexer.api;
 
-import lombok.extern.java.Log;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.service.IClusterConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +27,10 @@ import org.springframework.web.context.annotation.RequestScope;
 import java.io.IOException;
 import java.util.ArrayList;
 
-
-@Log
 @RestController
-@RequestMapping("/partitions/settings")
+@RequestMapping("/partitions")
 @RequestScope
-public class DataPartitionSettingsApi {
+public class DataPartitionSetupApi {
 
     private static final String OPS = "users.datalake.ops";
 
@@ -43,7 +40,7 @@ public class DataPartitionSettingsApi {
     private AuditLogger auditLogger;
 
     @PreAuthorize("@authorizationFilter.hasPermission('" + OPS + "')")
-    @PostMapping
+    @PostMapping(path = "/cluster-settings", consumes = "application/json")
     public ResponseEntity<?> partitionInit() throws IOException {
         this.clusterConfigurationService.updateClusterConfiguration();
         this.auditLogger.getConfigurePartition(new ArrayList<>());
