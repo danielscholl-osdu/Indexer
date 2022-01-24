@@ -47,6 +47,8 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | `STORAGE_SCHEMA_HOST` | `${storage_service_url}/schemas` | Endpoint of schema API | no | - |
 | `STORAGE_QUERY_RECORD_HOST` | `${storage_service_url}/query/records` | Endpoint of records API | no | - |
 | `STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST` | `${storage_service_url}/query/records:batch` | Endpoint of records batch API | no | - |
+| `STORAGE_RECORDS_BATCH_SIZE` | 20 | Batch size for storage API `POST {endpoint}/query/records:batch` | no | - |
+| `STORAGE_RECORDS_BY_KIND_BATCH_SIZE` | 100 | Batch size for storage API `GET {endpoint}/query/records`. If this is not present, defaults to value of `STORAGE_RECORDS_BATCH_SIZE` | no | - |
 | `KEYVAULT_URI` | ex `https://foo-kv.vault.azure.net/` | . | . | . |
 | `appinsights_key` | `********` | App Insights key | yes | output of infrastructure deployments |
 | `aad_client_id` | `********` | AAD client application ID | yes | output of infrastructure deployment |
