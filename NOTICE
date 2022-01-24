@@ -347,7 +347,6 @@ The following software have components provided under the terms of this license:
 - Doxia Sitetools :: Decoration Model (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-decoration-model)
 - Doxia Sitetools :: Site Renderer (from http://maven.apache.org/doxia/doxia-sitetools/doxia-site-renderer/, https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-site-renderer)
 - Elastic JNA Distribution (from https://github.com/java-native-access/jna)
-- Expression Language 3.0 (from http://el-spec.java.net, http://uel.java.net)
 - FindBugs-jsr305 (from http://findbugs.sourceforge.net/)
 - GSON extensions to the Google HTTP Client Library for Java. (from https://repo1.maven.org/maven2/com/google/http-client/google-http-client-gson)
 - Google APIs Client Library for Java (from https://repo1.maven.org/maven2/com/google/api-client/google-api-client)
@@ -401,6 +400,7 @@ The following software have components provided under the terms of this license:
 - Jackson-dataformat-YAML (from https://github.com/FasterXML/jackson, https://github.com/FasterXML/jackson-dataformats-text)
 - Jackson-module-parameter-names (from https://repo1.maven.org/maven2/com/fasterxml/jackson/module/jackson-module-parameter-names)
 - Jakarta Bean Validation API (from https://beanvalidation.org)
+- Jakarta Expression Language Implementation (from https://projects.eclipse.org/projects/ee4j.el)
 - Jakarta Servlet (from http://servlet-spec.java.net, https://projects.eclipse.org/projects/ee4j.servlet)
 - Java Libraries for Amazon Simple WorkFlow (from https://aws.amazon.com/sdkforjava)
 - Java Native Access (from https://github.com/java-native-access/jna, https://github.com/twall/jna)
@@ -479,6 +479,8 @@ The following software have components provided under the terms of this license:
 - Netty/Resolver/DNS/Classes/MacOS (from https://repo1.maven.org/maven2/io/netty/netty-resolver-dns-classes-macos)
 - Netty/TomcatNative [BoringSSL - Static] (from https://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static)
 - Netty/Transport (from https://repo1.maven.org/maven2/io/netty/netty-transport)
+- Netty/Transport/Classes/Epoll (from https://repo1.maven.org/maven2/io/netty/netty-transport-classes-epoll)
+- Netty/Transport/Classes/KQueue (from https://repo1.maven.org/maven2/io/netty/netty-transport-classes-kqueue)
 - Netty/Transport/Native/Unix/Common (from https://repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common)
 - Nimbus Content Type (from https://bitbucket.org/connect2id/nimbus-content-type)
 - Nimbus JOSE+JWT (from https://bitbucket.org/connect2id/nimbus-jose-jwt, https://bitbucket.org/nimbusds/nimbus-jose-jwt)
@@ -525,9 +527,9 @@ The following software have components provided under the terms of this license:
 - Spring Boot Reactor Netty Starter (from https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-reactor-netty, https://spring.io/projects/spring-boot)
 - Spring Boot Security Starter (from http://projects.spring.io/spring-boot/, https://spring.io/projects/spring-boot)
 - Spring Boot Starter (from http://projects.spring.io/spring-boot/, https://spring.io/projects/spring-boot)
-- Spring Boot Test (from http://projects.spring.io/spring-boot/, https://spring.io/projects/spring-boot)
-- Spring Boot Test Auto-Configure (from http://projects.spring.io/spring-boot/, https://spring.io/projects/spring-boot)
-- Spring Boot Test Starter (from http://projects.spring.io/spring-boot/, https://spring.io/projects/spring-boot)
+- Spring Boot Test (from http://projects.spring.io/spring-boot/, https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-test, https://spring.io/projects/spring-boot)
+- Spring Boot Test Auto-Configure (from http://projects.spring.io/spring-boot/, https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-test-autoconfigure, https://spring.io/projects/spring-boot)
+- Spring Boot Test Starter (from http://projects.spring.io/spring-boot/, https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-test, https://spring.io/projects/spring-boot)
 - Spring Boot Tomcat Starter (from http://projects.spring.io/spring-boot/, https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-tomcat, https://spring.io/projects/spring-boot)
 - Spring Boot Validation Starter (from http://projects.spring.io/spring-boot/, https://projects.spring.io/spring-boot/, https://spring.io/projects/spring-boot)
 - Spring Boot Web Starter (from http://projects.spring.io/spring-boot/, https://spring.io/projects/spring-boot)
@@ -584,6 +586,7 @@ The following software have components provided under the terms of this license:
 - io.grpc:grpc-stub (from https://github.com/grpc/grpc-java)
 - ion-java (from https://github.com/amzn/ion-java/, https://github.com/amznlabs/ion-java/)
 - jackson-databind (from http://github.com/FasterXML/jackson, http://wiki.fasterxml.com/JacksonHome)
+- jakarta.inject (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/jakarta.inject)
 - java-cloudant (from https://cloudant.com)
 - javatuples (from http://www.javatuples.org)
 - javax.inject (from http://code.google.com/p/atinject/)
@@ -792,7 +795,6 @@ CDDL-1.1
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Expression Language 3.0 (from http://el-spec.java.net, http://uel.java.net)
 - Jakarta Servlet (from http://servlet-spec.java.net, https://projects.eclipse.org/projects/ee4j.servlet)
 - Java Architecture for XML Binding (from http://jaxb.java.net/, https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api)
 - JavaBeans Activation Framework
@@ -906,7 +908,6 @@ The following software have components provided under the terms of this license:
 - Class Model for Hk2 (from https://repo1.maven.org/maven2/org/glassfish/hk2/class-model)
 - Cobertura (from http://cobertura.sourceforge.net)
 - Cobertura Limited Runtime (from http://cobertura.sourceforge.net)
-- Expression Language 3.0 (from http://el-spec.java.net, http://uel.java.net)
 - HK2 Implementation Utilities (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-utils)
 - HK2 Spring Bridge (from https://repo1.maven.org/maven2/org/glassfish/hk2/spring-bridge)
 - HK2 config types (from https://repo1.maven.org/maven2/org/glassfish/hk2/config-types)
@@ -953,7 +954,6 @@ The following software have components provided under the terms of this license:
 - Checker Qual (from https://checkerframework.org)
 - Class Model for Hk2 (from https://repo1.maven.org/maven2/org/glassfish/hk2/class-model)
 - Cobertura (from http://cobertura.sourceforge.net)
-- Expression Language 3.0 (from http://el-spec.java.net, http://uel.java.net)
 - HK2 Implementation Utilities (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-utils)
 - HK2 Spring Bridge (from https://repo1.maven.org/maven2/org/glassfish/hk2/spring-bridge)
 - HK2 core module (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-core)
@@ -970,7 +970,7 @@ The following software have components provided under the terms of this license:
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
 - jakarta.inject (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/jakarta.inject)
 - javax.annotation-api (from http://jcp.org/en/jsr/detail?id=250)
-- javax.ws.rs-api (from http://jax-rs-spec.java.net)
+- javax.ws.rs-api (from http://jax-rs-spec.java.net, https://github.com/eclipse-ee4j/jaxrs-api)
 - jersey-container-servlet (from https://repo1.maven.org/maven2/org/glassfish/jersey/containers/jersey-container-servlet)
 - jersey-container-servlet-core (from https://repo1.maven.org/maven2/org/glassfish/jersey/containers/jersey-container-servlet-core)
 - jersey-core-client (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-client)
@@ -1125,13 +1125,6 @@ The following software have components provided under the terms of this license:
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
 
 ========================================================================
-MS-RL
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Microsoft Application Insights Java SDK Core (from https://github.com/Microsoft/ApplicationInsights-Java)
-
-========================================================================
 PHP-3.01
 ========================================================================
 The following software have components provided under the terms of this license:
@@ -1215,6 +1208,7 @@ The following software have components provided under the terms of this license:
 - Microsoft Azure SDK for EventGrid Management (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure SDK for SQL API of Azure Cosmos DB Service (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure client library for Blob Storage (from https://github.com/Azure/azure-sdk-for-java)
+- Microsoft Azure client library for File Storage Data Lake (from https://github.com/Azure/azure-sdk-for-java)
 - Project Lombok (from http://projectlombok.org, https://projectlombok.org)
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
 - Spring Security JWT Library (from http://github.com/spring-projects/spring-security-oauth)
