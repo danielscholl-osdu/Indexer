@@ -31,7 +31,9 @@ In order to run the service locally or remotely, you will need to have the follo
 | `ENTITLEMENTS_BASE_URL` | `http://localhost:8081` or `https://some-hosted-url` | yes | Specify the base url for an entitlements service instance. Can be run locally or remote | no |
 | `PARTITION_BASE_URL` | `http://localhost:8082` or `https://some-hosted-url` | yes | Specify the base url for a partition service instance. Can be run locally or remote | no | 
 | `STORAGE_BASE_URL` | `http://localhost:8082` or `https://some-hosted-url` | yes | Specify the base url for a partition service instance. Can be run locally or remote | no | 
-| `SCHEMA_BASE_URL` | `http://localhost:8082` or `https://some-hosted-url` | yes | Specify the base url for a partition service instance. Can be run locally or remote | no | 
+| `SCHEMA_BASE_URL` | `http://localhost:8082` or `https://some-hosted-url` | yes | Specify the base url for a partition service instance. Can be run locally or remote | no |
+| `STORAGE_RECORDS_BATCH_SIZE` | 20 | Batch size for storage API `POST {endpoint}/query/records:batch` | no | - |
+| `STORAGE_RECORDS_BY_KIND_BATCH_SIZE` | - | Batch size for storage API `GET {endpoint}/query/records`. If this is not present, defaults to value of `STORAGE_RECORDS_BATCH_SIZE` | no | - | 
 
 
 ### Run Locally
