@@ -19,6 +19,7 @@ package org.opengroup.osdu.util;
 
 import com.google.gson.Gson;
 
+import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -416,11 +417,17 @@ public class ElasticUtils {
         return restHighLevelClient;
     }
 
-    public RestClientBuilder createClientBuilder(String host, String usernameAndPassword, int port) {
+    public RestClientBuilder createClientBuilder(String url, String usernameAndPassword, int port) throws Exception {
             String scheme = this.sslEnabled ? "https" : "http";
-            RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, scheme));
+
+            url = url.trim().replaceAll("^(?i)(https?)://","");
+            URI uri = new URI(scheme + "://" + url);
+
+            RestClientBuilder builder = RestClient.builder(new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme()));
+            builder.setPathPrefix(uri.getPath());
+
             builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
-                    .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
+                            .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
 
             Header[] defaultHeaders = new Header[]{
                     new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
