@@ -427,7 +427,7 @@ public class ElasticUtils {
             builder.setPathPrefix(uri.getPath());
 
             builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
-                            .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
+                    .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
 
             Header[] defaultHeaders = new Header[]{
                     new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
