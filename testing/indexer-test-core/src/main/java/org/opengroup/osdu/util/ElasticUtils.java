@@ -402,6 +402,7 @@ public class ElasticUtils {
 
 
     private RestHighLevelClient createClient(String username, String password, String host) {
+
         RestHighLevelClient restHighLevelClient;
         int port = Config.getPort();
         try {
