@@ -216,6 +216,7 @@ public class ElasticUtils {
 
     public long fetchRecords(String index) throws IOException {
         try {
+            log.info(String.format("The host is %s, the port is %d", host, Config.getPort()));
             try (RestHighLevelClient client = this.createClient(username, password, host)) {
                 SearchRequest request = new SearchRequest(index);
                 SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
@@ -223,6 +224,9 @@ public class ElasticUtils {
             }
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        } catch (Exception e) {
+            log.info(String.format("Caught exception %s", e));
             return -1;
         }
     }
