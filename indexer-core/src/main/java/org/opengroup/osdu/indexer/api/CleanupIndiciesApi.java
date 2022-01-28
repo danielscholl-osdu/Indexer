@@ -38,8 +38,10 @@ import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.service.IndicesServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -63,6 +65,9 @@ public class CleanupIndiciesApi {
 
   @Inject
   private IndicesServiceImpl indicesService;
+
+
+  private static final String PRE_AUTH = "@authorizationFilter.hasPermission('"+ SearchServiceRole.ADMIN + "')" ;
 
   @ApiIgnore
   @PostMapping(path = "/index-cleanup", consumes = "application/json")
@@ -102,6 +107,8 @@ public class CleanupIndiciesApi {
     }
   }
 
+  @DeleteMapping(value = "/delete-index-for-kind", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize(PRE_AUTH)
   public ResponseEntity deleteIndex(@RequestParam("kind") @NotBlank @ValidKind String kind) {
     try {
       String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
