@@ -423,6 +423,8 @@ public class ElasticUtils {
             url = url.trim().replaceAll("^(?i)(https?)://","");
             URI uri = new URI(scheme + "://" + url);
 
+            log.info(String.format("host:%s, port:%s, scheme:%s", uri.getHost(), uri.getPort(), uri.getScheme()));
+
             RestClientBuilder builder = RestClient.builder(new HttpHost(uri.getHost(), port, uri.getScheme()));
             builder.setPathPrefix(uri.getPath());
 
