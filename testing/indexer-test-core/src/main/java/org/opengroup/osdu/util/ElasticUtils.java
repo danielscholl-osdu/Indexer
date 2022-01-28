@@ -217,7 +217,6 @@ public class ElasticUtils {
 
     public long fetchRecords(String index) throws IOException {
         try {
-            log.info(String.format("The host is %s, the port is %d", host, Config.getPort()));
             try (RestHighLevelClient client = this.createClient(username, password, host)) {
                 SearchRequest request = new SearchRequest(index);
                 SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
@@ -406,10 +405,8 @@ public class ElasticUtils {
 
 
     private RestHighLevelClient createClient(String username, String password, String host) {
-        log.info(String.format("host is %s",host));
         RestHighLevelClient restHighLevelClient;
         int port = Config.getPort();
-        log.info(String.format("port is %d", port));
         try {
             String rawString = String.format("%s:%s", username, password);
 
@@ -418,14 +415,12 @@ public class ElasticUtils {
             restHighLevelClient = new RestHighLevelClient(builder);
 
         } catch (Exception e) {
-            log.info(String.format("host: %s, port: %d", Config.getElasticHost(), Config.getPort()));
-            throw new AssertionError("Setup elastic error" + e);
+            throw new AssertionError("Setup elastic error: %s" + e.getMessage());
         }
         return restHighLevelClient;
     }
 
     public RestClientBuilder createClientBuilder(String url, String usernameAndPassword, int port) throws Exception {
-            log.info(String.format("url:%s, port:%d", url, port));
             String scheme = this.sslEnabled ? "https" : "http";
 
             url = url.trim().replaceAll("^(?i)(https?)://","");
