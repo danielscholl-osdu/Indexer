@@ -56,6 +56,7 @@ import org.opengroup.osdu.core.common.model.indexer.RecordIndexerPayload;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.indexer.RecordStatus;
 import org.opengroup.osdu.core.common.model.indexer.Records;
+import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
