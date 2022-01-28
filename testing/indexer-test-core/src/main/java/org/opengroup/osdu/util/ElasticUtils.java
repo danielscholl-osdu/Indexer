@@ -17,6 +17,7 @@
 
 package org.opengroup.osdu.util;
 
+import com.google.api.client.util.Strings;
 import com.google.gson.Gson;
 
 import java.net.URI;
@@ -431,7 +432,9 @@ public class ElasticUtils {
             URI uri = new URI(scheme + "://" + url);
 
             RestClientBuilder builder = RestClient.builder(new HttpHost(uri.getHost(), port, uri.getScheme()));
-            builder.setPathPrefix(uri.getPath());
+            if (!Strings.isNullOrEmpty(uri.getPath())) {
+                builder.setPathPrefix(uri.getPath());
+            }
 
             builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
                     .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
