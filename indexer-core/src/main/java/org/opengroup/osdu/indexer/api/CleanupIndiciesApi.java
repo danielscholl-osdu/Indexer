@@ -67,7 +67,6 @@ public class CleanupIndiciesApi {
   private IndicesServiceImpl indicesService;
 
 
-  private static final String PRE_AUTH = "@authorizationFilter.hasPermission('"+ SearchServiceRole.ADMIN + "')" ;
 
   @ApiIgnore
   @PostMapping(path = "/index-cleanup", consumes = "application/json")
@@ -108,7 +107,6 @@ public class CleanupIndiciesApi {
   }
 
   @DeleteMapping(value = "/delete-index-for-kind", produces = MediaType.APPLICATION_JSON_VALUE)
-  @PreAuthorize(PRE_AUTH)
   public ResponseEntity deleteIndex(@RequestParam("kind") @NotBlank @ValidKind String kind) {
     try {
       String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
