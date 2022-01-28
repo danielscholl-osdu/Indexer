@@ -401,9 +401,10 @@ public class ElasticUtils {
 
 
     private RestHighLevelClient createClient(String username, String password, String host) {
-
+        log.info(String.format("host is %s",host));
         RestHighLevelClient restHighLevelClient;
         int port = Config.getPort();
+        log.info(String.format("port is %d", port));
         try {
             String rawString = String.format("%s:%s", username, password);
 
@@ -418,7 +419,7 @@ public class ElasticUtils {
     }
 
     public RestClientBuilder createClientBuilder(String url, String usernameAndPassword, int port) throws Exception {
-            log.info(String.format("url:%s, port:%s", url, port));
+            log.info(String.format("url:%s, port:%d", url, port));
             String scheme = this.sslEnabled ? "https" : "http";
 
             url = url.trim().replaceAll("^(?i)(https?)://","");
