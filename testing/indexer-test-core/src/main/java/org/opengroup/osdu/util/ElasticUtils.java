@@ -225,9 +225,6 @@ public class ElasticUtils {
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
-        } catch (Exception e) {
-            log.info(String.format("Caught exception %s", e));
-            return -1;
         }
     }
 
