@@ -417,7 +417,8 @@ public class ElasticUtils {
             restHighLevelClient = new RestHighLevelClient(builder);
 
         } catch (Exception e) {
-            throw new AssertionError("Setup elastic error");
+            log.info(String.format("host: %s, port: %d", Config.getElasticHost(), Config.getPort()));
+            throw new AssertionError("Setup elastic error" + e);
         }
         return restHighLevelClient;
     }
