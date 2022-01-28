@@ -418,12 +418,11 @@ public class ElasticUtils {
     }
 
     public RestClientBuilder createClientBuilder(String url, String usernameAndPassword, int port) throws Exception {
+            log.info(String.format("url:%s, port:%s", url, port));
             String scheme = this.sslEnabled ? "https" : "http";
 
             url = url.trim().replaceAll("^(?i)(https?)://","");
             URI uri = new URI(scheme + "://" + url);
-
-            log.info(String.format("url:%s, port:%s, scheme:%s", url, port, uri.getScheme()));
 
             RestClientBuilder builder = RestClient.builder(new HttpHost(uri.getHost(), port, uri.getScheme()));
             builder.setPathPrefix(uri.getPath());
