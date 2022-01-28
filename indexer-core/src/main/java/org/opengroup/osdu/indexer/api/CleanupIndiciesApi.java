@@ -20,6 +20,7 @@ import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -30,9 +31,11 @@ import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
 import org.opengroup.osdu.core.common.model.storage.validation.ValidKind;
+import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.SwaggerDoc;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.service.IndexerService;
+import org.opengroup.osdu.indexer.service.IndicesServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +57,12 @@ public class CleanupIndiciesApi {
 
   @Autowired
   private AuditLogger auditLogger;
+
+  @Inject
+  private ElasticIndexNameResolver elasticIndexNameResolver;
+
+  @Inject
+  private IndicesServiceImpl indicesService;
 
   @ApiIgnore
   @PostMapping(path = "/index-cleanup", consumes = "application/json")
