@@ -60,7 +60,7 @@ public class AuditEvents {
     private static final String CONFIGURE_PARTITION_ACTION_ID = "IN0012";
     private static final String CONFIGURE_PARTITION_OPERATION = "Data partition cluster configuration update";
 
-    private static final String INDEX_DELETE_ACTION_ID = "IN0012";
+    private static final String INDEX_DELETE_ACTION_ID = "IN0013";
     private static final String INDEX_DELETE_SUCCESS = "Successfully deleted index";
     private static final String INDEX_DELETE_FAILURE = "Failed deleting index";
 
