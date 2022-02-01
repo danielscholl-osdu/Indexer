@@ -63,6 +63,10 @@ public class AuditEvents {
     private static final String INDEX_DELETE_SUCCESS = "Successfully deleted index";
     private static final String INDEX_DELETE_FAILURE = "Failed deleting index";
 
+    private static final String INDEX_DELETE_ACTION_ID = "IN0012";
+    private static final String INDEX_DELETE_SUCCESS = "Successfully deleted index";
+    private static final String INDEX_DELETE_FAILURE = "Failed deleting index";
+
     private final String user;
 
     public AuditEvents(String user) {
