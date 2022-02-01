@@ -65,6 +65,14 @@ public class AuditLogger {
         this.writeLog(this.getAuditEvents().getIndexDeleteRecordFailEvent(resources));
     }
 
+    public void indexDeleteSuccess(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getIndexDeleteSuccessEvent(resources));
+    }
+
+    public void indexDeleteFail(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getIndexDeleteFailEvent(resources));
+    }
+
     public void indexPurgeRecordSuccess(List<String> resources) {
         this.writeLog(this.getAuditEvents().getIndexPurgeRecordSuccessEvent(resources));
     }
