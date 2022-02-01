@@ -57,6 +57,10 @@ public class AuditEvents {
     private static final String INDEX_MAPPING_UPDATE_SUCCESS = "Successfully updated index mapping";
     private static final String INDEX_MAPPING_UPDATE_FAILURE = "Failed updating index mapping";
 
+    private static final String INDEX_DELETE_ACTION_ID = "IN0012";
+    private static final String INDEX_DELETE_SUCCESS = "Successfully deleted index";
+    private static final String INDEX_DELETE_FAILURE = "Failed deleting index";
+
     private final String user;
 
     public AuditEvents(String user) {
@@ -127,6 +131,28 @@ public class AuditEvents {
                 .status(AuditStatus.FAILURE)
                 .actionId(INDEX_DELETE_RECORD_ACTION_ID)
                 .message(INDEX_DELETE_RECORDS_FAILURE)
+                .resources(resources)
+                .user(this.user)
+                .build();
+    }
+
+    public AuditPayload getIndexDeleteFailEvent(List<String> resources) {
+        return AuditPayload.builder()
+                .action(AuditAction.DELETE)
+                .status(AuditStatus.FAILURE)
+                .actionId(INDEX_DELETE_ACTION_ID)
+                .message(INDEX_DELETE_FAILURE)
+                .resources(resources)
+                .user(this.user)
+                .build();
+    }
+
+    public AuditPayload getIndexDeleteSuccessEvent(List<String> resources) {
+        return AuditPayload.builder()
+                .action(AuditAction.DELETE)
+                .status(AuditStatus.SUCCESS)
+                .actionId(INDEX_DELETE_ACTION_ID)
+                .message(INDEX_DELETE_SUCCESS)
                 .resources(resources)
                 .user(this.user)
                 .build();

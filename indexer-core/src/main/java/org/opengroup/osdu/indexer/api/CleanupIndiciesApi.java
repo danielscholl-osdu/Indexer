@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.RequestScope;
 import springfox.documentation.annotations.ApiIgnore;
+import static java.util.Collections.singletonList;
 
 @Log
 @RestController
@@ -106,19 +107,21 @@ public class CleanupIndiciesApi {
     }
   }
 
-  @DeleteMapping(value = "/delete-index-for-kind", produces = MediaType.APPLICATION_JSON_VALUE)
+  @DeleteMapping(value = "/index", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
   public ResponseEntity deleteIndex(@RequestParam("kind") @NotBlank @ValidKind String kind) {
+    String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
     try {
-      String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
       boolean responseStatus = indicesService.deleteIndex(index);
       if (responseStatus) {
-        return new ResponseEntity(HttpStatus.OK);
+        this.auditLogger.indexDeleteSuccess(singletonList(index));
       }
+      return new ResponseEntity(HttpStatus.OK);
     } catch (AppException e) {
       throw e;
     } catch (Exception e) {
-      throw new AppException(HttpStatus.BAD_REQUEST.value(), "Unknown error", "An unknown error has occurred.", e);
+      this.auditLogger.indexDeleteFail(singletonList(index));
+      throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unknown error", "An unknown error has occurred.", e);
     }
-    return new ResponseEntity(HttpStatus.BAD_REQUEST);
   }
 }
