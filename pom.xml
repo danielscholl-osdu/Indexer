@@ -25,6 +25,7 @@
         <woodstox-core.version>6.2.3</woodstox-core.version>
         <log4j2.version>2.17.1</log4j2.version>
         <spring-boot.version>2.1.18.RELEASE</spring-boot.version>
+        <json-smart.version>2.4.7</json-smart.version>
 <!--        <maven.war.plugin>2.6</maven.war.plugin>-->
 <!--        <appengine.maven.plugin>1.0.0</appengine.maven.plugin>-->
 <!--        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
@@ -127,6 +128,11 @@
                 <groupId>com.fasterxml.woodstox</groupId>
                 <artifactId>woodstox-core</artifactId>
                 <version>${woodstox-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>${json-smart.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
