@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import javax.inject.Inject;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.auth.TokenProvider;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.model.entitlements.AuthorizationResponse;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -34,7 +35,6 @@ import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IAuthorizationService;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
 import org.opengroup.osdu.core.gcp.model.CloudTaskHeaders;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -50,7 +50,7 @@ public class RequestInfoImpl implements IRequestInfo {
     private DpsHeaders dpsHeaders;
 
     @Inject
-    private IServiceAccountJwtClient serviceAccountJwtClient;
+    private TokenProvider tokenProvider;
 
     @Inject
     private TenantInfo tenantInfo;
@@ -99,12 +99,12 @@ public class RequestInfoImpl implements IRequestInfo {
 
     @Override
     public boolean isTaskQueueRequest() {
-        if(this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.CLOUD_TASK_QUEUE_NAME)){
-            log.log(Level.INFO,"Request confirmed as cloud task, token validation in progress");
+        if (this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.CLOUD_TASK_QUEUE_NAME)) {
+            log.log(Level.INFO, "Request confirmed as cloud task, token validation in progress");
             return isCloudTaskRequest();
         }
-        if(this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.APPENGINE_TASK_QUEUE_NAME)){
-            log.log(Level.INFO,"Request confirmed as AppEngine, headers validation in progress");
+        if (this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.APPENGINE_TASK_QUEUE_NAME)) {
+            log.log(Level.INFO, "Request confirmed as AppEngine, headers validation in progress");
             return isAppEngineTaskRequest();
         }
         return false;
@@ -116,7 +116,7 @@ public class RequestInfoImpl implements IRequestInfo {
         return true;
     }
 
-    private boolean isAppEngineTaskRequest(){
+    private boolean isAppEngineTaskRequest() {
         if (!this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.APPENGINE_TASK_QUEUE_NAME)) {
             return false;
         }
@@ -136,7 +136,7 @@ public class RequestInfoImpl implements IRequestInfo {
             }
             return authHeader;
         } else {
-            return "Bearer " + this.serviceAccountJwtClient.getIdToken(tenantInfo.getName());
+            return "Bearer " + this.tokenProvider.getIdToken();
         }
     }
 }

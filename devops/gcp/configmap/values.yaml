@@ -3,26 +3,21 @@
 # Declare variables to be passed into your templates.
 
 data:
-  key_ring: "csqp"
-  kms_key: "searchService"
   log_level: "INFO"
   schema_host: ""
   authorize_api: "http://entitlements/api/entitlements/v2/"
-  google_cloud_project: ""
   redis_search_host: ""
   redis_group_host: ""
   security_https_certificate_trust: "true"
   storage_query_record_host: "http://storage/api/storage/v2/query/records"
   storage_schema_host: "http://storage/api/storage/v2/schemas"
   storage_query_record_for_conversion_host: "http://storage/api/storage/v2/query/records:batch"
-  storage_hostname: "storage"
   storage_records_batch_size: "20"
   storage_query_kinds_host: "http://storage/api/storage/v2/query/kinds"
   indexer_queue_host: ""
-  legaltag_api: "http://legal/api/legal/v1"
-  crs_api: ""
   partition_api: "http://partition/api/partition/v1/"
   google_audiences: ""
+  spring_profiles_active: "gcp"
 
 
 conf:
