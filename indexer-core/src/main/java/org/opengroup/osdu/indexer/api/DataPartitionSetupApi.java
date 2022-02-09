@@ -19,7 +19,7 @@ import org.opengroup.osdu.indexer.service.IClusterConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.RequestScope;
@@ -40,7 +40,7 @@ public class DataPartitionSetupApi {
     private AuditLogger auditLogger;
 
     @PreAuthorize("@authorizationFilter.hasPermission('" + OPS + "')")
-    @PostMapping(path = "/cluster-settings", consumes = "application/json")
+    @PutMapping(path = "/cluster-settings", consumes = "application/json")
     public ResponseEntity<?> partitionInit() throws IOException {
         this.clusterConfigurationService.updateClusterConfiguration();
         this.auditLogger.getConfigurePartition(new ArrayList<>());
