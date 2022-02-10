@@ -8,7 +8,6 @@
 - [Version info endpoint](#version-info-endpoint)
 - [Reindex](#reindex)
 - [Data Partition provision](#data-partition-provision)
-    * [Cluster setting](#cluster-setting)
 - [Schema Service adoption](#schema-service-adoption)
     * [R3 Schema Support](#r3-schema-support)
 - [Troubleshoot Indexing Issues](#troubleshoot-indexing-issues)  
