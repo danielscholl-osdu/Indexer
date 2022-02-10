@@ -28,21 +28,22 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
-public class DataPartitionSetupApiTest {
+public class PartitionSetupApiTest {
 
     @Mock
     private AuditLogger auditLogger;
     @Mock
     private IClusterConfigurationService clusterConfigurationService;
     @InjectMocks
-    private DataPartitionSetupApi sut;
+    private PartitionSetupApi sut;
 
     @Test
     public void should_return200_when_valid_kind_provided() throws IOException {
-        ResponseEntity<?> response = this.sut.partitionInit();
+        ResponseEntity<?> response = this.sut.provisionPartition("opendes");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
@@ -51,6 +52,6 @@ public class DataPartitionSetupApiTest {
     public void should_throwAppException_ifUnknownExceptionCaught_reindexTest() throws IOException {
         when(this.clusterConfigurationService.updateClusterConfiguration()).thenThrow(new AppException(500, "", ""));
 
-        this.sut.partitionInit();
+        this.sut.provisionPartition("opendes");
     }
 }

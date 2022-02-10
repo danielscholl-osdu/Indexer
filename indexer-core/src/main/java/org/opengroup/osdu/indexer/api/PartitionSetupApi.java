@@ -20,17 +20,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
-import java.util.ArrayList;
+
+import static java.util.Collections.singletonList;
+import static org.opengroup.osdu.core.common.model.http.DpsHeaders.DATA_PARTITION_ID;
 
 @RestController
 @RequestMapping("/partitions")
 @RequestScope
-public class DataPartitionSetupApi {
+public class PartitionSetupApi {
 
     private static final String OPS = "users.datalake.ops";
 
@@ -40,10 +43,10 @@ public class DataPartitionSetupApi {
     private AuditLogger auditLogger;
 
     @PreAuthorize("@authorizationFilter.hasPermission('" + OPS + "')")
-    @PutMapping(path = "/cluster-settings", consumes = "application/json")
-    public ResponseEntity<?> partitionInit() throws IOException {
+    @PutMapping(path = "/provision", consumes = "application/json")
+    public ResponseEntity<?> provisionPartition(@RequestHeader(DATA_PARTITION_ID) String dataPartitionId) throws IOException {
         this.clusterConfigurationService.updateClusterConfiguration();
-        this.auditLogger.getConfigurePartition(new ArrayList<>());
+        this.auditLogger.getConfigurePartition(singletonList(dataPartitionId));
         return new ResponseEntity<>(org.springframework.http.HttpStatus.OK);
     }
 }

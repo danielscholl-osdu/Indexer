@@ -215,7 +215,7 @@ public class AuditEvents {
     public AuditPayload getConfigurePartitionEvent(List<String> resources) {
         return AuditPayload.builder()
                 .action(AuditAction.UPDATE)
-                .status(AuditStatus.FAILURE)
+                .status(AuditStatus.SUCCESS)
                 .actionId(CONFIGURE_PARTITION_ACTION_ID)
                 .message(CONFIGURE_PARTITION_OPERATION)
                 .resources(resources)
