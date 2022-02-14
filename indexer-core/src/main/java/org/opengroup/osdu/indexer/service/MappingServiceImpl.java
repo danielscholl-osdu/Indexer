@@ -24,8 +24,6 @@ import org.elasticsearch.client.indices.GetMappingsResponse;
 import org.elasticsearch.common.unit.TimeValue;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.core.common.search.IMappingService;
-import org.opengroup.osdu.core.common.search.IndicesService;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +37,7 @@ import java.util.Objects;
 
 @Service
 @RequestScope
-public class MappingServiceImpl implements IMappingService {
+public abstract class MappingServiceImpl implements IMappingService {
 
     @Autowired
     private IndicesService indicesService;

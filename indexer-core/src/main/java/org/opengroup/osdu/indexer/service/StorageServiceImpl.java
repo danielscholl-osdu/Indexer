@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpMethods;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import com.google.gson.JsonElement;
@@ -43,7 +42,6 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -189,7 +187,7 @@ public class StorageServiceImpl implements StorageService {
     public RecordQueryResponse getRecordsByKind(RecordReindexRequest reindexRequest) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(RecordMetaAttribute.KIND.getValue(), reindexRequest.getKind());
-        queryParams.put("limit", configurationProperties.getStorageRecordsBatchSize().toString());
+        queryParams.put("limit", configurationProperties.getStorageRecordsByKindBatchSize().toString());
         if (!Strings.isNullOrEmpty(reindexRequest.getCursor())) {
             queryParams.put("cursor", reindexRequest.getCursor());
         }

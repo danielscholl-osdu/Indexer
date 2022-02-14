@@ -17,8 +17,10 @@
 
 package org.opengroup.osdu.util;
 
+import com.google.api.client.util.Strings;
 import com.google.gson.Gson;
 
+import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -411,14 +413,22 @@ public class ElasticUtils {
             restHighLevelClient = new RestHighLevelClient(builder);
 
         } catch (Exception e) {
-            throw new AssertionError("Setup elastic error");
+            throw new AssertionError("Setup elastic error: %s" + e.getMessage());
         }
         return restHighLevelClient;
     }
 
-    public RestClientBuilder createClientBuilder(String host, String usernameAndPassword, int port) {
+    public RestClientBuilder createClientBuilder(String url, String usernameAndPassword, int port) throws Exception {
             String scheme = this.sslEnabled ? "https" : "http";
-            RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, scheme));
+
+            url = url.trim().replaceAll("^(?i)(https?)://","");
+            URI uri = new URI(scheme + "://" + url);
+
+            RestClientBuilder builder = RestClient.builder(new HttpHost(uri.getHost(), port, uri.getScheme()));
+            if (!Strings.isNullOrEmpty(uri.getPath())) {
+                builder.setPathPrefix(uri.getPath());
+            }
+
             builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
                     .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));
 

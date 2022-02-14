@@ -1,42 +1,49 @@
 # Indexer Service
 os-indexer-gcp is a [Spring Boot](https://spring.io/projects/spring-boot) service that is responsible for indexing Records that enable the `os-search` service to execute OSDU R2 domain searches against Elasticsearch.
 
+## Table of Contents <a name="TOC"></a>
+* [Getting started](#Getting-started)
+* [Mappers](#Mappers)
+* [Settings and Configuration](#Settings-and-Configuration)
+* [Run service](#Run-service)
+* [Testing](#Testing)
+* [Deployment](#Deployment)
+* [Entitlements groups](#Entitlements-groups)
+* [Licence](#License)
+
 ## Getting Started
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
+## Mappers
+
+This is a universal solution created using EPAM OQM mappers technology. It allows you to work with various
+implementations of message brokers.
+
+For more information about mappers:
+- [OQM Readme](https://community.opengroup.org/osdu/platform/system/lib/cloud/gcp/oqm/-/blob/master/README.md)
+
+### Limitations of the current version
+
+In the current version, the mappers are equipped with several drivers to the stores and the message broker:
+
+- OQM (mapper to message brokers): Google PubSub; RabbitMQ
+
+## Settings and Configuration
+
 ### Prerequisites
-Pre-requisites
+1. Mandatory
+  - JDK 8
+  - Lombok 1.16 or later
+  - Maven
+2. For Google Cloud only
+  - GCloud SDK with java (latest version)
 
-* GCloud SDK with java (latest version)
-* JDK 8
-* Lombok 1.16 or later
-* Maven
+### Anthos Service Configuration:
+[Anthos service configuration ](docs/anthos/README.md)
+### GCP Service Configuration:
+[Gcp service configuration ](docs/gcp/README.md)
 
-### Installation
-In order to run the service locally or remotely, you will need to have the following environment variables defined.
-
-| name | value | description | sensitive? | source |
-| ---  | ---   | ---         | ---        | ---    |
-| `LOG_PREFIX` | `service` | Logging prefix | no | - |
-| `SERVER_SERVLET_CONTEXPATH` | `/api/indexer/v2` | Servlet context path | no | - |
-| `AUTHORIZE_API` | ex `https://entitlements.com/entitlements/v1` | Entitlements API endpoint | no | output of infrastructure deployment |
-| `LEGALTAG_API` | ex `https://legal.com/api/legal/v1` | Legal API endpoint | no | output of infrastructure deployment |
-| `INDEXER_QUEUE_HOST` | ex `https://os-indexer-queue-dot-opendes.appspot.com/_dps/task-handlers/enqueue` | Indexer-Queue API endpoint | no | output of infrastructure deployment |
-| `CRS_API` | ex `https://crs-converter-gae-dot-opendes.appspot.com/api/crs/v1` | CRS API endpoint | no | https://console.cloud.google.com/memorystore/redis/instances |
-| `STORAGE_HOSTNAME` | ex `os-storage-dot-opendes.appspot.com` | Storage Host | no | output of infrastructure deployment |
-| `STORAGE_SCHEMA_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/schemas` | Storage API endpoint 'schemas' | no | https://console.cloud.google.com/apis/credentials |
-| `STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/query/records:batch` | Storage API endpoint 'records'  | no | https://console.cloud.google.com/iam-admin/serviceaccounts |
-| `STORAGE_QUERY_RECORD_HOST` | ex `https://os-storage-dot-opendes.appspot.com/api/storage/v2/query/records` | Storage API endpoint 'query/records'  | no | https://console.cloud.google.com/iam-admin/serviceaccounts |
-| `REDIS_SEARCH_HOST` | ex `127.0.0.1` | Redis host for search | no | https://console.cloud.google.com/memorystore/redis/instances |
-| `REDIS_GROUP_HOST` | ex `127.0.0.1` | Redis host for groups | no | https://console.cloud.google.com/memorystore/redis/instances |
-| `REDIS_SEARCH_PORT` | ex `6379` | Redis host for search | no | https://console.cloud.google.com/memorystore/redis/instances |
-| `GOOGLE_CLOUD_PROJECT` | ex `opendes` | Google Cloud Project Id| no | output of infrastructure deployment |
-| `GOOGLE_AUDIENCES` | ex `*****.apps.googleusercontent.com` | Client ID for getting access to cloud resources | yes | https://console.cloud.google.com/apis/credentials |
-| `GOOGLE_APPLICATION_CREDENTIALS` | ex `/path/to/directory/service-key.json` | Service account credentials, you only need this if running locally | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
-| `security.https.certificate.trust` | ex `false` | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false | output of infrastructure deployment |
-| `indexer.que.service.mail` | ex `default@iam.gserviceaccount.com` | Indexer Que environment service account mail, required if Indexer Que deployed in cloud task mode, to validate token from it | yes | - |
-| `SCHEMA_HOST` | ex `https://os-schema-dot-opendes.appspot.com/api/schema-service/v1/schema` | Schema API endpoint | no | output of infrastructure deployment |
-| `PARTITION_API` | ex `https://localhost:8081/api/partition/v1` | Partition API endpoint | no | output of infrastructure deployment |
+## Run service
 
 ### Run Locally
 Check that maven is installed:
@@ -181,26 +188,6 @@ $ (cd testing/indexer-test-gcp/ && mvn clean test)
 or
 * Google Documentation: https://cloud.google.com/cloud-build/docs/deploying-builds/deploy-appengine
 
-#### Cloud KMS Setup
-
-Enable cloud KMS on master project
-
-Create king ring and key in the ***master project***
-
-```bash
-    gcloud services enable cloudkms.googleapis.com
-    export KEYRING_NAME="csqp"
-    export CRYPTOKEY_NAME="searchService"
-    gcloud kms keyrings create $KEYRING_NAME --location global
-    gcloud kms keys create $CRYPTOKEY_NAME --location global \
-    		--keyring $KEYRING_NAME \
-    		--purpose encryption
-```
-
-Add **Cloud KMS CryptoKey Encrypter/Decrypter** role to the **default service account** of the ***master project*** through IAM - Role tab
-
-Add **Cloud KMS Encrypt/Decrypt** role to the **default service account** of ***master project*** through IAM - Role tab
-
 #### Memory Store (Redis Instance) Setup
 
 Create a new Standard tier Redis instance on the ***service project***
@@ -210,6 +197,14 @@ The Redis instance must be created under the same region with the App Engine app
 ```bash
     gcloud beta redis instances create redis-cache-search --size=10 --region=<service-deployment-region> --zone=<service-deployment-zone> --tier=STANDARD
 ```
+
+## Entitlements groups
+Storage service account should have entitlements groups listed below:
+- service.entitlements.user
+- users
+- service.storage.viewer
+- service.schema-service.viewers
+- data.default.viewers
 
 ## Licence
 Copyright © Google LLC

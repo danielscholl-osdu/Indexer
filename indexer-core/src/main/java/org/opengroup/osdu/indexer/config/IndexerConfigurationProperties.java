@@ -47,6 +47,7 @@ public class IndexerConfigurationProperties {
 	private String storageQueryRecordForConversionHost;
 	private String storageQueryRecordHost;
 	private Integer storageRecordsBatchSize;
+	private Integer storageRecordsByKindBatchSize;
 	private String storageSchemaHost;
 	private String schemaHost;
 	private String entitlementsHost;
@@ -121,5 +122,13 @@ public class IndexerConfigurationProperties {
 
 	public final Boolean isSmartSearchCcsDisabled() {
 		return Boolean.TRUE.toString().equalsIgnoreCase(smartSearchCcsDisabled);
+	}
+
+	public Integer getStorageRecordsByKindBatchSize() {
+		if (this.storageRecordsByKindBatchSize != null) {
+			return this.storageRecordsByKindBatchSize;
+		}
+		// if property is not set, fall back to storageRecordsBatchSize property which is used by all CSPs to set batch size.
+		return this.storageRecordsBatchSize;
 	}
 }
