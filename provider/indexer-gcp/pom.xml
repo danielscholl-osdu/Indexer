@@ -19,7 +19,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-lib-gcp</artifactId>
-            <version>0.13.0-rc4</version>
+            <version>0.14.0-rc1</version>
         </dependency>
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
@@ -179,6 +179,4 @@
 			</plugin>
         </plugins>
     </build>
-
-
 </project>
