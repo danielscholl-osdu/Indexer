@@ -1,0 +1,8 @@
+[
+  {
+    "id": "tenant1:test:testSchemaUpdate1<timestamp>",
+    "data": {
+      "message": "text with float numbers 32.406402588"
+    }
+  }
+]
