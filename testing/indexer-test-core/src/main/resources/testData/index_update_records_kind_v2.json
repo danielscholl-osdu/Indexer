@@ -1,6 +1,6 @@
 [
   {
-    "id": "tenant1:test:testSchemaUpdate12",
+    "id": "tenant1:test:testSchemaUpdate<timestamp>",
     "data": {
       "message": "test record2"
     }
