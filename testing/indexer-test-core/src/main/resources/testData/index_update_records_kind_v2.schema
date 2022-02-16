@@ -2,7 +2,7 @@
 	"kind": "KIND_VAL",
 	"schema": [{
 			"path": "message",
-			"kind": "float"
+			"kind": "string"
 		}
 	]
 }
