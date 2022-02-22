@@ -27,7 +27,7 @@ import org.mockito.Mock;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
-import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.powermock.api.mockito.PowerMockito;
@@ -70,7 +70,7 @@ public class IndexerMappingServiceTest {
     @Mock
     private ElasticClientHandler elasticClientHandler;
     @Mock
-    private IIndexCache indexCache;
+    private PartitionSafeIndexCache indexCache;
     @Mock
     private IMappingService mappingService;
     @InjectMocks
