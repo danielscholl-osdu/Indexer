@@ -196,6 +196,7 @@ public class AuditLoggerTest {
         assertEquals("IN0011", ((Map) payload.get("auditLog")).get("actionId"));
         assertEquals("testUser", ((Map) payload.get("auditLog")).get("user"));
     }
+
     @Test
     @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexMappingUpdateSuccess() {
@@ -204,6 +205,17 @@ public class AuditLoggerTest {
         verify(this.logger).audit(payloadCaptor.capture());
         AuditPayload payload = payloadCaptor.getValue();
         assertEquals("IN0011", ((Map) payload.get("auditLog")).get("actionId"));
+        assertEquals("testUser", ((Map) payload.get("auditLog")).get("user"));
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    public void should_createAuditLogEvent_when_configurePartitionSuccess() {
+        this.sut.getConfigurePartition(Lists.newArrayList("anything"));
+        ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
+        verify(this.logger).audit(payloadCaptor.capture());
+        AuditPayload payload = payloadCaptor.getValue();
+        assertEquals("IN0012", ((Map) payload.get("auditLog")).get("actionId"));
         assertEquals("testUser", ((Map) payload.get("auditLog")).get("user"));
     }
 }
