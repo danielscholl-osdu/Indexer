@@ -16,7 +16,6 @@ package org.opengroup.osdu.indexer.service;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
@@ -31,11 +30,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -59,7 +58,7 @@ public class IndicesServiceTest {
     @Mock
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Mock
-    private IIndexCache indicesExistCache;
+    private PartitionSafeIndexCache indicesExistCache;
     @Mock
     @Lazy
     private JaxRsDpsLog log;

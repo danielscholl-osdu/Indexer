@@ -57,6 +57,9 @@ public class AuditEvents {
     private static final String INDEX_MAPPING_UPDATE_SUCCESS = "Successfully updated index mapping";
     private static final String INDEX_MAPPING_UPDATE_FAILURE = "Failed updating index mapping";
 
+    private static final String CONFIGURE_PARTITION_ACTION_ID = "IN0012";
+    private static final String CONFIGURE_PARTITION_OPERATION = "Data partition cluster configuration update";
+
     private final String user;
 
     public AuditEvents(String user) {
@@ -206,6 +209,17 @@ public class AuditEvents {
                 .actionId(RUN_JOB_ACTION_ID)
                 .message(RUN_JOB_MESSAGE_SUCCESS)
                 .resources(resources)
+                .build();
+    }
+
+    public AuditPayload getConfigurePartitionEvent(List<String> resources) {
+        return AuditPayload.builder()
+                .action(AuditAction.UPDATE)
+                .status(AuditStatus.SUCCESS)
+                .actionId(CONFIGURE_PARTITION_ACTION_ID)
+                .message(CONFIGURE_PARTITION_OPERATION)
+                .resources(resources)
+                .user(this.user)
                 .build();
     }
 

@@ -36,8 +36,8 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
-import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 import org.opengroup.osdu.core.common.search.Preconditions;
+import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +56,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     @Inject
     private ElasticClientHandler elasticClientHandler;
     @Autowired
-    private IIndexCache indexCache;
+    private PartitionSafeIndexCache indexCache;
     @Autowired
     private IMappingService mappingService;
 
