@@ -2,23 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.18.RELEASE</version>
-        <relativePath />
-    </parent>
-
     <groupId>org.opengroup.osdu.indexer</groupId>
     <artifactId>indexer-service</artifactId>
     <packaging>pom</packaging>
-    <version>0.13.0-SNAPSHOT</version>
+    <version>0.14.0-SNAPSHOT</version>
     <description>Indexer Service</description>
 
     <properties>
         <java.version>1.8</java.version>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
         <spring-cloud.version>Greenwich.SR2</spring-cloud.version>
-        <os-core-common.version>0.13.0-rc6</os-core-common.version>
+        <os-core-common.version>0.13.0</os-core-common.version>
         <snakeyaml.version>1.26</snakeyaml.version>
         <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
         <jackson.version>2.11.4</jackson.version>
@@ -28,9 +23,9 @@
         <netty.version>4.1.51.Final</netty.version>
         <reactor-netty.version>0.8.20.RELEASE</reactor-netty.version>
         <woodstox-core.version>6.2.3</woodstox-core.version>
-        <log4j2.version>2.17.0</log4j2.version>
-        <!--        <maven.compiler.target>1.8</maven.compiler.target>-->
-<!--        <maven.compiler.source>1.8</maven.compiler.source>-->
+        <log4j2.version>2.17.1</log4j2.version>
+        <spring-boot.version>2.1.18.RELEASE</spring-boot.version>
+        <json-smart.version>2.4.7</json-smart.version>
 <!--        <maven.war.plugin>2.6</maven.war.plugin>-->
 <!--        <appengine.maven.plugin>1.0.0</appengine.maven.plugin>-->
 <!--        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
@@ -50,6 +45,13 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-to-slf4j</artifactId>
@@ -126,6 +128,11 @@
                 <groupId>com.fasterxml.woodstox</groupId>
                 <artifactId>woodstox-core</artifactId>
                 <version>${woodstox-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>${json-smart.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

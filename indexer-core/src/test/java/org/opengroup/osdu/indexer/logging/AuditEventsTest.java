@@ -227,4 +227,18 @@ public class AuditEventsTest {
         assertEquals("IN0011", payload.get("actionId"));
         assertEquals("testUser", payload.get("user"));
     }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void should_getConfigurePartitionEvent() {
+        AuditEvents auditEvent = new AuditEvents("testUser");
+        Map<String, String> payload = (Map) auditEvent.getConfigurePartitionEvent(Lists.newArrayList("anything"))
+                .get("auditLog");
+        assertEquals(Lists.newArrayList("anything"), payload.get("resources"));
+        assertEquals(AuditStatus.SUCCESS, payload.get("status"));
+        assertEquals("Data partition cluster configuration update", payload.get("message"));
+        assertEquals(AuditAction.UPDATE, payload.get("action"));
+        assertEquals("IN0012", payload.get("actionId"));
+        assertEquals("testUser", payload.get("user"));
+    }
 }

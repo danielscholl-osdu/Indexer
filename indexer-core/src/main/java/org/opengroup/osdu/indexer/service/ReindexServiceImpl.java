@@ -88,7 +88,7 @@ public class ReindexServiceImpl implements ReindexService {
 
             // don't call reindex-worker endpoint if it's the last batch
             // previous storage query result size will be less then requested (limit param)
-            if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageRecordsBatchSize()) {
+            if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageRecordsByKindBatchSize()) {
                 String newPayLoad = gson.toJson(RecordReindexRequest.builder().cursor(recordQueryResponse.getCursor()).kind(recordReindexRequest.getKind()).build());
                 this.indexerQueueTaskBuilder.createReIndexTask(newPayLoad, initialDelayMillis, headers);
                 return newPayLoad;

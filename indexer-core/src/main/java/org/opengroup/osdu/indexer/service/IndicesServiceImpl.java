@@ -40,9 +40,9 @@ import org.elasticsearch.rest.RestStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
-import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
+import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -63,7 +63,7 @@ public class IndicesServiceImpl implements IndicesService {
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Autowired
-    private IIndexCache indexCache;
+    private PartitionSafeIndexCache indexCache;
     @Autowired
     private JaxRsDpsLog log;
 
@@ -261,8 +261,7 @@ public class IndicesServiceImpl implements IndicesService {
         Request request = new Request("GET", requestUrl);
         Response response = client.getLowLevelClient().performRequest(request);
         String str = EntityUtils.toString(response.getEntity());
-        final Type typeOf = new TypeToken<List<IndexInfo>>() {
-        }.getType();
+        final Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
         return new Gson().fromJson(str, typeOf);
     }
 
