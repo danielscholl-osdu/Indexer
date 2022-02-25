@@ -27,7 +27,7 @@ Defined in default application property file but possible to override:
 | `PARTITION_HOST` | ex `https://partition.com` | Partition host | no | output of infrastructure deployment |
 | `ENTITLEMENTS_HOST` | ex `https://entitlements.com` | Entitlements host | no | output of infrastructure deployment |
 | `STORAGE_HOST` | ex `https://storage.com` | Storage host | no | output of infrastructure deployment |
-| `INDEXER_QUEUE_HOST` | ex `http://indexer-queue` | Indexer-Queue host | no | output of infrastructure deployment |
+| `INDEXER_QUEUE_HOST` | ex `http://indexer-queue/api/indexer-queue/v1/_dps/task-handlers/enqueue` | Indexer-Queue host endpoint used for reprocessing tasks| no | output of infrastructure deployment |
 | `SCHEMA_BASE_HOST` | ex `https://schema.com` | Schema service host | no | output of infrastructure deployment |
 
 These variables define service behavior, and are used to switch between `anthos` or `gcp` environments, their overriding and usage in mixed mode was not tested.
