@@ -205,6 +205,8 @@ Storage service account should have entitlements groups listed below:
 - service.storage.viewer
 - service.schema-service.viewers
 - data.default.viewers
+- service.storage.admin
+- service.search.admin
 
 ## Licence
 Copyright © Google LLC
