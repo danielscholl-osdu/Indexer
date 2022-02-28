@@ -25,7 +25,7 @@ Defined in default application property file but possible to override:
 | `PARTITION_HOST` | ex `https://partition.com` | Partition host | no | output of infrastructure deployment |
 | `ENTITLEMENTS_HOST` | ex `https://entitlements.com` | Entitlements host | no | output of infrastructure deployment |
 | `STORAGE_HOST` | ex `https://storage.com` | Storage host | no | output of infrastructure deployment |
-| `INDEXER_QUEUE_HOST` | ex `http://indexer-queue` | Indexer-Queue host | no | output of infrastructure deployment |
+| `INDEXER_QUEUE_HOST` | ex `http://indexer-queue/api/indexer-queue/v1/_dps/task-handlers/enqueue` | Indexer-Queue host endpoint used for reprocessing tasks | no | output of infrastructure deployment |
 | `SCHEMA_BASE_HOST` | ex `https://schema.com` | Schema service host | no | output of infrastructure deployment |
 | `GOOGLE_APPLICATION_CREDENTIALS` | ex `/path/to/directory/service-key.json` | Service account credentials, you only need this if running locally | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
 
