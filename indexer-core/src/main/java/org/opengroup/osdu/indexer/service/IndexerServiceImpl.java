@@ -430,6 +430,8 @@ public class IndexerServiceImpl implements IndexerService {
 
         List<String> failureRecordIds = new LinkedList<>();
         if (bulkRequest.numberOfActions() == 0) return failureRecordIds;
+        int failedRequestStatus = 200;
+        String failedRequestMessage = "";
 
         try {
             BulkResponse bulkResponse = restClient.bulk(bulkRequest, RequestOptions.DEFAULT);
@@ -447,6 +449,10 @@ public class IndexerServiceImpl implements IndexerService {
                     if (RETRY_ELASTIC_EXCEPTION.contains(bulkItemResponse.status())) {
                         failureRecordIds.add(bulkItemResponse.getId());
                     }
+                    if (Strings.isNullOrEmpty(failedRequestMessage)) {
+                        failedRequestMessage = failure.getMessage();
+                        failedRequestStatus = failure.getStatus().getStatus();
+                    }
                     failedResponses++;
                 } else {
                     succeededResponses++;
@@ -456,6 +462,9 @@ public class IndexerServiceImpl implements IndexerService {
             if (!bulkFailures.isEmpty()) this.jaxRsDpsLog.warning(bulkFailures);
 
             jaxRsDpsLog.info(String.format("records in elasticsearch service bulk request: %s | successful: %s | failed: %s", bulkRequest.numberOfActions(), succeededResponses, failedResponses));
+
+            // retry entire message if all records are failing
+            if (bulkRequest.numberOfActions() == failedResponses) throw new AppException(failedRequestStatus,  "Elastic error", failedRequestMessage);
         } catch (IOException e) {
             // throw explicit 504 for IOException
             throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, "Elastic error", "Request cannot be completed in specified time.", e);
