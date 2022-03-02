@@ -23,7 +23,9 @@ spec:
         imagePullPolicy: "{{ .Values.data.imagePullPolicy }}"
         envFrom:
         - configMapRef:
-            name: "{{ .Values.conf.configmap }}"             
+            name: "{{ .Values.conf.configmap }}"
+        - secretRef:
+            name: "{{ .Values.conf.elastic_secret_name }}"
         securityContext:
           allowPrivilegeEscalation: false
           runAsUser: 0
