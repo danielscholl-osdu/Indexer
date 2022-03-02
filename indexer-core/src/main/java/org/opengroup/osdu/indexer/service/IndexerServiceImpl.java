@@ -430,7 +430,7 @@ public class IndexerServiceImpl implements IndexerService {
 
         List<String> failureRecordIds = new LinkedList<>();
         if (bulkRequest.numberOfActions() == 0) return failureRecordIds;
-        int failedRequestStatus = 200;
+        int failedRequestStatus = 500;
         String failedRequestMessage = "";
 
         try {
