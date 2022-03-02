@@ -13,4 +13,5 @@ data:
 
 conf:
   configmap: "indexer-config"
+  elastic_secret_name: "elastic-secret"
   app_name: "indexer"
