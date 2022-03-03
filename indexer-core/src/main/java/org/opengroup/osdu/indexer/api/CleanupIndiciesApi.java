@@ -68,6 +68,7 @@ public class CleanupIndiciesApi {
   private IndicesServiceImpl indicesService;
 
 
+  private static final String ENTITLEMENT_GROUP = "users.datalake.ops";
 
   @ApiIgnore
   @PostMapping(path = "/index-cleanup", consumes = "application/json")
@@ -108,7 +109,7 @@ public class CleanupIndiciesApi {
   }
 
   @DeleteMapping(value = "/index", produces = MediaType.APPLICATION_JSON_VALUE)
-  @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
+  @PreAuthorize("@authorizationFilter.hasPermission('" + ENTITLEMENT_GROUP + "')")
   public ResponseEntity deleteIndex(@RequestParam("kind") @NotBlank @ValidKind String kind) {
     String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
     try {
