@@ -27,7 +27,7 @@ parent, acl, namespace, type, version, legaltags, index to each record at the ti
 
 * Required roles
 
-  Indexer service requires that users (and service accounts) have dedicated roles in order to use it. Users must be a member of `users.datalake.viewers` or `users.datalake.editors` or `users.datalake.admins`, roles can be assigned using the [Entitlements Service](/solutions/osdu/tutorials/core-services/entitlementsservice). Please look at the API documentation for specific requirements.
+  Indexer service requires that users (and service accounts) have dedicated roles in order to use it. Users must be a member of `users.datalake.viewers` or `users.datalake.editors` or `users.datalake.admins`, `users.datalake.ops` roles can be assigned using the [Entitlements Service](/solutions/osdu/tutorials/core-services/entitlementsservice). Please look at the API documentation for specific requirements.
 
   In addition to service roles, users __must__ be a member of data groups to access the data.
 
@@ -122,6 +122,23 @@ curl --request POST \
 </details>
 
 [Back to table of contents](#TOC)
+## Delete API <a name="delete"></a>
+Delete api is used to delete an index for a specific kind.
+Only users who belong to the Entitlement groups 'users.datalake.ops' can make calls to this API.
+
+```
+DELETE /api/indexer/v2/index?kind=opendes:welldb:wellbore:1.0.0
+```
+
+<details><summary>**Curl**</summary>
+
+```bash
+curl --request DELETE \
+  --url '/api/indexer/v2/index?kind=opendes:welldb:wellbore:1.0.0' \
+  --header 'authorization: Bearer <JWT>' \
+  --header 'content-type: application/json' \
+  --header 'data-partition-id: opendes' 
+```
 
 ## Data Partition provision <a name="data-partition-provision"></a>
 
