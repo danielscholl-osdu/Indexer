@@ -232,8 +232,6 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             }
 
             String[] parts = schemaObj.getKind().split(":");
-            String authority = parts[0];
-            String source = parts[1];
             String type = parts[2];
 
             // mandatory attributes
@@ -248,8 +246,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             meta.put(RecordMetaAttribute.LEGAL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.LEGAL));
             meta.put(RecordMetaAttribute.ANCESTRY.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ANCESTRY));
             meta.put(RecordMetaAttribute.INDEX_STATUS.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.INDEX_STATUS));
-            meta.put(RecordMetaAttribute.AUTHORITY.getValue(), TypeMapper.getConstantIndexerType(RecordMetaAttribute.AUTHORITY, authority));
-            meta.put(RecordMetaAttribute.SOURCE.getValue(), TypeMapper.getConstantIndexerType(RecordMetaAttribute.SOURCE, source));
+            meta.put(RecordMetaAttribute.AUTHORITY.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.AUTHORITY));
+            meta.put(RecordMetaAttribute.SOURCE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.SOURCE));
             meta.put(RecordMetaAttribute.CREATE_USER.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_USER));
             meta.put(RecordMetaAttribute.CREATE_TIME.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_TIME));
             meta.put(RecordMetaAttribute.MODIFY_USER.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_USER));

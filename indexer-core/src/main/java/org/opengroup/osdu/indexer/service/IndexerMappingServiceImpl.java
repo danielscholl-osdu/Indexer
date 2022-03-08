@@ -112,16 +112,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         Map<String, Object> properties = new HashMap<>();
 
         // meta  attribute
-        Map<String, Object> metaMapping = new HashMap<>();
-        for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
-            if (entry.getKey() == RecordMetaAttribute.AUTHORITY.getValue() || entry.getKey() == RecordMetaAttribute.SOURCE.getValue()) {
-                metaMapping.put(entry.getKey(), schema.getMetaSchema().get(entry.getKey()));
-            } else {
-                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey()));
-            }
-        }
+        Map<String, Object> metaMapping = this.getMetaMapping(schema);
 
-        // data-source attributes
         // data-source attributes
         Map<String, Object> dataMapping = this.getDataMapping(schema);
         if (!dataMapping.isEmpty()) {
@@ -141,6 +133,24 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         // don't add dynamic mapping
         documentMapping.put("dynamic", false);
         return documentMapping;
+    }
+
+    private Map<String, Object> getMetaMapping(IndexSchema schema) {
+        Map<String, Object> metaMapping = new HashMap<>();
+        String[] parts = schema.getKind().split(":");
+        String authority = parts[0];
+        String source = parts[1];
+
+        for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
+            if (entry.getKey() == RecordMetaAttribute.AUTHORITY.getValue()) {
+                metaMapping.put(entry.getKey(), TypeMapper.getConstantIndexerType(RecordMetaAttribute.AUTHORITY, authority));
+            } else if (entry.getKey() == RecordMetaAttribute.SOURCE.getValue()) {
+                metaMapping.put(entry.getKey(), TypeMapper.getConstantIndexerType(RecordMetaAttribute.SOURCE, source));
+            } else {
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey()));
+            }
+        }
+        return metaMapping;
     }
 
     private Map<String, Object> getDataMapping(IndexSchema schema) {

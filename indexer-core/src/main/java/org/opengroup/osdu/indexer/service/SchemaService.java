@@ -34,5 +34,10 @@ public interface SchemaService {
      */
     String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException;
 
+    /**
+     *
+     * @param schemaInfos schema change event
+     * @throws IOException
+     */
     void processSchemaMessages(List<SchemaInfo> schemaInfos) throws IOException;
 }

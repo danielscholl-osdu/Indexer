@@ -189,7 +189,7 @@ public class AuditLoggerTest {
     @Test
     @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexMappingUpdateFail() {
-        this.sut.indexMappingUpdateFail(Lists.newArrayList("anything"));
+        this.sut.indexMappingUpsertFail(Lists.newArrayList("anything"));
         ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
         verify(this.logger).audit(payloadCaptor.capture());
         AuditPayload payload = payloadCaptor.getValue();
@@ -200,7 +200,7 @@ public class AuditLoggerTest {
     @Test
     @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexMappingUpdateSuccess() {
-        this.sut.indexMappingUpdateSuccess(Lists.newArrayList("anything"));
+        this.sut.indexMappingUpsertSuccess(Lists.newArrayList("anything"));
         ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
         verify(this.logger).audit(payloadCaptor.capture());
         AuditPayload payload = payloadCaptor.getValue();

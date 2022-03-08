@@ -15,26 +15,26 @@
 package org.opengroup.osdu.indexer.api;
 
 import com.google.gson.Gson;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.http.HeadersUtil;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.model.indexer.SchemaChangedMessages;
+import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.service.SchemaService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
-import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
-import org.opengroup.osdu.core.common.model.indexer.SchemaChangedMessages;
-import org.opengroup.osdu.core.common.http.HeadersUtil;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -108,7 +108,7 @@ public class RecordIndexerApiTest {
 
     private void should_return200_indexerWorkerTest(String message) throws Exception {
         ResponseEntity response = this.sut.indexWorker(createRecordChangedMessage(message));
-        Assert.assertEquals(HttpStatus.OK.value(), response.getStatusCodeValue());
+        assertEquals(HttpStatus.OK.value(), response.getStatusCodeValue());
     }
 
     private void should_return400_indexerWorkerTest(String message, String errorMessage) {
@@ -116,8 +116,8 @@ public class RecordIndexerApiTest {
             this.sut.indexWorker(createRecordChangedMessage(message));
             fail("Should throw exception");
         } catch (AppException e) {
-            Assert.assertEquals(HttpStatus.BAD_REQUEST.value(), e.getError().getCode());
-            Assert.assertEquals(errorMessage, e.getError().getMessage());
+            assertEquals(HttpStatus.BAD_REQUEST.value(), e.getError().getCode());
+            assertEquals(errorMessage, e.getError().getMessage());
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -129,7 +129,7 @@ public class RecordIndexerApiTest {
 
     private void should_return200_schemaWorkerTest(String message) throws Exception {
         ResponseEntity response = this.sut.schemaWorker(createSchemaChangedMessage(message));
-        Assert.assertEquals(HttpStatus.OK.value(), response.getStatusCodeValue());
+        assertEquals(HttpStatus.OK.value(), response.getStatusCodeValue());
     }
 
     private void should_return400_schemaWorkerTest(String message, String errorMessage) {
@@ -137,8 +137,8 @@ public class RecordIndexerApiTest {
             this.sut.schemaWorker(createSchemaChangedMessage(message));
             fail("Should throw exception");
         } catch (AppException e) {
-            Assert.assertEquals(HttpStatus.BAD_REQUEST.value(), e.getError().getCode());
-            Assert.assertEquals(errorMessage, e.getError().getMessage());
+            assertEquals(HttpStatus.BAD_REQUEST.value(), e.getError().getCode());
+            assertEquals(errorMessage, e.getError().getMessage());
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }

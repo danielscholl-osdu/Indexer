@@ -91,14 +91,14 @@ public class TypeMapper {
         return metaAttributeIndexerType.getOrDefault(attribute.getValue(), null);
     }
 
-    public static Object getConstantIndexerType(RecordMetaAttribute attribute, String defaultValue) {
+    public static Object getConstantIndexerType(RecordMetaAttribute attribute, String value) {
         if (RecordMetaAttribute.AUTHORITY != attribute && RecordMetaAttribute.SOURCE != attribute) {
             return null;
         }
 
-        Map<String, Object> type = (Map<String, Object>) metaAttributeIndexerType.get(attribute.getValue());
-        type.put("value", defaultValue);
-        return type;
+        Map<String, Object> constantAttribute = (Map<String, Object>) metaAttributeIndexerType.get(attribute.getValue());
+        constantAttribute.put("value", value);
+        return constantAttribute;
     }
 
     public static List<String> getMetaAttributesKeys() {
