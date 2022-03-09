@@ -95,11 +95,6 @@ public class SchemaProviderImpl implements SchemaService {
             messages.putAll(updateSchemaMessages);
         }
 
-        if (messages.isEmpty()) {
-            this.log.warning(String.format("unsupported schema event: %s", new Gson().toJson(schemaInfos)));
-            return;
-        }
-
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
             messages.entrySet().forEach(msg -> {
                 try {
@@ -107,7 +102,7 @@ public class SchemaProviderImpl implements SchemaService {
                     this.auditLogger.indexMappingUpsertSuccess(singletonList(msg.getKey()));
                 } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
                     this.auditLogger.indexMappingUpsertFail(singletonList(msg.getKey()));
-                    throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
+                    throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema upsert event", e.getMessage());
                 }
             });
         }

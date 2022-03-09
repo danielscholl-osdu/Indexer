@@ -6,8 +6,10 @@ import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TypeMapperTest {
@@ -44,9 +46,20 @@ public class TypeMapperTest {
     public void validate_meta_attributes() {
         List<String> keys = TypeMapper.getMetaAttributesKeys();
 
-        String[] meta = new String[] {"id", "kind", "authority", "source", "namespace", "type", "version", "acl", "tags", "legal", "ancestry", "createUser", "modifyUser", "createTime", "modifyTime", "index"};
-        for(String attributeKey : meta) {
+        String[] meta = new String[]{"id", "kind", "authority", "source", "namespace", "type", "version", "acl", "tags", "legal", "ancestry", "createUser", "modifyUser", "createTime", "modifyTime", "index"};
+        for (String attributeKey : meta) {
             assertTrue(keys.contains(attributeKey));
         }
+    }
+
+    @Test
+    public void validate_constantAttribute_indexerMapping() {
+        Object value = TypeMapper.getConstantIndexerType(RecordMetaAttribute.ID, "");
+        assertNull(value);
+
+        value = TypeMapper.getConstantIndexerType(RecordMetaAttribute.AUTHORITY, "opendes");
+        Map<String, Object> mapping = (Map<String, Object>) value;
+        assertEquals("constant_keyword", mapping.get("type"));
+        assertEquals("opendes", mapping.get("value"));
     }
 }
