@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -65,7 +66,7 @@ public class IndexerServiceImpl implements IndexerService {
 
     private static final TimeValue BULK_REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
-    private static final List<RestStatus> RETRY_ELASTIC_EXCEPTION = new ArrayList<>(Arrays.asList(RestStatus.TOO_MANY_REQUESTS, RestStatus.BAD_GATEWAY, RestStatus.SERVICE_UNAVAILABLE, RestStatus.NOT_FOUND));
+    private static final List<RestStatus> RETRY_ELASTIC_EXCEPTION = new ArrayList<>(Arrays.asList(RestStatus.TOO_MANY_REQUESTS, RestStatus.BAD_GATEWAY, RestStatus.SERVICE_UNAVAILABLE));
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
@@ -430,6 +431,8 @@ public class IndexerServiceImpl implements IndexerService {
 
         List<String> failureRecordIds = new LinkedList<>();
         if (bulkRequest.numberOfActions() == 0) return failureRecordIds;
+        int failedRequestStatus = 500;
+        Exception failedRequestCause = null;
 
         try {
             BulkResponse bulkResponse = restClient.bulk(bulkRequest, RequestOptions.DEFAULT);
@@ -442,11 +445,17 @@ public class IndexerServiceImpl implements IndexerService {
             for (BulkItemResponse bulkItemResponse : bulkResponse.getItems()) {
                 if (bulkItemResponse.isFailed()) {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
-                    bulkFailures.add(String.format("elasticsearch bulk service status: %s id: %s message: %s", failure.getStatus(), failure.getId(), failure.getMessage()));
+                    bulkFailures.add(String.format("elasticsearch bulk service status: %s | id: %s | message: %s", failure.getStatus(), failure.getId(), failure.getMessage()));
                     this.jobStatus.addOrUpdateRecordStatus(bulkItemResponse.getId(), IndexingStatus.FAIL, failure.getStatus().getStatus(), bulkItemResponse.getFailureMessage());
-                    if (RETRY_ELASTIC_EXCEPTION.contains(bulkItemResponse.status())) {
+                    if (canIndexerRetry(bulkItemResponse)) {
                         failureRecordIds.add(bulkItemResponse.getId());
+
+                        if (failedRequestCause == null) {
+                            failedRequestCause = failure.getCause();
+                            failedRequestStatus = failure.getStatus().getStatus();
+                        }
                     }
+
                     failedResponses++;
                 } else {
                     succeededResponses++;
@@ -456,12 +465,18 @@ public class IndexerServiceImpl implements IndexerService {
             if (!bulkFailures.isEmpty()) this.jaxRsDpsLog.warning(bulkFailures);
 
             jaxRsDpsLog.info(String.format("records in elasticsearch service bulk request: %s | successful: %s | failed: %s", bulkRequest.numberOfActions(), succeededResponses, failedResponses));
+
+            // retry entire message if all records are failing
+            if (bulkRequest.numberOfActions() == failureRecordIds.size()) throw new AppException(failedRequestStatus,  "Elastic error", failedRequestCause.getMessage(), failedRequestCause);
         } catch (IOException e) {
             // throw explicit 504 for IOException
             throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, "Elastic error", "Request cannot be completed in specified time.", e);
         } catch (ElasticsearchStatusException e) {
             throw new AppException(e.status().getStatus(), "Elastic error", e.getMessage(), e);
         } catch (Exception e) {
+            if (e instanceof AppException) {
+                throw e;
+            }
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error", "Error indexing records.", e);
         }
         return failureRecordIds;
@@ -504,6 +519,17 @@ public class IndexerServiceImpl implements IndexerService {
             indexerPayload.put(RecordMetaAttribute.MODIFY_TIME.getValue(), record.getModifyTime());
         }
         return indexerPayload;
+    }
+
+    private boolean canIndexerRetry(BulkItemResponse bulkItemResponse) {
+        if (RETRY_ELASTIC_EXCEPTION.contains(bulkItemResponse.status())) return true;
+
+        if ((bulkItemResponse.getOpType() == DocWriteRequest.OpType.CREATE || bulkItemResponse.getOpType() == DocWriteRequest.OpType.UPDATE)
+                && bulkItemResponse.status() == RestStatus.NOT_FOUND) {
+            return true;
+        }
+
+        return false;
     }
 
     private void retryAndEnqueueFailedRecords(List<RecordInfo> recordInfos, List<String> failuresRecordIds, RecordChangedMessages message) throws IOException {
