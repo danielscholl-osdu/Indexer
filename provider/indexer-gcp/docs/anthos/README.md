@@ -12,6 +12,8 @@ Must have:
 | `OPENID_PROVIDER_CLIENT_ID` | `*****` |  Client id that represents this service and serves to request tokens, example `workload-identity-legal` |yes| - |
 | `OPENID_PROVIDER_CLIENT_SECRET` | `*****` | This client secret that serves to request tokens| yes | - |
 | `OPENID_PROVIDER_URL` | `https://keycloack.com/auth/realms/master` | URL of OpenID Connect provider, it will be used as `<OpenID URL> + /.well-known/openid-configuration` to auto configure endpoint for token request  | no | - |
+| `<ELASTICSEARCH_USER_ENV_VARIABLE_NAME>` | ex `user` | Elasticsearch user, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#Properties-set-in-Partition-service)  | yes | - |
+| `<ELASTICSEARCH_PASSWORD_ENV_VARIABLE_NAME>` | ex `password` | Elasticsearch password, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#Properties-set-in-Partition-service) | false | - |
 
 Defined in default application property file but possible to override:
 
@@ -39,9 +41,25 @@ Usage of spring profiles is preferred.
 | `OQMDRIVER` | `rabbitmq` or `pubsub` | Oqm driver mode that defines which message broker will be used | no | - |
 | `SERVICE_TOKEN_PROVIDER` | `GCP` or `OPENID` |Service account token provider, `GCP` means use Google service account `OPEIND` means use OpenId provider like `Keycloak` | no | - |
 
-## Elasticsearch configuration
-
 ### Properties set in Partition service:
+
+Note that properties can be set in Partition as `sensitive` in that case in property `value` should be present not value itself, but ENV variable name.
+This variable should be present in environment of service that need that variable.
+
+Example:
+```
+    "elasticsearch.port": {
+      "sensitive": false, <- value not sensitive 
+      "value": "9243"  <- will be used as is.
+    },
+      "elasticsearch.password": {
+      "sensitive": true, <- value is sensitive 
+      "value": "ELASTIC_SEARCH_PASSWORD_OSDU" <- service consumer should have env variable ELASTIC_SEARCH_PASSWORD_OSDU with elastic search password
+    }
+```
+
+
+## Elasticsearch configuration
 
 **prefix:** `elasticsearch`
 
@@ -56,7 +74,8 @@ It can be overridden by:
 | --- | --- |
 | elasticsearch.host | server URL |
 | elasticsearch.port | server port |
-| elasticsearch.configuration | username and password |
+| elasticsearch.user | username |
+| elasticsearch.password | password |
 
 <details><summary>Example of a definition for a single tenant</summary></details>
 
@@ -72,9 +91,13 @@ curl -L -X PATCH 'http://partition.com/api/partition/v1/partitions/opendes' -H '
       "sensitive": false,
       "value": "9243"
     },
-    "elasticsearch.configuration": {
+    "elasticsearch.user": {
       "sensitive": true,
-      "value": "elasticuser:elasticpassword"
+      "value": "<ELASTICSEARCH_USER_ENV_VARIABLE_NAME>" <- (Not actual value, just name of env variable)
+    },
+      "elasticsearch.password": {
+      "sensitive": true,
+      "value": "<ELASTICSEARCH_PASSWORD_ENV_VARIABLE_NAME>" <- (Not actual value, just name of env variable)
     }
   }
 }'
