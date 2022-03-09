@@ -81,7 +81,7 @@ The following software have components provided under the terms of this license:
 - Jackson-dataformat-YAML (from http://wiki.fasterxml.com/JacksonExtensionYAML, https://github.com/FasterXML/jackson, https://github.com/FasterXML/jackson-dataformats-text)
 - Jackson-module-parameter-names (from https://repo1.maven.org/maven2/com/fasterxml/jackson/module/jackson-module-parameter-names)
 - Jakarta Bean Validation API (from https://beanvalidation.org)
-- Java Native Access (from https://github.com/java-native-access/jna, https://github.com/twall/jna)
+- Java Native Access (from https://github.com/java-native-access/jna, https://github.com/twall/jna, https://repo1.maven.org/maven2/net/java/dev/jna/jna)
 - Java Native Access Platform (from https://github.com/java-native-access/jna)
 - Java UUID Generator (from http://wiki.fasterxml.com/JugHome)
 - Javassist (from http://www.javassist.org/)
@@ -262,6 +262,8 @@ The following software have components provided under the terms of this license:
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
 - jakarta.inject (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/jakarta.inject)
 - javax.ws.rs-api (from https://github.com/eclipse-ee4j/jaxrs-api)
+- org.junit.jupiter:junit-jupiter-api (from http://junit.org/junit5/)
+- org.junit.platform:junit-platform-commons (from http://junit.org/junit5/)
 
 ========================================================================
 EPL-2.0
@@ -281,6 +283,8 @@ The following software have components provided under the terms of this license:
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
 - jakarta.inject (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/jakarta.inject)
 - javax.ws.rs-api (from https://github.com/eclipse-ee4j/jaxrs-api)
+- org.junit.jupiter:junit-jupiter-api (from http://junit.org/junit5/)
+- org.junit.platform:junit-platform-commons (from http://junit.org/junit5/)
 
 ========================================================================
 GPL-2.0-only
@@ -343,7 +347,7 @@ LGPL-2.1-only
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Java Native Access (from https://github.com/java-native-access/jna, https://github.com/twall/jna)
+- Java Native Access (from https://github.com/java-native-access/jna, https://github.com/twall/jna, https://repo1.maven.org/maven2/net/java/dev/jna/jna)
 - Java Native Access Platform (from https://github.com/java-native-access/jna)
 - Javassist (from http://www.javassist.org/)
 - Lang (from https://repo1.maven.org/maven2/commons-lang/commons-lang)
@@ -457,7 +461,7 @@ public-domain
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs (from https://www.bouncycastle.org/java.html)
+- Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs (from http://www.bouncycastle.org/java.html, https://www.bouncycastle.org/java.html)
 - Bouncy Castle Provider (from http://www.bouncycastle.org/java.html, https://www.bouncycastle.org/java.html)
 - Guava: Google Core Libraries for Java (from http://code.google.com/p/guava-libraries, https://github.com/google/guava, https://repo1.maven.org/maven2/com/google/guava/guava)
 - HdrHistogram (from http://hdrhistogram.github.io/HdrHistogram/)
@@ -474,7 +478,7 @@ unknown
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs (from https://www.bouncycastle.org/java.html)
+- Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs (from http://www.bouncycastle.org/java.html, https://www.bouncycastle.org/java.html)
 - Bouncy Castle Provider (from http://www.bouncycastle.org/java.html, https://www.bouncycastle.org/java.html)
 - Byte Buddy (without dependencies) (from https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy)
 - Checker Qual (from https://checkerframework.org)
@@ -489,4 +493,6 @@ The following software have components provided under the terms of this license:
 - Jakarta Activation API (from https://github.com/eclipse-ee4j/jaf)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api, https://repo1.maven.org/maven2/org/jboss/spec/javax/xml/bind/jboss-jaxb-api_2.3_spec)
 - jaxen (from http://jaxen.codehaus.org/, https://repo1.maven.org/maven2/jaxen/jaxen)
+- org.junit.jupiter:junit-jupiter-api (from http://junit.org/junit5/)
+- org.junit.platform:junit-platform-commons (from http://junit.org/junit5/)
 - xml-apis
