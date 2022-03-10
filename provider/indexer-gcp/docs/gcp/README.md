@@ -10,6 +10,8 @@ Must have:
 | ---  | ---   | ---         | ---        | ---    |
 | `GOOGLE_AUDIENCES` | ex `*****.apps.googleusercontent.com` | Client ID for getting access to cloud resources | yes | https://console.cloud.google.com/apis/credentials |
 | `SPRING_PROFILES_ACTIVE` | ex `gcp` | Spring profile that activate default configuration for GCP environment | false | - |
+| `<ELASTICSEARCH_USER_ENV_VARIABLE_NAME>` | ex `user` | Elasticsearch user, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#Properties-set-in-Partition-service)  | yes | - |
+| `<ELASTICSEARCH_PASSWORD_ENV_VARIABLE_NAME>` | ex `password` | Elasticsearch password, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#Properties-set-in-Partition-service) | false | - |
 
 Defined in default application property file but possible to override:
 
@@ -25,7 +27,7 @@ Defined in default application property file but possible to override:
 | `PARTITION_HOST` | ex `https://partition.com` | Partition host | no | output of infrastructure deployment |
 | `ENTITLEMENTS_HOST` | ex `https://entitlements.com` | Entitlements host | no | output of infrastructure deployment |
 | `STORAGE_HOST` | ex `https://storage.com` | Storage host | no | output of infrastructure deployment |
-| `INDEXER_QUEUE_HOST` | ex `http://indexer-queue` | Indexer-Queue host | no | output of infrastructure deployment |
+| `INDEXER_QUEUE_HOST` | ex `http://indexer-queue/api/indexer-queue/v1/_dps/task-handlers/enqueue` | Indexer-Queue host endpoint used for reprocessing tasks | no | output of infrastructure deployment |
 | `SCHEMA_BASE_HOST` | ex `https://schema.com` | Schema service host | no | output of infrastructure deployment |
 | `GOOGLE_APPLICATION_CREDENTIALS` | ex `/path/to/directory/service-key.json` | Service account credentials, you only need this if running locally | yes | https://console.cloud.google.com/iam-admin/serviceaccounts |
 
@@ -44,9 +46,26 @@ At Pubsub should be created topic with name:
 
 **name:** `indexing-progress`
 
-## Elasticsearch configuration
-
 ### Properties set in Partition service:
+
+Note that properties can be set in Partition as `sensitive` in that case in property `value` should be present not value itself, but ENV variable name.
+This variable should be present in environment of service that need that variable. 
+
+Example:
+```
+    "elasticsearch.port": {
+      "sensitive": false, <- value not sensitive 
+      "value": "9243"  <- will be used as is.
+    },
+      "elasticsearch.password": {
+      "sensitive": true, <- value is sensitive 
+      "value": "ELASTIC_SEARCH_PASSWORD_OSDU" <- service consumer should have env variable ELASTIC_SEARCH_PASSWORD_OSDU with elastic search password
+    }
+```
+
+There is no hardcode in services, all behaviour defined by sensitivity of property. 
+
+## Elasticsearch configuration
 
 **prefix:** `elasticsearch`
 
@@ -61,7 +80,8 @@ It can be overridden by:
 | --- | --- |
 | elasticsearch.host | server URL |
 | elasticsearch.port | server port |
-| elasticsearch.configuration | username and password |
+| elasticsearch.user | username |
+| elasticsearch.password | password |
 
 <details><summary>Example of a definition for a single tenant</summary></details>
 
@@ -77,9 +97,13 @@ curl -L -X PATCH 'http://partition.com/api/partition/v1/partitions/opendes' -H '
       "sensitive": false,
       "value": "9243"
     },
-    "elasticsearch.configuration": {
+    "elasticsearch.user": {
       "sensitive": true,
-      "value": "elasticuser:elasticpassword"
+      "value": "<USER_ENV_VARIABLE_NAME>" <- (Not actual value, just name of env variable)
+    },
+      "elasticsearch.password": {
+      "sensitive": true,
+      "value": "<PASSWORD_ENV_VARIABLE_NAME>" <- (Not actual value, just name of env variable)
     }
   }
 }'
