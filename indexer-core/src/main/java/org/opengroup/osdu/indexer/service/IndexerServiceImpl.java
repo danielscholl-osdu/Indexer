@@ -400,7 +400,8 @@ public class IndexerServiceImpl implements IndexerService {
                 IndexRequest indexRequest = new IndexRequest(index).id(record.getId()).source(this.gson.toJson(sourceMap), XContentType.JSON);
                 bulkRequest.add(indexRequest);
             } else if (operation == OperationType.update) {
-                UpdateRequest updateRequest = new UpdateRequest(index, record.getId()).doc(this.gson.toJson(sourceMap), XContentType.JSON).docAsUpsert(true);
+                jaxRsDpsLog.info("Updating record: "+record.getId());
+                UpdateRequest updateRequest = new UpdateRequest(index, "_doc", record.getId()).doc(this.gson.toJson(sourceMap), XContentType.JSON).docAsUpsert(true);
                 bulkRequest.add(updateRequest);
             }
         }
