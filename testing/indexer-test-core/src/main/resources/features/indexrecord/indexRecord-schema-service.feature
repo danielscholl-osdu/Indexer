@@ -73,7 +73,7 @@ Feature: Indexing of the documents
     Then I should get the 1 documents for the <index_v1> in the Elastic Search
     Then I ingest records with the <recordFile> with <acl> for a given <kind_v2>
     Then I should get the 1 documents for the <index_v2> in the Elastic Search
-    Then I should get the 1 documents for the <index_v1> in the Elastic Search
+    Then I should not get any documents for the <index_v1> in the Elastic Search
 
     Examples:
       | kind_v1                                               | index_v1                                              | recordFile                        | acl                                   | kind_v2                                               | index_v2                                              |
