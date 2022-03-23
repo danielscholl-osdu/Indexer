@@ -14,6 +14,14 @@ os-indexer-gcp is a [Spring Boot](https://spring.io/projects/spring-boot) servic
 ## Getting Started
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
+# Configuration
+
+## Service Configuration
+### Anthos:
+[Anthos service configuration ](docs/anthos/README.md)
+### GCP:
+[Gcp service configuration ](docs/gcp/README.md)
+
 ## Mappers
 
 This is a universal solution created using EPAM OQM mappers technology. It allows you to work with various

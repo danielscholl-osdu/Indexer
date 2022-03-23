@@ -134,6 +134,11 @@ public class RecordSteps extends TestsBase {
         assertEquals(expectedCount, numOfIndexedDocuments);
     }
 
+    public void i_should_not_get_any_documents_for_the_index_in_the_Elastic_Search(String index) throws Throwable {
+        index = generateActualName(index, timeStamp);
+        getRecordsInIndex(index, 0);
+    }
+
     public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String kind, String index) throws Throwable {
         index = generateActualName(index, timeStamp);
         Map<String, MappingMetadata> elasticMapping = elasticUtils.getMapping(index);
@@ -238,6 +243,32 @@ public class RecordSteps extends TestsBase {
 
             numOfIndexedDocuments = elasticUtils.fetchRecords(index);
             if (numOfIndexedDocuments > 0) {
+                log.info(String.format("index: %s | attempts: %s | documents acknowledged by elastic: %s", index, iterator, numOfIndexedDocuments));
+                break;
+            } else {
+                log.info(String.format("index: %s | documents acknowledged by elastic: %s", index, numOfIndexedDocuments));
+                Thread.sleep(5000);
+            }
+
+            if ((iterator + 1) % 5 == 0) elasticUtils.refreshIndex(index);
+        }
+        if (iterator >= 20) {
+            fail(String.format("index not created after waiting for %s seconds", ((40000 + iterator * 5000) / 1000)));
+        }
+        return numOfIndexedDocuments;
+    }
+
+    private long getRecordsInIndex(String index, int expectedCount) throws InterruptedException, IOException {
+        long numOfIndexedDocuments = 0;
+        int iterator;
+
+        // index.refresh_interval is set to default 30s, wait for 40s initially
+        Thread.sleep(40000);
+
+        for (iterator = 0; iterator < 20; iterator++) {
+
+            numOfIndexedDocuments = elasticUtils.fetchRecords(index);
+            if (expectedCount == numOfIndexedDocuments) {
                 log.info(String.format("index: %s | attempts: %s | documents acknowledged by elastic: %s", index, iterator, numOfIndexedDocuments));
                 break;
             } else {
