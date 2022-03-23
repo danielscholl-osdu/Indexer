@@ -20,6 +20,7 @@ import javassist.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -72,6 +73,12 @@ public class GlobalExceptionMapperCore extends ResponseEntityExceptionHandler {
             return this.getErrorResponse(
                     new AppException(HttpStatus.SERVICE_UNAVAILABLE.value(), "Unknown error", e.getMessage(), e));
         }
+    }
+
+    @ExceptionHandler(SchemaProcessingException.class)
+    public ResponseEntity<Object> handleSchemaProcessingException(SchemaProcessingException e) {
+        return this.getErrorResponse(
+                new AppException(HttpStatus.BAD_REQUEST.value(), "Error processing schema.", e.getMessage(), e));
     }
 
     @ExceptionHandler(Exception.class)
