@@ -58,6 +58,11 @@ public class Steps extends SchemaServiceRecordSteps {
         super.i_should_get_the_documents_for_the_in_the_Elastic_Search(expectedCount, index);
     }
 
+    @Then("^I should not get any documents for the \"([^\"]*)\" in the Elastic Search$")
+    public void i_should_not_get_any_documents_for_the_index_in_the_Elastic_Search(String index) throws Throwable {
+        super.i_should_not_get_any_documents_for_the_index_in_the_Elastic_Search(index);
+    }
+
     @Then("^I should get the elastic \"(.*?)\" for the \"([^\"]*)\" and \"([^\"]*)\" in the Elastic Search$")
     public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String kind, String index) throws Throwable {
         super.i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(expectedMapping, kind, index);
