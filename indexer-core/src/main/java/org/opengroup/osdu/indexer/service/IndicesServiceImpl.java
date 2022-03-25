@@ -22,6 +22,8 @@ import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Request;
@@ -92,7 +94,7 @@ public class IndicesServiceImpl implements IndicesService {
             request.settings(settings != null ? settings : DEFAULT_INDEX_SETTINGS);
             if (mapping != null) {
                 String mappingJsonString = new Gson().toJson(mapping, Map.class);
-                request.mapping(mappingJsonString,XContentType.JSON);
+                request.mapping(mappingJsonString, XContentType.JSON);
             }
             request.setTimeout(REQUEST_TIMEOUT);
             CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
@@ -121,13 +123,7 @@ public class IndicesServiceImpl implements IndicesService {
      */
     public boolean isIndexExist(RestHighLevelClient client, String index) throws IOException {
         try {
-            try {
-                Boolean isIndexExist = (Boolean) this.indexCache.get(index);
-                if (isIndexExist != null && isIndexExist) return true;
-            } catch (RedisException ex) {
-                //In case the format of cache changes then clean the cache
-                this.indexCache.delete(index);
-            }
+            if (this.indexExistInCache(index)) return true;
             GetIndexRequest request = new GetIndexRequest(index);
             boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
             if (exists) this.indexCache.put(index, true);
@@ -140,6 +136,50 @@ public class IndicesServiceImpl implements IndicesService {
                     String.format("Error getting index: %s status", index),
                     exception);
         }
+    }
+
+    /**
+     * Check if an index ready for indexing
+     *
+     * @param index Index name
+     * @return index details if index already exists
+     * @throws IOException if request cannot be processed
+     */
+    public boolean isIndexReady(RestHighLevelClient client, String index) throws IOException {
+        try {
+            if (this.indexExistInCache(index)) return true;
+            GetIndexRequest request = new GetIndexRequest(index);
+            boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
+            if (!exists) return false;
+            ClusterHealthRequest indexHealthRequest = new ClusterHealthRequest();
+            indexHealthRequest.indices(index);
+            indexHealthRequest.timeout(REQUEST_TIMEOUT);
+            indexHealthRequest.waitForYellowStatus();
+            ClusterHealthResponse healthResponse = client.cluster().health(indexHealthRequest, RequestOptions.DEFAULT);
+            if (healthResponse.status() == RestStatus.OK) {
+                this.indexCache.put(index, true);
+                return true;
+            }
+            return false;
+        } catch (ElasticsearchException exception) {
+            if (exception.status() == RestStatus.NOT_FOUND) return false;
+            throw new AppException(
+                    exception.status().getStatus(),
+                    exception.getMessage(),
+                    String.format("Error getting index: %s status", index),
+                    exception);
+        }
+    }
+
+    private boolean indexExistInCache(String index) {
+        try {
+            Boolean isIndexExist = (Boolean) this.indexCache.get(index);
+            if (isIndexExist != null && isIndexExist) return true;
+        } catch (RedisException ex) {
+            //In case the format of cache changes then clean the cache
+            this.indexCache.delete(index);
+        }
+        return false;
     }
 
     /**
