@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -106,5 +107,13 @@ public class GlobalExceptionMapperCoreTest {
 
         ResponseEntity response = this.sut.handleIOException(ioException);
         assertEquals(HttpStatus.SC_SERVICE_UNAVAILABLE, response.getStatusCodeValue());
+    }
+
+    @Test
+    public void should_returnAppException_when_SchemaProcessingExceptionIsThrown() {
+        SchemaProcessingException schemaProcessingException = new SchemaProcessingException("error processing schema");
+        
+        ResponseEntity response = this.sut.handleSchemaProcessingException(schemaProcessingException);
+        assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCodeValue());
     }
 }
