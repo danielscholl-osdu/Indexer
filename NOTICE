@@ -117,6 +117,7 @@ The following software have components provided under the terms of this license:
 - Plexus Velocity Component (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-velocity)
 - PostgreSQL JDBC Driver
 - PowerMock (from http://www.powermock.org, https://repo1.maven.org/maven2/org/powermock/powermock-api-mockito)
+- Prometheus Java Simpleclient (from https://repo1.maven.org/maven2/io/prometheus/simpleclient)
 - Protocol Buffer extensions to the Google HTTP Client Library for Java. (from https://repo1.maven.org/maven2/com/google/http-client/google-http-client-protobuf)
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
 - RxJava (from https://github.com/ReactiveX/RxJava)
@@ -465,6 +466,7 @@ The following software have components provided under the terms of this license:
 - LatencyUtils (from http://latencyutils.github.io/LatencyUtils/)
 - PostgreSQL JDBC Driver
 - Project Lombok (from http://projectlombok.org, https://projectlombok.org)
+- Prometheus Java Simpleclient (from https://repo1.maven.org/maven2/io/prometheus/simpleclient)
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
 - reactive-streams (from http://www.reactive-streams.org/)
 - xml-apis
