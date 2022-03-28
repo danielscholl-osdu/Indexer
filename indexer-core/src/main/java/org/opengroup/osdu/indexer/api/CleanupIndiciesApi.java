@@ -31,7 +31,6 @@ import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
 import org.opengroup.osdu.core.common.model.storage.validation.ValidKind;
-import org.opengroup.osdu.core.common.model.storage.validation.ValidKind;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.SwaggerDoc;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
@@ -67,6 +66,7 @@ public class CleanupIndiciesApi {
 
   @Inject
   private IndicesServiceImpl indicesService;
+
 
   private static final String ENTITLEMENT_GROUP = "users.datalake.ops";
 
