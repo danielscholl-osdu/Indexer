@@ -27,6 +27,7 @@ The following software have components provided under the terms of this license:
 - ASM based accessors helper used by json-smart (from https://urielch.github.io/)
 - AWS SDK For Java (from https://aws.amazon.com/sdkforjava)
 - AWS SDK for Java - BOM (from https://aws.amazon.com/sdkforjava)
+- AWS SDK for Java - Models (from https://aws.amazon.com/sdkforjava)
 - Apache Ant + JUnit (from http://ant.apache.org/, https://ant.apache.org/)
 - Apache Ant Core
 - Apache Ant Launcher (from http://ant.apache.org/)
