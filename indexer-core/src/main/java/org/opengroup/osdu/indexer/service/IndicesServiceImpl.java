@@ -97,10 +97,15 @@ public class IndicesServiceImpl implements IndicesService {
                 request.mapping(mappingJsonString, XContentType.JSON);
             }
             request.setTimeout(REQUEST_TIMEOUT);
+            long startTime = System.currentTimeMillis();
             CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
+            long stopTime = System.currentTimeMillis();
             // cache the index status
             boolean indexStatus = response.isAcknowledged() && response.isShardsAcknowledged();
-            if (indexStatus) this.indexCache.put(index, true);
+            if (indexStatus) {
+                this.indexCache.put(index, true);
+                this.log.info(String.format("Time taken to successfully create new index %s : %d milliseconds", request.index(), stopTime-startTime));
+            }
 
             return indexStatus;
         } catch (ElasticsearchStatusException e) {

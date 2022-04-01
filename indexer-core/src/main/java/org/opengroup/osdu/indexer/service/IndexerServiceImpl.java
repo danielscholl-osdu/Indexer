@@ -435,7 +435,9 @@ public class IndexerServiceImpl implements IndexerService {
         Exception failedRequestCause = null;
 
         try {
+            long startTime = System.currentTimeMillis();
             BulkResponse bulkResponse = restClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+            long stopTime = System.currentTimeMillis();
 
             // log failed bulk requests
             ArrayList<String> bulkFailures = new ArrayList<>();
@@ -464,7 +466,7 @@ public class IndexerServiceImpl implements IndexerService {
             }
             if (!bulkFailures.isEmpty()) this.jaxRsDpsLog.warning(bulkFailures);
 
-            jaxRsDpsLog.info(String.format("records in elasticsearch service bulk request: %s | successful: %s | failed: %s", bulkRequest.numberOfActions(), succeededResponses, failedResponses));
+            jaxRsDpsLog.info(String.format("records in elasticsearch service bulk request: %s | successful: %s | failed: %s | time taken for bulk request: %d milliseconds", bulkRequest.numberOfActions(), succeededResponses, failedResponses, stopTime-startTime));
 
             // retry entire message if all records are failing
             if (bulkRequest.numberOfActions() == failureRecordIds.size()) throw new AppException(failedRequestStatus,  "Elastic error", failedRequestCause.getMessage(), failedRequestCause);
