@@ -67,7 +67,6 @@ public class CleanupIndiciesApi {
   @Inject
   private IndicesServiceImpl indicesService;
 
-
   private static final String ENTITLEMENT_GROUP = "users.datalake.ops";
 
   @ApiIgnore
