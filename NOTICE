@@ -27,6 +27,7 @@ The following software have components provided under the terms of this license:
 - ASM based accessors helper used by json-smart (from https://urielch.github.io/)
 - AWS SDK For Java (from https://aws.amazon.com/sdkforjava)
 - AWS SDK for Java - BOM (from https://aws.amazon.com/sdkforjava)
+- AWS SDK for Java - Models (from https://aws.amazon.com/sdkforjava)
 - Apache Ant + JUnit (from http://ant.apache.org/, https://ant.apache.org/)
 - Apache Ant Core
 - Apache Ant Launcher (from http://ant.apache.org/)
@@ -110,6 +111,7 @@ The following software have components provided under the terms of this license:
 - Nimbus Content Type (from https://bitbucket.org/connect2id/nimbus-content-type)
 - Nimbus LangTag (from https://bitbucket.org/connect2id/nimbus-language-tags)
 - Non-Blocking Reactive Foundation for the JVM (from https://github.com/reactor/reactor, https://github.com/reactor/reactor-core)
+- OAuth 2.0 SDK with OpenID Connect extensions (from https://bitbucket.org/connect2id/oauth-2.0-sdk-with-openid-connect-extensions)
 - Objenesis (from http://objenesis.org)
 - OkHttp (from https://repo1.maven.org/maven2/com/squareup/okhttp3/okhttp, https://square.github.io/okhttp/)
 - Okio (from https://github.com/square/okio/, https://repo1.maven.org/maven2/com/squareup/okio/okio)
@@ -158,6 +160,10 @@ BSD-2-Clause
 ========================================================================
 The following software have components provided under the terms of this license:
 
+- ASM Analysis (from http://asm.ow2.io/)
+- ASM Commons (from http://asm.ow2.io/, https://repo1.maven.org/maven2/org/ow2/asm/asm-commons)
+- ASM Tree (from http://asm.ow2.io/, https://repo1.maven.org/maven2/org/ow2/asm/asm-tree)
+- ASM Util (from http://asm.ow2.io/)
 - Apache Commons CLI (from https://commons.apache.org/proper/commons-cli/, https://repo1.maven.org/maven2/commons-cli/commons-cli)
 - Hamcrest (from http://hamcrest.org/JavaHamcrest/)
 - Hamcrest Core (from http://hamcrest.org/, https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core)
@@ -365,8 +371,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 LGPL-3.0-only
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
 
 ========================================================================
