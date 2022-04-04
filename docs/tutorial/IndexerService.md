@@ -145,7 +145,7 @@ will use the same schema and overwrite records with the same ids. Default value 
 
 [Back to table of contents](#TOC)
 ## Delete API <a name="delete"></a>
-Delete api is used to delete an index for a specific kind.
+Delete API is used to delete an index for a specific kind.
 Only users who belong to the Entitlement groups 'users.datalake.ops' can make calls to this API.
 
 ```
