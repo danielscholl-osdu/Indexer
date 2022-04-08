@@ -36,4 +36,6 @@ public interface IndicesService {
     boolean deleteIndex(String index) throws ElasticsearchException, IOException, AppException;
 
     List<IndexInfo> getIndexInfo(RestHighLevelClient client, String indexPattern) throws IOException;
+
+    boolean isIndexReady(RestHighLevelClient client, String index) throws IOException;
 }

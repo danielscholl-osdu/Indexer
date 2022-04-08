@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-service</artifactId>
-        <version>0.14.0-SNAPSHOT</version>
+        <version>0.15.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>indexer-reference</artifactId>
-    <version>0.14.0-SNAPSHOT</version>
+    <version>0.15.0-SNAPSHOT</version>
     <name>indexer-reference</name>
     <description>Indexer Service GCP Anthos</description>
     <packaging>jar</packaging>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-core</artifactId>
-            <version>0.14.0-SNAPSHOT</version>
+            <version>0.15.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -48,6 +48,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>os-core-common</artifactId>
+            <version>${os-core-common.version}</version>
         </dependency>
 
         <dependency>
@@ -130,7 +131,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.26.0</version>
+            <version>3.12.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
