@@ -18,7 +18,7 @@
 package org.opengroup.osdu.indexer.persistence;
 
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.util.JSON.serialize;
+import static com.mongodb.BasicDBObject.parse;
 
 import com.google.gson.Gson;
 import com.mongodb.client.MongoCollection;
@@ -75,7 +75,7 @@ public class ElasticRepositoryMongoDB implements IElasticRepository {
           SETTINGS_FETCH_ERROR_MESSAGE);
     }
 
-    ElasticSettingsDoc elasticSettingsDoc = new Gson().fromJson(serialize(record),
+    ElasticSettingsDoc elasticSettingsDoc = new Gson().fromJson(String.valueOf(parse(record.toString())),
         ElasticSettingsDoc.class);
 
     try {
