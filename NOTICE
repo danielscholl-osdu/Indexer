@@ -13,8 +13,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 Apache-1.1
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Apache Commons CLI (from https://commons.apache.org/proper/commons-cli/, https://repo1.maven.org/maven2/commons-cli/commons-cli)
 - Default Plexus Container (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-container-default)
 - oro (from https://repo1.maven.org/maven2/oro/oro)
@@ -30,7 +28,7 @@ The following software have components provided under the terms of this license:
 - AWS SDK for Java - Models (from https://aws.amazon.com/sdkforjava)
 - Apache Ant + JUnit (from http://ant.apache.org/, https://ant.apache.org/)
 - Apache Ant Core
-- Apache Ant Launcher (from http://ant.apache.org/)
+- Apache Ant Launcher (from http://ant.apache.org/, https://ant.apache.org/)
 - Apache Commons BeanUtils (from http://commons.apache.org/proper/commons-beanutils/, https://repo1.maven.org/maven2/commons-beanutils/commons-beanutils)
 - Apache Commons CLI (from https://commons.apache.org/proper/commons-cli/, https://repo1.maven.org/maven2/commons-cli/commons-cli)
 - Apache Commons Codec (from http://commons.apache.org/proper/commons-codec/, https://commons.apache.org/proper/commons-codec/)
@@ -201,23 +199,17 @@ The following software have components provided under the terms of this license:
 ========================================================================
 CC-BY-2.5
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - FindBugs-jsr305 (from http://findbugs.sourceforge.net/)
 - MongoDB Java Driver (from http://mongodb.org/, http://www.mongodb.org)
 
 ========================================================================
 CC0-1.0
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - reactive-streams (from http://www.reactive-streams.org/)
 
 ========================================================================
 CDDL-1.0
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Jakarta Activation API (from https://github.com/eclipse-ee4j/jaf, https://repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api)
 - Servlet Specification 2.5 API (from http://jetty.mortbay.org, https://repo1.maven.org/maven2/org/mortbay/jetty/servlet-api-2.5)
 
@@ -273,8 +265,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 EPL-2.0
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - HK2 Implementation Utilities (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-utils)
 - JUnit Jupiter (Aggregator) (from https://junit.org/junit5/)
 - JUnit Jupiter API (from http://junit.org/junit5/, https://junit.org/junit5/)
@@ -305,8 +295,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 GPL-2.0-or-later
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - SnakeYAML (from http://code.google.com/p/snakeyaml/, http://www.snakeyaml.org)
 
 ========================================================================
@@ -331,8 +319,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 GPL-3.0-only
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
 - OSGi resource locator (from https://repo1.maven.org/maven2/org/glassfish/hk2/osgi-resource-locator)
 - Project Lombok (from http://projectlombok.org, https://projectlombok.org)
@@ -341,8 +327,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 JSON
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - JSON in Java (from https://github.com/douglascrockford/JSON-java)
 
 ========================================================================
@@ -363,8 +347,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 LGPL-2.1-or-later
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Javassist (from http://www.javassist.org/)
 - SnakeYAML (from http://code.google.com/p/snakeyaml/, http://www.snakeyaml.org)
 
@@ -396,16 +378,12 @@ The following software have components provided under the terms of this license:
 ========================================================================
 MPL-1.1
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Javassist (from http://www.javassist.org/)
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
 
 ========================================================================
 MPL-2.0
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Javassist (from http://www.javassist.org/)
 - OkHttp (from https://repo1.maven.org/maven2/com/squareup/okhttp3/okhttp, https://square.github.io/okhttp/)
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
@@ -413,8 +391,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 PHP-3.01
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Jakarta Activation API (from https://github.com/eclipse-ee4j/jaf, https://repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api, https://repo1.maven.org/maven2/org/jboss/spec/javax/xml/bind/jboss-jaxb-api_2.3_spec)
 
@@ -428,8 +404,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 SPL-1.0
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Servlet Specification 2.5 API (from http://jetty.mortbay.org, https://repo1.maven.org/maven2/org/mortbay/jetty/servlet-api-2.5)
 
 ========================================================================
@@ -453,8 +427,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 WTFPL
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Reflections (from http://code.google.com/p/reflections/, http://github.com/ronmamo/reflections)
 
 ========================================================================
