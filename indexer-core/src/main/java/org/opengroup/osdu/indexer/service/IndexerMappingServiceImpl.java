@@ -143,11 +143,11 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
 
         for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
             if (entry.getKey() == RecordMetaAttribute.AUTHORITY.getValue()) {
-                metaMapping.put(entry.getKey(), TypeMapper.getConstantIndexerType(RecordMetaAttribute.AUTHORITY, authority));
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), authority));
             } else if (entry.getKey() == RecordMetaAttribute.SOURCE.getValue()) {
-                metaMapping.put(entry.getKey(), TypeMapper.getConstantIndexerType(RecordMetaAttribute.SOURCE, source));
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), source));
             } else {
-                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey()));
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), null));
             }
         }
         return metaMapping;
@@ -211,11 +211,11 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         String source = parts[1];
         for (String attribute : missing) {
             if (attribute == RecordMetaAttribute.AUTHORITY.getValue()) {
-                properties.put(attribute, TypeMapper.getConstantIndexerType(RecordMetaAttribute.AUTHORITY, authority));
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, authority));
             } else if (attribute == RecordMetaAttribute.SOURCE.getValue()) {
-                properties.put(attribute, TypeMapper.getConstantIndexerType(RecordMetaAttribute.SOURCE, source));
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, source));
             } else {
-                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute));
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, null));
             }
         }
 

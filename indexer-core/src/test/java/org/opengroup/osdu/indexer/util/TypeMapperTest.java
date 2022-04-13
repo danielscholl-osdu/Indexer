@@ -2,6 +2,7 @@ package org.opengroup.osdu.indexer.util;
 
 import org.junit.Test;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
+import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 
@@ -54,10 +55,11 @@ public class TypeMapperTest {
 
     @Test
     public void validate_constantAttribute_indexerMapping() {
-        Object value = TypeMapper.getConstantIndexerType(RecordMetaAttribute.ID, "");
-        assertNull(value);
+        Object value = TypeMapper.getMetaAttributeIndexerMapping(RecordMetaAttribute.ID.getValue(), "");
+        Records.Type recordsType = (Records.Type) value;
+        assertEquals("keyword", recordsType.getType());
 
-        value = TypeMapper.getConstantIndexerType(RecordMetaAttribute.AUTHORITY, "opendes");
+        value = TypeMapper.getMetaAttributeIndexerMapping(RecordMetaAttribute.AUTHORITY.getValue(), "opendes");
         Map<String, Object> mapping = (Map<String, Object>) value;
         assertEquals("constant_keyword", mapping.get("type"));
         assertEquals("opendes", mapping.get("value"));

@@ -91,12 +91,8 @@ public class TypeMapper {
         return metaAttributeIndexerType.getOrDefault(attribute.getValue(), null);
     }
 
-    public static Object getConstantIndexerType(RecordMetaAttribute attribute, String value) {
-        if (RecordMetaAttribute.AUTHORITY != attribute && RecordMetaAttribute.SOURCE != attribute) {
-            return null;
-        }
-
-        Map<String, Object> constantAttribute = (Map<String, Object>) metaAttributeIndexerType.get(attribute.getValue());
+    private static Object getConstantIndexerType(String key, String value) {
+        Map<String, Object> constantAttribute = (Map<String, Object>) metaAttributeIndexerType.get(key);
         constantAttribute.put("value", value);
         return constantAttribute;
     }
@@ -105,10 +101,12 @@ public class TypeMapper {
         return new ArrayList<>(metaAttributeIndexerType.keySet());
     }
 
-    public static Object getMetaAttributeIndexerMapping(String key) {
+    public static Object getMetaAttributeIndexerMapping(String key, String value) {
         if (key.equals(RecordMetaAttribute.ACL.getValue())
                 || key.equals(RecordMetaAttribute.LEGAL.getValue()) || key.equals(RecordMetaAttribute.ANCESTRY.getValue()) || key.equals(RecordMetaAttribute.INDEX_STATUS.getValue())) {
             return metaAttributeIndexerType.get(key);
+        } else if (key.equals(RecordMetaAttribute.AUTHORITY.getValue()) || key.equals(RecordMetaAttribute.SOURCE.getValue())) {
+            return getConstantIndexerType(key, value);
         }
         return Records.Type.builder().type(metaAttributeIndexerType.get(key).toString()).build();
     }
