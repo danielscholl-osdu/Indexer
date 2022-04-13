@@ -28,6 +28,7 @@ import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
 import org.opengroup.osdu.core.common.model.indexer.SchemaOperationType;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.config.SchemaEventsListenerConfiguration;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -76,6 +77,10 @@ public class SchemaProviderImpl implements SchemaService {
     @Inject
     private AuditLogger auditLogger;
 
+    @Inject
+    private SchemaEventsListenerConfiguration schemaEventsListenerConfiguration;
+
+
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
         String schemaServiceSchema = getFromSchemaService(kind);
@@ -85,15 +90,22 @@ public class SchemaProviderImpl implements SchemaService {
     @Override
     public void processSchemaMessages(List<SchemaInfo> schemaInfos) throws IOException {
         Map<String, SchemaOperationType> messages = new HashMap<>();
-        Map<String, SchemaOperationType> createSchemaMessages = SchemaInfo.getCreateSchemaEvents(schemaInfos);
-        if (createSchemaMessages != null && !createSchemaMessages.isEmpty()) {
-            messages.putAll(createSchemaMessages);
+
+        if (schemaEventsListenerConfiguration.isListenCreateEvent()) {
+            Map<String, SchemaOperationType> createSchemaMessages = SchemaInfo.getCreateSchemaEvents(schemaInfos);
+            if (createSchemaMessages != null && !createSchemaMessages.isEmpty()) {
+                messages.putAll(createSchemaMessages);
+            }
         }
 
-        Map<String, SchemaOperationType> updateSchemaMessages = SchemaInfo.getUpdateSchemaEvents(schemaInfos);
-        if (updateSchemaMessages != null && !updateSchemaMessages.isEmpty()) {
-            messages.putAll(updateSchemaMessages);
+        if (schemaEventsListenerConfiguration.isListenUpdateEvent()) {
+            Map<String, SchemaOperationType> updateSchemaMessages = SchemaInfo.getUpdateSchemaEvents(schemaInfos);
+            if (updateSchemaMessages != null && !updateSchemaMessages.isEmpty()) {
+                messages.putAll(updateSchemaMessages);
+            }
         }
+
+        if (messages.isEmpty()) return;
 
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
             messages.entrySet().forEach(msg -> {

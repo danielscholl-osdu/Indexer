@@ -21,6 +21,7 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.rest.RestStatus;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
@@ -31,6 +32,7 @@ import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.config.SchemaEventsListenerConfiguration;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -77,11 +79,18 @@ public class SchemaProviderImplTest {
     private AuditLogger auditLogger;
     @Mock
     private IndexSchemaService indexSchemaService;
-
+    @Mock
+    private SchemaEventsListenerConfiguration schemaEventsListenerConfiguration;
     @InjectMocks
     private SchemaProviderImpl sut;
 
     private RestHighLevelClient restClient;
+
+    @Before
+    public void setup() {
+        when(this.schemaEventsListenerConfiguration.isListenCreateEvent()).thenReturn(true);
+        when(this.schemaEventsListenerConfiguration.isListenUpdateEvent()).thenReturn(true);
+    }
 
     @Test
     public void test_empty_schema() throws UnsupportedEncodingException, URISyntaxException {
