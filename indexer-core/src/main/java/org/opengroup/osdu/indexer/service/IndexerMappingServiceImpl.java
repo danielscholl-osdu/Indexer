@@ -173,7 +173,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     }
 
     @Override
-    public void syncIndexMappingIfRequired(RestHighLevelClient restClient, String index) throws Exception {
+    public void syncIndexMappingIfRequired(RestHighLevelClient restClient, String index, String kind) throws Exception {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
 
         try {
@@ -206,8 +206,17 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         }
 
         Map<String, Object> properties = new HashMap<>();
+        String[] parts = kind.split(":");
+        String authority = parts[0];
+        String source = parts[1];
         for (String attribute : missing) {
-            properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute));
+            if (attribute == RecordMetaAttribute.AUTHORITY.getValue()) {
+                properties.put(attribute, TypeMapper.getConstantIndexerType(RecordMetaAttribute.AUTHORITY, authority));
+            } else if (attribute == RecordMetaAttribute.SOURCE.getValue()) {
+                properties.put(attribute, TypeMapper.getConstantIndexerType(RecordMetaAttribute.SOURCE, source));
+            } else {
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute));
+            }
         }
 
         Map<String, Object> documentMapping = new HashMap<>();

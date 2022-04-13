@@ -33,5 +33,5 @@ public interface IMappingService {
 
     void updateIndexMappingForIndicesOfSameType(Set<String> indices, String fieldName) throws Exception;
 
-    void syncIndexMappingIfRequired(RestHighLevelClient restClient, String index) throws Exception;
+    void syncIndexMappingIfRequired(RestHighLevelClient restClient, String index, String kind) throws Exception;
 }

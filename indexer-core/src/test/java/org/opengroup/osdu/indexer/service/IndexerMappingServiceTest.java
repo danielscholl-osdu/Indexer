@@ -178,7 +178,7 @@ public class IndexerMappingServiceTest {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         when(this.indexCache.get(cacheKey)).thenReturn(true);
 
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index);
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index, kind);
 
         verifyNoMoreInteractions(this.mappingService);
     }
@@ -189,7 +189,7 @@ public class IndexerMappingServiceTest {
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
         when(this.mappingService.getIndexMapping(restHighLevelClient, index)).thenReturn(mapping);
 
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index);
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index, kind);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);
@@ -205,7 +205,7 @@ public class IndexerMappingServiceTest {
         doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
         doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
 
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index);
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index, kind);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);

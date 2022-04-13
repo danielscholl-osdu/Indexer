@@ -425,7 +425,7 @@ public class IndexerServiceImpl implements IndexerService {
 
       // check if index exist and sync meta attribute schema if required
       if (this.indicesService.isIndexExist(restClient, index)) {
-        this.mappingService.syncIndexMappingIfRequired(restClient, index);
+        this.mappingService.syncIndexMappingIfRequired(restClient, index, schema.getKind());
         continue;
       }
 
