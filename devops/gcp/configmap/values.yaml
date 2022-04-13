@@ -3,23 +3,20 @@
 # Declare variables to be passed into your templates.
 
 data:
+  # common
+  entitlements_host: "http://entitlements"
+  indexer_queue_base_host: "http://indexer-queue"
   log_level: "INFO"
-  schema_host: ""
-  authorize_api: "http://entitlements/api/entitlements/v2/"
-  redis_search_host: ""
-  redis_group_host: ""
+  partition_host: "http://partition"
+  redis_group_host: "redis-group-master"
+  redis_search_host: "redis-search-master"
+  schema_base_host: "http://schema"
   security_https_certificate_trust: "true"
-  storage_query_record_host: "http://storage/api/storage/v2/query/records"
-  storage_schema_host: "http://storage/api/storage/v2/schemas"
-  storage_query_record_for_conversion_host: "http://storage/api/storage/v2/query/records:batch"
-  storage_records_batch_size: "20"
-  storage_query_kinds_host: "http://storage/api/storage/v2/query/kinds"
-  indexer_queue_host: ""
-  partition_api: "http://partition/api/partition/v1/"
-  google_audiences: ""
   spring_profiles_active: "gcp"
-
-
+  storage_host: "http://storage"
+  # gcp
+  google_audiences: ""
 conf:
-  configmap: "indexer-config"
   app_name: "indexer"
+  configmap: "indexer-config"
+  on_prem_enabled: false
