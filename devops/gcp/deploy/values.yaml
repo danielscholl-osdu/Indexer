@@ -7,11 +7,13 @@ data:
   requests_memory: "640M"
   limits_cpu: "1"
   limits_memory: "1G"
-  serviceAccountName: ""
-  imagePullPolicy: "IfNotPresent"
   image: ""
-
+  imagePullPolicy: "IfNotPresent"
+  serviceAccountName: "indexer"
 conf:
+  app_name: "indexer"
   configmap: "indexer-config"
   elastic_secret_name: "elastic-secret"
-  app_name: "indexer"
+  keycloak_secret_name: "indexer-keycloak-secret"
+  on_prem_enabled: false
+  rabbitmq_secret_name: "rabbitmq-secret"
