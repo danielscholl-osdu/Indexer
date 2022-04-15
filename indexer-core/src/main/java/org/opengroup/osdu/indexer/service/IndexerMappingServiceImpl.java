@@ -36,6 +36,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
+import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -59,6 +60,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     private PartitionSafeIndexCache indexCache;
     @Autowired
     private IMappingService mappingService;
+    @Autowired
+    private ElasticIndexNameResolver elasticIndexNameResolver;
 
     private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
@@ -173,7 +176,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     }
 
     @Override
-    public void syncIndexMappingIfRequired(RestHighLevelClient restClient, String index, String kind) throws Exception {
+    public void syncIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception {
+        String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
 
         try {
@@ -206,7 +210,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         }
 
         Map<String, Object> properties = new HashMap<>();
-        String[] parts = kind.split(":");
+        String[] parts = schema.getKind().split(":");
         String authority = parts[0];
         String source = parts[1];
         for (String attribute : missing) {

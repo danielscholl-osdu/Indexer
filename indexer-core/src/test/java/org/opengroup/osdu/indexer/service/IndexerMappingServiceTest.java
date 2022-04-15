@@ -27,6 +27,7 @@ import org.mockito.Mock;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
+import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
@@ -73,6 +74,8 @@ public class IndexerMappingServiceTest {
     private PartitionSafeIndexCache indexCache;
     @Mock
     private IMappingService mappingService;
+    @Mock
+    private ElasticIndexNameResolver elasticIndexNameResolver;
     @InjectMocks
     private IndexerMappingServiceImpl sut;
 
@@ -89,6 +92,7 @@ public class IndexerMappingServiceTest {
         this.indicesClient = PowerMockito.mock(IndicesClient.class);
         this.restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
 
+        when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(index);
         when(this.restHighLevelClient.getLowLevelClient()).thenReturn(restClient);
         when(this.restClient.performRequest(any())).thenReturn(response);
         when(this.response.getStatusLine()).thenReturn(statusLine);
@@ -178,7 +182,7 @@ public class IndexerMappingServiceTest {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         when(this.indexCache.get(cacheKey)).thenReturn(true);
 
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index, kind);
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema);
 
         verifyNoMoreInteractions(this.mappingService);
     }
@@ -189,7 +193,7 @@ public class IndexerMappingServiceTest {
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
         when(this.mappingService.getIndexMapping(restHighLevelClient, index)).thenReturn(mapping);
 
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index, kind);
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);
@@ -205,7 +209,7 @@ public class IndexerMappingServiceTest {
         doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
         doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
 
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, index, kind);
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);
