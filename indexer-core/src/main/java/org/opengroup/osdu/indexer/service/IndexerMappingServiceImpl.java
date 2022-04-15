@@ -39,6 +39,7 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
+import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,15 +141,13 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
 
     private Map<String, Object> getMetaMapping(IndexSchema schema) {
         Map<String, Object> metaMapping = new HashMap<>();
-        String[] parts = schema.getKind().split(":");
-        String authority = parts[0];
-        String source = parts[1];
+        Kind kind = new Kind(schema.getKind());
 
         for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
             if (entry.getKey() == RecordMetaAttribute.AUTHORITY.getValue()) {
-                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), authority));
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), kind.getAuthority()));
             } else if (entry.getKey() == RecordMetaAttribute.SOURCE.getValue()) {
-                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), source));
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), kind.getSource()));
             } else {
                 metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), null));
             }
@@ -210,14 +209,12 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         }
 
         Map<String, Object> properties = new HashMap<>();
-        String[] parts = schema.getKind().split(":");
-        String authority = parts[0];
-        String source = parts[1];
+        Kind kind = new Kind(schema.getKind());
         for (String attribute : missing) {
             if (attribute == RecordMetaAttribute.AUTHORITY.getValue()) {
-                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, authority));
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, kind.getAuthority()));
             } else if (attribute == RecordMetaAttribute.SOURCE.getValue()) {
-                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, source));
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, kind.getSource()));
             } else {
                 properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, null));
             }

@@ -30,6 +30,7 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -231,8 +232,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 }
             }
 
-            String[] parts = schemaObj.getKind().split(":");
-            String type = parts[2];
+            Kind kind = new Kind(schemaObj.getKind());
 
             // mandatory attributes
             meta.put(RecordMetaAttribute.ID.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ID));
@@ -253,7 +253,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             meta.put(RecordMetaAttribute.MODIFY_USER.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_USER));
             meta.put(RecordMetaAttribute.MODIFY_TIME.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_TIME));
 
-            return IndexSchema.builder().dataSchema(data).metaSchema(meta).kind(schemaObj.getKind()).type(type).build();
+            return IndexSchema.builder().dataSchema(data).metaSchema(meta).kind(schemaObj.getKind()).type(kind.getType()).build();
 
         } catch (Exception e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Schema normalization error", "An error has occurred while normalizing the schema.", e);

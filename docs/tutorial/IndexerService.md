@@ -61,7 +61,7 @@ Provides build and git related information.
 
 #### Request
 
-```http request
+```http
 GET /api/indexer/v2/info HTTP/1.1
 ```
 
@@ -104,7 +104,7 @@ multiple factors contribute to latency, such as number of records in the kind, c
 
 #### Request
 
-```http request
+```http
 POST /api/indexer/v2/reindex HTTP/1.1
 {
   "kind": "opendes:welldb:wellbore:1.0.0"
@@ -149,7 +149,7 @@ will use the same schema and overwrite records with the same ids. Default value 
 
 Configures Search backend for a data partition. 
 
-```http request 
+```http 
 PUT /api/indexer/v2/partitions/provision HTTP/1.1
 ```
 
@@ -181,7 +181,7 @@ Schema change event listener endpoint.
 
 #### Request
 
-```http request
+```http
 POST /api/indexer/v2/_dps/task-handlers/schema-worker HTTP/1.1
 {
     "messageId": "676894654",
