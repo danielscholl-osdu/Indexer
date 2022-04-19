@@ -2,12 +2,15 @@ package org.opengroup.osdu.indexer.util;
 
 import org.junit.Test;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
+import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TypeMapperTest {
@@ -34,8 +37,6 @@ public class TypeMapperTest {
         assertEquals(ElasticType.LONG.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.VERSION));
         assertEquals(ElasticType.KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.X_ACL));
 
-        assertEquals(ElasticType.CONSTANT_KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.AUTHORITY));
-        assertEquals(ElasticType.CONSTANT_KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.SOURCE));
         assertEquals(ElasticType.KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_USER));
         assertEquals(ElasticType.KEYWORD.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.MODIFY_USER));
         assertEquals(ElasticType.DATE.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.CREATE_TIME));
@@ -46,9 +47,21 @@ public class TypeMapperTest {
     public void validate_meta_attributes() {
         List<String> keys = TypeMapper.getMetaAttributesKeys();
 
-        String[] meta = new String[] {"id", "kind", "authority", "source", "namespace", "type", "version", "acl", "tags", "legal", "ancestry", "createUser", "modifyUser", "createTime", "modifyTime", "index"};
-        for(String attributeKey : meta) {
+        String[] meta = new String[]{"id", "kind", "authority", "source", "namespace", "type", "version", "acl", "tags", "legal", "ancestry", "createUser", "modifyUser", "createTime", "modifyTime", "index"};
+        for (String attributeKey : meta) {
             assertTrue(keys.contains(attributeKey));
         }
+    }
+
+    @Test
+    public void validate_constantAttribute_indexerMapping() {
+        Object value = TypeMapper.getMetaAttributeIndexerMapping(RecordMetaAttribute.ID.getValue(), "");
+        Records.Type recordsType = (Records.Type) value;
+        assertEquals("keyword", recordsType.getType());
+
+        value = TypeMapper.getMetaAttributeIndexerMapping(RecordMetaAttribute.AUTHORITY.getValue(), "opendes");
+        Map<String, Object> mapping = (Map<String, Object>) value;
+        assertEquals("constant_keyword", mapping.get("type"));
+        assertEquals("opendes", mapping.get("value"));
     }
 }

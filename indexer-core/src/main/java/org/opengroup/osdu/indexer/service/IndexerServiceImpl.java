@@ -115,6 +115,10 @@ public class IndexerServiceImpl implements IndexerService {
         this.jobStatus.initialize(recordInfos);
 
         try {
+            auditLogger.indexStarted(recordInfos.stream()
+                    .map(RecordInfo::getKind)
+                    .collect(Collectors.toList()));
+
             // get upsert records
             Map<String, Map<String, OperationType>> upsertRecordMap = RecordInfo.getUpsertRecordIds(recordInfos);
             if (upsertRecordMap != null && !upsertRecordMap.isEmpty()) {
@@ -129,11 +133,7 @@ public class IndexerServiceImpl implements IndexerService {
                 retryRecordIds.addAll(deleteFailureRecordIds);
             }
 
-            auditLogger.indexStarted(recordInfos.stream()
-                    .map(RecordInfo::getKind)
-                    .collect(Collectors.toList()));
-
-            // process schema change messages
+            // process legacy storage schema change messages
             Map<String, OperationType> schemaMsgs = RecordInfo.getSchemaMsgs(recordInfos);
             if (schemaMsgs != null && !schemaMsgs.isEmpty()) {
                 this.schemaService.processSchemaMessages(schemaMsgs);
@@ -367,7 +367,7 @@ public class IndexerServiceImpl implements IndexerService {
 
             // check if index exist and sync meta attribute schema if required
             if (this.indicesService.isIndexReady(restClient, index)) {
-                this.mappingService.syncIndexMappingIfRequired(restClient, index);
+                this.mappingService.syncIndexMappingIfRequired(restClient, schema);
                 continue;
             }
 

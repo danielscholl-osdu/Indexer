@@ -27,7 +27,6 @@ public class AuditEvents {
     private static final String INDEX_CREATE_RECORDS_SUCCESS = "Successfully created record in index";
     private static final String INDEX_CREATE_RECORDS_FAILURE = "Failed creating record in index";
 
-
     private static final String INDEX_UPDATE_RECORD_ACTION_ID = "IN002";
     private static final String INDEX_UPDATE_RECORDS_SUCCESS = "Successfully updated record in index";
     private static final String INDEX_UPDATE_RECORDS_FAILURE = "Failed updating record in index";
@@ -54,8 +53,8 @@ public class AuditEvents {
     private static final String RUN_JOB_MESSAGE_SUCCESS = "Index clean-up status job run success";
 
     private static final String INDEX_MAPPING_UPDATE_ACTION_ID = "IN0011";
-    private static final String INDEX_MAPPING_UPDATE_SUCCESS = "Successfully updated index mapping";
-    private static final String INDEX_MAPPING_UPDATE_FAILURE = "Failed updating index mapping";
+    private static final String INDEX_MAPPING_UPDATE_SUCCESS = "Successfully upserted index mapping";
+    private static final String INDEX_MAPPING_UPDATE_FAILURE = "Failed upserting index mapping";
 
     private static final String CONFIGURE_PARTITION_ACTION_ID = "IN0012";
     private static final String CONFIGURE_PARTITION_OPERATION = "Data partition cluster configuration update";
@@ -223,7 +222,7 @@ public class AuditEvents {
                 .build();
     }
 
-    public AuditPayload getIndexMappingUpdateEvent(List<String> resources, boolean isSuccess) {
+    public AuditPayload getIndexMappingUpsertEvent(List<String> resources, boolean isSuccess) {
         if (isSuccess) {
             return AuditPayload.builder()
                     .action(AuditAction.UPDATE)

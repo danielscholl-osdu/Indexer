@@ -35,8 +35,11 @@ import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
+import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
+import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
+import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +61,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     private PartitionSafeIndexCache indexCache;
     @Autowired
     private IMappingService mappingService;
+    @Autowired
+    private ElasticIndexNameResolver elasticIndexNameResolver;
 
     private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
@@ -111,12 +116,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         Map<String, Object> properties = new HashMap<>();
 
         // meta  attribute
-        Map<String, Object> metaMapping = new HashMap<>();
-        for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
-            metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey()));
-        }
+        Map<String, Object> metaMapping = this.getMetaMapping(schema);
 
-        // data-source attributes
         // data-source attributes
         Map<String, Object> dataMapping = this.getDataMapping(schema);
         if (!dataMapping.isEmpty()) {
@@ -136,6 +137,22 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         // don't add dynamic mapping
         documentMapping.put("dynamic", false);
         return documentMapping;
+    }
+
+    private Map<String, Object> getMetaMapping(IndexSchema schema) {
+        Map<String, Object> metaMapping = new HashMap<>();
+        Kind kind = new Kind(schema.getKind());
+
+        for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
+            if (entry.getKey() == RecordMetaAttribute.AUTHORITY.getValue()) {
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), kind.getAuthority()));
+            } else if (entry.getKey() == RecordMetaAttribute.SOURCE.getValue()) {
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), kind.getSource()));
+            } else {
+                metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), null));
+            }
+        }
+        return metaMapping;
     }
 
     private Map<String, Object> getDataMapping(IndexSchema schema) {
@@ -158,7 +175,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     }
 
     @Override
-    public void syncIndexMappingIfRequired(RestHighLevelClient restClient, String index) throws Exception {
+    public void syncIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception {
+        String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
 
         try {
@@ -191,8 +209,15 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         }
 
         Map<String, Object> properties = new HashMap<>();
+        Kind kind = new Kind(schema.getKind());
         for (String attribute : missing) {
-            properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute));
+            if (attribute == RecordMetaAttribute.AUTHORITY.getValue()) {
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, kind.getAuthority()));
+            } else if (attribute == RecordMetaAttribute.SOURCE.getValue()) {
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, kind.getSource()));
+            } else {
+                properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, null));
+            }
         }
 
         Map<String, Object> documentMapping = new HashMap<>();
