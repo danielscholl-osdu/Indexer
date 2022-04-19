@@ -205,24 +205,25 @@ public class AuditEventsTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void should_getIndexMappingUpdateEventSuccess() {
         AuditEvents auditEvent = new AuditEvents("testUser");
-        Map<String, String> payload = (Map) auditEvent.getIndexMappingUpdateEvent(Lists.newArrayList("anything"),true)
+        Map<String, String> payload = (Map) auditEvent.getIndexMappingUpsertEvent(Lists.newArrayList("anything"),true)
                 .get("auditLog");
         assertEquals(Lists.newArrayList("anything"), payload.get("resources"));
         assertEquals(AuditStatus.SUCCESS, payload.get("status"));
-        assertEquals("Successfully updated index mapping", payload.get("message"));
+        assertEquals("Successfully upserted index mapping", payload.get("message"));
         assertEquals(AuditAction.UPDATE, payload.get("action"));
         assertEquals("IN0011", payload.get("actionId"));
         assertEquals("testUser", payload.get("user"));
     }
+
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void should_getIndexMappingUpdateEventFail() {
         AuditEvents auditEvent = new AuditEvents("testUser");
-        Map<String, String> payload = (Map) auditEvent.getIndexMappingUpdateEvent(Lists.newArrayList("anything"),false)
+        Map<String, String> payload = (Map) auditEvent.getIndexMappingUpsertEvent(Lists.newArrayList("anything"),false)
                 .get("auditLog");
         assertEquals(Lists.newArrayList("anything"), payload.get("resources"));
         assertEquals(AuditStatus.FAILURE, payload.get("status"));
-        assertEquals("Failed updating index mapping", payload.get("message"));
+        assertEquals("Failed upserting index mapping", payload.get("message"));
         assertEquals(AuditAction.UPDATE, payload.get("action"));
         assertEquals("IN0011", payload.get("actionId"));
         assertEquals("testUser", payload.get("user"));

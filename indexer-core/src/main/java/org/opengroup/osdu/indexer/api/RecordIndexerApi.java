@@ -22,13 +22,16 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
+import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
+import org.opengroup.osdu.core.common.model.indexer.SchemaChangedMessages;
+import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.SwaggerDoc;
-import org.opengroup.osdu.core.common.model.indexer.JobStatus;
-import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.service.ReindexService;
-import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
+import org.opengroup.osdu.indexer.service.SchemaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +40,7 @@ import org.springframework.web.context.annotation.RequestScope;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -50,6 +54,8 @@ public class RecordIndexerApi {
     private IndexerService indexerService;
     @Inject
     private ReindexService reIndexService;
+    @Inject
+    private SchemaService schemaService;
 
     // THIS IS AN INTERNAL USE API ONLY
     // THAT MEANS WE DON'T DOCUMENT IT IN SWAGGER, ACCESS IS LIMITED TO CLOUD TASK QUEUE CALLS ONLY
@@ -95,5 +101,36 @@ public class RecordIndexerApi {
             @RequestBody @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
             @Valid RecordReindexRequest recordReindexRequest) {
         return new ResponseEntity<>(reIndexService.reindexRecords(recordReindexRequest, false), HttpStatus.OK);
+    }
+
+    // THIS IS AN INTERNAL USE API ONLY
+    // THAT MEANS WE DON'T DOCUMENT IT IN SWAGGER, ACCESS IS LIMITED TO CLOUD TASK QUEUE CALLS ONLY
+    @PostMapping("/schema-worker")
+    @ApiOperation(hidden = true, value = "", notes = "")
+    public ResponseEntity<?> schemaWorker(
+            @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
+            @Valid @RequestBody SchemaChangedMessages schemaChangedMessage) throws IOException {
+        if (schemaChangedMessage == null) {
+            log.warning("schema change messages is null");
+        }
+
+        if (schemaChangedMessage.missingAccountId()) {
+            throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Invalid tenant",
+                    String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
+        }
+
+        try {
+            Type listType = new TypeToken<List<SchemaInfo>>() {}.getType();
+            List<SchemaInfo> schemaInfos = new Gson().fromJson(schemaChangedMessage.getData(), listType);
+
+            if (schemaInfos.size() == 0) {
+                log.warning("none of schema-change message can be deserialized");
+                return new ResponseEntity(org.springframework.http.HttpStatus.OK);
+            }
+            this.schemaService.processSchemaMessages(schemaInfos);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (JsonParseException e) {
+            throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Request payload parsing error", "Unable to parse request payload.", e);
+        }
     }
 }

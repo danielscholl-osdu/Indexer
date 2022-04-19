@@ -93,11 +93,12 @@ public class AuditLogger {
         this.writeLog(this.getAuditEvents().getIndexCleanUpJobRunEvent(resources));
     }
 
-    public void indexMappingUpdateSuccess(List<String> resources) {
-        this.writeLog(this.getAuditEvents().getIndexMappingUpdateEvent(resources,true));
+    public void indexMappingUpsertSuccess(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getIndexMappingUpsertEvent(resources,true));
     }
-    public void indexMappingUpdateFail(List<String> resources) {
-        this.writeLog(this.getAuditEvents().getIndexMappingUpdateEvent(resources,false));
+
+    public void indexMappingUpsertFail(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getIndexMappingUpsertEvent(resources,false));
     }
 
     public void getConfigurePartition(List<String> resources) {
