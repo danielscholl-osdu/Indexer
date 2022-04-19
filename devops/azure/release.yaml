@@ -74,7 +74,7 @@ spec:
         - containerPort: 80
         readinessProbe:
           httpGet:
-            path: /api/indexer/v2/swagger-ui.html
+            path: /api/indexer/v2/swagger-ui/index.html
             port: 80
         volumeMounts:
         - name: azure-keyvault

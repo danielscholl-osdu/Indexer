@@ -12,7 +12,75 @@ spec:
   gateways:
   - istio-gateway
   http:  
-  - match:
+  - name: "Settings specific to the Swagger page and resources"
+    match:
+    - uri:
+        prefix: "/api/indexer/v2/webjars"
+    - uri:
+        prefix: "/api/indexer/v2/swagger-resources"
+    - uri:
+        prefix: "/api/indexer/v2/v3/api-docs"
+    - uri:
+        prefix: "/api/indexer/v2/swagger-ui"
+    route:
+    - destination:
+        host: {{ .Chart.Name }}
+        port:
+          number: 80
+    headers:
+      response:
+        set:
+          cache-control: "private, max-age=300"
+    corsPolicy:
+      maxAge: "60m"
+      allowCredentials: true
+      allowHeaders:
+      - Authorization
+      - Data-Partition-Id
+      - Correlation-Id
+      - Content-Type
+      - cache-control
+      allowMethods:
+      - POST
+      - GET
+      - PUT
+      - PATCH
+      - DELETE
+      allowOrigins:
+      - prefix: "*"
+  - name: "Settings specific to the QueryAttributeApi API"
+    match:
+    - uri:
+        prefix: "/api/indexer/v2/query/attributes"
+    route:
+    - destination:
+        host: {{ .Chart.Name }}
+        port:
+          number: 80
+    headers:
+      response:
+        set:
+          cache-control: "private, max-age=300, stale-while-revalidate=600, stale-if-error=600"
+          vary: "data-partition-id,authorization"
+    corsPolicy:
+      maxAge: "60m"
+      allowCredentials: true
+      allowHeaders:
+      - Authorization
+      - Data-Partition-Id
+      - Correlation-Id
+      - Content-Type
+      - cache-control
+      allowMethods:
+      - POST
+      - GET
+      - PUT
+      - PATCH
+      - DELETE
+      allowOrigins:
+      - prefix: "*"
+  - name: "Default settings, applies to everything not matched above"
+    match:
     - uri:
         prefix: "/api/indexer/v2"
     route:
@@ -28,6 +96,7 @@ spec:
       - Data-Partition-Id
       - Correlation-Id
       - Content-Type
+      - cache-control
       allowMethods:
       - POST
       - GET
