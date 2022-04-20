@@ -119,3 +119,5 @@ spec:
           value: "true"
         - name: azure_activedirectory_AppIdUri
           value: "api://$(aad_client_id)"
+        - name: SPRING_CONFIG_NAME
+          value: "common,application"
