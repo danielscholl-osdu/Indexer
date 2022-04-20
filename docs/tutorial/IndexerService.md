@@ -145,6 +145,24 @@ will use the same schema and overwrite records with the same ids. Default value 
 
 [Back to table of contents](#TOC)
 
+## Delete API <a name="delete"></a>
+Delete API is used to delete an index for a specific kind.
+Only users who belong to the Entitlement groups 'users.datalake.ops' can make calls to this API.
+
+```
+DELETE /api/indexer/v2/index?kind=opendes:welldb:wellbore:1.0.0
+```
+
+<details><summary>**Curl**</summary>
+
+```bash
+curl --request DELETE \
+  --url '/api/indexer/v2/index?kind=opendes:welldb:wellbore:1.0.0' \
+  --header 'authorization: Bearer <JWT>' \
+  --header 'content-type: application/json' \
+  --header 'data-partition-id: opendes' 
+```
+
 ### Data Partition provision <a name="data-partition-provision"></a>
 
 Configures Search backend for a data partition. 
