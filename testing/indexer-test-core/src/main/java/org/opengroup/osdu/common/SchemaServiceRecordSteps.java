@@ -17,12 +17,11 @@ public class SchemaServiceRecordSteps extends RecordSteps {
 
     public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
         List<Setup> inputList = dataTable.asList(Setup.class);
-        inputList.forEach(this::createSchema);
-        inputList.forEach(s -> deleteIndex(s.getKind()));
+        inputList.forEach(this::setup);
         super.addShutDownHook();
     }
 
-    private void createSchema(Setup input) {
+    private void setup(Setup input) {
         PersistentSchemaTestIndex testIndex = new PersistentSchemaTestIndex(super.elasticUtils, super.httpClient, this);
         testIndex.setIndex(generateActualName(input.getIndex(), super.getTimeStamp()));
         testIndex.setSchemaFile(input.getSchemaFile());
@@ -31,6 +30,8 @@ public class SchemaServiceRecordSteps extends RecordSteps {
         testIndex.setKind(testIndex.getSchemaModel().getSchemaInfo().getSchemaIdentity().getId());
 
         super.getInputIndexMap().put(testIndex.getKind(), testIndex);
+
+        deleteIndex(testIndex.getKind());
     }
 
     private void deleteIndex(String kind) {
