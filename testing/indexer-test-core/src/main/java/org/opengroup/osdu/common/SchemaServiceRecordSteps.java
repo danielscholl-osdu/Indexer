@@ -18,7 +18,7 @@ public class SchemaServiceRecordSteps extends RecordSteps {
     public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
         List<Setup> inputList = dataTable.asList(Setup.class);
         inputList.forEach(this::createSchema);
-        inputList.forEach(s -> deleteIndex(generateActualNameWithoutTs(s.getIndex())));
+        inputList.forEach(s -> deleteIndex(s.getKind()));
         super.addShutDownHook();
     }
 
@@ -33,8 +33,8 @@ public class SchemaServiceRecordSteps extends RecordSteps {
         super.getInputIndexMap().put(testIndex.getKind(), testIndex);
     }
 
-    private void deleteIndex(String index) {
-        this.elasticUtils.deleteIndex(index);
+    private void deleteIndex(String kind) {
+        this.indexerClientUtil.deleteIndex(kind);
     }
 
     @Override
