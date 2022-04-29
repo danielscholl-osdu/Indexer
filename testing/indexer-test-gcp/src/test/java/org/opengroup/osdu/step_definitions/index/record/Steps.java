@@ -10,7 +10,6 @@ import lombok.extern.java.Log;
 import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.GCPHTTPClient;
-import org.opengroup.osdu.util.GcpElasticUtils;
 
 @Log
 public class Steps extends SchemaServiceRecordSteps {
@@ -23,7 +22,6 @@ public class Steps extends SchemaServiceRecordSteps {
     public void before(Scenario scenario) {
         this.scenario = scenario;
         this.httpClient = new GCPHTTPClient();
-        this.elasticUtils = new GcpElasticUtils(this.httpClient);
     }
 
     @Given("^the schema is created with the following kind$")
