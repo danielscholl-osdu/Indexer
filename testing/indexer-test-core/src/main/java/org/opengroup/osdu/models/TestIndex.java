@@ -13,6 +13,7 @@ import org.opengroup.osdu.core.common.model.legal.Legal;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.FileHandler;
 import org.opengroup.osdu.util.HTTPClient;
+import org.opengroup.osdu.util.IndexerClientUtil;
 
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +39,7 @@ public class TestIndex {
     private HTTPClient httpClient;
     private Map<String, String> headers;
     private ElasticUtils elasticUtils;
+    private IndexerClientUtil indexerClientUtil;
     private Gson gson = new Gson();
 
     public TestIndex(ElasticUtils elasticUtils){
@@ -47,6 +49,7 @@ public class TestIndex {
     public void setHttpClient(HTTPClient httpClient) {
         this.httpClient = httpClient;
         headers = httpClient.getCommonHeader();
+        this.indexerClientUtil = new IndexerClientUtil(this.httpClient);
     }
 
     public void setupIndex() {
@@ -72,8 +75,8 @@ public class TestIndex {
         this.elasticUtils.createIndex(this.index, this.getIndexMappingFromJson());
     }
 
-    public void cleanupIndex() {
-        this.elasticUtils.deleteIndex(index);
+    public void cleanupIndex(String kind) {
+        this.indexerClientUtil.deleteIndex(kind);
     }
 
     private String getRecordFile() {

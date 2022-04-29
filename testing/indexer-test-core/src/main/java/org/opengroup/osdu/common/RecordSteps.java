@@ -53,7 +53,7 @@ public class RecordSteps extends TestsBase {
     public void tearDown() {
         for (String kind : inputIndexMap.keySet()) {
             TestIndex testIndex = inputIndexMap.get(kind);
-            testIndex.cleanupIndex();
+            testIndex.cleanupIndex(kind);
             testIndex.deleteSchema(kind);
         }
 

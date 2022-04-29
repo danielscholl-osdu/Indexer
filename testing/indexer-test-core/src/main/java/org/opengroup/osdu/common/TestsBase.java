@@ -12,6 +12,7 @@ import org.opengroup.osdu.util.HTTPClient;
 import com.sun.jersey.api.client.ClientResponse;
 import cucumber.api.Scenario;
 import lombok.extern.java.Log;
+import org.opengroup.osdu.util.IndexerClientUtil;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -28,6 +29,7 @@ public abstract class TestsBase {
     protected Map<String, String> tenantMap = new HashMap<>();
     protected Map<String, TestIndex> inputRecordMap = new HashMap<>();
     protected ElasticUtils elasticUtils;
+    protected IndexerClientUtil indexerClientUtil;
 
     public TestsBase(HTTPClient httpClient) {
         this.httpClient = httpClient;
@@ -36,6 +38,7 @@ public abstract class TestsBase {
         tenantMap.put("common", "common");
 
         elasticUtils = new ElasticUtils();
+        this.indexerClientUtil = new IndexerClientUtil(this.httpClient);
     }
 
     public TestsBase(HTTPClient httpClient, ElasticUtils elasticUtils) {
@@ -45,6 +48,7 @@ public abstract class TestsBase {
         tenantMap.put("common", "common");
 
         this.elasticUtils = elasticUtils;
+        this.indexerClientUtil = new IndexerClientUtil(this.httpClient);
     }
 
     protected TestIndex getTextIndex(){
@@ -94,7 +98,7 @@ public abstract class TestsBase {
     public void tearDown() {
         for (String kind : inputRecordMap.keySet()) {
             TestIndex testIndex = inputRecordMap.get(kind);
-            testIndex.cleanupIndex();
+            testIndex.cleanupIndex(kind);
         }
     }
 
