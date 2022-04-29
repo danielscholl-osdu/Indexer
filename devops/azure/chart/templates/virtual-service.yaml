@@ -11,7 +11,7 @@ spec:
   - "{{ .Values.istioDnsHost }}"
   gateways:
   - istio-gateway
-  http:  
+  http:
   - match:
     - uri:
         prefix: "/api/indexer/v2"
