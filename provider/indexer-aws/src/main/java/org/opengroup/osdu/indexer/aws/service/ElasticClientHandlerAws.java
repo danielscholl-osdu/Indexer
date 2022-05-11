@@ -71,11 +71,9 @@ public class ElasticClientHandlerAws extends ElasticClientHandler {
                 httpClientBuilder.setSSLContext(sslContext)
                                 .setSSLHostnameVerifier((s, session) -> true));
             } catch (NoSuchAlgorithmException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.severe(e.getMessage());
             } catch (KeyManagementException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.severe(e.getMessage());
             }
 
         }
