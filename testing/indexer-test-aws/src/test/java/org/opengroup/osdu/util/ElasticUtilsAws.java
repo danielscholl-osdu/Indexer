@@ -21,12 +21,14 @@ import java.util.Base64;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 
+@Slf4j
 public class ElasticUtilsAws extends ElasticUtils {
 
     private static final int REST_CLIENT_CONNECT_TIMEOUT = 60000;
@@ -50,11 +52,9 @@ public class ElasticUtilsAws extends ElasticUtils {
             httpClientBuilder.setSSLContext(sslContext)
                             .setSSLHostnameVerifier((s, session) -> true));
         } catch (NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error("No such algorithm.", e);
         } catch (KeyManagementException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error("Key management error.", e);
         }
 
 
