@@ -106,7 +106,7 @@ public class ElasticClientHandler {
         new BasicHeader("xpack.security.transport.ssl.enabled", tls),
         new BasicHeader("Authorization", basicAuthenticationHeaderVal),
     };
-    log.info(String.format(
+    log.fine(String.format(
         "Elastic client connection uses protocolScheme = %s with a flag "
             + "'security.https.certificate.trust' = %s",
         protocolScheme, isSecurityHttpsCertificateTrust));
