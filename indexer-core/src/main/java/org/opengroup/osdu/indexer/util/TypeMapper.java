@@ -117,7 +117,11 @@ public class TypeMapper {
         }
 
         if (isArray(indexerType.toString())) {
-            return Records.Type.builder().type(getArrayMemberType(indexerType.toString())).build();
+            String memberType = getArrayMemberType(indexerType.toString());
+            if (ElasticType.TEXT.getValue().equalsIgnoreCase(memberType)) {
+                return getTextIndexerMapping();
+            }
+            return Records.Type.builder().type(memberType).build();
         }
 
         if (isMap(indexerType)) {
