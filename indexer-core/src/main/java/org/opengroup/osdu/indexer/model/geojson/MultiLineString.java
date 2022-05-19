@@ -14,14 +14,21 @@
 
 package org.opengroup.osdu.indexer.model.geojson;
 
-import lombok.NoArgsConstructor;
-
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
+import lombok.NoArgsConstructor;
+import org.opengroup.osdu.indexer.model.geojson.jackson.MultiLineStringDeserializer;
 
 @NoArgsConstructor
 public class MultiLineString extends Geometry<List<Position>> {
 
     public MultiLineString(List<Position> line) {
         add(line);
+    }
+
+    @Override
+    @JsonDeserialize(using = MultiLineStringDeserializer.class)
+    public void setCoordinates(List<List<Position>> coordinates) {
+        super.setCoordinates(coordinates);
     }
 }
