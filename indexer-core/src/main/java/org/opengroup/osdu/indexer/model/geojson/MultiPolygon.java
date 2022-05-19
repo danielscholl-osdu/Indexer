@@ -14,9 +14,10 @@
 
 package org.opengroup.osdu.indexer.model.geojson;
 
-import lombok.NoArgsConstructor;
-
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
+import lombok.NoArgsConstructor;
+import org.opengroup.osdu.indexer.model.geojson.jackson.MultiPolygonDeserializer;
 
 @NoArgsConstructor
 public class MultiPolygon extends Geometry<List<List<Position>>> {
@@ -28,5 +29,11 @@ public class MultiPolygon extends Geometry<List<List<Position>>> {
     public MultiPolygon add(Polygon polygon) {
         coordinates.add(polygon.getCoordinates());
         return this;
+    }
+
+    @Override
+    @JsonDeserialize(using = MultiPolygonDeserializer.class)
+    public void setCoordinates(List<List<List<Position>>> coordinates) {
+        super.setCoordinates(coordinates);
     }
 }
