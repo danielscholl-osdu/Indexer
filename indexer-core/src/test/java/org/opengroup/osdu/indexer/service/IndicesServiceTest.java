@@ -27,6 +27,7 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.*;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.rest.RestStatus;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,10 +90,14 @@ public class IndicesServiceTest {
     @Test
     public void delete_existingElasticIndex() throws Exception {
         AcknowledgedResponse indexResponse = new AcknowledgedResponse(true);
+        GetIndexResponse getIndexResponse = PowerMockito.mock(GetIndexResponse.class);
+        String[] indices = {"anyIndex"};
 
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doReturn(indexResponse).when(indicesClient).delete(any(), any(RequestOptions.class));
+        doReturn(getIndexResponse).when(indicesClient).get(any(GetIndexRequest.class), any(RequestOptions.class));
+        doReturn(indices).when(getIndexResponse).getIndices();
         boolean response = this.sut.deleteIndex("anyIndex");
         assertTrue(response);
     }
@@ -100,10 +105,14 @@ public class IndicesServiceTest {
     @Test
     public void delete_existingElasticIndex_usingSameClient() throws Exception {
         AcknowledgedResponse indexResponse = new AcknowledgedResponse(true);
+        GetIndexResponse getIndexResponse = PowerMockito.mock(GetIndexResponse.class);
+        String[] indices = {"anyIndex"};
 
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doReturn(indexResponse).when(indicesClient).delete(any(), any(RequestOptions.class));
+        doReturn(getIndexResponse).when(indicesClient).get(any(GetIndexRequest.class), any(RequestOptions.class));
+        doReturn(indices).when(getIndexResponse).getIndices();
         boolean response = this.sut.deleteIndex(restHighLevelClient, "anyIndex");
         assertTrue(response);
     }
@@ -111,9 +120,13 @@ public class IndicesServiceTest {
     @Test
     public void should_throw_internalServerException_delete_isNotAcknowledged() throws Exception {
         AcknowledgedResponse indexResponse = new AcknowledgedResponse(false);
+        GetIndexResponse getIndexResponse = PowerMockito.mock(GetIndexResponse.class);
+        String[] indices = {"anyIndex"};
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doReturn(indexResponse).when(indicesClient).delete(any(), any(RequestOptions.class));
+        doReturn(getIndexResponse).when(indicesClient).get(any(GetIndexRequest.class), any(RequestOptions.class));
+        doReturn(indices).when(getIndexResponse).getIndices();
 
         try {
             this.sut.deleteIndex("anyIndex");
@@ -131,9 +144,13 @@ public class IndicesServiceTest {
     public void should_throwAppException_when_delete_existingElasticIndex_and_backupIsRunning() throws Exception {
         ElasticsearchStatusException exception = new ElasticsearchStatusException(
                 "Cannot delete indices that are being snapshotted: [[anyIndex/8IXuPeFnTJGEu_LjjXrHwA]]. Try again after snapshot finishes or cancel the currently running snapshot.", RestStatus.BAD_REQUEST);
+        GetIndexResponse getIndexResponse = PowerMockito.mock(GetIndexResponse.class);
+        String[] indices = {"anyIndex"};
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doThrow(exception).when(indicesClient).delete(any(), any(RequestOptions.class));
+        doReturn(getIndexResponse).when(indicesClient).get(any(GetIndexRequest.class), any(RequestOptions.class));
+        doReturn(indices).when(getIndexResponse).getIndices();
 
         try {
             this.sut.deleteIndex("anyIndex");
@@ -152,7 +169,7 @@ public class IndicesServiceTest {
         ElasticsearchStatusException exception = new ElasticsearchStatusException("no such index", RestStatus.NOT_FOUND);
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
-        doThrow(exception).when(indicesClient).delete(any(), any(RequestOptions.class));
+        doThrow(exception).when(indicesClient).get(any(GetIndexRequest.class), any(RequestOptions.class));
 
         try {
             this.sut.deleteIndex("anyIndex");
