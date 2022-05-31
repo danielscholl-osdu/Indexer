@@ -13,7 +13,7 @@ data:
 conf:
   app_name: "indexer"
   configmap: "indexer-config"
-  elastic_secret_name: "elastic-secret"
+  elastic_secret_name: "indexer-elastic-secret"
   keycloak_secret_name: "indexer-keycloak-secret"
   on_prem_enabled: false
   rabbitmq_secret_name: "rabbitmq-secret"
