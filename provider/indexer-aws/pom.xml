@@ -32,7 +32,7 @@
       <aws.version>1.11.1018</aws.version>
       <deployment.environment>dev</deployment.environment>
       <netty.version>4.1.51.Final</netty.version>
-      <jackson.version>2.11.4</jackson.version>
+      <jackson.version>2.13.2</jackson.version>
   </properties>
 
   <dependencyManagement>
