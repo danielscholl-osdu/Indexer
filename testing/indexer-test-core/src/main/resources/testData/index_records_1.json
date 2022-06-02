@@ -7,8 +7,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "lat":32.406402588,
-        "lon":-86.565592762
+        "lat": 32.406402588,
+        "lon": -86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -20,9 +20,18 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 10,
+      "Score": 10,
       "Established": "2000-03-27T23:38:48Z",
-      "DblArray": [32.40, 36.45, 40.0]
+      "DblArray": [
+        32.40,
+        36.45,
+        40.0
+      ],
+      "TextArray": [
+        "Elevation (m)",
+        "SpatialLocation",
+        "Well Type"
+      ]
     }
   },
   {
@@ -33,8 +42,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "lat":32.406402588,
-        "lon":-86.565592762
+        "lat": 32.406402588,
+        "lon": -86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -46,9 +55,17 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 10,
+      "Score": 10,
       "Established": "2000-03-27T23:38:48Z",
-      "DblArray": [62.40, 60.0]
+      "DblArray": [
+        62.40,
+        60.0
+      ],
+      "TextArray": [
+        "WCR",
+        "License",
+        "Completion Date"
+      ]
     }
   },
   {
@@ -59,8 +76,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "lat":32.406402588,
-        "lon":-86.565592762
+        "lat": 32.406402588,
+        "lon": -86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -72,8 +89,13 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 10,
-      "Established": "2000-03-27T23:38:48Z"
+      "Score": 10,
+      "Established": "2000-03-27T23:38:48Z",
+      "TextArray": [
+        "Wgs84Coordinates",
+        "Petroleum Field"
+      ]
+
     }
   },
   {
@@ -84,8 +106,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "lat":32.406402588,
-        "lon":-86.565592762
+        "lat": 32.406402588,
+        "lon": -86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -97,7 +119,7 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 10,
+      "Score": 10,
       "Established": "2000-03-27T23:38:48Z"
     }
   },
@@ -109,8 +131,8 @@
     "data": {
       "Field": "OSDU OFFICE - 2",
       "Location": {
-        "lat":32.406402588,
-        "lon":-86.565592762
+        "lat": 32.406402588,
+        "lon": -86.565592762
       },
       "Basin": "Houston",
       "County": "Harris",
@@ -122,7 +144,7 @@
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
       "Rank": 1,
-      "Score" : 10,
+      "Score": 10,
       "Established": "2000-03-27T23:38:48Z"
     }
   }

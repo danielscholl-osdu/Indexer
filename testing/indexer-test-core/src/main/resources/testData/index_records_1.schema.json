@@ -6,7 +6,7 @@
       "entityType": "test-data--Integration",
       "schemaVersionMajor": "1",
       "schemaVersionMinor": "0",
-      "schemaVersionPatch": "1"
+      "schemaVersionPatch": "2"
     },
     "status": "DEVELOPMENT"
   },
@@ -83,6 +83,12 @@
                 "type": "array",
                 "items": {
                   "type": "number"
+                }
+              },
+              "TextArray": {
+                "type": "array",
+                "items": {
+                  "type": "string"
                 }
               }
             }
