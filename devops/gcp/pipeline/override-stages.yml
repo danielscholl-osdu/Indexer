@@ -1,0 +1,19 @@
+variables:
+  OSDU_GCP_SERVICE: indexer
+  OSDU_GCP_VENDOR: gcp
+  OSDU_GCP_HELM_CONFIG_SERVICE_VARS: >
+    --set data.log_level=INFO
+    --set data.redis_search_host=$REDIS_SEARCH_HOST
+    --set data.redis_group_host=$REDIS_GROUP_HOST
+    --set data.google_audiences=$GOOGLE_AUDIENCE
+  OSDU_GCP_HELM_CONFIG_SERVICE_VARS_DEV2: >
+    --set data.log_level=INFO
+    --set data.redis_search_host=$REDIS_SEARCH_HOST
+    --set data.redis_group_host=$REDIS_GROUP_HOST
+    --set data.google_audiences=$GOOGLE_AUDIENCE
+  OSDU_GCP_HELM_DEPLOYMENT_SERVICE_VARS: > 
+    --set data.image=$CI_REGISTRY_IMAGE/osdu-gcp-$OSDU_GCP_SERVICE:$CI_COMMIT_SHORT_SHA
+    --set data.serviceAccountName=$OSDU_GCP_SERVICE-k8s
+  OSDU_GCP_HELM_CONFIG_SERVICE: indexer-config
+  OSDU_GCP_HELM_DEPLOYMENT_SERVICE: indexer-deploy
+  OSDU_GCP_HELM_PACKAGE_CHARTS: "devops/gcp/deploy devops/gcp/configmap"
