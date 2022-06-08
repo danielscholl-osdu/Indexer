@@ -120,7 +120,7 @@ public class StorageServiceImpl implements StorageService {
         try {
             records = this.objectMapper.readValue(bulkStorageData, Records.class);
         } catch (JsonProcessingException e) {
-            throw new AppException(RequestStatus.INVALID_RECORD, "Invalid request", "Successful Storage service response with wrong json");
+            throw new AppException(RequestStatus.INVALID_RECORD, "Invalid request", "Successful Storage service response with wrong json", e);
         }
 
         // no retry possible, update record status as failed -- storage service cannot locate records
