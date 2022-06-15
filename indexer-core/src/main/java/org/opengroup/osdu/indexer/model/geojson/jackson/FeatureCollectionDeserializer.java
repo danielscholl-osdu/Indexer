@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonSyntaxException;
 import org.opengroup.osdu.indexer.model.geojson.Feature;
 import org.opengroup.osdu.indexer.model.geojson.FeatureCollection;
 
@@ -39,6 +40,11 @@ public class FeatureCollectionDeserializer extends JsonDeserializer<FeatureColle
         ObjectCodec codec = jsonParser.getCodec();
         JsonNode featureCollection = codec.readTree(jsonParser);
         JsonNode features = featureCollection.get("features");
+
+        if(features == null){
+            throw new JsonSyntaxException("Missing feature field in the ");
+        }
+
         final List<Feature> result = new ArrayList<>();
         for (JsonNode node : features) {
             result.add(codec.treeToValue(node, Feature.class));
