@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-service</artifactId>
-        <version>0.15.0-SNAPSHOT</version>
+        <version>0.16.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>indexer-reference</artifactId>
-    <version>0.15.0-SNAPSHOT</version>
+    <version>0.16.0-SNAPSHOT</version>
     <name>indexer-reference</name>
     <description>Indexer Service GCP Anthos</description>
     <packaging>jar</packaging>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-core</artifactId>
-            <version>0.15.0-SNAPSHOT</version>
+            <version>0.16.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

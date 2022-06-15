@@ -18,7 +18,7 @@
   <parent>
       <groupId>org.opengroup.osdu.indexer</groupId>
       <artifactId>indexer-service</artifactId>
-      <version>0.15.0-SNAPSHOT</version>
+      <version>0.16.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -26,12 +26,13 @@
   <artifactId>indexer-aws</artifactId>
   <description>Indexer service on AWS</description>
   <packaging>jar</packaging>
-    <version>0.15.0-SNAPSHOT</version>
+    <version>0.16.0-SNAPSHOT</version>
 
   <properties>
       <aws.version>1.11.1018</aws.version>
       <deployment.environment>dev</deployment.environment>
       <netty.version>4.1.51.Final</netty.version>
+      <jackson-databind.version>2.13.2.2</jackson-databind.version>
       <jackson.version>2.13.2</jackson.version>
   </properties>
 
@@ -64,7 +65,7 @@
     <dependency>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-core</artifactId>
-        <version>0.15.0-SNAPSHOT</version>
+        <version>0.16.0-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
@@ -129,6 +130,21 @@
     <dependency>
         <groupId>org.elasticsearch.client</groupId>
         <artifactId>elasticsearch-rest-high-level-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson-databind.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>${jackson.version}</version>
     </dependency>
 
     <!-- Testing packages -->
