@@ -1,11 +1,6 @@
 variables:
   OSDU_GCP_SERVICE: indexer
   OSDU_GCP_VENDOR: gcp
-  OSDU_GCP_HELM_CONFIG_SERVICE_VARS_DEV2: >
-    --set data.log_level=INFO
-    --set data.redis_search_host=$REDIS_SEARCH_HOST
-    --set data.redis_group_host=$REDIS_GROUP_HOST
-    --set data.google_audiences=$GOOGLE_AUDIENCE
 
 osdu-gcp-anthos-test:
   variables:
