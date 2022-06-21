@@ -53,6 +53,8 @@
         <reactor-core.version>3.4.6</reactor-core.version>
         <jackson-dataformat-xml.version>2.11.4</jackson-dataformat-xml.version>
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
+        <jackson-databind.version>2.13.2.2</jackson-databind.version>
+        <jackson.version>2.13.2</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -212,6 +214,23 @@
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
+        </dependency>
+
+        <!-- Jackson explicit Dependencies-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-databind.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Resilience4j Dependencies-->
