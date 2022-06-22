@@ -37,10 +37,10 @@ public class FeatureCollectionDeserializerTest {
     private final JsonFactory factory = mapper.getFactory();
 
     @Test
-    public void should_throwException_provided_emptyGeoJson() {
+    public void should_throwException_provided_emptyFeatureJson() {
         String shapeJson = "{}";
 
-        this.validateInput(shapeJson, Strings.EMPTY, "shape not included");
+        this.validateInput(shapeJson, Strings.EMPTY, "feature not included");
     }
 
     @Test
