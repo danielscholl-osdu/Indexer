@@ -1,168 +1,202 @@
 package org.opengroup.osdu.indexer.model.geojson.jackson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import com.google.gson.internal.LinkedTreeMap;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import joptsimple.internal.Strings;
+import lombok.SneakyThrows;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.opengroup.osdu.indexer.model.geojson.Feature;
 import org.opengroup.osdu.indexer.model.geojson.FeatureCollection;
-import org.opengroup.osdu.indexer.model.geojson.LineString;
-import org.opengroup.osdu.indexer.model.geojson.Position;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 public class FeatureCollectionDeserializerTest {
 
-    private ObjectMapper mapper = new ObjectMapper();
+    @InjectMocks
+    private FeatureCollectionDeserializer featureCollectionDeserializer;
 
-    private FeatureCollection featureCollection = createFeatureCollection();
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonFactory factory = mapper.getFactory();
 
     @Test
-    public void should_returnFeatureList_extractFeatureTest(){
-        Map<String, Object> objectMap = createObjectMap();
+    public void should_throwException_provided_emptyGeoJson() {
+        String shapeJson = "{}";
 
+        this.validateInput(shapeJson, Strings.EMPTY, "shape not included");
+    }
+
+    @Test
+    public void should_throwException_parseInvalidPoint() {
+        String shapeJson = getFeatureFromFile("input/invalid_point.json");
+        this.validateInput(shapeJson, Strings.EMPTY, "unable to parse FeatureCollection");
+    }
+
+    @Test
+    public void should_throwException_parseInvalidPoint_NaN() {
+        String shapeJson = getFeatureFromFile("input/invalid_point_nan.json");
+        this.validateInput(shapeJson, Strings.EMPTY, "unable to parse FeatureCollection");
+    }
+
+    @Test
+    public void should_throwException_parseInvalidPoint_missingLatitude() {
+        String shapeJson = getFeatureFromFile("input/invalid_point_missing_latitude.json");
+        this.validateInput(shapeJson, Strings.EMPTY, "unable to parse FeatureCollection");
+    }
+
+    @Test
+    public void should_throwException_missingMandatoryAttribute() {
+        String shapeJson = getFeatureFromFile("input/missing_mandatory_attribute.json");
+        this.validateInput(shapeJson, Strings.EMPTY, "must be a valid FeatureCollection");
+    }
+
+    @Test
+    public void should_throwException_parseInvalidShape() {
+        String shapeJson = getFeatureFromFile("input/invalid_shape.json");
+        this.validateInput(shapeJson, Strings.EMPTY, "must be a valid FeatureCollection");
+    }
+
+    @Test
+    public void should_parseValidPoint() {
+        String shapeJson = getFeatureFromFile("input/valid_point.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_parseValidMultiPoint() {
+        String shapeJson = getFeatureFromFile("input/valid_multi_point.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_parseValidLineString() {
+        String shapeJson = getFeatureFromFile("input/valid_line_string.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_parseValidMultiLineString() {
+        String shapeJson = getFeatureFromFile("input/valid_multi_line_string.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_parseValidPolygon() {
+        String shapeJson = getFeatureFromFile("input/valid_polygon.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_throwException_parseInvalidPolygon_malformedLatitude() {
+        String shapeJson = getFeatureFromFile("input/invalid_polygon_malformed_latitude.json");
+        this.validateInput(shapeJson, Strings.EMPTY, "unable to parse FeatureCollection");
+    }
+
+    @Test
+    public void should_parseValidMultiPolygon() {
+        String shapeJson = getFeatureFromFile("input/valid_multi_polygon.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_parseValidGeometryCollection() {
+        String shapeJson = getFeatureFromFile("input/valid_geometry_collection.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_parseValidFeatureCollection() {
+        String shapeJson = getFeatureFromFile("input/valid_feature_collection.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_parseValidFeatureCollection_withZCoordinate() {
+        String shapeJson = getFeatureFromFile("input/valid_feature_collection_with_z_coordinate.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_throwException_parseUnsupportedType_feature() {
+        String shapeJson = getFeatureFromFile("input/valid_feature_collection_with_z_coordinate.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void shouldParseValidMultiPolygonWithZCoordinates() {
+        String shapeJson = getFeatureFromFile("input/multi_polygon_with_z_coordinates.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void shouldParseValidLineStringWithZCoordinates() {
+        String shapeJson = getFeatureFromFile("input/line_string_with_z_coordinate.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+    @Test
+    public void shouldParseValidMultiLineStringWithZCoordinates() {
+        String shapeJson = getFeatureFromFile("input/valid_milti_line_string_with_z_coordinate.json");
+        this.validateInput(shapeJson, shapeJson, Strings.EMPTY);
+    }
+
+
+    private void validateInput(String shapeJson, String expectedParsedShape, String errorMessage) {
         try {
-            FeatureCollection collection = mapper.readValue(mapper.writeValueAsString(objectMap), FeatureCollection.class);
-            assertEquals(featureCollection, collection);
-        } catch (JsonProcessingException e) {
-            fail("unable to parse FeatureCollection");
+            Type type = new TypeToken<Map<String, Object>>() {}.getType();
+            Map<String, Object> expectedShape = new Gson().fromJson(expectedParsedShape, type);
+            FeatureCollection featureCollection = mapper.convertValue(expectedShape, FeatureCollection.class);
+
+            JsonParser parser = factory.createParser(shapeJson);
+            List<Feature> result = (List<Feature>) callPrivateMethod_ExtractFeature(parser);
+
+            assertNotNull(result);
+            assertTrue(Strings.isNullOrEmpty(errorMessage));
+            assertEquals(featureCollection.getFeatures(), result);
+        } catch (IllegalArgumentException e) {
+            if (Strings.isNullOrEmpty(errorMessage)) {
+                fail(String.format("error parsing valid feature-json %s", shapeJson));
+            } else {
+                assertThat(String.format("Incorrect error message for feature-json parsing [ %s ]", shapeJson), e.getMessage(), containsString(errorMessage));
+            }
+        } catch (IOException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            e.printStackTrace();
         }
     }
 
-    @Test
-    public void should_throwException_extractFeatureTest(){
-        assertThrows(InvalidTypeIdException.class, () -> mapper.readValue(mapper.writeValueAsString(new LinkedTreeMap()), FeatureCollection.class));
-    }
-
-    @Test
-    public void should_throwException_whenInvalidFeature_extractFeatureTest(){
-        Map<String, Object> objectMap = createInvalidObjectMap();
-        assertThrows(InvalidTypeIdException.class, () -> mapper.readValue(mapper.writeValueAsString(objectMap), FeatureCollection.class));
-    }
-
-    @Test
-    public void should_returnFeatureList_withoutGeometry_extractFeatureTest() {
-        FeatureCollection featureCollection = createFeatureCollectionWithoutGeometry();
-        Map<String, Object> objectMap = createInvalidObjectMapWithoutGeometry();
-
-        try {
-            FeatureCollection collection = mapper.readValue(mapper.writeValueAsString(objectMap), FeatureCollection.class);
-            assertEquals(featureCollection, collection);
-        } catch (JsonProcessingException e) {
-            fail("unable to parse FeatureCollection");
+    @SneakyThrows
+    private String getFeatureFromFile(String file) {
+        InputStream inStream = this.getClass().getResourceAsStream("/geojson/parsing/" + file);
+        assert inStream != null;
+        BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
+        StringBuilder stringBuilder = new StringBuilder();
+        String sCurrentLine;
+        while ((sCurrentLine = br.readLine()) != null) {
+            stringBuilder.append(sCurrentLine).append("\n");
         }
+        return stringBuilder.toString();
     }
 
-    private FeatureCollection createFeatureCollection(){
-        Position position = new Position(90, 80);
-        List<Position> positions = new ArrayList<>();
-        positions.add(position);
-
-        LineString lineString = new LineString();
-        lineString.setCoordinates(positions);
-        Feature feature = new Feature();
-        feature.setGeometry(lineString);
-
-        List<Feature> futures = new ArrayList<>();
-        futures.add(feature);
-        FeatureCollection featureCollection = new FeatureCollection();
-        featureCollection.setFeatures(futures);
-
-        return featureCollection;
-    }
-
-    private FeatureCollection createFeatureCollectionWithoutGeometry(){
-        Feature feature = new Feature();
-
-        List<Feature> futures = new ArrayList<>();
-        futures.add(feature);
-        FeatureCollection featureCollection = new FeatureCollection();
-        featureCollection.setFeatures(futures);
-
-        return featureCollection;
-    }
-
-    private Map<String, Object> createObjectMap(){
-        Map<String, String> type = new LinkedTreeMap<>();
-        type.put("type", "Feature");
-
-        List<Double> objectList2 = new ArrayList<>();
-        objectList2.add(90d);
-        objectList2.add(80d);
-        List<Object> objectList1 = new ArrayList<>();
-        objectList1.add(objectList2);
-        LinkedTreeMap<String, Object> geometry = new LinkedTreeMap<>();
-        geometry.put("type", "LineString");
-        geometry.put("coordinates", objectList1);
-
-        LinkedTreeMap<String, Object> objectList11 = new LinkedTreeMap<>();
-        objectList11.put("type", "Feature");
-        objectList11.put("geometry", geometry);
-        objectList11.put("property", new LinkedTreeMap<>());
-
-        List<Object> objectList = new ArrayList<>();
-        objectList.add(objectList11);
-
-        Map<String, Object> objectMap = new LinkedTreeMap();
-        objectMap.put("features", objectList);
-        objectMap.put("type", "FeatureCollection");
-
-        return objectMap;
-    }
-
-    private Map<String, Object> createInvalidObjectMap(){
-        Map<String, String> type = new LinkedTreeMap<>();
-        type.put("type", "Feature");
-
-        List<Double> objectList2 = new ArrayList<>();
-        objectList2.add(90d);
-        objectList2.add(80d);
-        List<Object> objectList1 = new ArrayList<>();
-        objectList1.add(objectList2);
-        LinkedTreeMap<String, Object> geometry = new LinkedTreeMap<>();
-        geometry.put("type", "LineString");
-        geometry.put("coordinates", objectList1);
-
-        LinkedTreeMap<String, Object> objectList11 = new LinkedTreeMap<>();
-        objectList11.put("type", "FeatuIre");
-        objectList11.put("geometry", geometry);
-        objectList11.put("property", new LinkedTreeMap<>());
-
-        List<Object> objectList = new ArrayList<>();
-        objectList.add(objectList11);
-
-        Map<String, Object> objectMap = new LinkedTreeMap();
-        objectMap.put("features", objectList);
-        objectMap.put("type", "FeatureCollection");
-
-        return objectMap;
-    }
-
-    private Map<String, Object> createInvalidObjectMapWithoutGeometry(){
-        Map<String, String> type = new LinkedTreeMap<>();
-        type.put("type", "Feature");
-
-        LinkedTreeMap<String, Object> objectList11 = new LinkedTreeMap<>();
-        objectList11.put("type", "Feature");
-        objectList11.put("property", new LinkedTreeMap<>());
-
-        List<Object> objectList = new ArrayList<>();
-        objectList.add(objectList11);
-
-        Map<String, Object> objectMap = new LinkedTreeMap();
-        objectMap.put("features", objectList);
-        objectMap.put("type", "FeatureCollection");
-
-        return objectMap;
+    public Object callPrivateMethod_ExtractFeature(JsonParser parser) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
+        Method method = featureCollectionDeserializer.getClass().getDeclaredMethod("extractFeature", JsonParser.class);
+        method.setAccessible(true);
+        return method.invoke(featureCollectionDeserializer, parser);
     }
 }
