@@ -14,12 +14,12 @@
 
 package org.opengroup.osdu.indexer.model.geojson.jackson;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.gson.JsonSyntaxException;
 import org.opengroup.osdu.indexer.model.geojson.Feature;
 import org.opengroup.osdu.indexer.model.geojson.FeatureCollection;
 
@@ -42,7 +42,7 @@ public class FeatureCollectionDeserializer extends JsonDeserializer<FeatureColle
         JsonNode features = featureCollection.get("features");
 
         if(features == null){
-            throw new JsonSyntaxException("Missing feature field in the ");
+            throw new JsonParseException(jsonParser, "Missing feature field in the ");
         }
 
         final List<Feature> result = new ArrayList<>();
