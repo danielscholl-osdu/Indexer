@@ -1,2 +1,2 @@
 * text=auto eol=lf
-*.java binary
+*.sh eol=lf
