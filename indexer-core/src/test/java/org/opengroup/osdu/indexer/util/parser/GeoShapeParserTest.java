@@ -34,6 +34,7 @@ import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @RunWith(SpringRunner.class)
 public class GeoShapeParserTest {
@@ -176,6 +177,16 @@ public class GeoShapeParserTest {
         String shapeJson = getGeoShapeFromFile("input/valid_milti_line_string_with_z_coordinate.json");
         String expectedParsedShape = getGeoShapeFromFile("expected/valid_multi_line_string_with_z_coordinate.json");
         this.validateInput(this.sut::parseGeoJson, shapeJson, expectedParsedShape, Strings.EMPTY);
+    }
+
+    @Test
+    public void should_throwException_parseInvalidFeatureCollection() {
+        String shapeJson = getGeoShapeFromFile("input/invalid_feature_collection.json");
+
+        Type type = new TypeToken<Map<String, Object>>() {}.getType();
+        Map<String, Object> shapeObj = new Gson().fromJson(shapeJson, type);
+
+        assertThrows(IllegalArgumentException.class, () -> this.sut.parseGeoJson(shapeObj));
     }
 
     private void validateInput(Function<Map<String, Object>, Map<String, Object>> parser, String shapeJson, String expectedParsedShape, String errorMessage) {
