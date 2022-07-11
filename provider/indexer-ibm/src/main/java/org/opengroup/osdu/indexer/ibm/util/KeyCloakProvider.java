@@ -13,7 +13,7 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.net.ssl.HttpsURLConnection;
+import java.net.HttpURLConnection;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,10 +42,20 @@ public class KeyCloakProvider {
     @Value("${ibm.keycloak.client_secret}")
     private String clientSecret;
     
+	@Value("${partition.keycloak.accept_http:false}")
+	private boolean accept_kc_http;
+
+    
 	public String getToken(String user, String password) throws IOException {
 		String endpoint = String.format("https://%s/auth/realms/%s/protocol/openid-connect/token", url, realm);
+		if(accept_kc_http)
+		{
+			endpoint = String.format("http://%s/auth/realms/%s/protocol/openid-connect/token", url, realm);
+			
+		}
+		
         URL url = new URL(endpoint);
-        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+        HttpURLConnection  con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
