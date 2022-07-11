@@ -66,7 +66,7 @@ public class IndexerServiceImpl implements IndexerService {
 
     private static final TimeValue BULK_REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
-    private static final List<RestStatus> RETRY_ELASTIC_EXCEPTION = new ArrayList<>(Arrays.asList(RestStatus.TOO_MANY_REQUESTS, RestStatus.BAD_GATEWAY, RestStatus.SERVICE_UNAVAILABLE));
+    private static final List<RestStatus> RETRY_ELASTIC_EXCEPTION = new ArrayList<>(Arrays.asList(RestStatus.TOO_MANY_REQUESTS, RestStatus.BAD_GATEWAY, RestStatus.SERVICE_UNAVAILABLE, RestStatus.FORBIDDEN));
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
