@@ -317,6 +317,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-utils</artifactId>
+            <version>3.0.16</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty</artifactId>
             <version>${reactor-netty.version}</version>
