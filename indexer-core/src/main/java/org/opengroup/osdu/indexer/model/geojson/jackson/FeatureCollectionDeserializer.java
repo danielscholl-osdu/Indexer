@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.model.geojson.jackson;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -39,6 +40,11 @@ public class FeatureCollectionDeserializer extends JsonDeserializer<FeatureColle
         ObjectCodec codec = jsonParser.getCodec();
         JsonNode featureCollection = codec.readTree(jsonParser);
         JsonNode features = featureCollection.get("features");
+
+        if(features == null){
+            throw new JsonParseException(jsonParser, "Missing feature field in the ");
+        }
+
         final List<Feature> result = new ArrayList<>();
         for (JsonNode node : features) {
             result.add(codec.treeToValue(node, Feature.class));
