@@ -54,6 +54,7 @@
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
         <jackson-databind.version>2.13.2.2</jackson-databind.version>
         <jackson.version>2.13.2</jackson.version>
+        <spring-webmvc.version>5.3.22</spring-webmvc.version>
     </properties>
 
     <dependencyManagement>
@@ -329,6 +330,11 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>oauth2-oidc-sdk</artifactId>
             <version>${oauth2-oidc-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring-webmvc.version}</version>
         </dependency>
 
     </dependencies>
