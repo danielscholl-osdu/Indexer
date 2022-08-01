@@ -9,8 +9,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.commons.beanutils.NestedNullException;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -21,11 +21,18 @@ import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
+import org.opengroup.osdu.indexer.schema.converter.tags.Priority;
+import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
+import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
 import org.springframework.stereotype.Component;
 
 @Component
 public class StorageIndexerPayloadMapper {
+	private static final String PROPERTY_DELIMITER = ".";
+	private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
 
 	@Inject
 	private JaxRsDpsLog log;
@@ -35,6 +42,9 @@ public class StorageIndexerPayloadMapper {
 	private JobStatus jobStatus;
 	@Inject
 	private SchemaConverterConfig schemaConfig;
+
+	@Inject
+	private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
 	public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
 		String recordId) {
@@ -47,6 +57,7 @@ public class StorageIndexerPayloadMapper {
 		}
 
 		mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
+		mapVirtualPropertiesPayload(storageSchema, dataCollectorMap);
 
 		// add these once iterated over the list
 		storageSchema.getDataSchema().put(DATA_GEOJSON_TAG, ElasticType.GEO_SHAPE.getValue());
@@ -187,4 +198,69 @@ public class StorageIndexerPayloadMapper {
     private boolean nullIndexedValueSupported(ElasticType type) {
         return type == ElasticType.TEXT;
     }
+
+	private void mapVirtualPropertiesPayload(IndexSchema storageSchema, Map<String, Object> dataCollectorMap) {
+		if(dataCollectorMap.isEmpty() || !this.hasVirtualProperties(storageSchema.getKind()))
+			return;
+
+		VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
+		for (Map.Entry<String, VirtualProperty> entry :virtualProperties.getProperties().entrySet()) {
+			if(entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0)
+				continue;
+
+			String virtualPropertyPath = entry.getKey();
+			String originalPropertyPath = chooseOriginalProperty(entry.getValue(), dataCollectorMap).getPath();
+			Preconditions.checkNotNullOrEmpty(virtualPropertyPath, "virtual path cannot be null or empty");
+			Preconditions.checkNotNullOrEmpty(originalPropertyPath, "priority path cannot be null or empty");
+
+			if(virtualPropertyPath.startsWith(DATA_PREFIX)) {
+				virtualPropertyPath = virtualPropertyPath.substring(DATA_PREFIX.length());
+			}
+			if(originalPropertyPath.startsWith(DATA_PREFIX)) {
+				originalPropertyPath = originalPropertyPath.substring(DATA_PREFIX.length());
+			}
+
+			mapVirtualPropertyPayload(dataCollectorMap, originalPropertyPath, virtualPropertyPath);
+		}
+
+	}
+
+	private void mapVirtualPropertyPayload(Map<String, Object> dataCollectorMap, String originalPropertyPath, String virtualPropertyPath) {
+		// We should not just use name.startsWith(originalPropertyPath)
+		// For example, if originalPropertyPath is "FacilityName" and name.startsWith(originalPropertyPath) is used,
+		// it can match property "FacilityNameAlias". Same in method chooseOriginalProperty(...)
+		List<String> originalPropertyNames = dataCollectorMap.keySet().stream().filter(name ->
+				name.startsWith(originalPropertyPath + PROPERTY_DELIMITER) || name.equals(originalPropertyPath))
+				.collect(Collectors.toList());
+
+		for(String originalPropertyName: originalPropertyNames) {
+			if(dataCollectorMap.containsKey(originalPropertyName)) {
+				String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
+				dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
+			}
+		}
+	}
+
+	private boolean hasVirtualProperties(String kind) {
+		return this.virtualPropertiesSchemaCache.get(kind) != null;
+	}
+
+	private Priority chooseOriginalProperty(VirtualProperty virtualProperty, Map<String, Object> dataCollectorMap) {
+		for(Priority priority: virtualProperty.getPriorities()) {
+			String originalPropertyPath = priority.getPath().startsWith(DATA_PREFIX)
+					? priority.getPath().substring(DATA_PREFIX.length())
+					: priority.getPath();
+			List<String> originalPropertyNames = dataCollectorMap.keySet().stream().filter(name ->
+					name.startsWith(originalPropertyPath + PROPERTY_DELIMITER) || name.equals(originalPropertyPath))
+					.collect(Collectors.toList());
+			for(String originalPropertyName: originalPropertyNames) {
+				// TBD: Should we specially handle DefaultLocation -- originalPropertyName + ".Wgs84Coordinates"
+				if(dataCollectorMap.containsKey(originalPropertyName) && dataCollectorMap.get(originalPropertyName) != null)
+					return priority;
+			}
+		}
+
+		// None of the original properties has value, return the default one
+		return virtualProperty.getPriorities().get(0);
+	}
 }

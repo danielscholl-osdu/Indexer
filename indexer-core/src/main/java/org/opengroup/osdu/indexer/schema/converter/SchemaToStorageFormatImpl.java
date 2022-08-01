@@ -16,13 +16,15 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.util.Strings;
+import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
-import org.opengroup.osdu.indexer.schema.converter.tags.PropertiesData;
-import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
+import org.opengroup.osdu.indexer.schema.converter.tags.*;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -34,9 +36,15 @@ import java.util.stream.Collectors;
  */
 @Component
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
+    private static final String PROPERTY_DELIMITER = ".";
+    private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
+    private final Gson gson = new Gson();
 
     private ObjectMapper objectMapper;
     private SchemaConverterConfig schemaConverterConfig;
+
+    @Inject
+    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
     @Inject
     public SchemaToStorageFormatImpl(ObjectMapper objectMapper, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {
@@ -80,6 +88,10 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
     private Map<String, Object> convert(SchemaRoot schemaServiceSchema, String kind) {
         Preconditions.checkNotNull(objectMapper, "schemaServiceSchema cannot be null");
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
+
+        if(schemaServiceSchema.getVirtualProperties() != null) {
+            virtualPropertiesSchemaCache.put(kind, schemaServiceSchema.getVirtualProperties());
+        }
 
         PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), schemaConverterConfig);
 
@@ -126,10 +138,60 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                     kind, String.join(",", propertiesProcessor.getErrors())));
         }
 
+
+        if(schemaServiceSchema.getVirtualProperties() != null) {
+            PopulateVirtualPropertiesSchema(storageSchemaItems, schemaServiceSchema.getVirtualProperties().getProperties());
+        }
+
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("kind", kind);
         result.put("schema", storageSchemaItems);
 
         return result;
+    }
+
+    private void PopulateVirtualPropertiesSchema(List<Map<String, Object>> storageSchemaItems,  Map<String, VirtualProperty> virtualProperties) {
+        if(virtualProperties == null || virtualProperties.isEmpty())
+            return;
+
+        for (Map.Entry<String, VirtualProperty> entry :virtualProperties.entrySet()) {
+            if(entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
+                continue;
+            }
+
+            // TBD: We can't support different schema from a list of Priority
+            Priority priority = entry.getValue().getPriorities().get(0); // Pick the first one
+            if(Strings.isNullOrEmpty(entry.getKey()) || Strings.isNullOrEmpty(priority.getPath())) {
+                // It should not happen
+                continue;
+            }
+
+            // Remove the data. prefix if it exists
+            String virtualPropertyPath = entry.getKey().startsWith(DATA_PREFIX)
+                                        ? entry.getKey().substring(DATA_PREFIX.length())
+                                        : entry.getKey();
+            String originalPropertyPath = priority.getPath().startsWith(DATA_PREFIX)
+                                        ? priority.getPath().substring(DATA_PREFIX.length())
+                                        : priority.getPath();
+
+            List<Map<String, Object>> matchedItems = storageSchemaItems.stream().filter(item ->
+                    isPropertyPathMatched((String)item.get("path"), originalPropertyPath))
+                    .collect(Collectors.toList());
+            storageSchemaItems.addAll(matchedItems.stream().map(item ->
+                    cloneVirtualProperty(item, virtualPropertyPath, originalPropertyPath))
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    private boolean isPropertyPathMatched(String path, String propertyPath) {
+        return !Strings.isNullOrEmpty(path) && (path.startsWith(propertyPath + PROPERTY_DELIMITER) || path.equals(propertyPath));
+    }
+
+    private Map<String, Object> cloneVirtualProperty(Map<String, Object> originalProperty, String virtualPropertyPath, String originalPropertyPath) {
+        String jsonString = gson.toJson(originalProperty);
+        Map<String, Object> clonedItem = gson.fromJson(jsonString, HashMap.class); // Clean clone
+        String virtualPropertyFullPath = virtualPropertyPath + clonedItem.get("path").toString().substring(originalPropertyPath.length());
+        clonedItem.put("path", virtualPropertyFullPath);
+        return clonedItem;
     }
 }
