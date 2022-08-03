@@ -241,8 +241,8 @@ public class StorageIndexerPayloadMapper {
 			String originalPropertyPath = priority.getPath().startsWith(DATA_PREFIX)
 					? priority.getPath().substring(DATA_PREFIX.length())
 					: priority.getPath();
-			List<String> originalPropertyNames = dataCollectorMap.keySet().stream().filter(name ->
-					name.startsWith(originalPropertyPath + PROPERTY_DELIMITER) || name.equals(originalPropertyPath))
+			List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
+					.filter(name ->isPropertyPathMatched(name, originalPropertyPath))
 					.collect(Collectors.toList());
 			for(String originalPropertyName: originalPropertyNames) {
 				// TBD: Should we specially handle DefaultLocation -- originalPropertyName + ".Wgs84Coordinates"
