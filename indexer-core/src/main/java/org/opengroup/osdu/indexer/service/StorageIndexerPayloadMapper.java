@@ -220,9 +220,10 @@ public class StorageIndexerPayloadMapper {
 										: priority.getPath();
 
 			// Populate the virtual property values from the chosen original property
-			dataCollectorMap.keySet().stream()
+			List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
 					.filter(originalPropertyName -> isPropertyPathMatched(originalPropertyName, originalPropertyPath))
-					.forEach(originalPropertyName -> {
+					.collect(Collectors.toList());
+			originalPropertyNames.forEach(originalPropertyName -> {
 						String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
 						dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
 					});
