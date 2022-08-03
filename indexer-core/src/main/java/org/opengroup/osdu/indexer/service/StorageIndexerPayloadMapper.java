@@ -219,17 +219,13 @@ public class StorageIndexerPayloadMapper {
 										? priority.getPath().substring(DATA_PREFIX.length())
 										: priority.getPath();
 
-			List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
-					.filter(path -> isPropertyPathMatched(path, originalPropertyPath))
-					.collect(Collectors.toList());
-
 			// Populate the virtual property values from the chosen original property
-			for(String originalPropertyName: originalPropertyNames) {
-				if(dataCollectorMap.containsKey(originalPropertyName)) {
-					String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
-					dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
-				}
-			}
+			dataCollectorMap.keySet().stream()
+					.filter(originalPropertyName -> isPropertyPathMatched(originalPropertyName, originalPropertyPath))
+					.forEach(originalPropertyName -> {
+						String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
+						dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
+					});
 		}
 	}
 
