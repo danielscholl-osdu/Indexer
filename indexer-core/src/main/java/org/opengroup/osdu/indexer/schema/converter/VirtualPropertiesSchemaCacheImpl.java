@@ -15,11 +15,10 @@ import java.util.Map;
 public class VirtualPropertiesSchemaCacheImpl implements IVirtualPropertiesSchemaCache<String, VirtualProperties> {
     private static final String VIRTUAL_PROPERTIES_SCHEMA = "_virtual_properties";
     private final Gson gson = new Gson();
-
-    Map<String, VirtualProperties> virtualPropertiesSchema = new HashMap<>();
+    private Map<String, VirtualProperties> virtualPropertiesSchema = new HashMap<>();
 
     @Inject
-    ISchemaCache schemaCache;
+    private ISchemaCache schemaCache;
 
     @Override
     public void put(String s, VirtualProperties o) {

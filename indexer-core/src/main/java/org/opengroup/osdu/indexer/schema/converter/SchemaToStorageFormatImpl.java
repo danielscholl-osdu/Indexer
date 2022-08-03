@@ -89,10 +89,6 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         Preconditions.checkNotNull(objectMapper, "schemaServiceSchema cannot be null");
         Preconditions.checkNotNullOrEmpty(kind, "kind cannot be null or empty");
 
-        if(schemaServiceSchema.getVirtualProperties() != null) {
-            virtualPropertiesSchemaCache.put(kind, schemaServiceSchema.getVirtualProperties());
-        }
-
         PropertiesProcessor propertiesProcessor = new PropertiesProcessor(schemaServiceSchema.getDefinitions(), schemaConverterConfig);
 
         final List<Map<String, Object>> storageSchemaItems = new ArrayList<>();
@@ -140,6 +136,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
 
         if(schemaServiceSchema.getVirtualProperties() != null) {
+            this.virtualPropertiesSchemaCache.put(kind, schemaServiceSchema.getVirtualProperties());
             PopulateVirtualPropertiesSchema(storageSchemaItems, schemaServiceSchema.getVirtualProperties().getProperties());
         }
 
@@ -155,14 +152,18 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
             return;
 
         for (Map.Entry<String, VirtualProperty> entry :virtualProperties.entrySet()) {
-            if(entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
+            if(Strings.isNullOrEmpty(entry.getKey()) ||
+               entry.getValue().getPriorities() == null ||
+               entry.getValue().getPriorities().size() == 0) {
                 continue;
             }
 
             // TBD: We can't support different schema from a list of Priority
-            Priority priority = entry.getValue().getPriorities().get(0); // Pick the first one
-            if(Strings.isNullOrEmpty(entry.getKey()) || Strings.isNullOrEmpty(priority.getPath())) {
-                // It should not happen
+            Priority priority = entry.getValue().getPriorities().stream()
+                    .filter(p -> !Strings.isNullOrEmpty(p.getPath()))
+                    .findFirst()
+                    .orElse(null);
+            if(priority == null) {
                 continue;
             }
 

@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+
+import com.google.api.client.util.Strings;
 import org.apache.commons.beanutils.NestedNullException;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.http.HttpStatus;
@@ -200,53 +202,46 @@ public class StorageIndexerPayloadMapper {
     }
 
 	private void mapVirtualPropertiesPayload(IndexSchema storageSchema, Map<String, Object> dataCollectorMap) {
-		if(dataCollectorMap.isEmpty() || !this.hasVirtualProperties(storageSchema.getKind()))
+		if(dataCollectorMap.isEmpty() || this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) == null) {
 			return;
+		}
 
 		VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
 		for (Map.Entry<String, VirtualProperty> entry :virtualProperties.getProperties().entrySet()) {
-			if(entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0)
+			if(entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
 				continue;
-
-			String virtualPropertyPath = entry.getKey();
-			String originalPropertyPath = chooseOriginalProperty(entry.getValue(), dataCollectorMap).getPath();
-			Preconditions.checkNotNullOrEmpty(virtualPropertyPath, "virtual path cannot be null or empty");
-			Preconditions.checkNotNullOrEmpty(originalPropertyPath, "priority path cannot be null or empty");
-
-			if(virtualPropertyPath.startsWith(DATA_PREFIX)) {
-				virtualPropertyPath = virtualPropertyPath.substring(DATA_PREFIX.length());
 			}
-			if(originalPropertyPath.startsWith(DATA_PREFIX)) {
-				originalPropertyPath = originalPropertyPath.substring(DATA_PREFIX.length());
-			}
+			Priority priority = chooseOriginalProperty(entry.getValue().getPriorities(), dataCollectorMap);
+			String virtualPropertyPath = entry.getKey().startsWith(DATA_PREFIX)
+										? entry.getKey().substring(DATA_PREFIX.length())
+										: entry.getKey();
+			String originalPropertyPath = priority.getPath().startsWith(DATA_PREFIX)
+										? priority.getPath().substring(DATA_PREFIX.length())
+										: priority.getPath();
 
-			mapVirtualPropertyPayload(dataCollectorMap, originalPropertyPath, virtualPropertyPath);
+			List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
+					.filter(path -> isPropertyPathMatched(path, originalPropertyPath))
+					.collect(Collectors.toList());
+
+			// Populate the virtual property values from the chosen original property
+			for(String originalPropertyName: originalPropertyNames) {
+				if(dataCollectorMap.containsKey(originalPropertyName)) {
+					String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
+					dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
+				}
+			}
 		}
-
 	}
 
-	private void mapVirtualPropertyPayload(Map<String, Object> dataCollectorMap, String originalPropertyPath, String virtualPropertyPath) {
+	private boolean isPropertyPathMatched(String path, String propertyPath) {
 		// We should not just use name.startsWith(originalPropertyPath)
 		// For example, if originalPropertyPath is "FacilityName" and name.startsWith(originalPropertyPath) is used,
 		// it can match property "FacilityNameAlias". Same in method chooseOriginalProperty(...)
-		List<String> originalPropertyNames = dataCollectorMap.keySet().stream().filter(name ->
-				name.startsWith(originalPropertyPath + PROPERTY_DELIMITER) || name.equals(originalPropertyPath))
-				.collect(Collectors.toList());
-
-		for(String originalPropertyName: originalPropertyNames) {
-			if(dataCollectorMap.containsKey(originalPropertyName)) {
-				String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
-				dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
-			}
-		}
+		return !Strings.isNullOrEmpty(path) && (path.startsWith(propertyPath + PROPERTY_DELIMITER) || path.equals(propertyPath));
 	}
 
-	private boolean hasVirtualProperties(String kind) {
-		return this.virtualPropertiesSchemaCache.get(kind) != null;
-	}
-
-	private Priority chooseOriginalProperty(VirtualProperty virtualProperty, Map<String, Object> dataCollectorMap) {
-		for(Priority priority: virtualProperty.getPriorities()) {
+	private Priority chooseOriginalProperty(List<Priority> priorities, Map<String, Object> dataCollectorMap) {
+		for(Priority priority: priorities) {
 			String originalPropertyPath = priority.getPath().startsWith(DATA_PREFIX)
 					? priority.getPath().substring(DATA_PREFIX.length())
 					: priority.getPath();
@@ -261,6 +256,6 @@ public class StorageIndexerPayloadMapper {
 		}
 
 		// None of the original properties has value, return the default one
-		return virtualProperty.getPriorities().get(0);
+		return priorities.get(0);
 	}
 }
