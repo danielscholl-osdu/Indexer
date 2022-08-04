@@ -57,8 +57,8 @@ public class IndexerMappingServiceTest {
     private final String kind = "tenant:test:test:1.0.0";
     private final String index = "tenant-test-test-1.0.0";
     private final String type = "test";
-    private final String validMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
-    private final String emptyDataValidMapping = "{\"dynamic\":false,\"properties\":{\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"}}}";
+    private final String validMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
+    private final String emptyDataValidMapping = "{\"dynamic\":false,\"properties\":{\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
 
     @Mock
     private RestClient restClient;
@@ -111,6 +111,13 @@ public class IndexerMappingServiceTest {
         Map<String, Object> dataMapping = new HashMap<>();
         dataMapping.put("Location", "geo_point");
         dataMapping.put("Msg", "text");
+        Map<String, Object> intervalNestedAttribute = new HashMap<>();
+        Map<String, Object> intervalProperties = new HashMap<>();
+        intervalProperties.put("StopMarkerID", "text");
+        intervalProperties.put("GeologicUnitInterpretationIDs", "text");
+        intervalProperties.put("StopMeasuredDepth", "double");
+        intervalNestedAttribute.put("properties", intervalProperties);
+        dataMapping.put("Intervals", intervalNestedAttribute);
         return dataMapping;
     }
 
