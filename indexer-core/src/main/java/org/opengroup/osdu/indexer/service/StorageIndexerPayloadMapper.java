@@ -39,7 +39,6 @@ public class StorageIndexerPayloadMapper {
 	private JobStatus jobStatus;
 	@Inject
 	private SchemaConverterConfig schemaConfig;
-
 	@Inject
 	private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 

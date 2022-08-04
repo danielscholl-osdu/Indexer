@@ -16,13 +16,19 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -36,8 +42,10 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-@SpringBootTest
+@RunWith(SpringRunner.class)
 public class SchemaToStorageFormatImplTest {
 
     private static final String KIND = "KIND_VAL";
@@ -45,10 +53,19 @@ public class SchemaToStorageFormatImplTest {
     private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
 
     private JaxRsDpsLog jaxRsDpsLog = Mockito.mock(JaxRsDpsLog.class);
-    
+
+    @InjectMocks
     private SchemaToStorageFormatImpl schemaToStorageFormatImpl
             = new SchemaToStorageFormatImpl(objectMapper, jaxRsDpsLog
                     , new SchemaConverterPropertiesConfig());
+
+    @Mock
+    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+
+    @Before
+    public void init(){
+        MockitoAnnotations.initMocks(this);
+    }
 
     @Test
     public void dotsDefinitionFormat() {
@@ -128,6 +145,12 @@ public class SchemaToStorageFormatImplTest {
     @Test
     public void nestedIndexHints() {
         testSingleFile("/converter/index-hints/nested-type-schema.json", "osdu:osdu:Wellbore:1.0.0");
+    }
+
+    @Test
+    public void virtualProperties() {
+        testSingleFile("/converter/index-virtual-properties/virtual-properties-schema.json", "osdu:wks:master-data--Wellbore:1.0.0");
+        verify(this.virtualPropertiesSchemaCache, times(1)).put(Mockito.anyString(), Mockito.any());
     }
 
     @Test
