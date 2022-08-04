@@ -1,19 +1,5 @@
 package org.opengroup.osdu.indexer.service;
 
-import static org.opengroup.osdu.indexer.service.IAttributeParsingService.DATA_GEOJSON_TAG;
-import static org.opengroup.osdu.indexer.service.IAttributeParsingService.RECORD_GEOJSON_TAG;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-
-import com.google.api.client.util.Strings;
 import org.apache.commons.beanutils.NestedNullException;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.http.HttpStatus;
@@ -23,18 +9,27 @@ import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
-import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.Priority;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
+import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.opengroup.osdu.indexer.service.IAttributeParsingService.DATA_GEOJSON_TAG;
+import static org.opengroup.osdu.indexer.service.IAttributeParsingService.RECORD_GEOJSON_TAG;
 
 @Component
 public class StorageIndexerPayloadMapper {
-	private static final String PROPERTY_DELIMITER = ".";
-	private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
+	private static final String DATA_VIRTUAL_DEFAULT_LOCATION = "data.VirtualProperties.DefaultLocation";
+	private static final String VIRTUAL_DEFAULT_LOCATION = "VirtualProperties.DefaultLocation";
+	private static final String FIELD_WGS84_COORDINATES = ".Wgs84Coordinates";
 
 	@Inject
 	private JaxRsDpsLog log;
@@ -211,17 +206,13 @@ public class StorageIndexerPayloadMapper {
 			if(entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
 				continue;
 			}
-			Priority priority = chooseOriginalProperty(entry.getValue().getPriorities(), dataCollectorMap);
-			String virtualPropertyPath = entry.getKey().startsWith(DATA_PREFIX)
-										? entry.getKey().substring(DATA_PREFIX.length())
-										: entry.getKey();
-			String originalPropertyPath = priority.getPath().startsWith(DATA_PREFIX)
-										? priority.getPath().substring(DATA_PREFIX.length())
-										: priority.getPath();
+			Priority priority = chooseOriginalProperty(entry.getKey(), entry.getValue().getPriorities(), dataCollectorMap);
+			String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
+			String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
 
 			// Populate the virtual property values from the chosen original property
 			List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
-					.filter(originalPropertyName -> isPropertyPathMatched(originalPropertyName, originalPropertyPath))
+					.filter(originalPropertyName -> VirtualPropertyUtil.isPropertyPathMatched(originalPropertyName, originalPropertyPath))
 					.collect(Collectors.toList());
 			originalPropertyNames.forEach(originalPropertyName -> {
 						String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
@@ -230,23 +221,23 @@ public class StorageIndexerPayloadMapper {
 		}
 	}
 
-	private boolean isPropertyPathMatched(String path, String propertyPath) {
-		// We should not just use name.startsWith(originalPropertyPath)
-		// For example, if originalPropertyPath is "FacilityName" and name.startsWith(originalPropertyPath) is used,
-		// it can match property "FacilityNameAlias". Same in method chooseOriginalProperty(...)
-		return !Strings.isNullOrEmpty(path) && (path.startsWith(propertyPath + PROPERTY_DELIMITER) || path.equals(propertyPath));
-	}
+	private Priority chooseOriginalProperty(String virtualPropertyPath, List<Priority> priorities, Map<String, Object> dataCollectorMap) {
+		if(VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath) || DATA_VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath)) {
+			// Specially handle "data.VirtualProperties.DefaultLocation" -- check the value of the field "wgs84Coordinates"
+			for(Priority priority: priorities) {
+				String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
+				String wgs84PropertyField = originalPropertyPath + FIELD_WGS84_COORDINATES;
+				if(dataCollectorMap.containsKey(wgs84PropertyField) && dataCollectorMap.get(wgs84PropertyField) != null)
+					return priority;
+			}
+		}
 
-	private Priority chooseOriginalProperty(List<Priority> priorities, Map<String, Object> dataCollectorMap) {
 		for(Priority priority: priorities) {
-			String originalPropertyPath = priority.getPath().startsWith(DATA_PREFIX)
-					? priority.getPath().substring(DATA_PREFIX.length())
-					: priority.getPath();
+			String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
 			List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
-					.filter(name ->isPropertyPathMatched(name, originalPropertyPath))
+					.filter(name ->VirtualPropertyUtil.isPropertyPathMatched(name, originalPropertyPath))
 					.collect(Collectors.toList());
 			for(String originalPropertyName: originalPropertyNames) {
-				// TBD: Should we specially handle DefaultLocation -- originalPropertyName + ".Wgs84Coordinates"
 				if(dataCollectorMap.containsKey(originalPropertyName) && dataCollectorMap.get(originalPropertyName) != null)
 					return priority;
 			}

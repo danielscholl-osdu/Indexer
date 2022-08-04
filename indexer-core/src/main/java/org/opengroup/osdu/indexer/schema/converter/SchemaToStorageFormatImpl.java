@@ -25,6 +25,7 @@ import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingExce
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.*;
+import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -36,8 +37,6 @@ import java.util.stream.Collectors;
  */
 @Component
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
-    private static final String PROPERTY_DELIMITER = ".";
-    private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
     private final Gson gson = new Gson();
 
     private ObjectMapper objectMapper;
@@ -159,26 +158,15 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
             // The schema for different properties in the list of Priority should be the same
             Priority priority = entry.getValue().getPriorities().get(0);
-
-            // Remove the "data." prefix if it exists
-            String virtualPropertyPath = entry.getKey().startsWith(DATA_PREFIX)
-                                        ? entry.getKey().substring(DATA_PREFIX.length())
-                                        : entry.getKey();
-            String originalPropertyPath = priority.getPath().startsWith(DATA_PREFIX)
-                                        ? priority.getPath().substring(DATA_PREFIX.length())
-                                        : priority.getPath();
-
+            String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
+            String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
             List<Map<String, Object>> matchedItems = storageSchemaItems.stream().filter(item ->
-                    isPropertyPathMatched((String)item.get("path"), originalPropertyPath))
+                     VirtualPropertyUtil.isPropertyPathMatched((String)item.get("path"), originalPropertyPath))
                     .collect(Collectors.toList());
             storageSchemaItems.addAll(matchedItems.stream().map(item ->
                     cloneVirtualProperty(item, virtualPropertyPath, originalPropertyPath))
                     .collect(Collectors.toList()));
         }
-    }
-
-    private boolean isPropertyPathMatched(String path, String propertyPath) {
-        return !Strings.isNullOrEmpty(path) && (path.startsWith(propertyPath + PROPERTY_DELIMITER) || path.equals(propertyPath));
     }
 
     private Map<String, Object> cloneVirtualProperty(Map<String, Object> originalProperty, String virtualPropertyPath, String originalPropertyPath) {
