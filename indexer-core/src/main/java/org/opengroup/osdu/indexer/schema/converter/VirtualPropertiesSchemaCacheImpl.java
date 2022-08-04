@@ -8,38 +8,34 @@ import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class VirtualPropertiesSchemaCacheImpl implements IVirtualPropertiesSchemaCache<String, VirtualProperties> {
     private static final String VIRTUAL_PROPERTIES_SCHEMA = "_virtual_properties";
     private final Gson gson = new Gson();
-    private Map<String, VirtualProperties> virtualPropertiesSchema = new HashMap<>();
 
     @Inject
     private ISchemaCache schemaCache;
 
     @Override
     public void put(String s, VirtualProperties o) {
+        if(Strings.isNullOrEmpty(s) || o == null)
+            return;
+
         String key = getCacheKey(s);
-        virtualPropertiesSchema.put(key, o);
         schemaCache.put(key, gson.toJson(o));
     }
 
     @Override
     public VirtualProperties get(String s) {
-        String key = getCacheKey(s);
-        if(virtualPropertiesSchema.containsKey(key))
-            return virtualPropertiesSchema.get(key);
+        if(Strings.isNullOrEmpty(s))
+            return null;
 
+        String key = getCacheKey(s);
         String schema = (String)schemaCache.get(key);
         if(!Strings.isNullOrEmpty(schema)) {
             VirtualProperties schemaObj = gson.fromJson(schema, VirtualProperties.class);
-            if(schemaObj != null) {
-                virtualPropertiesSchema.put(key, schemaObj);
-                return schemaObj;
-            }
+            return schemaObj;
         }
 
         return null;
@@ -47,20 +43,18 @@ public class VirtualPropertiesSchemaCacheImpl implements IVirtualPropertiesSchem
 
     @Override
     public void delete(String s) {
+        if(Strings.isNullOrEmpty(s))
+            return;
+
         String key = getCacheKey(s);
         String schema = (String)schemaCache.get(key);
         if(!Strings.isNullOrEmpty(schema)) {
             schemaCache.delete(key);
         }
-
-        if(virtualPropertiesSchema.containsKey(key)) {
-            virtualPropertiesSchema.remove(key);
-        }
     }
 
     @Override
     public void clearAll() {
-        virtualPropertiesSchema.clear();
         schemaCache.clearAll();
     }
 

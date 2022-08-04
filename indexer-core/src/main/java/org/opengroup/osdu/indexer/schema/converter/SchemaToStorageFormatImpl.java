@@ -134,10 +134,9 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                     kind, String.join(",", propertiesProcessor.getErrors())));
         }
 
-
         if(schemaServiceSchema.getVirtualProperties() != null) {
             this.virtualPropertiesSchemaCache.put(kind, schemaServiceSchema.getVirtualProperties());
-            PopulateVirtualPropertiesSchema(storageSchemaItems, schemaServiceSchema.getVirtualProperties().getProperties());
+            populateVirtualPropertiesSchema(storageSchemaItems, schemaServiceSchema.getVirtualProperties().getProperties());
         }
 
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -147,7 +146,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         return result;
     }
 
-    private void PopulateVirtualPropertiesSchema(List<Map<String, Object>> storageSchemaItems,  Map<String, VirtualProperty> virtualProperties) {
+    private void populateVirtualPropertiesSchema(List<Map<String, Object>> storageSchemaItems,  Map<String, VirtualProperty> virtualProperties) {
         if(virtualProperties == null || virtualProperties.isEmpty())
             return;
 
@@ -158,16 +157,10 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                 continue;
             }
 
-            // TBD: We can't support different schema from a list of Priority
-            Priority priority = entry.getValue().getPriorities().stream()
-                    .filter(p -> !Strings.isNullOrEmpty(p.getPath()))
-                    .findFirst()
-                    .orElse(null);
-            if(priority == null) {
-                continue;
-            }
+            // The schema for different properties in the list of Priority should be the same
+            Priority priority = entry.getValue().getPriorities().get(0);
 
-            // Remove the data. prefix if it exists
+            // Remove the "data." prefix if it exists
             String virtualPropertyPath = entry.getKey().startsWith(DATA_PREFIX)
                                         ? entry.getKey().substring(DATA_PREFIX.length())
                                         : entry.getKey();
