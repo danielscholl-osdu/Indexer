@@ -4,19 +4,19 @@
 
 data:
   # common
-  entitlements_host: "http://entitlements"
-  indexer_queue_base_host: "http://indexer-queue"
-  log_level: "INFO"
-  partition_host: "http://partition"
-  redis_group_host: "redis-group-master"
-  redis_search_host: "redis-search-master"
-  schema_base_host: "http://schema"
-  security_https_certificate_trust: "true"
-  spring_profiles_active: "gcp"
-  storage_host: "http://storage"
+  entitlementsHost: "http://entitlements"
+  indexerQueueHost: "http://indexer-queue"
+  logLevel: "INFO"
+  partitionHost: "http://partition"
+  redisGroupHost: "redis-group-master"
+  redisSearchHost: "redis-search-master"
+  schemaHost: "http://schema"
+  securityHttpsCertificateTrust: "true"
+  springProfilesActive: "gcp"
+  storageHost: "http://storage"
   # gcp
-  google_audiences: ""
+  googleAudiences: ""
 conf:
-  app_name: "indexer"
+  appName: "indexer"
   configmap: "indexer-config"
-  on_prem_enabled: false
+  onPremEnabled: false

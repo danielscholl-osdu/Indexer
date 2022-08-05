@@ -21,6 +21,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.client.indices.GetMappingsResponse;
+import org.elasticsearch.cluster.metadata.MappingMetadata;
 import org.elasticsearch.common.unit.TimeValue;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequestScope
@@ -87,8 +89,12 @@ public abstract class MappingServiceImpl implements IMappingService {
             request.indices(index);
             request.setTimeout(REQUEST_TIMEOUT);
             GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
+            if (response.mappings().isEmpty()) {
+                throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)));
+            }
             Type type = new TypeToken<Map<String, Object>>() {}.getType();
-            return new Gson().toJson(response.mappings().get(index).getSourceAsMap(), type);
+            Optional<MappingMetadata> mapping = response.mappings().values().stream().findFirst();
+            return new Gson().toJson(mapping.get().getSourceAsMap(), type);
         } catch (IOException e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)), e);
         }

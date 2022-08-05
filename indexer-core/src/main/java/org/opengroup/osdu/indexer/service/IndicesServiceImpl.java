@@ -33,6 +33,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -50,6 +51,7 @@ import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -194,7 +196,11 @@ public class IndicesServiceImpl implements IndicesService {
      * @param index  Index name
      */
     public boolean deleteIndex(RestHighLevelClient client, String index) throws ElasticsearchException, IOException, AppException {
-        boolean responseStatus = removeIndexInElasticsearch(client, index);
+        List<String> indices = this.resolveIndex(client, index);
+        boolean responseStatus = true;
+        for (String idx: indices) {
+            responseStatus &= removeIndexInElasticsearch(client, idx);
+        }
         if (responseStatus) {
             this.clearCacheOnIndexDeletion(index);
         }
@@ -274,5 +280,27 @@ public class IndicesServiceImpl implements IndicesService {
         final String syncCacheKey = String.format("metaAttributeMappingSynced-%s", index);
         this.indexCache.delete(index);
         this.indexCache.delete(syncCacheKey);
+    }
+
+    public List<String> resolveIndex(RestHighLevelClient client, String index) throws IOException {
+
+        Preconditions.checkArgument(client, Objects::nonNull, "client cannot be null");
+        Preconditions.checkArgument(index, Objects::nonNull, "index cannot be null");
+
+        try {
+            GetIndexRequest request = new GetIndexRequest(index);
+            request.setTimeout(REQUEST_TIMEOUT);
+            GetIndexResponse getIndexResponse = client.indices().get(request, RequestOptions.DEFAULT);
+            String[] indices = getIndexResponse.getIndices();
+            if (indices != null && indices.length != 0) {
+                return Arrays.asList(indices);
+            }
+            throw new AppException(HttpStatus.SC_NOT_FOUND, "Index deletion error", notFoundErrorMessage(index));
+        } catch (ElasticsearchException exception) {
+            if (exception.status() == RestStatus.NOT_FOUND) {
+                throw new AppException(HttpStatus.SC_NOT_FOUND, "Index deletion error", notFoundErrorMessage(index), exception);
+            }
+            throw exception;
+        }
     }
 }
