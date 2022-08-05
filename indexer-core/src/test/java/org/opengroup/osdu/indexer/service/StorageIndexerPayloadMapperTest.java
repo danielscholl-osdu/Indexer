@@ -1,13 +1,9 @@
 package org.opengroup.osdu.indexer.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.google.gson.Gson;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,17 +12,31 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
+import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
 import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
 import org.opengroup.osdu.indexer.util.parser.NumberParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
-	BooleanParser.class, DateTimeParser.class,
+	BooleanParser.class, DateTimeParser.class, VirtualPropertiesSchemaCacheMock.class,
 	GeoShapeParser.class, GeometryConversionService.class, JobStatus.class, SchemaConverterPropertiesConfig.class,JaxRsDpsLog.class})
 public class StorageIndexerPayloadMapperTest {
 
@@ -49,9 +59,13 @@ public class StorageIndexerPayloadMapperTest {
 
 	private static IndexSchema indexSchema;
 	private static Map<String, Object> storageRecordData;
+	private Gson gson = new Gson();
 
 	@Autowired
 	private StorageIndexerPayloadMapper payloadMapper;
+
+	@Autowired
+	private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
 	@BeforeClass
 	public static void setUp() {
@@ -136,5 +150,47 @@ public class StorageIndexerPayloadMapperTest {
 		assertEquals(FIRST_OBJECT_TEST_VALUE,firstInnerProperty);
 		Object secondInnerProperty = objectProperties.get(1).get(SECOND_OBJECT_INNER_PROPERTY);
 		assertEquals(SECOND_OBJECT_TEST_VALUE,secondInnerProperty);
+	}
+
+	@Test
+	public void mapDataPayloadTestVirtualProperties() {
+		final String kind = "osdu:wks:master-data--Wellbore:1.0.0";
+		String schema = readResourceFile("/converter/index-virtual-properties/virtual-properties-schema.json");
+		SchemaRoot schemaRoot = parserJsonString(schema);
+		virtualPropertiesSchemaCache.put(kind, schemaRoot.getVirtualProperties());
+
+		Map<String, Object> storageRecordData = new HashMap<>();
+		storageRecordData = loadObject("/converter/index-virtual-properties/storageRecordData.json", storageRecordData.getClass());
+		assertFalse(storageRecordData.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
+		assertFalse(storageRecordData.containsKey("VirtualProperties.DefaultName"));
+
+		IndexSchema indexSchema = loadObject("/converter/index-virtual-properties/storageSchema.json", IndexSchema.class);
+		Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
+		assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
+		assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultName"));
+	}
+
+	private <T> T loadObject(String file, Class<T> valueType) {
+		String jsonString = readResourceFile(file);
+		return this.gson.fromJson(jsonString, valueType);
+	}
+
+	private SchemaRoot parserJsonString(final String schemaServiceFormat) {
+		try {
+			ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
+			return objectMapper.readValue(schemaServiceFormat, SchemaRoot.class);
+		} catch (JsonProcessingException e) {
+			throw new SchemaProcessingException("Failed to parse the schema");
+		}
+	}
+
+	private String readResourceFile(String file) {
+		try {
+			return new String(Files.readAllBytes(
+					Paths.get(this.getClass().getResource(file).toURI())), StandardCharsets.UTF_8);
+		} catch (Throwable e) {
+			fail("Failed to read file:" + file);
+		}
+		return null;
 	}
 }
