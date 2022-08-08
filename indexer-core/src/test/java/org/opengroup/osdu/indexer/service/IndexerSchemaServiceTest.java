@@ -30,6 +30,7 @@ import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -81,6 +82,8 @@ public class IndexerSchemaServiceTest {
     private SchemaService schemaService;
     @Mock
     private ISchemaCache schemaCache;
+    @Mock
+    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @InjectMocks
     private IndexSchemaServiceImpl sut;
 
