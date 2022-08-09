@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-service</artifactId>
-        <version>0.16.0-SNAPSHOT</version>
+        <version>0.17.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>indexer-azure</artifactId>
-    <version>0.16.0-SNAPSHOT</version>
+    <version>0.17.0-SNAPSHOT</version>
     <name>indexer-azure</name>
     <description>Indexer Service Azure</description>
     <packaging>jar</packaging>
@@ -39,7 +39,7 @@
         <azure.appservice.subscription />
         <log4j.version>2.17.1</log4j.version>
         <nimbus-jose-jwt.version>8.2</nimbus-jose-jwt.version>
-        <indexer-core.version>0.16.0-SNAPSHOT</indexer-core.version>
+        <indexer-core.version>0.17.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
         <osdu.corelibazure.version>0.15.2</osdu.corelibazure.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
@@ -54,6 +54,7 @@
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
         <jackson-databind.version>2.13.2.2</jackson-databind.version>
         <jackson.version>2.13.2</jackson.version>
+        <spring-webmvc.version>5.3.22</spring-webmvc.version>
     </properties>
 
     <dependencyManagement>
@@ -329,6 +330,11 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>oauth2-oidc-sdk</artifactId>
             <version>${oauth2-oidc-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring-webmvc.version}</version>
         </dependency>
 
     </dependencies>
