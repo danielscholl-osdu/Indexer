@@ -14,10 +14,6 @@
 
 package org.opengroup.osdu.indexer.util;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.model.entitlements.AclRole;
@@ -25,6 +21,11 @@ import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TypeMapper {
 
@@ -80,7 +81,7 @@ public class TypeMapper {
         //TODO temporary fix for https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/1
         storageToIndexerType.put(STORAGE_TYPE_OBJECTS, ElasticType.OBJECT.getValue());
         storageToIndexerType.put(STORAGE_TYPE_NESTED, ElasticType.NESTED.getValue());
-        storageToIndexerType.put(STORAGE_TYPE_FLATTENED,ElasticType.FLATTENED.getValue());
+        storageToIndexerType.put(STORAGE_TYPE_FLATTENED, ElasticType.FLATTENED.getValue());
     }
 
     public static String getIndexerType(String storageType, String defaultType) {
@@ -130,8 +131,10 @@ public class TypeMapper {
             for (Map.Entry<String, Object> entry : propertiesMap.entrySet()) {
                 if (isMap(entry.getValue())) {
                     entry.setValue(getDataAttributeIndexerMapping(entry.getValue()));
-                } else if(ElasticType.TEXT.getValue().equalsIgnoreCase(String.valueOf(entry.getValue()))) {
+                } else if (ElasticType.TEXT.getValue().equalsIgnoreCase(String.valueOf(entry.getValue()))) {
                     entry.setValue(getTextIndexerMapping());
+                } else if (isArray(String.valueOf(entry.getValue()))) {
+                    entry.setValue(Records.Type.builder().type(getArrayMemberType(String.valueOf(entry.getValue()))).build());
                 } else {
                     entry.setValue(Records.Type.builder().type(entry.getValue().toString()).build());
                 }
@@ -189,8 +192,8 @@ public class TypeMapper {
 
     public static Object getObjectsArrayMapping(String dataType, Object properties) {
         Map<String, Object> nestedMapping = new HashMap<>();
-        nestedMapping.put(Constants.TYPE,storageToIndexerType.getOrDefault(dataType, dataType));
-        nestedMapping.put(Constants.PROPERTIES,properties);
+        nestedMapping.put(Constants.TYPE, storageToIndexerType.getOrDefault(dataType, dataType));
+        nestedMapping.put(Constants.PROPERTIES, properties);
         return nestedMapping;
     }
 
