@@ -154,6 +154,13 @@ public class SchemaToStorageFormatImplTest {
     }
 
     @Test
+    public void unmatchedVirtualProperties() {
+        // The actual property "data.Facility" does not exist for "data.VirtualProperties.DefaultName"
+        testSingleFile("/converter/index-virtual-properties/unmatched-virtual-properties-schema.json", "osdu:wks:master-data--Wellbore:1.0.0");
+        verify(this.virtualPropertiesSchemaCache, times(1)).put(Mockito.anyString(), Mockito.any());
+    }
+
+    @Test
     public void folderPassed() throws URISyntaxException, IOException {
 
         String folder = "/converter/R3-json-schema";

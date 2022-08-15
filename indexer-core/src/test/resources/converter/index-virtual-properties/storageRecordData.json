@@ -25,16 +25,25 @@
         },
         "SpatialGeometryTypeID": "osdu:reference-data--SpatialGeometryType:Point:",
         "Wgs84Coordinates": {
+            "coordinateReferenceSystemID": null,
+            "verticalUnitID": null,
             "type": "FeatureCollection",
+            "bbox": null,
             "features": [{
                     "type": "Feature",
+                    "bbox": null,
                     "geometry": {
                         "type": "Point",
+                        "bbox": null,
                         "coordinates": [22.501793000000013, -30.34003, 13.0]
                     },
                     "properties": {}
                 }
             ],
+            "properties": null,
+            "persistableReferenceCrs": null,
+            "CoordinateReferenceSystemID": null,
+            "VerticalUnitID": null,
             "persistableReferenceUnitZ": "{\"scaleOffset\":{\"scale\":1.0,\"offset\":0.0},\"symbol\":\"m\",\"baseMeasurement\":{\"ancestry\":\"Length\",\"type\":\"UM\"},\"type\":\"USO\"}"
         }
     },

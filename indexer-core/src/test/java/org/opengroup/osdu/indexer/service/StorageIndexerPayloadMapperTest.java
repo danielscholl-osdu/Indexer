@@ -167,7 +167,29 @@ public class StorageIndexerPayloadMapperTest {
 		IndexSchema indexSchema = loadObject("/converter/index-virtual-properties/storageSchema.json", IndexSchema.class);
 		Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
 		assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
+		assertNotNull(dataCollectorMap.get("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
 		assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultName"));
+		assertNotNull(dataCollectorMap.get("VirtualProperties.DefaultName"));
+	}
+
+	@Test
+	public void mapDataPayloadTestVirtualPropertiesWithoutMatchedProperties() {
+		final String kind = "osdu:wks:master-data--Wellbore:1.0.0";
+		String schema = readResourceFile("/converter/index-virtual-properties/virtual-properties-schema.json");
+		SchemaRoot schemaRoot = parserJsonString(schema);
+		virtualPropertiesSchemaCache.put(kind, schemaRoot.getVirtualProperties());
+
+		Map<String, Object> storageRecordData = new HashMap<>();
+		// The mapped properties do not exist in the storageRecordData
+		storageRecordData = loadObject("/converter/index-virtual-properties/unmatched-payload-storageRecordData.json", storageRecordData.getClass());
+		assertFalse(storageRecordData.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
+		assertFalse(storageRecordData.containsKey("VirtualProperties.DefaultName"));
+
+		IndexSchema indexSchema = loadObject("/converter/index-virtual-properties/storageSchema.json", IndexSchema.class);
+		Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
+		assertFalse(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
+		assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultName"));
+		assertNull(dataCollectorMap.get("VirtualProperties.DefaultName"));
 	}
 
 	private <T> T loadObject(String file, Class<T> valueType) {
