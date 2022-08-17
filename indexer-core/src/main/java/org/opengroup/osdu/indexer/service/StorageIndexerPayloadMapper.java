@@ -27,152 +27,148 @@ import static org.opengroup.osdu.indexer.service.IAttributeParsingService.RECORD
 
 @Component
 public class StorageIndexerPayloadMapper {
-	private static final String DATA_VIRTUAL_DEFAULT_LOCATION = "data.VirtualProperties.DefaultLocation";
-	private static final String VIRTUAL_DEFAULT_LOCATION = "VirtualProperties.DefaultLocation";
-	private static final String FIELD_WGS84_COORDINATES = ".Wgs84Coordinates";
+    private static final String DATA_VIRTUAL_DEFAULT_LOCATION = "data.VirtualProperties.DefaultLocation";
+    private static final String VIRTUAL_DEFAULT_LOCATION = "VirtualProperties.DefaultLocation";
+    private static final String FIELD_WGS84_COORDINATES = ".Wgs84Coordinates";
 
-	@Inject
-	private JaxRsDpsLog log;
-	@Inject
-	private IAttributeParsingService attributeParsingService;
-	@Inject
-	private JobStatus jobStatus;
-	@Inject
-	private SchemaConverterConfig schemaConfig;
-	@Inject
-	private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    @Inject
+    private JaxRsDpsLog log;
+    @Inject
+    private IAttributeParsingService attributeParsingService;
+    @Inject
+    private JobStatus jobStatus;
+    @Inject
+    private SchemaConverterConfig schemaConfig;
+    @Inject
+    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
-	public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
-		String recordId) {
+    public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
+                                              String recordId) {
 
-		Map<String, Object> dataCollectorMap = new HashMap<>();
+        Map<String, Object> dataCollectorMap = new HashMap<>();
 
-		if (storageSchema.isDataSchemaMissing()) {
-			this.log.warning(String.format("record-id: %s | schema mismatching: %s ", recordId, storageSchema.getKind()));
-			return dataCollectorMap;
-		}
+        if (storageSchema.isDataSchemaMissing()) {
+            this.log.warning(String.format("record-id: %s | schema mismatching: %s ", recordId, storageSchema.getKind()));
+            return dataCollectorMap;
+        }
 
-		mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
-		mapVirtualPropertiesPayload(storageSchema, dataCollectorMap);
+        mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
+        mapVirtualPropertiesPayload(storageSchema, dataCollectorMap);
 
-		// add these once iterated over the list
-		storageSchema.getDataSchema().put(DATA_GEOJSON_TAG, ElasticType.GEO_SHAPE.getValue());
-		storageSchema.getDataSchema().remove(RECORD_GEOJSON_TAG);
+        return dataCollectorMap;
+    }
 
-		return dataCollectorMap;
-	}
+    private Map<String, Object> mapDataPayload(Map<String, Object> dataSchema, Map<String, Object> storageRecordData,
+                                               String recordId, Map<String, Object> dataCollectorMap) {
 
-	private Map<String, Object> mapDataPayload(Map<String, Object> dataSchema, Map<String, Object> storageRecordData,
-		String recordId, Map<String, Object> dataCollectorMap) {
+        // get the key and get the corresponding object from the storageRecord object
+        for (Map.Entry<String, Object> entry : dataSchema.entrySet()) {
+            String schemaPropertyName = entry.getKey();
+            Object storageRecordValue = getPropertyValue(recordId, storageRecordData, schemaPropertyName);
+            ElasticType elasticType = defineElasticType(entry.getValue());
 
-		// get the key and get the corresponding object from the storageRecord object
-		for (Map.Entry<String, Object> entry : dataSchema.entrySet()) {
-			String schemaPropertyName = entry.getKey();
-			Object storageRecordValue = getPropertyValue(recordId, storageRecordData, schemaPropertyName);
-			ElasticType elasticType = defineElasticType(entry.getValue());
+            if (Objects.isNull(elasticType)) {
+                this.jobStatus
+                        .addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST,
+                                String.format("record-id: %s | %s for entry %s", recordId, "Not resolvable elastic type", schemaPropertyName));
+                continue;
+            }
 
-			if (Objects.isNull(elasticType)) {
-				this.jobStatus
-					.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST,
-						String.format("record-id: %s | %s for entry %s", recordId, "Not resolvable elastic type", schemaPropertyName));
-				continue;
-			}
+            if (schemaConfig.getProcessedArraysTypes().contains(elasticType.getValue().toLowerCase()) && Objects.nonNull(storageRecordValue)) {
+                processInnerProperties(recordId, dataCollectorMap, entry.getValue(), schemaPropertyName, (List<Map>) storageRecordValue);
+            }
 
-			if (schemaConfig.getProcessedArraysTypes().contains(elasticType.getValue().toLowerCase()) && Objects.nonNull(storageRecordValue)) {
-				processInnerProperties(recordId, dataCollectorMap, entry.getValue(), schemaPropertyName, (List<Map>) storageRecordValue);
-			}
+            if (storageRecordValue == null && !nullIndexedValueSupported(elasticType)) {
+                continue;
+            }
 
-			if (storageRecordValue == null && !nullIndexedValueSupported(elasticType)) {
-				continue;
-			}
+            switch (elasticType) {
+                case KEYWORD:
+                case KEYWORD_ARRAY:
+                case TEXT:
+                case TEXT_ARRAY:
+                    dataCollectorMap.put(schemaPropertyName, storageRecordValue);
+                    break;
+                case INTEGER_ARRAY:
+                    this.attributeParsingService.tryParseValueArray(Integer.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case INTEGER:
+                    this.attributeParsingService.tryParseInteger(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case LONG_ARRAY:
+                    this.attributeParsingService.tryParseValueArray(Long.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case LONG:
+                    this.attributeParsingService.tryParseLong(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case FLOAT_ARRAY:
+                    this.attributeParsingService.tryParseValueArray(Float.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case FLOAT:
+                    this.attributeParsingService.tryParseFloat(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case DOUBLE_ARRAY:
+                    this.attributeParsingService.tryParseValueArray(Double.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case DOUBLE:
+                    this.attributeParsingService.tryParseDouble(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case BOOLEAN_ARRAY:
+                    this.attributeParsingService.tryParseValueArray(Boolean.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case BOOLEAN:
+                    this.attributeParsingService.tryParseBoolean(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case DATE_ARRAY:
+                    this.attributeParsingService.tryParseValueArray(Date.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case DATE:
+                    this.attributeParsingService.tryParseDate(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case GEO_POINT:
+                    this.attributeParsingService.tryParseGeopoint(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case GEO_SHAPE:
+                    this.attributeParsingService.tryParseGeojson(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case FLATTENED:
+                    // flattened type inner properties will be added "as is" without parsing as they types not present in schema
+                    this.attributeParsingService.tryParseFlattened(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case OBJECT:
+                    // object type inner properties will be added "as is" without parsing as they types not present in schema
+                    this.attributeParsingService.tryParseObject(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;
+                case UNDEFINED:
+                    // don't do anything for now
+                    break;
+            }
+        }
 
-			switch (elasticType) {
-				case KEYWORD:
-				case KEYWORD_ARRAY:
-				case TEXT:
-				case TEXT_ARRAY:
-					dataCollectorMap.put(schemaPropertyName, storageRecordValue);
-					break;
-				case INTEGER_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Integer.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case INTEGER:
-					this.attributeParsingService.tryParseInteger(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case LONG_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Long.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case LONG:
-					this.attributeParsingService.tryParseLong(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case FLOAT_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Float.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case FLOAT:
-					this.attributeParsingService.tryParseFloat(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case DOUBLE_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Double.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case DOUBLE:
-					this.attributeParsingService.tryParseDouble(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case BOOLEAN_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Boolean.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case BOOLEAN:
-					this.attributeParsingService.tryParseBoolean(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case DATE_ARRAY:
-					this.attributeParsingService.tryParseValueArray(Date.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case DATE:
-					this.attributeParsingService.tryParseDate(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case GEO_POINT:
-					this.attributeParsingService.tryParseGeopoint(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case GEO_SHAPE:
-					this.attributeParsingService.tryParseGeojson(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case FLATTENED:
-					// flattened type inner properties will be added "as is" without parsing as they types not present in schema
-					this.attributeParsingService.tryParseFlattened(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case OBJECT:
-					// object type inner properties will be added "as is" without parsing as they types not present in schema
-					this.attributeParsingService.tryParseObject(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-					break;
-				case UNDEFINED:
-					// don't do anything for now
-					break;
-			}
-		}
+        return dataCollectorMap;
+    }
 
-		return dataCollectorMap;
-	}
+    private void processInnerProperties(String recordId, Map<String, Object> dataCollectorMap, Object schemaPropertyWithInnerProperties,
+                                        String name, List<Map> storageRecordValue) {
+        Map schemaPropertyMap = (Map) schemaPropertyWithInnerProperties;
+        Map innerProperties = (Map) schemaPropertyMap.get(Constants.PROPERTIES);
+        ArrayList<Map> innerPropertiesMappingCollector = new ArrayList<>();
+        storageRecordValue.forEach(recordData -> innerPropertiesMappingCollector.add(mapDataPayload(innerProperties, recordData, recordId, new HashMap<>())));
+        dataCollectorMap.put(name, innerPropertiesMappingCollector);
+    }
 
-	private void processInnerProperties(String recordId, Map<String, Object> dataCollectorMap, Object schemaPropertyWithInnerProperties,
-		String name, List<Map> storageRecordValue) {
-		Map schemaPropertyMap = (Map) schemaPropertyWithInnerProperties;
-		Map innerProperties = (Map) schemaPropertyMap.get(Constants.PROPERTIES);
-		ArrayList<Map> innerPropertiesMappingCollector = new ArrayList<>();
-		storageRecordValue.forEach(recordData -> innerPropertiesMappingCollector.add(mapDataPayload(innerProperties, recordData, recordId, new HashMap<>())));
-		dataCollectorMap.put(name, innerPropertiesMappingCollector);
-	}
+    private ElasticType defineElasticType(Object entryValue) {
+        ElasticType elasticType = null;
+        if (entryValue instanceof String) {
+            elasticType = ElasticType.forValue(entryValue.toString());
+        } else if (entryValue instanceof Map) {
+            Map map = (Map) entryValue;
+            elasticType = ElasticType.forValue(map.get(Constants.TYPE).toString());
+        }
+        return elasticType;
+    }
 
-	private ElasticType defineElasticType(Object entryValue) {
-		ElasticType elasticType = null;
-		if (entryValue instanceof String) {
-			elasticType = ElasticType.forValue(entryValue.toString());
-		} else if (entryValue instanceof Map) {
-			Map map = (Map) entryValue;
-			elasticType = ElasticType.forValue(map.get(Constants.TYPE).toString());
-		}
-		return elasticType;
-	}
-
-	private Object getPropertyValue(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
+    private Object getPropertyValue(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
 
         try {
             // try getting first level property using optimized collection
@@ -195,54 +191,54 @@ public class StorageIndexerPayloadMapper {
         return type == ElasticType.TEXT;
     }
 
-	private void mapVirtualPropertiesPayload(IndexSchema storageSchema, Map<String, Object> dataCollectorMap) {
-		if(dataCollectorMap.isEmpty() || this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) == null) {
-			return;
-		}
+    private void mapVirtualPropertiesPayload(IndexSchema storageSchema, Map<String, Object> dataCollectorMap) {
+        if (dataCollectorMap.isEmpty() || this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) == null) {
+            return;
+        }
 
-		VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
-		for (Map.Entry<String, VirtualProperty> entry :virtualProperties.getProperties().entrySet()) {
-			if(entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
-				continue;
-			}
-			Priority priority = chooseOriginalProperty(entry.getKey(), entry.getValue().getPriorities(), dataCollectorMap);
-			String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
-			String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
+        VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
+        for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
+            if (entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
+                continue;
+            }
+            Priority priority = chooseOriginalProperty(entry.getKey(), entry.getValue().getPriorities(), dataCollectorMap);
+            String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
+            String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
 
-			// Populate the virtual property values from the chosen original property
-			List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
-					.filter(originalPropertyName -> VirtualPropertyUtil.isPropertyPathMatched(originalPropertyName, originalPropertyPath))
-					.collect(Collectors.toList());
-			originalPropertyNames.forEach(originalPropertyName -> {
-						String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
-						dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
-					});
-		}
-	}
+            // Populate the virtual property values from the chosen original property
+            List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
+                    .filter(originalPropertyName -> VirtualPropertyUtil.isPropertyPathMatched(originalPropertyName, originalPropertyPath))
+                    .collect(Collectors.toList());
+            originalPropertyNames.forEach(originalPropertyName -> {
+                String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
+                dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
+            });
+        }
+    }
 
-	private Priority chooseOriginalProperty(String virtualPropertyPath, List<Priority> priorities, Map<String, Object> dataCollectorMap) {
-		if(VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath) || DATA_VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath)) {
-			// Specially handle "data.VirtualProperties.DefaultLocation" -- check the value of the field "wgs84Coordinates"
-			for(Priority priority: priorities) {
-				String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
-				String wgs84PropertyField = originalPropertyPath + FIELD_WGS84_COORDINATES;
-				if(dataCollectorMap.containsKey(wgs84PropertyField) && dataCollectorMap.get(wgs84PropertyField) != null)
-					return priority;
-			}
-		}
+    private Priority chooseOriginalProperty(String virtualPropertyPath, List<Priority> priorities, Map<String, Object> dataCollectorMap) {
+        if (VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath) || DATA_VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath)) {
+            // Specially handle "data.VirtualProperties.DefaultLocation" -- check the value of the field "wgs84Coordinates"
+            for (Priority priority : priorities) {
+                String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
+                String wgs84PropertyField = originalPropertyPath + FIELD_WGS84_COORDINATES;
+                if (dataCollectorMap.containsKey(wgs84PropertyField) && dataCollectorMap.get(wgs84PropertyField) != null)
+                    return priority;
+            }
+        }
 
-		for(Priority priority: priorities) {
-			String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
-			List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
-					.filter(name ->VirtualPropertyUtil.isPropertyPathMatched(name, originalPropertyPath))
-					.collect(Collectors.toList());
-			for(String originalPropertyName: originalPropertyNames) {
-				if(dataCollectorMap.containsKey(originalPropertyName) && dataCollectorMap.get(originalPropertyName) != null)
-					return priority;
-			}
-		}
+        for (Priority priority : priorities) {
+            String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
+            List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
+                    .filter(name -> VirtualPropertyUtil.isPropertyPathMatched(name, originalPropertyPath))
+                    .collect(Collectors.toList());
+            for (String originalPropertyName : originalPropertyNames) {
+                if (dataCollectorMap.containsKey(originalPropertyName) && dataCollectorMap.get(originalPropertyName) != null)
+                    return priority;
+            }
+        }
 
-		// None of the original properties has value, return the default one
-		return priorities.get(0);
-	}
+        // None of the original properties has value, return the default one
+        return priorities.get(0);
+    }
 }

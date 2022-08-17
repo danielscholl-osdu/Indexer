@@ -128,14 +128,14 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                     .collect(Collectors.toList()));
         }
 
-        if (!propertiesProcessor.getErrors().isEmpty()) {
-            throw new SchemaProcessingException(String.format("Errors occurred during parsing the schema, kind: %s | errors: %s" ,
-                    kind, String.join(",", propertiesProcessor.getErrors())));
+        if (schemaServiceSchema.getVirtualProperties() != null) {
+            this.virtualPropertiesSchemaCache.put(kind, schemaServiceSchema.getVirtualProperties());
+            populateVirtualPropertiesSchema(propertiesProcessor, storageSchemaItems, schemaServiceSchema.getVirtualProperties().getProperties());
         }
 
-        if(schemaServiceSchema.getVirtualProperties() != null) {
-            this.virtualPropertiesSchemaCache.put(kind, schemaServiceSchema.getVirtualProperties());
-            populateVirtualPropertiesSchema(storageSchemaItems, schemaServiceSchema.getVirtualProperties().getProperties());
+        if (!propertiesProcessor.getErrors().isEmpty()) {
+            throw new SchemaProcessingException(String.format("Errors occurred during parsing the schema, kind: %s | errors: %s",
+                    kind, String.join(",", propertiesProcessor.getErrors())));
         }
 
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -145,14 +145,14 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         return result;
     }
 
-    private void populateVirtualPropertiesSchema(List<Map<String, Object>> storageSchemaItems,  Map<String, VirtualProperty> virtualProperties) {
-        if(virtualProperties == null || virtualProperties.isEmpty())
+    private void populateVirtualPropertiesSchema(PropertiesProcessor propertiesProcessor, List<Map<String, Object>> storageSchemaItems, Map<String, VirtualProperty> virtualProperties) {
+        if (virtualProperties == null || virtualProperties.isEmpty())
             return;
 
-        for (Map.Entry<String, VirtualProperty> entry :virtualProperties.entrySet()) {
-            if(Strings.isNullOrEmpty(entry.getKey()) ||
-               entry.getValue().getPriorities() == null ||
-               entry.getValue().getPriorities().size() == 0) {
+        for (Map.Entry<String, VirtualProperty> entry : virtualProperties.entrySet()) {
+            if (entry.getValue().getPriorities() == null ||
+                    entry.getValue().getPriorities().size() == 0) {
+                propertiesProcessor.getErrors().add(String.format("Invalid virtual properties attribute '%s': priority missing.", entry.getKey()));
                 continue;
             }
 
@@ -161,10 +161,10 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
             String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
             String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
             List<Map<String, Object>> matchedItems = storageSchemaItems.stream().filter(item ->
-                     VirtualPropertyUtil.isPropertyPathMatched((String)item.get("path"), originalPropertyPath))
+                            VirtualPropertyUtil.isPropertyPathMatched((String) item.get("path"), originalPropertyPath))
                     .collect(Collectors.toList());
             storageSchemaItems.addAll(matchedItems.stream().map(item ->
-                    cloneVirtualProperty(item, virtualPropertyPath, originalPropertyPath))
+                            cloneVirtualProperty(item, virtualPropertyPath, originalPropertyPath))
                     .collect(Collectors.toList()));
         }
     }

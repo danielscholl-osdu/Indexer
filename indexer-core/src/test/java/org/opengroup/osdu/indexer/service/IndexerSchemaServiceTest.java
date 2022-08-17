@@ -245,7 +245,7 @@ public class IndexerSchemaServiceTest {
 
         try {
             this.sut.processSchemaMessages(schemaMessages);
-        } catch (AppException e){
+        } catch (AppException e) {
             assertEquals(RequestStatus.SCHEMA_CONFLICT, e.getError().getCode());
             assertEquals("error creating or merging index mapping", e.getError().getMessage());
             assertEquals(reason, e.getError().getReason());
@@ -278,7 +278,7 @@ public class IndexerSchemaServiceTest {
 
         try {
             this.sut.processSchemaMessages(schemaMessages);
-        } catch (AppException e){
+        } catch (AppException e) {
             assertEquals(HttpStatus.SC_FORBIDDEN, e.getError().getCode());
             assertEquals("blah", e.getError().getMessage());
             assertEquals(reason, e.getError().getReason());

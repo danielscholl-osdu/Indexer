@@ -57,13 +57,13 @@ public class SchemaToStorageFormatImplTest {
     @InjectMocks
     private SchemaToStorageFormatImpl schemaToStorageFormatImpl
             = new SchemaToStorageFormatImpl(objectMapper, jaxRsDpsLog
-                    , new SchemaConverterPropertiesConfig());
+            , new SchemaConverterPropertiesConfig());
 
     @Mock
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
     @Before
-    public void init(){
+    public void init() {
         MockitoAnnotations.initMocks(this);
     }
 
@@ -168,19 +168,19 @@ public class SchemaToStorageFormatImplTest {
         Files.walk(path)
                 .filter(Files::isRegularFile)
                 .filter(f -> f.toString().endsWith(".json"))
-                .forEach( f -> testSingleFile(f.toString().replaceAll("\\\\", "/").substring(f.toString().replaceAll("\\\\", "/").indexOf(folder)), "osdu:osdu:Wellbore:1.0.0"));
+                .forEach(f -> testSingleFile(f.toString().replaceAll("\\\\", "/").substring(f.toString().replaceAll("\\\\", "/").indexOf(folder)), "osdu:osdu:Wellbore:1.0.0"));
     }
 
     private void testSingleFile(String filename, String kind) {
         String json = getSchemaFromSchemaService(filename);
 
         Map<String, Object> converted = schemaToStorageFormatImpl.convertToMap(json, kind);
-        Map<String, Object> expected = getStorageSchema( filename + ".res");
+        Map<String, Object> expected = getStorageSchema(filename + ".res");
 
         compareSchemas(expected, converted, filename);
     }
 
-    private Map<String, Object> getStorageSchema(String s)  {
+    private Map<String, Object> getStorageSchema(String s) {
 
         TypeReference<Map<String, Object>> typeRef
                 = new TypeReference<Map<String, Object>>() {
@@ -220,8 +220,8 @@ public class SchemaToStorageFormatImplTest {
 
     private void checkItemIn(Map<String, String> item, List<Map<String, String>> exp, String filename) {
         String itemPath = item.get("path");
-        assertEquals("File:" + filename + ", " + itemPath + " is missed(or too many) see count", exp.stream().filter(e->itemPath.equals(e.get("path"))).count(), 1L);
-        Map<String, String> found =  exp.stream().filter(e->item.get("path").equals(e.get("path"))).findAny().get();
+        assertEquals("File:" + filename + ", " + itemPath + " is missed(or too many) see count", exp.stream().filter(e -> itemPath.equals(e.get("path"))).count(), 1L);
+        Map<String, String> found = exp.stream().filter(e -> item.get("path").equals(e.get("path"))).findAny().get();
         assertEquals("File:" + filename + ", in " + itemPath, found.get("kind"), item.get("kind"));
     }
 }
