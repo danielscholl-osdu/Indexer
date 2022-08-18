@@ -21,11 +21,11 @@ public class VirtualPropertyUtil {
     private static final String PROPERTY_DELIMITER = ".";
     private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
 
-    public static boolean isPropertyPathMatched(String propertyPath, String propertyPathPrefix) {
-        // We should not just use propertyPath.startsWith(propertyPathPrefix)
-        // For example, if propertyPathPrefix is "data.FacilityName" and propertyPath.startsWith(propertyPathPrefix) is used,
+    public static boolean isPropertyPathMatched(String propertyPath, String parentPropertyPath) {
+        // We should not just use propertyPath.startsWith(parentPropertyPath)
+        // For example, if parentPropertyPath is "data.FacilityName" and propertyPath.startsWith(parentPropertyPath) is used,
         // then the property "data.FacilityNameAlias" will be matched and unexpected result will be returned.
-        return !Strings.isNullOrEmpty(propertyPath) && (propertyPath.startsWith(propertyPathPrefix + PROPERTY_DELIMITER) || propertyPath.equals(propertyPathPrefix));
+        return !Strings.isNullOrEmpty(propertyPath) && (propertyPath.startsWith(parentPropertyPath + PROPERTY_DELIMITER) || propertyPath.equals(parentPropertyPath));
     }
 
     public static String removeDataPrefix(String path) {
