@@ -121,7 +121,7 @@
               "description": "Schema Format Type ID",
               "pattern": "^srn:<namespace>:reference-data\\/SchemaFormatType:[^:]+:[0-9]*$"
             },
-            "PreLoadFilePath": {
+            "PreloadFilePath": {
               "description": "File system path to the data file as it existed before loading to the data platform",
               "type": "string"
             },
