@@ -1,0 +1,4 @@
+{{- template "common.virtualservice" (list . "os-indexer.virtualservice") -}}
+{{- define "os-indexer.virtualservice" -}}
+## Define overrides for the service's virtual service resource here
+{{- end -}}
