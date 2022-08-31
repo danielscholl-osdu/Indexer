@@ -33,6 +33,7 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
@@ -66,6 +67,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private IndicesService indicesService;
     @Inject
     private ISchemaCache schemaCache;
+    @Inject
+    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
@@ -208,6 +211,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
         String flattenSchema = (String) this.schemaCache.get(kind + FLATTENED_SCHEMA);
         if (!Strings.isNullOrEmpty(flattenSchema)) this.schemaCache.delete(kind + FLATTENED_SCHEMA);
+
+        virtualPropertiesSchemaCache.delete(kind);
     }
 
     private IndexSchema normalizeSchema(String schemaStr) throws AppException {

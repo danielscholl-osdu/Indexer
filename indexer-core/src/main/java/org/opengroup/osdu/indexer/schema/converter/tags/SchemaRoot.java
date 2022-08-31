@@ -14,10 +14,13 @@
 
 package org.opengroup.osdu.indexer.schema.converter.tags;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
 public class SchemaRoot {
+    @JsonProperty("x-osdu-virtual-properties")
+    private VirtualProperties virtualProperties;
     private Definitions definitions;
     private Properties properties;
 }

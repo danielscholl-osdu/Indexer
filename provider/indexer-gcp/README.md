@@ -182,9 +182,7 @@ The Redis instance must be created under the same region with the App Engine app
 Storage service account should have entitlements groups listed below:
 - service.entitlements.user
 - users
-- service.storage.viewer
 - service.schema-service.viewers
-- data.default.viewers
 - service.storage.admin
 - service.search.admin
 

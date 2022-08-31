@@ -1111,6 +1111,7 @@ GPL-3.0-or-later
 The following software have components provided under the terms of this license:
 
 - Cobertura (from http://cobertura.sourceforge.net)
+- aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
 
 ========================================================================
 IPA
