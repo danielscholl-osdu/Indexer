@@ -56,6 +56,9 @@ public class PublisherImpl implements IPublisher {
     @Named("SERVICE_BUS_TOPIC")
     private String serviceBusTopic;
 
+    @Inject
+    @Named("PUBLISH_TO_SERVICE_BUS_TOPIC_ENABLED")
+    private boolean shouldPublishToServiceBusTopic;
 
     @Override
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception {
@@ -73,8 +76,10 @@ public class PublisherImpl implements IPublisher {
         message.setContentType("application/json");
 
         try {
-            logger.debug("Indexer publishes message " + headers.getCorrelationId());
-            topicClientFactory.getClient(headers.getPartitionId(), serviceBusTopic).send(message);
+            if(shouldPublishToServiceBusTopic) {
+                logger.debug("Indexer publishes message " + headers.getCorrelationId());
+                topicClientFactory.getClient(headers.getPartitionId(), serviceBusTopic).send(message);
+            }
         }
         catch (Exception e)
         {
