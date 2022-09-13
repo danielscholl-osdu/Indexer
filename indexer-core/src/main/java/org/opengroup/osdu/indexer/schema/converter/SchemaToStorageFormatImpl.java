@@ -16,13 +16,16 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.util.Strings;
+import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
-import org.opengroup.osdu.indexer.schema.converter.tags.PropertiesData;
-import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
+import org.opengroup.osdu.indexer.schema.converter.tags.*;
+import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -34,9 +37,13 @@ import java.util.stream.Collectors;
  */
 @Component
 public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
+    private final Gson gson = new Gson();
 
     private ObjectMapper objectMapper;
     private SchemaConverterConfig schemaConverterConfig;
+
+    @Inject
+    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
     @Inject
     public SchemaToStorageFormatImpl(ObjectMapper objectMapper, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {
@@ -121,8 +128,13 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                     .collect(Collectors.toList()));
         }
 
+        if (schemaServiceSchema.getVirtualProperties() != null) {
+            this.virtualPropertiesSchemaCache.put(kind, schemaServiceSchema.getVirtualProperties());
+            populateVirtualPropertiesSchema(propertiesProcessor, storageSchemaItems, schemaServiceSchema.getVirtualProperties().getProperties());
+        }
+
         if (!propertiesProcessor.getErrors().isEmpty()) {
-            throw new SchemaProcessingException(String.format("Errors occurred during parsing the schema, kind: %s | errors: %s" ,
+            throw new SchemaProcessingException(String.format("Errors occurred during parsing the schema, kind: %s | errors: %s",
                     kind, String.join(",", propertiesProcessor.getErrors())));
         }
 
@@ -131,5 +143,37 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         result.put("schema", storageSchemaItems);
 
         return result;
+    }
+
+    private void populateVirtualPropertiesSchema(PropertiesProcessor propertiesProcessor, List<Map<String, Object>> storageSchemaItems, Map<String, VirtualProperty> virtualProperties) {
+        if (virtualProperties == null || virtualProperties.isEmpty())
+            return;
+
+        for (Map.Entry<String, VirtualProperty> entry : virtualProperties.entrySet()) {
+            if (entry.getValue().getPriorities() == null ||
+                    entry.getValue().getPriorities().size() == 0) {
+                propertiesProcessor.getErrors().add(String.format("Invalid virtual properties attribute '%s': priority missing.", entry.getKey()));
+                continue;
+            }
+
+            // The schema for different properties in the list of Priority should be the same
+            Priority priority = entry.getValue().getPriorities().get(0);
+            String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
+            String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
+            List<Map<String, Object>> matchedItems = storageSchemaItems.stream().filter(item ->
+                            VirtualPropertyUtil.isPropertyPathMatched((String) item.get("path"), originalPropertyPath))
+                    .collect(Collectors.toList());
+            storageSchemaItems.addAll(matchedItems.stream().map(item ->
+                            cloneVirtualProperty(item, virtualPropertyPath, originalPropertyPath))
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    private Map<String, Object> cloneVirtualProperty(Map<String, Object> originalProperty, String virtualPropertyPath, String originalPropertyPath) {
+        String jsonString = gson.toJson(originalProperty);
+        Map<String, Object> clonedItem = gson.fromJson(jsonString, HashMap.class); // Clean clone
+        String virtualPropertyFullPath = virtualPropertyPath + clonedItem.get("path").toString().substring(originalPropertyPath.length());
+        clonedItem.put("path", virtualPropertyFullPath);
+        return clonedItem;
     }
 }

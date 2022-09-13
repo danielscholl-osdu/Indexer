@@ -16,13 +16,19 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -36,8 +42,10 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-@SpringBootTest
+@RunWith(SpringRunner.class)
 public class SchemaToStorageFormatImplTest {
 
     private static final String KIND = "KIND_VAL";
@@ -45,10 +53,19 @@ public class SchemaToStorageFormatImplTest {
     private ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
 
     private JaxRsDpsLog jaxRsDpsLog = Mockito.mock(JaxRsDpsLog.class);
-    
+
+    @InjectMocks
     private SchemaToStorageFormatImpl schemaToStorageFormatImpl
             = new SchemaToStorageFormatImpl(objectMapper, jaxRsDpsLog
-                    , new SchemaConverterPropertiesConfig());
+            , new SchemaConverterPropertiesConfig());
+
+    @Mock
+    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+
+    @Before
+    public void init() {
+        MockitoAnnotations.initMocks(this);
+    }
 
     @Test
     public void dotsDefinitionFormat() {
@@ -131,6 +148,19 @@ public class SchemaToStorageFormatImplTest {
     }
 
     @Test
+    public void virtualProperties() {
+        testSingleFile("/converter/index-virtual-properties/virtual-properties-schema.json", "osdu:wks:master-data--Wellbore:1.0.0");
+        verify(this.virtualPropertiesSchemaCache, times(1)).put(Mockito.anyString(), Mockito.any());
+    }
+
+    @Test
+    public void unmatchedVirtualProperties() {
+        // The actual property "data.Facility" does not exist for "data.VirtualProperties.DefaultName"
+        testSingleFile("/converter/index-virtual-properties/unmatched-virtual-properties-schema.json", "osdu:wks:master-data--Wellbore:1.0.0");
+        verify(this.virtualPropertiesSchemaCache, times(1)).put(Mockito.anyString(), Mockito.any());
+    }
+
+    @Test
     public void folderPassed() throws URISyntaxException, IOException {
 
         String folder = "/converter/R3-json-schema";
@@ -138,19 +168,19 @@ public class SchemaToStorageFormatImplTest {
         Files.walk(path)
                 .filter(Files::isRegularFile)
                 .filter(f -> f.toString().endsWith(".json"))
-                .forEach( f -> testSingleFile(f.toString().replaceAll("\\\\", "/").substring(f.toString().replaceAll("\\\\", "/").indexOf(folder)), "osdu:osdu:Wellbore:1.0.0"));
+                .forEach(f -> testSingleFile(f.toString().replaceAll("\\\\", "/").substring(f.toString().replaceAll("\\\\", "/").indexOf(folder)), "osdu:osdu:Wellbore:1.0.0"));
     }
 
     private void testSingleFile(String filename, String kind) {
         String json = getSchemaFromSchemaService(filename);
 
         Map<String, Object> converted = schemaToStorageFormatImpl.convertToMap(json, kind);
-        Map<String, Object> expected = getStorageSchema( filename + ".res");
+        Map<String, Object> expected = getStorageSchema(filename + ".res");
 
         compareSchemas(expected, converted, filename);
     }
 
-    private Map<String, Object> getStorageSchema(String s)  {
+    private Map<String, Object> getStorageSchema(String s) {
 
         TypeReference<Map<String, Object>> typeRef
                 = new TypeReference<Map<String, Object>>() {
@@ -190,8 +220,8 @@ public class SchemaToStorageFormatImplTest {
 
     private void checkItemIn(Map<String, String> item, List<Map<String, String>> exp, String filename) {
         String itemPath = item.get("path");
-        assertEquals("File:" + filename + ", " + itemPath + " is missed(or too many) see count", exp.stream().filter(e->itemPath.equals(e.get("path"))).count(), 1L);
-        Map<String, String> found =  exp.stream().filter(e->item.get("path").equals(e.get("path"))).findAny().get();
+        assertEquals("File:" + filename + ", " + itemPath + " is missed(or too many) see count", exp.stream().filter(e -> itemPath.equals(e.get("path"))).count(), 1L);
+        Map<String, String> found = exp.stream().filter(e -> item.get("path").equals(e.get("path"))).findAny().get();
         assertEquals("File:" + filename + ", in " + itemPath, found.get("kind"), item.get("kind"));
     }
 }
