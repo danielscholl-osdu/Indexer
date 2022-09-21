@@ -1,5 +1,6 @@
 package org.opengroup.osdu.indexer.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.beanutils.NestedNullException;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.http.HttpStatus;
@@ -15,6 +16,8 @@ import org.opengroup.osdu.indexer.schema.converter.tags.Priority;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
 import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
+import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -22,15 +25,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.opengroup.osdu.indexer.service.IAttributeParsingService.DATA_GEOJSON_TAG;
-import static org.opengroup.osdu.indexer.service.IAttributeParsingService.RECORD_GEOJSON_TAG;
-
 @Component
 public class StorageIndexerPayloadMapper {
-    private static final String DATA_VIRTUAL_DEFAULT_LOCATION = "data.VirtualProperties.DefaultLocation";
-    private static final String VIRTUAL_DEFAULT_LOCATION = "VirtualProperties.DefaultLocation";
-    private static final String FIELD_WGS84_COORDINATES = ".Wgs84Coordinates";
-
     @Inject
     private JaxRsDpsLog log;
     @Inject
@@ -41,6 +37,8 @@ public class StorageIndexerPayloadMapper {
     private SchemaConverterConfig schemaConfig;
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+
+    private GeoShapeDecimator decimator = new GeoShapeDecimator();
 
     public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {
@@ -53,7 +51,7 @@ public class StorageIndexerPayloadMapper {
         }
 
         mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
-        mapVirtualPropertiesPayload(storageSchema, dataCollectorMap);
+        mapVirtualPropertiesPayload(storageSchema, recordId, dataCollectorMap);
 
         return dataCollectorMap;
     }
@@ -191,7 +189,7 @@ public class StorageIndexerPayloadMapper {
         return type == ElasticType.TEXT;
     }
 
-    private void mapVirtualPropertiesPayload(IndexSchema storageSchema, Map<String, Object> dataCollectorMap) {
+    private void mapVirtualPropertiesPayload(IndexSchema storageSchema, String recordId, Map<String, Object> dataCollectorMap) {
         if (dataCollectorMap.isEmpty() || this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) == null) {
             return;
         }
@@ -214,14 +212,30 @@ public class StorageIndexerPayloadMapper {
                 dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
             });
         }
+
+        // Decimate the shape in VirtualProperties.DefaultLocation.Wgs84Coordinates when necessary
+        if(dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+            try {
+                Map<String, Object> shapeObj = (Map<String, Object>)dataCollectorMap.get(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH);
+                DecimatedResult result = decimator.decimateShapeObj(shapeObj);
+                if(result.isDecimated()) {
+                    dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH, result.getDecimatedShapeObj());
+                }
+                dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_THUMBNAIL_PATH, result.getThumbnailShapeObj());
+                dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH, result.isDecimated());
+            }
+            catch(JsonProcessingException ex) {
+                this.log.warning(String.format("record-id: %s | error decimating geoshape | error: %s", recordId, ex.getMessage()));
+            }
+        }
     }
 
     private Priority chooseOriginalProperty(String virtualPropertyPath, List<Priority> priorities, Map<String, Object> dataCollectorMap) {
-        if (VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath) || DATA_VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath)) {
+        if (VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath) || VirtualPropertyUtil.DATA_VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath)) {
             // Specially handle "data.VirtualProperties.DefaultLocation" -- check the value of the field "wgs84Coordinates"
             for (Priority priority : priorities) {
                 String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
-                String wgs84PropertyField = originalPropertyPath + FIELD_WGS84_COORDINATES;
+                String wgs84PropertyField = originalPropertyPath + VirtualPropertyUtil.FIELD_WGS84_COORDINATES;
                 if (dataCollectorMap.containsKey(wgs84PropertyField) && dataCollectorMap.get(wgs84PropertyField) != null)
                     return priority;
             }

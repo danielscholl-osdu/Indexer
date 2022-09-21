@@ -279,6 +279,8 @@ public class IndexerServiceImpl implements IndexerService {
 
         RecordIndexerPayload.Record document = null;
 
+
+        String recordJson = gson.toJson(storageRecord);
         try {
             Map<String, Object> storageRecordData = storageRecord.getData();
             document = new RecordIndexerPayload.Record();

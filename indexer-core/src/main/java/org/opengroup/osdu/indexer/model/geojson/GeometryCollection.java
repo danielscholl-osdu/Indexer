@@ -14,13 +14,17 @@
 
 package org.opengroup.osdu.indexer.model.geojson;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
+import org.opengroup.osdu.indexer.model.geojson.jackson.FeatureCollectionSerializer;
+import org.opengroup.osdu.indexer.model.geojson.jackson.GeometryCollectionSerializer;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 @Data
+@JsonSerialize(using = GeometryCollectionSerializer.class)
 public class GeometryCollection extends GeoJsonObject implements Iterable<GeoJsonObject> {
 
     private List<GeoJsonObject> geometries = new ArrayList<GeoJsonObject>();

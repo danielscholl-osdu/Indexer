@@ -149,6 +149,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         if (virtualProperties == null || virtualProperties.isEmpty())
             return;
 
+        boolean hasVirtualDefaultLocation = false;
         for (Map.Entry<String, VirtualProperty> entry : virtualProperties.entrySet()) {
             if (entry.getValue().getPriorities() == null ||
                     entry.getValue().getPriorities().size() == 0) {
@@ -159,6 +160,8 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
             // The schema for different properties in the list of Priority should be the same
             Priority priority = entry.getValue().getPriorities().get(0);
             String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
+            hasVirtualDefaultLocation |= VirtualPropertyUtil.isPropertyPathMatched(virtualPropertyPath, VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION);
+
             String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
             List<Map<String, Object>> matchedItems = storageSchemaItems.stream().filter(item ->
                             VirtualPropertyUtil.isPropertyPathMatched((String) item.get("path"), originalPropertyPath))
@@ -166,6 +169,18 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
             storageSchemaItems.addAll(matchedItems.stream().map(item ->
                             cloneVirtualProperty(item, virtualPropertyPath, originalPropertyPath))
                     .collect(Collectors.toList()));
+        }
+
+        if(hasVirtualDefaultLocation) {
+            Map<String, Object> thumbnailProperty = new HashMap<>();
+            thumbnailProperty.put("path", VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_THUMBNAIL_PATH);
+            thumbnailProperty.put("kind", "core:dl:geoshape:1.0.0");
+            storageSchemaItems.add(thumbnailProperty);
+
+            Map<String, Object> isDecimatedProperty = new HashMap<>();
+            isDecimatedProperty.put("path", VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH);
+            isDecimatedProperty.put("kind", "boolean");
+            storageSchemaItems.add(isDecimatedProperty);
         }
     }
 
