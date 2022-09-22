@@ -14,6 +14,10 @@
 
 package org.opengroup.osdu.indexer.api;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.MockitoAnnotations.initMocks;
+
 import com.google.gson.Gson;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,16 +31,13 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.SchemaChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.service.IndexerService;
+import org.opengroup.osdu.indexer.service.SchemaEventsProcessor;
 import org.opengroup.osdu.indexer.service.SchemaService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({HeadersUtil.class, IndexerQueueTaskBuilder.class, DpsHeaders.class})
@@ -59,6 +60,8 @@ public class RecordIndexerApiTest {
     private IndexerService indexService;
     @Mock
     private SchemaService schemaService;
+    @Mock
+    private SchemaEventsProcessor eventsProcessingService;
 
     @Mock
     private DpsHeaders dpsHeaders;

@@ -24,6 +24,8 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
@@ -47,7 +49,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.RequestScope;
-import springfox.documentation.annotations.ApiIgnore;
 import static java.util.Collections.singletonList;
 
 @Log
@@ -69,7 +70,7 @@ public class CleanupIndiciesApi {
 
   private static final String ENTITLEMENT_GROUP = "users.datalake.ops";
 
-  @ApiIgnore
+  @Operation(hidden = true)
   @PostMapping(path = "/index-cleanup", consumes = "application/json")
   @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
   public ResponseEntity cleanupIndices(@NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)

@@ -15,34 +15,22 @@
 package org.opengroup.osdu.indexer.service;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.gson.Gson;
-import org.apache.http.HttpStatus;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
-import org.opengroup.osdu.core.common.http.IUrlFetchService;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.http.HttpResponse;
-import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
-import org.opengroup.osdu.core.common.model.indexer.SchemaOperationType;
-import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.opengroup.osdu.indexer.config.SchemaEventsListenerConfiguration;
-import org.opengroup.osdu.indexer.logging.AuditLogger;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-
-import static java.util.Collections.singletonList;
+import java.util.Objects;
+import javax.inject.Inject;
+import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
+import org.opengroup.osdu.core.common.http.IUrlFetchService;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.HttpResponse;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
+import org.springframework.stereotype.Component;
 
 /**
  * Provides implementation of the client service that retrieves schemas from the Schema Service
@@ -69,55 +57,12 @@ public class SchemaProviderImpl implements SchemaService {
     private StorageService storageService;
 
     @Inject
-    private IndexSchemaService indexSchemaService;
-
-    @Inject
-    private ElasticClientHandler elasticClientHandler;
-
-    @Inject
     private AuditLogger auditLogger;
-
-    @Inject
-    private SchemaEventsListenerConfiguration schemaEventsListenerConfiguration;
-
 
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
         String schemaServiceSchema = getFromSchemaService(kind);
         return Objects.nonNull(schemaServiceSchema) ? schemaServiceSchema : getFromStorageService(kind);
-    }
-
-    @Override
-    public void processSchemaMessages(List<SchemaInfo> schemaInfos) throws IOException {
-        Map<String, SchemaOperationType> messages = new HashMap<>();
-
-        if (schemaEventsListenerConfiguration.isListenCreateEvent()) {
-            Map<String, SchemaOperationType> createSchemaMessages = SchemaInfo.getCreateSchemaEvents(schemaInfos);
-            if (createSchemaMessages != null && !createSchemaMessages.isEmpty()) {
-                messages.putAll(createSchemaMessages);
-            }
-        }
-
-        if (schemaEventsListenerConfiguration.isListenUpdateEvent()) {
-            Map<String, SchemaOperationType> updateSchemaMessages = SchemaInfo.getUpdateSchemaEvents(schemaInfos);
-            if (updateSchemaMessages != null && !updateSchemaMessages.isEmpty()) {
-                messages.putAll(updateSchemaMessages);
-            }
-        }
-
-        if (messages.isEmpty()) return;
-
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            messages.entrySet().forEach(msg -> {
-                try {
-                    this.indexSchemaService.processSchemaUpsertEvent(restClient, msg.getKey());
-                    this.auditLogger.indexMappingUpsertSuccess(singletonList(msg.getKey()));
-                } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
-                    this.auditLogger.indexMappingUpsertFail(singletonList(msg.getKey()));
-                    throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema upsert event", e.getMessage());
-                }
-            });
-        }
     }
 
     protected String getFromSchemaService(String kind) throws UnsupportedEncodingException, URISyntaxException {

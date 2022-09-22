@@ -18,7 +18,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import com.google.gson.JsonParseException;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.java.Log;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -31,6 +31,7 @@ import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.SwaggerDoc;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.service.ReindexService;
+import org.opengroup.osdu.indexer.service.SchemaEventsProcessor;
 import org.opengroup.osdu.indexer.service.SchemaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,11 +57,13 @@ public class RecordIndexerApi {
     private ReindexService reIndexService;
     @Inject
     private SchemaService schemaService;
+    @Inject
+    private SchemaEventsProcessor eventsProcessingService;
 
     // THIS IS AN INTERNAL USE API ONLY
     // THAT MEANS WE DON'T DOCUMENT IT IN SWAGGER, ACCESS IS LIMITED TO CLOUD TASK QUEUE CALLS ONLY
     @PostMapping(path = "/index-worker", consumes = "application/json")
-    @ApiOperation(hidden = true, value = "", notes = "")
+    @Operation(hidden = true, summary = "", description = "")
     public ResponseEntity<JobStatus> indexWorker (
              @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
              @Valid @RequestBody RecordChangedMessages recordChangedMessages) throws Exception {
@@ -96,7 +99,7 @@ public class RecordIndexerApi {
     // THIS IS AN INTERNAL USE API ONLY
     // THAT MEANS WE DON'T DOCUMENT IT IN SWAGGER, ACCESS IS LIMITED TO CLOUD TASK QUEUE CALLS ONLY
     @PostMapping("/reindex-worker")
-    @ApiOperation(hidden = true, value = "", notes = "")
+    @Operation(hidden = true, summary = "", description = "")
     public ResponseEntity<?> reindex(
             @RequestBody @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
             @Valid RecordReindexRequest recordReindexRequest) {
@@ -106,7 +109,7 @@ public class RecordIndexerApi {
     // THIS IS AN INTERNAL USE API ONLY
     // THAT MEANS WE DON'T DOCUMENT IT IN SWAGGER, ACCESS IS LIMITED TO CLOUD TASK QUEUE CALLS ONLY
     @PostMapping("/schema-worker")
-    @ApiOperation(hidden = true, value = "", notes = "")
+    @Operation(hidden = true, summary = "", description = "")
     public ResponseEntity<?> schemaWorker(
             @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
             @Valid @RequestBody SchemaChangedMessages schemaChangedMessage) throws IOException {
@@ -127,7 +130,7 @@ public class RecordIndexerApi {
                 log.warning("none of schema-change message can be deserialized");
                 return new ResponseEntity(org.springframework.http.HttpStatus.OK);
             }
-            this.schemaService.processSchemaMessages(schemaInfos);
+            this.eventsProcessingService.processSchemaMessages(schemaInfos);
             return new ResponseEntity(HttpStatus.OK);
         } catch (JsonParseException e) {
             throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Request payload parsing error", "Unable to parse request payload.", e);
