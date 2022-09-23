@@ -27,15 +27,12 @@ public class GeoShapeDecimator {
         if(type != null && type.equals("geometrycollection")) {
             GeometryCollection geometryCollection = deserializerMapper.readValue(deserializerMapper.writeValueAsString(shapeObj), GeometryCollection.class);
             boolean decimated = decimator.decimate(geometryCollection);
-            if (decimated) {
-                result.setDecimatedShapeObj(
-                        serializerMapper.readValue(serializerMapper.writeValueAsString(geometryCollection), new TypeReference<Map<String, Object>>() {}));
-                result.setDecimated(true);
+            result.setDecimated(decimated);
+            if(decimated) {
+                // Must serialize the decimated shape before further decimating it as thumbnail
+                Map<String, Object> decimatedShapeObj = serializerMapper.readValue(serializerMapper.writeValueAsString(geometryCollection), new TypeReference<Map<String, Object>>() {});
+                result.setDecimatedShapeObj(decimatedShapeObj);
             }
-            // Must serialize the normal decimated shape before decimating it as thumbnail
-            decimator.decimateAsThumbnail(geometryCollection);
-            result.setThumbnailShapeObj(
-                    serializerMapper.readValue(serializerMapper.writeValueAsString(geometryCollection), new TypeReference<Map<String, Object>>() {}));
         }
 
         return result;

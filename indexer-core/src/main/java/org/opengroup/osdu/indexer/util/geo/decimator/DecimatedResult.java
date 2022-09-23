@@ -7,6 +7,5 @@ import java.util.Map;
 @Data
 public class DecimatedResult {
     Map<String, Object> decimatedShapeObj;
-    Map<String, Object> thumbnailShapeObj;
     boolean isDecimated = false;
 }

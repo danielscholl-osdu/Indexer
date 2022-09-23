@@ -172,11 +172,6 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         }
 
         if(hasVirtualDefaultLocation) {
-            Map<String, Object> thumbnailProperty = new HashMap<>();
-            thumbnailProperty.put("path", VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_THUMBNAIL_PATH);
-            thumbnailProperty.put("kind", "core:dl:geoshape:1.0.0");
-            storageSchemaItems.add(thumbnailProperty);
-
             Map<String, Object> isDecimatedProperty = new HashMap<>();
             isDecimatedProperty.put("path", VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH);
             isDecimatedProperty.put("kind", "boolean");

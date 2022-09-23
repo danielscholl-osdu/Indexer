@@ -195,6 +195,7 @@ public class StorageIndexerPayloadMapper {
         }
 
         VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
+        String originalGeoShapeProperty = null;
         for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
             if (entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
                 continue;
@@ -211,22 +212,42 @@ public class StorageIndexerPayloadMapper {
                 String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
                 dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
             });
+
+            if(virtualPropertyPath.equals(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
+               dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+                originalGeoShapeProperty = originalPropertyPath + ".Wgs84Coordinates";
+            }
         }
 
-        // Decimate the shape in VirtualProperties.DefaultLocation.Wgs84Coordinates when necessary
+        // No VirtualProperties.DefaultLocation.Wgs84Coordinates defined, use the default geo-shape property
+        String defaultGeoShapeProperty = "SpatialLocation.Wgs84Coordinates";
+        if(originalGeoShapeProperty == null && dataCollectorMap.containsKey(defaultGeoShapeProperty))
+            originalGeoShapeProperty = defaultGeoShapeProperty;
+        try {
+            decimateGeoShape(originalGeoShapeProperty, dataCollectorMap);
+        }
+        catch(JsonProcessingException ex) {
+            this.log.warning(String.format("record-id: %s | error decimating geoshape | error: %s", recordId, ex.getMessage()));
+        }
+    }
+
+    private void decimateGeoShape(String originalGeoShapeProperty, Map<String, Object> dataCollectorMap) throws JsonProcessingException {
+        if(originalGeoShapeProperty == null || !dataCollectorMap.containsKey(originalGeoShapeProperty))
+            return;
+
+        Map<String, Object> shapeObj = (Map<String, Object>)dataCollectorMap.get(originalGeoShapeProperty);
+        if(shapeObj == null)
+            return;
+
+        DecimatedResult result = decimator.decimateShapeObj(shapeObj);
+        if(result.isDecimated()) {
+            dataCollectorMap.put(originalGeoShapeProperty, result.getDecimatedShapeObj());
+            if(dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+                dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH, result.getDecimatedShapeObj());
+            }
+        }
         if(dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
-            try {
-                Map<String, Object> shapeObj = (Map<String, Object>)dataCollectorMap.get(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH);
-                DecimatedResult result = decimator.decimateShapeObj(shapeObj);
-                if(result.isDecimated()) {
-                    dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH, result.getDecimatedShapeObj());
-                }
-                dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_THUMBNAIL_PATH, result.getThumbnailShapeObj());
-                dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH, result.isDecimated());
-            }
-            catch(JsonProcessingException ex) {
-                this.log.warning(String.format("record-id: %s | error decimating geoshape | error: %s", recordId, ex.getMessage()));
-            }
+            dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH, result.isDecimated());
         }
     }
 

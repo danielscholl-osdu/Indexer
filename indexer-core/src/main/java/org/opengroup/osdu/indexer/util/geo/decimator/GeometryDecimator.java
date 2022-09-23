@@ -7,16 +7,11 @@ import java.util.List;
 
 public class GeometryDecimator {
     private static final double NormalShapeDecimationEpsilon = 10; // meters
-    private static final double ThumbnailShapeDecimationEpsilon = 1000; // meters
     private static final double DegreesToMeters = 100000; // approximate using 100km per degree
     private static final int MaxShapePointCountForLineDecimation = 300000;
 
     public boolean decimate(GeometryCollection geometryCollection) {
         return decimate(geometryCollection, NormalShapeDecimationEpsilon);
-    }
-
-    public boolean decimateAsThumbnail(GeometryCollection geometryCollection) {
-        return decimate(geometryCollection, ThumbnailShapeDecimationEpsilon);
     }
 
     private boolean decimate(GeometryCollection geometryCollection, double epsilon) {
