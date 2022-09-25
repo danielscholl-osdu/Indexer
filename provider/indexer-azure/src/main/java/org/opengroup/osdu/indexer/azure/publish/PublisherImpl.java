@@ -57,7 +57,7 @@ public class PublisherImpl implements IPublisher {
     private String serviceBusTopic;
 
     @Inject
-    @Named("PUBLISH_TO_SERVICE_BUS_TOPIC_ENABLED")
+    @Named("PUBLISH_TO_SERVICE_BUS_INDEXERSTATUS_TOPIC_ENABLED")
     private boolean shouldPublishToServiceBusTopic;
 
     @Override

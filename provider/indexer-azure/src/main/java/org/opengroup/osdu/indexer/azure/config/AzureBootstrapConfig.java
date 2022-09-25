@@ -67,7 +67,7 @@ public class AzureBootstrapConfig {
     }
 
     @Bean
-    @Named("PUBLISH_TO_SERVICE_BUS_TOPIC_ENABLED")
+    @Named("PUBLISH_TO_SERVICE_BUS_INDEXERSTATUS_TOPIC_ENABLED")
     public Boolean shouldPublishToServiceBusTopic() {
         return shouldPublishToServiceBusTopic;
     }
