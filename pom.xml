@@ -13,10 +13,11 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <spring-cloud.version>Greenwich.SR2</spring-cloud.version>
-        <os-core-common.version>0.14.0-rc8</os-core-common.version>
+        <os-core-common.version>0.16.1</os-core-common.version>
         <snakeyaml.version>1.26</snakeyaml.version>
         <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
-        <jackson.version>2.11.4</jackson.version>
+        <jackson-databind.version>2.13.2.2</jackson-databind.version>
+        <jackson.version>2.13.2</jackson.version>
         <tomcat-embed-core.version>9.0.45</tomcat-embed-core.version>
         <common-codec.version>1.14</common-codec.version>
         <elasticsearch.version>7.8.1</elasticsearch.version>
@@ -31,8 +32,7 @@
 <!--        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
 <!--        <failOnMissingWebXml>false</failOnMissingWebXml>-->
 <!--        <spring-cloud.version>Greenwich.SR2</spring-cloud.version>-->
-<!--        <springfox-version>2.7.0</springfox-version>-->
-            <springfox.version>3.0.0</springfox.version>
+        <openapi.version>1.6.9</openapi.version>
     </properties>
 
     <licenses>
@@ -82,7 +82,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson-databind.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -144,22 +144,12 @@
 			<version>1.18.16</version>
 			<scope>provided</scope>
 		</dependency>
-		<!--Swagger -->
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-boot-starter</artifactId>
-			<version>${springfox.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.springframework.plugin</groupId>
-					<artifactId>spring-plugin-core</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.springframework.plugin</groupId>
-					<artifactId>spring-plugin-metadata</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+		<!--OpenApi -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>${openapi.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.plugin</groupId>
 			<artifactId>spring-plugin-core</artifactId>

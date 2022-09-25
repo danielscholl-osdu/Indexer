@@ -53,6 +53,8 @@ import java.util.*;
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMappingService {
 
+    private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
+
     @Inject
     private JaxRsDpsLog log;
     @Inject
@@ -60,11 +62,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     @Autowired
     private PartitionSafeIndexCache indexCache;
     @Autowired
-    private IMappingService mappingService;
-    @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
 
-    private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
 
     /**
@@ -180,14 +179,14 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
 
         try {
-            Boolean mappingSynced = (Boolean) this.indexCache.get(cacheKey);
+            Boolean mappingSynced = this.indexCache.get(cacheKey);
             if (mappingSynced != null && mappingSynced) return;
         } catch (RedisException ex) {
             //In case the format of cache changes then clean the cache
             this.indexCache.delete(cacheKey);
         }
 
-        String jsonResponse = this.mappingService.getIndexMapping(restClient, index);
+        String jsonResponse = this.getIndexMapping(restClient, index);
         Type type = new TypeToken<Map<String, Object>>() {}.getType();
         Map<String, Object> mappings = new Gson().fromJson(jsonResponse, type);
 

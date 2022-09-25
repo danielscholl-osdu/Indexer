@@ -14,12 +14,8 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
-
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
-import java.util.List;
 
 /**
  * Interface to consume schemas from the Schema Service
@@ -34,10 +30,4 @@ public interface SchemaService {
      */
     String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException;
 
-    /**
-     *
-     * @param schemaInfos schema change event
-     * @throws IOException
-     */
-    void processSchemaMessages(List<SchemaInfo> schemaInfos) throws IOException;
 }
