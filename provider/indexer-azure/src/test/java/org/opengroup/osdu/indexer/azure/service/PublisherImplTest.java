@@ -25,10 +25,6 @@ public class PublisherImplTest {
     private PublisherImpl publisher = new PublisherImpl();
     @Mock
     private JaxRsDpsLog logger;
-    @Inject
-    @Named("SERVICE_BUS_TOPIC")
-    private String serviceBusTopic;
-
     private DpsHeaders dpsHeaders;
     private JobStatus jobStatus;
 
