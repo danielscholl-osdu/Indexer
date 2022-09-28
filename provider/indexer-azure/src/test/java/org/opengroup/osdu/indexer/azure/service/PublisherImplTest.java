@@ -33,11 +33,11 @@ public class PublisherImplTest {
         // Arrange
         this.dpsHeaders = new DpsHeaders();
         this.jobStatus = new JobStatus();
-
         Map<String, String> messageAttributes = new HashMap<>();
         messageAttributes.put(DpsHeaders.ACCOUNT_ID,  dpsHeaders.getPartitionIdWithFallbackToAccountId());
         messageAttributes.put(DpsHeaders.DATA_PARTITION_ID,  dpsHeaders.getPartitionIdWithFallbackToAccountId());
         messageAttributes.put(DpsHeaders.CORRELATION_ID, dpsHeaders.getCorrelationId());
+
         // Act
         publisher.publishStatusChangedTagsToTopic(dpsHeaders, jobStatus);
 
