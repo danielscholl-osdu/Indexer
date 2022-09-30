@@ -41,7 +41,7 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 
 @RunWith(SpringRunner.class)
 public class GeoShapeDecimatorTest {
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     @InjectMocks
     GeoShapeDecimator sut;
@@ -50,7 +50,7 @@ public class GeoShapeDecimatorTest {
     private GeometryDecimator decimator;
 
 
-    private Answer<Boolean> answer = invocation -> {
+    private final Answer<Boolean> answer = invocation -> {
         GeometryCollection geometryCollection = invocation.getArgument(0);
         if(geometryCollection == null || geometryCollection.getGeometries() == null)
             return false;

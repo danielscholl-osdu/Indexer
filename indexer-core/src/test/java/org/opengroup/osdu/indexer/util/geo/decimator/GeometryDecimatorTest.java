@@ -47,7 +47,7 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 
 @RunWith(SpringRunner.class)
 public class GeometryDecimatorTest {
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
     private ObjectMapper deserializerMapper;
 
     @InjectMocks
@@ -56,7 +56,7 @@ public class GeometryDecimatorTest {
     @Mock
     private DouglasPeuckerReducer reducer;
 
-    private Answer<List<Integer>> answer = invocation -> {
+    private final Answer<List<Integer>> answer = invocation -> {
         List<Position> coordinates = invocation.getArgument(0);
         List<Integer> indexes = new ArrayList<>();
         if(coordinates.size() < 6) {

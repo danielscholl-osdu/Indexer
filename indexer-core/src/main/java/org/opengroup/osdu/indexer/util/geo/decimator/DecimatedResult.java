@@ -16,7 +16,6 @@
 package org.opengroup.osdu.indexer.util.geo.decimator;
 
 import lombok.Data;
-
 import java.util.Map;
 
 @Data

@@ -21,15 +21,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.opengroup.osdu.indexer.model.geojson.*;
 import org.springframework.stereotype.Component;
-
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import java.util.Map;
 
 @Component
 public class GeoShapeDecimator {
-    private ObjectMapper deserializerMapper;
-    private ObjectMapper serializerMapper;
+    private final ObjectMapper deserializerMapper;
+    private final ObjectMapper serializerMapper;
 
     @Inject
     private GeometryDecimator decimator;

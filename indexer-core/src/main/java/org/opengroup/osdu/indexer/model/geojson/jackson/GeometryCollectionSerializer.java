@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import org.opengroup.osdu.indexer.model.geojson.*;
-
 import java.io.IOException;
 
 public class GeometryCollectionSerializer extends JsonSerializer<GeometryCollection> {

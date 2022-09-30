@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opengroup.osdu.indexer.model.geojson.Point;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -34,7 +33,7 @@ import java.util.Map;
 
 @RunWith(SpringRunner.class)
 public class PointDeserializerTest {
-    private TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {};
+    private final TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {};
     private static ObjectMapper objectMapper;
 
     @BeforeClass

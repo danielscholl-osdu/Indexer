@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opengroup.osdu.indexer.model.geojson.Point;
 import org.opengroup.osdu.indexer.model.geojson.Position;
-
 import java.io.IOException;
 
 public class PointDeserializer extends JsonDeserializer<Point> {
