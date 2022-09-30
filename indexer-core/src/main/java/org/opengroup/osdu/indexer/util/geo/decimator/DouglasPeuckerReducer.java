@@ -1,6 +1,7 @@
 package org.opengroup.osdu.indexer.util.geo.decimator;
 
 import org.opengroup.osdu.indexer.model.geojson.Position;
+import org.springframework.stereotype.Component;
 /*
  * Copyright © Schlumberger
  *
@@ -19,9 +20,10 @@ import org.opengroup.osdu.indexer.model.geojson.Position;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Component
 public class DouglasPeuckerReducer {
 
-    public static List<Integer> getPointIndexesToKeep(List<Position> coordinates, double xyScalar, double epsilon) {
+    public List<Integer> getPointIndexesToKeep(List<Position> coordinates, double xyScalar, double epsilon) {
         List<Integer> pointIndexesToKeep = new ArrayList<>();
 
         int firstPointIndex = 0;
@@ -53,7 +55,7 @@ public class DouglasPeuckerReducer {
         return pointIndexesToKeep.stream().distinct().sorted().collect(Collectors.toList());
     }
 
-    private static List<Integer> getBoundaryPointIndexes(List<Position> coordinates, int firstPointIndex, int lastPointIndex) {
+    private List<Integer> getBoundaryPointIndexes(List<Position> coordinates, int firstPointIndex, int lastPointIndex) {
 
         double xMin = Double.NaN;
         double xMax = Double.NaN;
@@ -122,7 +124,7 @@ public class DouglasPeuckerReducer {
         return new ArrayList<>(boundaryPointIndexes);
     }
 
-    private static void reduce(List<Position> coordinates, int firstPointIndex, int lastPointIndex, double xyScalar, double epsilon, List<Integer> pointIndexesToKeep) {
+    private void reduce(List<Position> coordinates, int firstPointIndex, int lastPointIndex, double xyScalar, double epsilon, List<Integer> pointIndexesToKeep) {
         double maxDistance = 0d;
         int indexFarthest = 0;
 
@@ -155,7 +157,7 @@ public class DouglasPeuckerReducer {
     /// http://www.softsurfer.com/Archive/algorithm_0102/
     /// </summary>
     /// <returns></returns>
-    private static double calculatePerpendicularDistance(Position startPoint, Position endPoint, Position testPoint, double xyScalar) {
+    private double calculatePerpendicularDistance(Position startPoint, Position endPoint, Position testPoint, double xyScalar) {
         boolean hasAltitude = startPoint.hasAltitude();
         double lineStartX = startPoint.getLongitude() * xyScalar;
         double lineStartY = startPoint.getLatitude() * xyScalar;
@@ -193,7 +195,7 @@ public class DouglasPeuckerReducer {
         return Math.sqrt(Math.pow(pbX - testPointX, 2) + Math.pow(pbY - testPointY, 2) + (hasAltitude ? Math.pow(pbZ - testPointZ, 2) : 0));
     }
 
-    private static boolean arePointsEqual(Position point1, Position point2)
+    private boolean arePointsEqual(Position point1, Position point2)
     {
         return point1.getLatitude() == point2.getLatitude() &&
                 point1.getLongitude() == point2.getLongitude() &&

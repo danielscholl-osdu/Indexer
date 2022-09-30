@@ -37,8 +37,8 @@ public class StorageIndexerPayloadMapper {
     private SchemaConverterConfig schemaConfig;
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
-
-    private GeoShapeDecimator decimator = new GeoShapeDecimator();
+    @Inject
+    private GeoShapeDecimator decimator;
 
     public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {

@@ -15,6 +15,9 @@ import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropert
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
+import org.opengroup.osdu.indexer.util.geo.decimator.DouglasPeuckerReducer;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeometryDecimator;
 import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
@@ -36,8 +39,9 @@ import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
-        BooleanParser.class, DateTimeParser.class, VirtualPropertiesSchemaCacheMock.class,
-        GeoShapeParser.class, GeometryConversionService.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class})
+        BooleanParser.class, DateTimeParser.class, GeoShapeParser.class,
+        DouglasPeuckerReducer.class, GeoShapeDecimator.class, GeometryDecimator.class,
+        GeometryConversionService.class, JobStatus.class, SchemaConverterPropertiesConfig.class, VirtualPropertiesSchemaCacheMock.class, JaxRsDpsLog.class})
 public class StorageIndexerPayloadMapperTest {
 
     public static final String FIRST_OBJECT_INNER_PROPERTY = "FirstObjectInnerProperty";

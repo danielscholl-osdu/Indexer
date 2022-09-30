@@ -16,11 +16,9 @@
 package org.opengroup.osdu.indexer.model.geojson.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
-
 import org.opengroup.osdu.indexer.model.geojson.*;
 
 import java.io.IOException;

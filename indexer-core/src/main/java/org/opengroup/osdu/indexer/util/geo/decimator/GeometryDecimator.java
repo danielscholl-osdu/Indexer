@@ -16,14 +16,20 @@
 package org.opengroup.osdu.indexer.util.geo.decimator;
 
 import org.opengroup.osdu.indexer.model.geojson.*;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class GeometryDecimator {
     private static final double NormalShapeDecimationEpsilon = 10; // meters
     private static final double DegreesToMeters = 100000; // approximate using 100km per degree
     private static final int MaxShapePointCountForLineDecimation = 300000;
+
+    @Inject
+    private DouglasPeuckerReducer reducer;
 
     public boolean decimate(GeometryCollection geometryCollection) {
         return decimate(geometryCollection, NormalShapeDecimationEpsilon);
@@ -120,16 +126,17 @@ public class GeometryDecimator {
         // Douglas/Peucker algorithm is expensive, apply simple sampling if the line has too many points
         coordinates = downSamplePoints(coordinates);
 
-        List<Integer> pointIndexes = DouglasPeuckerReducer.getPointIndexesToKeep(coordinates, DegreesToMeters, epsilon);
-        List<Position> sampledCoordinates = new ArrayList<>();
-        for(int i : pointIndexes) {
-            sampledCoordinates.add(coordinates.get(i));
-        }
+        List<Integer> pointIndexes = reducer.getPointIndexesToKeep(coordinates, DegreesToMeters, epsilon);
 
-        boolean decimated = (coordinates.size() != sampledCoordinates.size());
+        boolean decimated = (coordinates.size() > pointIndexes.size());
         if(decimated) {
+            List<Position> decimatedCoordinates = new ArrayList<>();
+            for(int i : pointIndexes) {
+                decimatedCoordinates.add(coordinates.get(i));
+            }
+
             coordinates.clear();
-            coordinates.addAll(sampledCoordinates);
+            coordinates.addAll(decimatedCoordinates);
         }
         return decimated;
     }

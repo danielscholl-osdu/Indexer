@@ -20,18 +20,21 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.opengroup.osdu.indexer.model.geojson.*;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import java.util.Map;
 
+@Component
 public class GeoShapeDecimator {
     private ObjectMapper deserializerMapper;
     private ObjectMapper serializerMapper;
+
+    @Inject
     private GeometryDecimator decimator;
 
-
     public GeoShapeDecimator() {
-        decimator = new GeometryDecimator();
         serializerMapper = new ObjectMapper();
         deserializerMapper = createDeserializerMapper();
     }
@@ -44,7 +47,6 @@ public class GeoShapeDecimator {
             boolean decimated = decimator.decimate(geometryCollection);
             result.setDecimated(decimated);
             if(decimated) {
-                // Must serialize the decimated shape before further decimating it as thumbnail
                 Map<String, Object> decimatedShapeObj = serializerMapper.readValue(serializerMapper.writeValueAsString(geometryCollection), new TypeReference<Map<String, Object>>() {});
                 result.setDecimatedShapeObj(decimatedShapeObj);
             }
