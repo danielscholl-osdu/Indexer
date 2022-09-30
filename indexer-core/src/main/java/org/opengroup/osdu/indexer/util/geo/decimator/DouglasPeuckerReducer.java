@@ -17,7 +17,11 @@ package org.opengroup.osdu.indexer.util.geo.decimator;
 
 import org.opengroup.osdu.indexer.model.geojson.Position;
 import org.springframework.stereotype.Component;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
