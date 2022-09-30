@@ -30,7 +30,7 @@ public class PointDeserializer extends JsonDeserializer<Point> {
     public Point deserialize(JsonParser jsonParser, DeserializationContext ctxt) throws IOException {
         ObjectCodec codec = jsonParser.getCodec();
         JsonNode coordinatesNode = codec.readTree(jsonParser);
-        JsonNode positionNode = coordinatesNode.get("coordinates");
+        JsonNode positionNode = coordinatesNode.get(GeoJsonConstants.COORDINATES);
         if(positionNode == null) {
             throw new JsonParseException(jsonParser, "Missing coordinates field in the point");
         }

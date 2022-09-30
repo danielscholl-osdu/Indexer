@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.opengroup.osdu.indexer.model.geojson.*;
+import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -40,8 +41,8 @@ public class GeoShapeDecimator {
 
     public DecimatedResult decimateShapeObj(Map<String, Object> shapeObj) throws JsonProcessingException {
         DecimatedResult result = new DecimatedResult();
-        String type = (String)shapeObj.getOrDefault("type", null);
-        if(type != null && type.equals("geometrycollection")) {
+        String type = (String)shapeObj.getOrDefault(GeoJsonConstants.TYPE, null);
+        if(type != null && type.equals(GeoJsonConstants.GEOMETRY_COLLECTION)) {
             GeometryCollection geometryCollection = deserializerMapper.readValue(deserializerMapper.writeValueAsString(shapeObj), GeometryCollection.class);
             boolean decimated = decimator.decimate(geometryCollection);
             result.setDecimated(decimated);
@@ -57,13 +58,13 @@ public class GeoShapeDecimator {
     @NotNull
     private static ObjectMapper createDeserializerMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.registerSubtypes(new NamedType(GeometryCollection.class, "geometrycollection"));
-        mapper.registerSubtypes(new NamedType(Polygon.class, "polygon"));
-        mapper.registerSubtypes(new NamedType(MultiPolygon.class, "multipolygon"));
-        mapper.registerSubtypes(new NamedType(LineString.class, "linestring"));
-        mapper.registerSubtypes(new NamedType(MultiLineString.class, "multilinestring"));
-        mapper.registerSubtypes(new NamedType(Point.class, "point"));
-        mapper.registerSubtypes(new NamedType(MultiPoint.class, "multipoint"));
+        mapper.registerSubtypes(new NamedType(GeometryCollection.class, GeoJsonConstants.GEOMETRY_COLLECTION));
+        mapper.registerSubtypes(new NamedType(Polygon.class, GeoJsonConstants.POLYGON));
+        mapper.registerSubtypes(new NamedType(MultiPolygon.class, GeoJsonConstants.MULTI_POLYGON));
+        mapper.registerSubtypes(new NamedType(LineString.class, GeoJsonConstants.LINE_STRING));
+        mapper.registerSubtypes(new NamedType(MultiLineString.class, GeoJsonConstants.MULTI_LINE_STRING));
+        mapper.registerSubtypes(new NamedType(Point.class, GeoJsonConstants.POINT));
+        mapper.registerSubtypes(new NamedType(MultiPoint.class, GeoJsonConstants.MULTI_POINT));
         return mapper;
     }
 }

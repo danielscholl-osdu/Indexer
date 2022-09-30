@@ -33,19 +33,18 @@ import java.util.Map;
 
 @RunWith(SpringRunner.class)
 public class GeometryCollectionSerializerTest {
-    private final TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {};
     private static ObjectMapper objectMapper;
 
     @BeforeClass
     public static void setup() {
         objectMapper = new ObjectMapper();
-        objectMapper.registerSubtypes(new NamedType(GeometryCollection.class, "geometrycollection"));
-        objectMapper.registerSubtypes(new NamedType(Polygon.class, "polygon"));
-        objectMapper.registerSubtypes(new NamedType(MultiPolygon.class, "multipolygon"));
-        objectMapper.registerSubtypes(new NamedType(LineString.class, "linestring"));
-        objectMapper.registerSubtypes(new NamedType(MultiLineString.class, "multilinestring"));
-        objectMapper.registerSubtypes(new NamedType(Point.class, "point"));
-        objectMapper.registerSubtypes(new NamedType(MultiPoint.class, "multipoint"));
+        objectMapper.registerSubtypes(new NamedType(GeometryCollection.class, GeoJsonConstants.GEOMETRY_COLLECTION));
+        objectMapper.registerSubtypes(new NamedType(Polygon.class, GeoJsonConstants.POLYGON));
+        objectMapper.registerSubtypes(new NamedType(MultiPolygon.class, GeoJsonConstants.MULTI_POLYGON));
+        objectMapper.registerSubtypes(new NamedType(LineString.class, GeoJsonConstants.LINE_STRING));
+        objectMapper.registerSubtypes(new NamedType(MultiLineString.class, GeoJsonConstants.MULTI_LINE_STRING));
+        objectMapper.registerSubtypes(new NamedType(Point.class, GeoJsonConstants.POINT));
+        objectMapper.registerSubtypes(new NamedType(MultiPoint.class, GeoJsonConstants.MULTI_POINT));
     }
 
     @Test

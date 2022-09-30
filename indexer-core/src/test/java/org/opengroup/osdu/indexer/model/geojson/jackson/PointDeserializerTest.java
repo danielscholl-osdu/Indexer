@@ -33,13 +33,12 @@ import java.util.Map;
 
 @RunWith(SpringRunner.class)
 public class PointDeserializerTest {
-    private final TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {};
     private static ObjectMapper objectMapper;
 
     @BeforeClass
     public static void setup() {
         objectMapper = new ObjectMapper();
-        objectMapper.registerSubtypes(new NamedType(Point.class, "point"));
+        objectMapper.registerSubtypes(new NamedType(Point.class, GeoJsonConstants.POINT));
     }
 
     @Test
