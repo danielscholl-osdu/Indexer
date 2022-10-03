@@ -14,16 +14,37 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.powermock.api.mockito.PowerMockito.when;
+
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.http.StatusLine;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.*;
+import org.elasticsearch.client.IndicesClient;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.Response;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.invocation.Invocation;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
@@ -34,21 +55,6 @@ import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({RestHighLevelClient.class, IndicesClient.class})
@@ -73,11 +79,13 @@ public class IndexerMappingServiceTest {
     @Mock
     private PartitionSafeIndexCache indexCache;
     @Mock
-    private IMappingService mappingService;
+    private IndicesService indicesService;
     @Mock
     private ElasticIndexNameResolver elasticIndexNameResolver;
+
+    @Spy
     @InjectMocks
-    private IndexerMappingServiceImpl sut;
+    private IndexerMappingServiceImpl sut = new IndexerMappingServiceImpl();
 
     private IndexSchema indexSchema;
     private IndicesClient indicesClient;
@@ -190,16 +198,15 @@ public class IndexerMappingServiceTest {
         when(this.indexCache.get(cacheKey)).thenReturn(true);
 
         this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema);
-
-        verifyNoMoreInteractions(this.mappingService);
+        Collection<Invocation> invocations = mockingDetails(this.sut).getInvocations();
+        assertEquals(1,invocations.size());
     }
 
     @Test
     public void should_applyNoUpdate_givenUpdateIndex() throws Exception {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
-        when(this.mappingService.getIndexMapping(restHighLevelClient, index)).thenReturn(mapping);
-
+        doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
         this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
@@ -210,7 +217,7 @@ public class IndexerMappingServiceTest {
     public void should_applyUpdate_givenExistingIndex() throws Exception {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"namespace\":{\"type\":\"keyword\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
-        when(this.mappingService.getIndexMapping(restHighLevelClient, index)).thenReturn(mapping);
+        doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
 
         AcknowledgedResponse mappingResponse = new AcknowledgedResponse(true);
         doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
