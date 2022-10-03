@@ -13,18 +13,15 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.util.geo.decimator;
+package org.opengroup.osdu.indexer.service.mock;
 
-import org.opengroup.osdu.core.common.cache.VmCache;
-import org.springframework.stereotype.Component;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.partition.IPartitionFactory;
+import org.opengroup.osdu.core.common.partition.IPartitionProvider;
 
-@Component
-public class DecimationSettingCache extends VmCache<String, Boolean> {
-    public DecimationSettingCache() {
-        super(300, 1000);
-    }
-
-    public boolean containsKey(final String key) {
-        return this.get(key) != null;
+public class PartitionFactoryMock implements IPartitionFactory {
+    @Override
+    public IPartitionProvider create(DpsHeaders dpsHeaders) {
+        return new PartitionProviderMock();
     }
 }

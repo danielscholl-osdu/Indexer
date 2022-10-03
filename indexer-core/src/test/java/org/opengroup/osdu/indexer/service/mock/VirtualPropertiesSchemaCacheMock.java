@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.service;
+package org.opengroup.osdu.indexer.service.mock;
 
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
