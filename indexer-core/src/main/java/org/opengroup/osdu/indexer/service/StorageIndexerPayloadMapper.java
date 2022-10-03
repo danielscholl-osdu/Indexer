@@ -33,6 +33,7 @@ import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
 import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
 import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimationSetting;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -54,6 +55,8 @@ public class StorageIndexerPayloadMapper {
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
     private GeoShapeDecimator decimator;
+    @Inject
+    private GeoShapeDecimationSetting decimationSetting;
 
     public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {
@@ -236,13 +239,14 @@ public class StorageIndexerPayloadMapper {
 
         // No VirtualProperties.DefaultLocation.Wgs84Coordinates defined, use the default geo-shape property
         String defaultGeoShapeProperty = "SpatialLocation.Wgs84Coordinates";
-        if(originalGeoShapeProperty == null && dataCollectorMap.containsKey(defaultGeoShapeProperty))
+        if (originalGeoShapeProperty == null && dataCollectorMap.containsKey(defaultGeoShapeProperty))
             originalGeoShapeProperty = defaultGeoShapeProperty;
-        try {
-            decimateGeoShape(originalGeoShapeProperty, dataCollectorMap);
-        }
-        catch(JsonProcessingException ex) {
-            this.log.warning(String.format("record-id: %s | error decimating geoshape | error: %s", recordId, ex.getMessage()));
+        if(decimationSetting.isDecimationEnabled()) {
+            try {
+                decimateGeoShape(originalGeoShapeProperty, dataCollectorMap);
+            } catch (JsonProcessingException ex) {
+                this.log.warning(String.format("record-id: %s | error decimating geoshape | error: %s", recordId, ex.getMessage()));
+            }
         }
     }
 
