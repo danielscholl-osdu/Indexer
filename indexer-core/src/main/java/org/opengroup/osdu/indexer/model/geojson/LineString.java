@@ -15,9 +15,11 @@
 package org.opengroup.osdu.indexer.model.geojson;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import java.util.List;
 import lombok.NoArgsConstructor;
 import org.opengroup.osdu.indexer.model.geojson.jackson.CoordinatesDeserializer;
+import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
+
+import java.util.List;
 
 @NoArgsConstructor
 public class LineString extends MultiPoint {
@@ -30,5 +32,10 @@ public class LineString extends MultiPoint {
     @JsonDeserialize(using = CoordinatesDeserializer.class)
     public void setCoordinates(List<Position> coordinates) {
         super.setCoordinates(coordinates);
+    }
+
+    @Override
+    public String getType() {
+        return GeoJsonConstants.LINE_STRING;
     }
 }

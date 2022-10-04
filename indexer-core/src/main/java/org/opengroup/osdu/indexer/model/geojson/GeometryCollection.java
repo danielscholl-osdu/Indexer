@@ -27,7 +27,7 @@ import java.util.List;
 @JsonSerialize(using = GeometryCollectionSerializer.class)
 public class GeometryCollection extends GeoJsonObject implements Iterable<GeoJsonObject> {
 
-    private List<GeoJsonObject> geometries = new ArrayList<GeoJsonObject>();
+    private List<GeoJsonObject> geometries = new ArrayList<>();
 
     @Override
     public Iterator<GeoJsonObject> iterator() {
