@@ -62,7 +62,7 @@ public class SchemaProviderImpl implements SchemaService {
     @Override
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
         String schemaServiceSchema = getFromSchemaService(kind);
-        return Objects.nonNull(schemaServiceSchema) ? schemaServiceSchema : getFromStorageService(kind);
+        return schemaServiceSchema;
     }
 
     protected String getFromSchemaService(String kind) throws UnsupportedEncodingException, URISyntaxException {
