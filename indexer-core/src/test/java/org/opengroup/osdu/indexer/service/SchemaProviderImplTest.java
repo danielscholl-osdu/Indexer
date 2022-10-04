@@ -14,44 +14,40 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.when;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpStatus;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.rest.RestStatus;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.*;
-import org.opengroup.osdu.core.common.http.IUrlFetchService;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.http.HttpResponse;
-import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
-import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.opengroup.osdu.indexer.config.SchemaEventsListenerConfiguration;
-import org.opengroup.osdu.indexer.logging.AuditLogger;
-import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.powermock.api.mockito.PowerMockito;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.Map;
-
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import org.apache.http.HttpStatus;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
+import org.opengroup.osdu.core.common.http.IUrlFetchService;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.HttpResponse;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
+import org.powermock.api.mockito.PowerMockito;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 public class SchemaProviderImplTest {
@@ -73,24 +69,12 @@ public class SchemaProviderImplTest {
 
     @Mock
     private IndexerConfigurationProperties configurationProperties;
-    @Mock
-    private ElasticClientHandler elasticClientHandler;
+
     @Mock
     private AuditLogger auditLogger;
-    @Mock
-    private IndexSchemaService indexSchemaService;
-    @Mock
-    private SchemaEventsListenerConfiguration schemaEventsListenerConfiguration;
+
     @InjectMocks
     private SchemaProviderImpl sut;
-
-    private RestHighLevelClient restClient;
-
-    @Before
-    public void setup() {
-        when(this.schemaEventsListenerConfiguration.isListenCreateEvent()).thenReturn(true);
-        when(this.schemaEventsListenerConfiguration.isListenUpdateEvent()).thenReturn(true);
-    }
 
     @Test
     public void test_empty_schema() throws UnsupportedEncodingException, URISyntaxException {
@@ -164,25 +148,6 @@ public class SchemaProviderImplTest {
     }
 
     @Test
-    public void should_call_Schema_then_Storage() throws Exception {
-        String kind = "tenant:test:test:1.0.0";
-
-        SchemaProviderImpl schemaService = Mockito.mock(SchemaProviderImpl.class);
-        when(schemaService.getSchema(any())).thenCallRealMethod();
-
-        InOrder inOrder = inOrder(schemaService);
-
-        String recordSchemaResponse = schemaService.getSchema(kind);
-        assertNull(recordSchemaResponse);
-
-        inOrder.verify(schemaService).getSchema(any());
-        inOrder.verify(schemaService).getFromSchemaService(any());
-        inOrder.verify(schemaService).getFromStorageService(any());
-        verify(schemaService, times(1)).getFromStorageService(any());
-        verify(schemaService, times(1)).getFromSchemaService(any());
-    }
-
-    @Test
     public void should_call_only_SchemaService_if_it_returns_result() throws Exception {
         String kind = "tenant:test:test:1.0.0";
 
@@ -202,61 +167,4 @@ public class SchemaProviderImplTest {
         verify(schemaService, times(0)).getFromStorageService(any());
     }
 
-    @Test
-    public void should_process_validSchemaCreateEvent() throws IOException, URISyntaxException {
-        SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "create");
-        this.restClient = PowerMockito.mock(RestHighLevelClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
-
-        this.sut.processSchemaMessages(singletonList(event1));
-
-        verify(this.indexSchemaService, times(1)).processSchemaUpsertEvent(this.restClient, event1.getKind());
-        verify(this.auditLogger, times(1)).indexMappingUpsertSuccess(singletonList(event1.getKind()));
-    }
-
-    @Test
-    public void should_process_validSchemaUpdateEvent() throws IOException, URISyntaxException {
-        SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "update");
-        this.restClient = PowerMockito.mock(RestHighLevelClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
-
-        this.sut.processSchemaMessages(singletonList(event1));
-
-        verify(this.indexSchemaService, times(1)).processSchemaUpsertEvent(this.restClient, event1.getKind());
-        verify(this.auditLogger, times(1)).indexMappingUpsertSuccess(singletonList(event1.getKind()));
-    }
-
-    @Test
-    public void should_throwError_given_unsupportedEvent() {
-        SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "delete");
-
-        try {
-            this.sut.processSchemaMessages(singletonList(event1));
-            fail("Should throw exception");
-        } catch (AppException e) {
-            assertEquals(BAD_REQUEST.value(), e.getError().getCode());
-            assertEquals("Error parsing schema events in request payload.", e.getError().getMessage());
-        } catch (Exception e) {
-            fail("Should not throw this exception" + e.getMessage());
-        }
-    }
-
-    @Test
-    public void should_throwError_given_schemaUpsertFails() throws IOException, URISyntaxException {
-        SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "update");
-        this.restClient = PowerMockito.mock(RestHighLevelClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
-        doThrow(new ElasticsearchStatusException("unknown error", RestStatus.INTERNAL_SERVER_ERROR)).when(this.indexSchemaService).processSchemaUpsertEvent(any(RestHighLevelClient.class), anyString());
-
-        try {
-            this.sut.processSchemaMessages(singletonList(event1));
-            fail("Should throw exception");
-        } catch (AppException e) {
-            assertEquals(INTERNAL_SERVER_ERROR.value(), e.getError().getCode());
-            assertEquals("unknown error", e.getError().getMessage());
-            verify(this.auditLogger, times(1)).indexMappingUpsertFail(singletonList(event1.getKind()));
-        } catch (Exception e) {
-            fail("Should not throw this exception" + e.getMessage());
-        }
-    }
 }

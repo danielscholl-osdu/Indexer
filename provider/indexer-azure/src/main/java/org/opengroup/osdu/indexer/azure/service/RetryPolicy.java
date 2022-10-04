@@ -85,13 +85,11 @@ public class RetryPolicy {
     public boolean schemaRetryPolicy(HttpResponse response) {
         if (retryOnEmptyResponse(response)) return false;
 
-        if (defaultResponseRetry(response)) return true;
-
-        if (response.getResponseCode() == 404) {
+        if (defaultResponseRetry(response)) {
             log.info("Schema API retry");
             return true;
         }
-
+        
         return false;
     }
 

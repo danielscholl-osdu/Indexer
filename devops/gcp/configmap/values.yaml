@@ -6,7 +6,7 @@ data:
   # common
   entitlementsHost: "http://entitlements"
   indexerQueueHost: "http://indexer-queue"
-  logLevel: "INFO"
+  logLevel: "ERROR"
   partitionHost: "http://partition"
   redisGroupHost: "redis-group-master"
   redisSearchHost: "redis-search-master"
