@@ -15,8 +15,14 @@
 
 package org.opengroup.osdu.indexer.util.geo.decimator;
 
-import org.opengroup.osdu.indexer.model.geojson.*;
+import org.apache.commons.collections.CollectionUtils;
+import org.opengroup.osdu.indexer.model.geojson.GeoJsonObject;
+import org.opengroup.osdu.indexer.model.geojson.Geometry;
+import org.opengroup.osdu.indexer.model.geojson.GeometryCollection;
+import org.opengroup.osdu.indexer.model.geojson.MultiPoint;
+import org.opengroup.osdu.indexer.model.geojson.Position;
 import org.springframework.stereotype.Component;
+
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,77 +52,25 @@ public class GeometryDecimator {
         return decimated;
     }
 
-    private boolean decimate(MultiLineString geometry, double epsilon) {
-        if(geometry == null || geometry.getCoordinates() == null)
+    @SuppressWarnings("unchecked")
+    private boolean decimate(List<?> coordinates, double epsilon) {
+        if(CollectionUtils.isEmpty(coordinates))
             return false;
 
         boolean decimated = false;
-        for(List<Position> coordinates : geometry.getCoordinates()) {
-            decimated |= decimateLine(coordinates, epsilon);
-        }
-        return decimated;
-    }
-
-    private boolean decimate(LineString geometry, double epsilon) {
-        if(geometry == null)
-            return false;
-
-        return decimateLine(geometry.getCoordinates(), epsilon);
-    }
-
-    private boolean decimate(MultiPolygon geometry, double epsilon) {
-        if(geometry == null || geometry.getCoordinates() == null)
-            return false;
-
-        boolean decimated = false;
-        for(List<List<Position>> polygon : geometry.getCoordinates()) {
-            for(List<Position> coordinates : polygon) {
-                decimated |= decimateLine(coordinates, epsilon);
+        Object firstElement = coordinates.get(0);
+        if(firstElement instanceof List){
+            for(Object coordinatesElement : coordinates) {
+                decimated |= decimate((List<?>) coordinatesElement, epsilon);
             }
+        } else if(firstElement instanceof Position){
+            decimated = decimateLine((List<Position>) coordinates, epsilon);
         }
         return decimated;
-    }
-
-    private boolean decimate(Polygon geometry, double epsilon) {
-        if(geometry == null || geometry.getCoordinates() == null)
-            return false;
-
-        boolean decimated = false;
-        for(List<Position> coordinates : geometry.getCoordinates()) {
-            decimated |= decimateLine(coordinates, epsilon);
-        }
-        return decimated;
-    }
-
-    private boolean decimate(Point geometry, double epsilon) {
-        return false;
-    }
-
-    private boolean decimate(MultiPoint geometry, double epsilon) {
-        return false;
     }
 
     private boolean decimateBasicGeometry(GeoJsonObject geometry, double epsilon) {
-        if(geometry instanceof MultiLineString) {
-            return decimate((MultiLineString) geometry, epsilon);
-        }
-        else if(geometry instanceof LineString) {
-            return decimate((LineString)geometry, epsilon);
-        }
-        else if(geometry instanceof MultiPolygon) {
-            return decimate((MultiPolygon)geometry, epsilon);
-        }
-        else if(geometry instanceof Polygon) {
-            return decimate((Polygon)geometry, epsilon);
-        }
-        else if(geometry instanceof Point) {
-            return decimate((Point)geometry, epsilon);
-        }
-        else if(geometry instanceof MultiPoint) {
-            return decimate((MultiPoint)geometry, epsilon);
-        }
-        else
-            return false;
+        return geometry instanceof Geometry && !(geometry instanceof MultiPoint) && decimate(((Geometry<?>) geometry).getCoordinates(), epsilon);
     }
 
     private boolean decimateLine(List<Position> coordinates, double epsilon) {
