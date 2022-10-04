@@ -18,13 +18,14 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 import org.opengroup.osdu.indexer.model.geojson.jackson.PointDeserializer;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonDeserialize(using = PointDeserializer.class)
-public class Point extends GeoJsonObject {
+public class Point extends GeoJsonObject implements Positioned {
 
     private Position coordinates;
 
@@ -34,5 +35,10 @@ public class Point extends GeoJsonObject {
 
     public Point(double longitude, double latitude, double altitude) {
         coordinates = new Position(longitude, latitude, altitude);
+    }
+
+    @Override
+    public String getType() {
+        return GeoJsonConstants.POINT;
     }
 }

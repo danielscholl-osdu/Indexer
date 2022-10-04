@@ -17,6 +17,7 @@ package org.opengroup.osdu.indexer.model.geojson;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
 import lombok.NoArgsConstructor;
+import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 import org.opengroup.osdu.indexer.model.geojson.jackson.MultiLineStringDeserializer;
 
 @NoArgsConstructor
@@ -30,5 +31,10 @@ public class MultiLineString extends Geometry<List<Position>> {
     @JsonDeserialize(using = MultiLineStringDeserializer.class)
     public void setCoordinates(List<List<Position>> coordinates) {
         super.setCoordinates(coordinates);
+    }
+
+    @Override
+    public String getType() {
+        return GeoJsonConstants.MULTI_LINE_STRING;
     }
 }

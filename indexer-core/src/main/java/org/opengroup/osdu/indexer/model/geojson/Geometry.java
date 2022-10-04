@@ -17,7 +17,7 @@ package org.opengroup.osdu.indexer.model.geojson;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Geometry<T> extends GeoJsonObject {
+public abstract class Geometry<T> extends GeoJsonObject implements Positioned {
 
     protected List<T> coordinates = new ArrayList<T>();
 
