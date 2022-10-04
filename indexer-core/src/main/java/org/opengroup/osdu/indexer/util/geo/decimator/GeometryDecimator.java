@@ -16,11 +16,7 @@
 package org.opengroup.osdu.indexer.util.geo.decimator;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.opengroup.osdu.indexer.model.geojson.GeoJsonObject;
-import org.opengroup.osdu.indexer.model.geojson.Geometry;
-import org.opengroup.osdu.indexer.model.geojson.GeometryCollection;
-import org.opengroup.osdu.indexer.model.geojson.MultiPoint;
-import org.opengroup.osdu.indexer.model.geojson.Position;
+import org.opengroup.osdu.indexer.model.geojson.*;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -70,7 +66,11 @@ public class GeometryDecimator {
     }
 
     private boolean decimateBasicGeometry(GeoJsonObject geometry, double epsilon) {
-        return geometry instanceof Geometry && !(geometry instanceof MultiPoint) && decimate(((Geometry<?>) geometry).getCoordinates(), epsilon);
+        // Decimation is limited to the geometry of the instances
+        // of LineString, MultiLineString, Polygon and MultiPolygon
+        return geometry instanceof Geometry &&
+                (geometry instanceof LineString || !(geometry instanceof MultiPoint)) &&
+                decimate(((Geometry<?>) geometry).getCoordinates(), epsilon);
     }
 
     private boolean decimateLine(List<Position> coordinates, double epsilon) {
