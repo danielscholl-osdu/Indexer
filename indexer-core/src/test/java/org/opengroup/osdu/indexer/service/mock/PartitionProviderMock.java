@@ -18,13 +18,21 @@ package org.opengroup.osdu.indexer.service.mock;
 import org.opengroup.osdu.core.common.partition.IPartitionProvider;
 import org.opengroup.osdu.core.common.partition.PartitionException;
 import org.opengroup.osdu.core.common.partition.PartitionInfo;
+import org.opengroup.osdu.core.common.partition.Property;
 
 import java.util.List;
 
 public class PartitionProviderMock implements IPartitionProvider {
+    private static final String PROPERTY_NAME =  "indexer-decimation-enabled";
+
     @Override
     public PartitionInfo get(String s) throws PartitionException {
-        return null;
+        PartitionInfo partitionInfo = new PartitionInfo();
+        Property property = new Property();
+        property.setSensitive(false);
+        property.setValue("true");
+        partitionInfo.getProperties().put(PROPERTY_NAME, property);
+        return partitionInfo;
     }
 
     @Override

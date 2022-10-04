@@ -13,6 +13,7 @@ Feature: Indexing of the documents
       | tenant1:indexer:test-update-data--Integration:1.0.1 | tenant1-indexer-test-update-data--integration-1.0.1 | index_update_records_kind_v1   |
       | tenant1:indexer:test-update-data--Integration:2.0.1 | tenant1-indexer-test-update-data--integration-2.0.1 | index_update_records_kind_v2   |
       | tenant1:indexer:virtual-properties-Integration:1.0.0 | tenant1-indexer-virtual-properties-integration-1.0.0 | index_record_virtual_properties   |
+      | tenant1:indexer:decimation-Integration:1.0.0        | tenant1-indexer-decimation-integration-1.0.0        | index_record_seismic_survey   |
 
   Scenario Outline: Ingest the record and Index in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
@@ -57,6 +58,7 @@ Feature: Indexing of the documents
     Examples:
       | kind                                                    | recordFile                        | number | index                                                  | acl                            | field                                                      | top_left_latitude | top_left_longitude | bottom_right_latitude | bottom_right_longitude |
       | "tenant1:indexer:virtual-properties-Integration:1.0.0"  | "index_record_virtual_properties" | 3      | "tenant1-indexer-virtual-properties-integration-1.0.0" | "data.default.viewers@tenant1" | "data.VirtualProperties.DefaultLocation.Wgs84Coordinates"  | 90                | -180               | -90                   | 180                    |
+      | "tenant1:indexer:decimation-Integration:1.0.0"          | "index_record_seismic_survey"     | 1       | "tenant1-indexer-decimation-integration-1.0.0"         | "data.default.viewers@tenant1" | "data.VirtualProperties.DefaultLocation.Wgs84Coordinates"  | 90                | -180               | -90                   | 180                    |
 
   Scenario Outline: Ingest the r3-record with arrays of objects and hints in schema and Index in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
