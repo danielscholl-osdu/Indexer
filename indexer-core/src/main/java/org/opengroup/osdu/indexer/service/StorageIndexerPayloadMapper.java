@@ -233,7 +233,7 @@ public class StorageIndexerPayloadMapper {
 
             if(virtualPropertyPath.equals(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
                dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
-                originalGeoShapeProperty = originalPropertyPath + ".Wgs84Coordinates";
+                originalGeoShapeProperty = originalPropertyPath + VirtualPropertyUtil.FIELD_WGS84_COORDINATES;
             }
         }
 

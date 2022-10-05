@@ -158,7 +158,6 @@ public class DouglasPeuckerReducer {
 
     /// <summary>
     /// Calculates the perpendicular distance between a point and a line
-    /// http://www.softsurfer.com/Archive/algorithm_0102/
     /// </summary>
     /// <returns></returns>
     private double calculatePerpendicularDistance(Position startPoint, Position endPoint, Position testPoint, double xyScalar) {

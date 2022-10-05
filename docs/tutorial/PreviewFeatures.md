@@ -1,3 +1,5 @@
+## Geoshape Decimation
+
 In order to improve indexing and search performance for documents with large geometry, the geo-shape of the following 
 GeoJSON types in the original shape attribute and virtual shape attribute if exists are decimated 
 by implementing Ramer–Douglas–Peucker algorithm:

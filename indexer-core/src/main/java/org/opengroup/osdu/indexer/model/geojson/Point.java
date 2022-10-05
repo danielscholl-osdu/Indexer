@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.opengroup.osdu.indexer.model.GeoJsonObject;
 import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 import org.opengroup.osdu.indexer.model.geojson.jackson.PointDeserializer;
 
@@ -25,7 +26,7 @@ import org.opengroup.osdu.indexer.model.geojson.jackson.PointDeserializer;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonDeserialize(using = PointDeserializer.class)
-public class Point extends GeoJsonObject implements Positioned {
+public class Point extends GeoJsonObject implements IGeoJson {
 
     private Position coordinates;
 

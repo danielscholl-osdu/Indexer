@@ -19,9 +19,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
-import org.opengroup.osdu.indexer.model.geojson.GeoJsonObject;
+import org.opengroup.osdu.indexer.model.GeoJsonObject;
 import org.opengroup.osdu.indexer.model.geojson.GeometryCollection;
-import org.opengroup.osdu.indexer.model.geojson.Positioned;
+import org.opengroup.osdu.indexer.model.geojson.IGeoJson;
 
 import java.io.IOException;
 
@@ -47,10 +47,10 @@ public class GeometryCollectionSerializer extends JsonSerializer<GeometryCollect
     }
 
     private void serializeGeoShape(GeoJsonObject geoJsonObject, JsonGenerator jsonGenerator) throws IOException {
-        if(geoJsonObject instanceof Positioned) {
+        if(geoJsonObject instanceof IGeoJson) {
             jsonGenerator.writeStartObject();
-            jsonGenerator.writeStringField(GeoJsonConstants.TYPE, ((Positioned)geoJsonObject).getType());
-            jsonGenerator.writeObjectField(GeoJsonConstants.COORDINATES, ((Positioned)geoJsonObject).getCoordinates());
+            jsonGenerator.writeStringField(GeoJsonConstants.TYPE, ((IGeoJson)geoJsonObject).getType());
+            jsonGenerator.writeObjectField(GeoJsonConstants.COORDINATES, ((IGeoJson)geoJsonObject).getCoordinates());
             jsonGenerator.writeEndObject();
         }
     }

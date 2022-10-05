@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.stubbing.Answer;
+import org.opengroup.osdu.indexer.model.GeoJsonObject;
 import org.opengroup.osdu.indexer.model.geojson.*;
 import org.springframework.test.context.junit4.SpringRunner;
 

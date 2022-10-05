@@ -16,6 +16,7 @@
 package org.opengroup.osdu.indexer.util.geo.decimator;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.opengroup.osdu.indexer.model.GeoJsonObject;
 import org.opengroup.osdu.indexer.model.geojson.*;
 import org.springframework.stereotype.Component;
 
