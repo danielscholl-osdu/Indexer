@@ -43,6 +43,9 @@ import java.util.stream.Collectors;
 
 @Component
 public class StorageIndexerPayloadMapper {
+    private static final String SPATIAL_LOCATION_WGS84 = "SpatialLocation.Wgs84Coordinates";
+    private static final String SPATIAL_AREA_WGS84 = "SpatialArea.Wgs84Coordinates";
+
     @Inject
     private JaxRsDpsLog log;
     @Inject
@@ -238,16 +241,23 @@ public class StorageIndexerPayloadMapper {
         }
 
         // No VirtualProperties.DefaultLocation.Wgs84Coordinates defined, use the default geo-shape property
-        String defaultGeoShapeProperty = "SpatialLocation.Wgs84Coordinates";
-        if (originalGeoShapeProperty == null && dataCollectorMap.containsKey(defaultGeoShapeProperty))
-            originalGeoShapeProperty = defaultGeoShapeProperty;
-        if(decimationSetting.isDecimationEnabled()) {
+        if (originalGeoShapeProperty == null)
+            originalGeoShapeProperty = getDefaultGeoShapeProperty(dataCollectorMap);
+        if(originalGeoShapeProperty != null && decimationSetting.isDecimationEnabled()) {
             try {
                 decimateGeoShape(originalGeoShapeProperty, dataCollectorMap);
             } catch (JsonProcessingException ex) {
                 this.log.warning(String.format("record-id: %s | error decimating geoshape | error: %s", recordId, ex.getMessage()));
             }
         }
+    }
+
+    private String getDefaultGeoShapeProperty(Map<String, Object> dataCollectorMap) {
+        if(dataCollectorMap.containsKey(SPATIAL_LOCATION_WGS84))
+            return SPATIAL_LOCATION_WGS84;
+        if(dataCollectorMap.containsKey(SPATIAL_AREA_WGS84))
+            return SPATIAL_AREA_WGS84;
+        return null;
     }
 
     private void decimateGeoShape(String originalGeoShapeProperty, Map<String, Object> dataCollectorMap) throws JsonProcessingException {
