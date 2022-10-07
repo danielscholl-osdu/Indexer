@@ -29,7 +29,7 @@ public class PublisherImplTest {
     private JobStatus jobStatus;
 
     @Test
-    public void publishStatusChangedTagsToTopic() throws Exception {
+    public void indexer_should_not_publish_message_to_stale_service_bus_topic() throws Exception {
         // Arrange
         this.dpsHeaders = new DpsHeaders();
         this.jobStatus = new JobStatus();
