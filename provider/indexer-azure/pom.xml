@@ -55,6 +55,9 @@
         <jackson-databind.version>2.13.2.2</jackson-databind.version>
         <jackson.version>2.13.2</jackson.version>
         <spring-webmvc.version>5.3.22</spring-webmvc.version>
+        <azure-core.version>1.31.0</azure-core.version>
+        <azure-security-keyvault-keys.version>4.4.6</azure-security-keyvault-keys.version>
+        <azure-security-keyvault-secrets.version>4.4.6</azure-security-keyvault-secrets.version>
     </properties>
 
     <dependencyManagement>
@@ -173,6 +176,18 @@
                 <exclusion>
                     <groupId>org.opengroup.osdu</groupId>
                     <artifactId>os-core-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>azure-security-keyvault-keys</artifactId>
+                    <groupId>com.azure</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>azure-security-keyvault-secrets</artifactId>
+                    <groupId>com.azure</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>azure-core</artifactId>
+                    <groupId>com.azure</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -335,6 +350,21 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
             <version>${spring-webmvc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-core</artifactId>
+            <version>${azure-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-security-keyvault-keys</artifactId>
+            <version>${azure-security-keyvault-keys.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-security-keyvault-secrets</artifactId>
+            <version>${azure-security-keyvault-secrets.version}</version>
         </dependency>
 
     </dependencies>
