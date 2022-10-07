@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.model.geojson;
+package org.opengroup.osdu.indexer.model;
 
 import java.io.Serializable;
 
@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import lombok.Data;
+import org.opengroup.osdu.indexer.model.geojson.*;
 
 @Data
 @JsonTypeInfo(property = "type", use = Id.NAME)

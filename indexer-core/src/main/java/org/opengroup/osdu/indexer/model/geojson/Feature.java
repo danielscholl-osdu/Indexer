@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.model.geojson;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+import org.opengroup.osdu.indexer.model.GeoJsonObject;
 
 import java.util.HashMap;
 import java.util.Map;

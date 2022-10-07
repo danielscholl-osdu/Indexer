@@ -18,6 +18,13 @@ package org.opengroup.osdu.indexer.util;
 import com.google.api.client.util.Strings;
 
 public class VirtualPropertyUtil {
+    public static final String DATA_VIRTUAL_DEFAULT_LOCATION = "data.VirtualProperties.DefaultLocation";
+    public static final String VIRTUAL_DEFAULT_LOCATION = "VirtualProperties.DefaultLocation";
+    public static final String FIELD_WGS84_COORDINATES = ".Wgs84Coordinates";
+    public static final String VIRTUAL_DEFAULT_LOCATION_WGS84_PATH = VIRTUAL_DEFAULT_LOCATION + FIELD_WGS84_COORDINATES;
+    public static final String VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH = VIRTUAL_DEFAULT_LOCATION + ".IsDecimated";
+
+
     private static final String PROPERTY_DELIMITER = ".";
     private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
 

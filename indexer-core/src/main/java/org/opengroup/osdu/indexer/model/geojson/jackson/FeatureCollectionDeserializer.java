@@ -39,7 +39,7 @@ public class FeatureCollectionDeserializer extends JsonDeserializer<FeatureColle
     private List<Feature> extractFeature(JsonParser jsonParser) throws IOException {
         ObjectCodec codec = jsonParser.getCodec();
         JsonNode featureCollection = codec.readTree(jsonParser);
-        JsonNode features = featureCollection.get("features");
+        JsonNode features = featureCollection.get(GeoJsonConstants.FEATURES);
 
         if(features == null){
             throw new JsonParseException(jsonParser, "Missing feature field in the ");

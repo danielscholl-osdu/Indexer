@@ -14,10 +14,12 @@
 
 package org.opengroup.osdu.indexer.model.geojson;
 
+import org.opengroup.osdu.indexer.model.GeoJsonObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Geometry<T> extends GeoJsonObject {
+public abstract class Geometry<T> extends GeoJsonObject implements IGeoJson {
 
     protected List<T> coordinates = new ArrayList<T>();
 

@@ -336,5 +336,8 @@
   }, {
     "path" : "VirtualProperties.DefaultName",
     "kind" : "string"
-  } ]
+  }, {
+      "path" : "VirtualProperties.DefaultLocation.IsDecimated",
+      "kind" : "boolean"
+    }]
 }
