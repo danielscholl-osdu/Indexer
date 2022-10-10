@@ -333,5 +333,8 @@
   }, {
     "path" : "VirtualProperties.DefaultLocation.SpatialGeometryTypeID",
     "kind" : "string"
+  }, {
+         "path" : "VirtualProperties.DefaultLocation.IsDecimated",
+         "kind" : "boolean"
   }]
 }

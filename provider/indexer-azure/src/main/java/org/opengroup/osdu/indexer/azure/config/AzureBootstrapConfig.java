@@ -39,6 +39,9 @@ public class AzureBootstrapConfig {
     @Value("${azure.servicebus.reindex.topic-name}")
     private String serviceBusReindexTopicName;
 
+    @Value("${publish.indexing.progress}")
+    private boolean publishIndexingProgress;
+
     @Value("${ELASTIC_CACHE_EXPIRATION}")
     private Integer elasticCacheExpiration;
 
@@ -61,6 +64,12 @@ public class AzureBootstrapConfig {
     @Named("SERVICE_BUS_REINDEX_TOPIC")
     public String serviceBusReindexTopicName() {
         return serviceBusReindexTopicName;
+    }
+
+    @Bean
+    @Named("PUBLISH_TO_INDEXING_PROGRESS_TOPIC")
+    public Boolean publishIndexingProgress() {
+        return publishIndexingProgress;
     }
 
     @Bean
