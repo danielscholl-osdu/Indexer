@@ -20,6 +20,10 @@ variables:
 
   IBM_BUILD_SUBDIR: provider/indexer-ibm
   IBM_INT_TEST_SUBDIR: testing/indexer-test-ibm
+  
+  IBM_HELM_CONFIG_PATH: devops/ibm/ibm-indexer-config
+  IBM_HELM_DEPLOY_PATH: devops/ibm/ibm-indexer-deploy
+
 
   AZURE_SERVICE: indexer
   AZURE_BUILD_SUBDIR: provider/indexer-azure
