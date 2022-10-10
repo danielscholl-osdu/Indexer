@@ -241,15 +241,15 @@ public class StorageIndexerPayloadMapper {
         }
 
         // No VirtualProperties.DefaultLocation.Wgs84Coordinates defined, use the default geo-shape property
-//        if (originalGeoShapeProperty == null)
-//            originalGeoShapeProperty = getDefaultGeoShapeProperty(dataCollectorMap);
-//        if(originalGeoShapeProperty != null && decimationSetting.isDecimationEnabled()) {
-//            try {
-//                decimateGeoShape(originalGeoShapeProperty, dataCollectorMap);
-//            } catch (JsonProcessingException ex) {
-//                this.log.warning(String.format("record-id: %s | error decimating geoshape | error: %s", recordId, ex.getMessage()));
-//            }
-//        }
+        if (originalGeoShapeProperty == null)
+            originalGeoShapeProperty = getDefaultGeoShapeProperty(dataCollectorMap);
+        if(originalGeoShapeProperty != null && decimationSetting.isDecimationEnabled()) {
+            try {
+                decimateGeoShape(originalGeoShapeProperty, dataCollectorMap);
+            } catch (JsonProcessingException ex) {
+                this.log.warning(String.format("record-id: %s | error decimating geoshape | error: %s", recordId, ex.getMessage()));
+            }
+        }
     }
 
     private String getDefaultGeoShapeProperty(Map<String, Object> dataCollectorMap) {
