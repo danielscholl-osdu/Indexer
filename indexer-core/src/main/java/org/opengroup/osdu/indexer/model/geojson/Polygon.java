@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.model.geojson;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.NoArgsConstructor;
+import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +30,11 @@ public class Polygon extends Geometry<List<Position>> {
 
     public Polygon(Position... polygon) {
         add(Arrays.asList(polygon));
+    }
+
+    @Override
+    public String getType() {
+        return GeoJsonConstants.POLYGON;
     }
 
     public void setExteriorRing(List<Position> points) {

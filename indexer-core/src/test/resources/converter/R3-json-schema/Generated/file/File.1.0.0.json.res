@@ -7,7 +7,7 @@
     },
     {
       "kind": "string",
-      "path": "PreLoadFilePath"
+      "path": "PreloadFilePath"
     },
     {
       "kind": "string",

@@ -148,25 +148,6 @@ public class SchemaProviderImplTest {
     }
 
     @Test
-    public void should_call_Schema_then_Storage() throws Exception {
-        String kind = "tenant:test:test:1.0.0";
-
-        SchemaProviderImpl schemaService = Mockito.mock(SchemaProviderImpl.class);
-        when(schemaService.getSchema(any())).thenCallRealMethod();
-
-        InOrder inOrder = inOrder(schemaService);
-
-        String recordSchemaResponse = schemaService.getSchema(kind);
-        assertNull(recordSchemaResponse);
-
-        inOrder.verify(schemaService).getSchema(any());
-        inOrder.verify(schemaService).getFromSchemaService(any());
-        inOrder.verify(schemaService).getFromStorageService(any());
-        verify(schemaService, times(1)).getFromStorageService(any());
-        verify(schemaService, times(1)).getFromSchemaService(any());
-    }
-
-    @Test
     public void should_call_only_SchemaService_if_it_returns_result() throws Exception {
         String kind = "tenant:test:test:1.0.0";
 
