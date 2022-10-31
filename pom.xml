@@ -16,7 +16,7 @@
         <os-core-common.version>0.16.1</os-core-common.version>
         <snakeyaml.version>1.26</snakeyaml.version>
         <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
-        <jackson-databind.version>2.13.2.2</jackson-databind.version>
+        <jackson-databind.version>2.13.4</jackson-databind.version>
         <jackson.version>2.13.2</jackson.version>
         <tomcat-embed-core.version>9.0.67</tomcat-embed-core.version>
         <common-codec.version>1.14</common-codec.version>
