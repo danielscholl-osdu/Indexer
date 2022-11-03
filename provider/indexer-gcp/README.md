@@ -19,8 +19,8 @@ These instructions will get you a copy of the project up and running on your loc
 ## Service Configuration
 ### Anthos:
 [Anthos service configuration ](docs/anthos/README.md)
-### GCP:
-[Gcp service configuration ](docs/gcp/README.md)
+##***REMOVED***:
+[Google Cloud service configuration ](docs/gcp/README.md)
 
 ## Mappers
 
@@ -48,8 +48,8 @@ In the current version, the mappers are equipped with several drivers to the sto
 
 ### Anthos Service Configuration:
 [Anthos service configuration ](docs/anthos/README.md)
-### GCP Service Configuration:
-[Gcp service configuration ](docs/gcp/README.md)
+##***REMOVED*** Service Configuration:
+[Google Cloud service configuration ](docs/gcp/README.md)
 
 ## Run service
 
@@ -146,8 +146,8 @@ This section describes how to run cloud OSDU E2E tests.
 
 ### Anthos test configuration:
 [Anthos service configuration ](docs/anthos/README.md)
-### GCP test configuration:
-[Gcp service configuration ](docs/gcp/README.md)
+##***REMOVED*** test configuration:
+[Google Cloud service configuration ](docs/gcp/README.md)
 
 ## Deployment
 
