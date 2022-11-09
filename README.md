@@ -7,9 +7,9 @@ os-indexer-azure is a [Spring Boot](https://spring.io/projects/spring-boot) serv
 The [os-indexer-azure README.md](./provider/indexer-azure/README.md) has all the information needed to get started
 running the `os-indexer` Azure implementation
 
-## GCP Implementation
+#***REMOVED*** Implementation
 
-All documentation for the GCP implementation of `os-indexer` lives [here](./provider/indexer-gcp/README.md)
+All documentation for the Google Cloud implementation of `os-indexer` lives [here](./provider/indexer-gcp/README.md)
 
 #***REMOVED*** Implementation
 
