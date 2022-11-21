@@ -643,6 +643,7 @@ The following software have components provided under the terms of this license:
 - Zipkin v2 (from https://repo1.maven.org/maven2/io/zipkin/zipkin2/zipkin)
 - aalto-xml (from https://github.com/FasterXML/aalto-xml, https://repo1.maven.org/maven2/com/fasterxml/aalto-xml)
 - aggs-matrix-stats (from https://github.com/elastic/elasticsearch)
+- compiler (from http://github.com/spullara/mustache.java)
 - datastore-v1-proto-client (from https://repo1.maven.org/maven2/com/google/cloud/datastore/datastore-v1-proto-client)
 - documentdb-bulkexecutor (from http://azure.microsoft.com/en-us/services/documentdb/)
 - elasticsearch (from https://github.com/elastic/elasticsearch, https://repo1.maven.org/maven2/org/elasticsearch/elasticsearch)
@@ -863,6 +864,7 @@ BouncyCastle
 ========================================================================
 The following software have components provided under the terms of this license:
 
+- Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs (from http://www.bouncycastle.org/java.html, https://maven.repository.redhat.com/ga/org/bouncycastle/bcpkix-jdk15on, https://www.bouncycastle.org/java.html)
 - Bouncy Castle Provider (from http://www.bouncycastle.org/java.html, https://www.bouncycastle.org/java.html)
 
 ========================================================================
@@ -953,6 +955,13 @@ The following software have components provided under the terms of this license:
 - System Rules (from http://stefanbirkner.github.com/system-rules/, http://stefanbirkner.github.io/system-rules/)
 
 ========================================================================
+EDL-1.0
+========================================================================
+The following software have components provided under the terms of this license:
+
+- jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
+
+========================================================================
 EPL-1.0
 ========================================================================
 The following software have components provided under the terms of this license:
@@ -998,6 +1007,7 @@ The following software have components provided under the terms of this license:
 - AspectJ Weaver (from http://www.aspectj.org, https://www.eclipse.org/aspectj/)
 - Class Model for Hk2 (from https://repo1.maven.org/maven2/org/glassfish/hk2/class-model)
 - Expression Language 3.0 (from http://el-spec.java.net, http://uel.java.net, https://projects.eclipse.org/projects/ee4j.el)
+- HK2 API module (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-api)
 - HK2 Implementation Utilities (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-utils)
 - HK2 core module (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-core)
 - JUnit Jupiter (Aggregator) (from https://junit.org/junit5/)
@@ -1212,8 +1222,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 LGPL-3.0-only
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - Logback Classic Module (from http://logback.qos.ch, https://repo1.maven.org/maven2/ch/qos/logback/logback-classic)
 - Logback Core Module (from http://logback.qos.ch, https://repo1.maven.org/maven2/ch/qos/logback/logback-core)
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
