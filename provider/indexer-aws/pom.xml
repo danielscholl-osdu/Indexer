@@ -192,6 +192,7 @@
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>${spring-boot-maven-plugin.version}</version>
           <configuration>
             <classifier>spring-boot</classifier>
             <mainClass>org.opengroup.osdu.indexer.aws.IndexerAwsApplication</mainClass>
