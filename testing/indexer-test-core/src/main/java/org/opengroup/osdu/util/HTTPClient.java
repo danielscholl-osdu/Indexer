@@ -61,7 +61,7 @@ public abstract class HTTPClient {
             headers.put(HEADER_CORRELATION_ID, correlationId);
             Client client = getClient();
             client.setReadTimeout(180000);
-            client.setConnectTimeout(10000);
+            client.setConnectTimeout(300000);
             log.info("URL: = " + url);
             WebResource webResource = client.resource(url);
             response = this.getClientResponse(httpMethod, payLoad, webResource, headers, token);
