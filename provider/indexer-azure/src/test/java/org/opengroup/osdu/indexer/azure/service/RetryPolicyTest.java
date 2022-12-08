@@ -15,7 +15,6 @@
 package org.opengroup.osdu.indexer.azure.service;
 
 import io.github.resilience4j.retry.RetryConfig;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -25,9 +24,7 @@ import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
-
 import java.util.function.Predicate;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -128,7 +125,6 @@ public class RetryPolicyTest {
     @Mock
     private JaxRsDpsLog logger;
 
-
     @Test
     public void retry_should_be_true_for_jsonResponseWithNotFound() {
         RetryConfig config = this.retryPolicy.retryConfig(response -> this.retryPolicy.batchRetryPolicy(response));
@@ -160,4 +156,71 @@ public class RetryPolicyTest {
         assertFalse(value);
     }
 
+    @Test
+    public void shouldReturnFalse_when_emptyResponse_for_schemaRetryPolicy()
+    {
+        HttpResponse response=null;
+
+        Boolean value=retryPolicy.schemaRetryPolicy(response);
+
+        assertFalse(value);
+    }
+
+    @Test
+    public void shouldReturnFalse_when_ResponseCode404_for_schemaRetryPolicy()
+    {
+        HttpResponse response=new HttpResponse();
+        response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
+        response.setResponseCode(404);
+
+        Boolean value=retryPolicy.schemaRetryPolicy(response);
+
+        assertFalse(value);
+    }
+
+    @Test
+    public void shouldReturnTrue_when_ResponseCode505_for_schemaRetryPolicy()
+    {
+        HttpResponse response=new HttpResponse();
+        response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
+        response.setResponseCode(505);
+
+        Boolean value=retryPolicy.schemaRetryPolicy(response);
+
+        assertTrue(value);
+    }
+
+    @Test
+    public void shouldReturnFalse_when_ResponseCode200_for_schemaRetryPolicy()
+    {
+        HttpResponse response=new HttpResponse();
+        response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
+        response.setResponseCode(200);
+
+        Boolean value=retryPolicy.schemaRetryPolicy(response);
+
+        assertFalse(value);
+    }
+
+    @Test
+    public void shouldReturnFalse_when_emptyResponse_for_defaultRetryPolicy()
+    {
+        HttpResponse response=null;
+
+        Boolean value=retryPolicy.defaultRetryPolicy(response);
+
+        assertFalse(value);
+    }
+
+    @Test
+    public void shouldReturnTrue_when_defaultResponse_for_defaultRetryPolicy()
+    {
+        HttpResponse response=new HttpResponse();
+        response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
+        response.setResponseCode(504);
+
+        Boolean value=retryPolicy.defaultRetryPolicy(response);
+
+        assertTrue(value);
+    }
 }

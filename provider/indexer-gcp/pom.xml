@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-service</artifactId>
-        <version>0.18.0-SNAPSHOT</version>
+        <version>0.19.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>indexer-gcp</artifactId>
-    <version>0.18.0-SNAPSHOT</version>
+    <version>0.19.0-SNAPSHOT</version>
     <name>indexer-gcp</name>
     <description>Indexer Service GCP App Engine</description>
     <packaging>jar</packaging>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-core</artifactId>
-            <version>0.18.0-SNAPSHOT</version>
+            <version>0.19.0-SNAPSHOT</version>
             <!-- excluded due to runtime conflict with latest core-lib-gcp transient dependencies -->
             <exclusions>
                 <exclusion>

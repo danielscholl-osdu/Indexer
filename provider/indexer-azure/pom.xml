@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-service</artifactId>
-        <version>0.18.0-SNAPSHOT</version>
+        <version>0.19.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>indexer-azure</artifactId>
-    <version>0.18.0-SNAPSHOT</version>
+    <version>0.19.0-SNAPSHOT</version>
     <name>indexer-azure</name>
     <description>Indexer Service Azure</description>
     <packaging>jar</packaging>
@@ -39,7 +39,7 @@
         <azure.appservice.subscription />
         <log4j.version>2.17.1</log4j.version>
         <nimbus-jose-jwt.version>8.2</nimbus-jose-jwt.version>
-        <indexer-core.version>0.18.0-SNAPSHOT</indexer-core.version>
+        <indexer-core.version>0.19.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
         <osdu.corelibazure.version>0.18.0-rc3</osdu.corelibazure.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
@@ -390,6 +390,25 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-webapp-maven-plugin</artifactId>
                 <version>1.7.0</version>
@@ -429,8 +448,32 @@
                   <threadCount>1</threadCount>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>**/cache/*</exclude>
+                        <exclude>**/security/*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-
-
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <!-- select non-aggregate reports -->
+                            <report>report</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>
