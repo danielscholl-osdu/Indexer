@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package org.opengroup.osdu.indexer.azure.config;
+package org.opengroup.osdu.indexer.azure.service.config;
 
 import com.azure.security.keyvault.secrets.SecretClient;
 import org.opengroup.osdu.azure.KeyVaultFacade;
