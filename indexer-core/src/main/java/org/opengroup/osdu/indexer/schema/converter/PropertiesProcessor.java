@@ -37,7 +37,6 @@ import java.util.stream.Stream;
 public class PropertiesProcessor {
 
     private SchemaConverterConfig schemaConverterConfig;
-
     private static final String TYPE_KEY = "type";
     private static final String DEF_PREFIX = "#/definitions/";
     private static final String LINK_PREFIX = "^srn";
@@ -99,7 +98,7 @@ public class PropertiesProcessor {
             if (Objects.nonNull(schemaConverterConfig.getSpecialDefinitionsMap().get(definitionIdentity))) {
                 return storageSchemaEntry(
                         schemaConverterConfig.getSpecialDefinitionsMap().get(definitionIdentity) + getDefinitionColonVersion(definitionSubRef),
-                        pathPrefix);
+                        pathPrefix, null);
             }
 
             Definition definition = definitions.getDefinition(definitionSubRef);
@@ -194,7 +193,7 @@ public class PropertiesProcessor {
                 }
 
                 if (schemaConverterConfig.getSupportedArrayTypes().contains(entry.getValue().getItems().getType()) && !items.isComplexTypeItems()) {
-                    return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
+                    return storageSchemaEntry("[]" + getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey(), entry.getValue().getPropertyConfigurations());
                 }
 
                 return Stream.empty();
@@ -222,7 +221,7 @@ public class PropertiesProcessor {
                 return refResult;
             }
 
-            return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey());
+            return storageSchemaEntry(getTypeByDefinitionProperty(entry.getValue()), pathPrefixWithDot + entry.getKey(), entry.getValue().getPropertyConfigurations());
         } catch (RuntimeException ex) {
             errors.add(ex.getMessage());
             return Stream.empty();
@@ -256,7 +255,7 @@ public class PropertiesProcessor {
                     pathPrefixWithDot + entry.getKey(),
                     propertiesStream);
         } else {
-            return storageSchemaEntry(indexingType, pathPrefixWithDot + entry.getKey());
+            return storageSchemaEntry(indexingType, pathPrefixWithDot + entry.getKey(), entry.getValue().getPropertyConfigurations());
         }
     }
 
@@ -292,13 +291,17 @@ public class PropertiesProcessor {
         return ofItems;
     }
 
-    private Stream<Map<String, Object>> storageSchemaEntry(String kind, String path) {
+    private Stream<Map<String, Object>> storageSchemaEntry(String kind, String path, List<PropertyConfiguration> propertyConfigurations) {
         Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
         Preconditions.checkNotNullOrEmpty(kind, String.format("kind cannot be null or empty for path '%s'", path));
 
         Map<String, Object> map = new HashMap<>();
-        map.put("kind", kind);
-        map.put("path", path);
+        map.put(ConverterConstants.PROPERTY_KIND, kind);
+        map.put(ConverterConstants.PROPERTY_PATH, path);
+        if(propertyConfigurations != null && !propertyConfigurations.isEmpty()) {
+            //piggyback PropertyConfiguration
+            map.put(ConverterConstants.PROPERTY_CONFIGURATION, propertyConfigurations);
+        }
         return Stream.of(map);
     }
 
@@ -307,8 +310,8 @@ public class PropertiesProcessor {
         Preconditions.checkNotNullOrEmpty(path, "path cannot be null or empty");
 
         Map<String, Object> map = new HashMap<>();
-        map.put("kind", kind);
-        map.put("path", path);
+        map.put(ConverterConstants.PROPERTY_KIND, kind);
+        map.put(ConverterConstants.PROPERTY_PATH, path);
         map.put(Constants.PROPERTIES, mapStream.collect(Collectors.toList()));
         return Stream.of(map);
     }

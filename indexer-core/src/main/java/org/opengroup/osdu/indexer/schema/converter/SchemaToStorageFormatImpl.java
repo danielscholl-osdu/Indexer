@@ -16,12 +16,12 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.util.Strings;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.schema.converter.interfaces.IPropertyConfigurationCache;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.*;
@@ -44,6 +44,9 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+
+    @Inject
+    private IPropertyConfigurationCache propertyConfigurationCache;
 
     @Inject
     public SchemaToStorageFormatImpl(ObjectMapper objectMapper, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {
@@ -128,6 +131,8 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
                     .collect(Collectors.toList()));
         }
 
+        processIndexPropertyConfigurations(storageSchemaItems, kind);
+
         if (schemaServiceSchema.getVirtualProperties() != null) {
             this.virtualPropertiesSchemaCache.put(kind, schemaServiceSchema.getVirtualProperties());
             populateVirtualPropertiesSchema(propertiesProcessor, storageSchemaItems, schemaServiceSchema.getVirtualProperties().getProperties());
@@ -143,6 +148,21 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
         result.put("schema", storageSchemaItems);
 
         return result;
+    }
+
+    private void processIndexPropertyConfigurations(List<Map<String, Object>> storageSchemaItems, String kind) {
+        Map<String, List<PropertyConfiguration>> propertyConfigurationMap = new HashMap<>();
+        for (Map<String, Object> item: storageSchemaItems) {
+            if(item.containsKey(ConverterConstants.PROPERTY_CONFIGURATION)) {
+                String path = (String)item.get(ConverterConstants.PROPERTY_PATH);
+                List<PropertyConfiguration> propertyConfigurations = (List<PropertyConfiguration>)item.get(ConverterConstants.PROPERTY_CONFIGURATION);
+                propertyConfigurationMap.put(path, propertyConfigurations);
+                item.remove(ConverterConstants.PROPERTY_CONFIGURATION);
+            }
+        }
+        if(!propertyConfigurationMap.isEmpty()) {
+            this.propertyConfigurationCache.put(kind, propertyConfigurationMap);
+        }
     }
 
     private void populateVirtualPropertiesSchema(PropertiesProcessor propertiesProcessor, List<Map<String, Object>> storageSchemaItems, Map<String, VirtualProperty> virtualProperties) {

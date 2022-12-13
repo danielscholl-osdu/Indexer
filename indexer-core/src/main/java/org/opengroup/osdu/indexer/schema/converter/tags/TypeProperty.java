@@ -23,6 +23,8 @@ import lombok.Data;
 public class TypeProperty {
     @JsonProperty("x-osdu-indexing")
     private Map<String, String> indexHint;
+    @JsonProperty("x-osdu-index-property-configuration")
+    private List<PropertyConfiguration> propertyConfigurations;
     private String type;
     private String pattern;
     private String format;
