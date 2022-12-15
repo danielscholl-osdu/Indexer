@@ -1,18 +1,24 @@
 package org.opengroup.osdu.indexer.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
 public class IndexPropertyPath {
-    private List<String> RelatedConditionMatches;
+    @JsonProperty("RelatedConditionMatches")
+    private List<String> relatedConditionMatches;
 
-    private String RelatedConditionProperty;
+    @JsonProperty("RelatedConditionProperty")
+    private String relatedConditionProperty;
 
-    private String RelatedObjectID;
+    @JsonProperty("RelatedObjectID")
+    private String relatedObjectID;
 
-    private String ValuePath;
+    @JsonProperty("ValuePath")
+    private String valuePath;
 
-    private String RelatedObjectKind;
+    @JsonProperty("RelatedObjectKind")
+    private String relatedObjectKind;
 }

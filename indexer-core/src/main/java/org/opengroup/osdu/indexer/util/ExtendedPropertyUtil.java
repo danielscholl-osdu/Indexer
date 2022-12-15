@@ -1,5 +1,7 @@
 package org.opengroup.osdu.indexer.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -11,7 +13,6 @@ import org.opengroup.osdu.indexer.service.StorageService;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +21,7 @@ import java.util.Map;
 
 @Component
 public class ExtendedPropertyUtil {
-    private static final Gson gson = new Gson();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Inject
     private StorageService storageService;
@@ -38,8 +39,7 @@ public class ExtendedPropertyUtil {
             if(records == null || records.getTotalRecordCount() < 1)
                 return null;
             Records.Entity entity = records.getRecords().get(0);
-            String jsonStr = gson.toJson(entity.getData());
-            IndexPropertyPathConfiguration indexPropertyPathConfiguration = gson.fromJson(jsonStr, IndexPropertyPathConfiguration.class);
+            IndexPropertyPathConfiguration indexPropertyPathConfiguration = objectMapper.readValue(objectMapper.writeValueAsString(entity.getData()), IndexPropertyPathConfiguration.class);
 
             if(indexPropertyPathConfiguration.isArray()) {
                 List<Object> values = new ArrayList<>();
@@ -60,7 +60,8 @@ public class ExtendedPropertyUtil {
                   }
             }
 
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException | JsonProcessingException e) {
+            String error = e.getMessage();
             // TBD
         }
 

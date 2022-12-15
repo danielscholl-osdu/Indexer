@@ -1,20 +1,30 @@
 package org.opengroup.osdu.indexer.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
 public class IndexPropertyPathConfiguration {
-    private String Name;
+    @JsonProperty("Name")
+    private String name;
 
-    private String Description;
+    @JsonProperty("Description")
+    private String description;
 
+    @JsonProperty("Code")
     private String code;
 
-    private boolean Array;
+    @JsonProperty("Array")
+    private boolean array;
 
-    private String Policy;
+    @JsonProperty("Policy")
+    private String policy;
 
-    private List<IndexPropertyPath> Paths;
+    @JsonProperty("UseCase")
+    private String useCase;
+
+    @JsonProperty("Paths")
+    private List<IndexPropertyPath> paths;
 }
