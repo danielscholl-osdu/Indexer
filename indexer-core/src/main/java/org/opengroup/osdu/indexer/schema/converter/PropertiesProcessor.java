@@ -176,7 +176,8 @@ public class PropertiesProcessor {
             if ("object".equals(entry.getValue().getType())
                     && Objects.isNull(entry.getValue().getItems())
                     && Objects.isNull(entry.getValue().getRef())
-                    && Objects.isNull(entry.getValue().getProperties())) {
+                    && Objects.isNull(entry.getValue().getProperties())
+                    && Objects.isNull(entry.getValue().getPropertyConfigurations())) {
                 return Stream.empty();
             }
 

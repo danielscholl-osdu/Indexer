@@ -332,9 +332,9 @@ public class StorageIndexerPayloadMapper {
     }
 
     private boolean mapExtendedProperty(String propertyPath, PropertyConfiguration propertyConfiguration, Map<String, Object> dataCollectorMap) {
-        Object value = extendedPropertyUtil.getExtendedPropertyValue(propertyConfiguration, dataCollectorMap);
-        if(value != null) {
-            dataCollectorMap.put(propertyPath, value);
+        Map<String, Object> values = extendedPropertyUtil.getExtendedPropertyValue(propertyPath, propertyConfiguration, dataCollectorMap);
+        if(values != null && !values.isEmpty()) {
+            dataCollectorMap.putAll(values);
             return true;
         }
         return false;
