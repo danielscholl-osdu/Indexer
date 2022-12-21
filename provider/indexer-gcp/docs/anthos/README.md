@@ -29,8 +29,8 @@ Defined in default application property file but possible to override:
 | `PARTITION_HOST` | ex `https://partition.com` | Partition host | no | output of infrastructure deployment |
 | `ENTITLEMENTS_HOST` | ex `https://entitlements.com` | Entitlements host | no | output of infrastructure deployment |
 | `STORAGE_HOST` | ex `https://storage.com` | Storage host | no | output of infrastructure deployment |
-| `INDEXER_QUEUE_HOST` | ex `http://indexer-queue/api/indexer-queue/v1/_dps/task-handlers/enqueue` | Indexer-Queue host endpoint used for reprocessing tasks| no | output of infrastructure deployment |
 | `SCHEMA_BASE_HOST` | ex `https://schema.com` | Schema service host | no | output of infrastructure deployment |
+| `RABBITMQ_RETRY_LIMIT` | ex `3` | Limit number of retry attempts | no | output of infrastructure deployment |
 
 These variables define service behavior, and are used to switch between `anthos` or `gcp` environments, their overriding and usage in mixed mode was not tested.
 Usage of spring profiles is preferred.
@@ -188,11 +188,33 @@ curl -L -X PATCH 'https://dev.osdu.club/api/partition/v1/partitions/opendes' -H 
 
 #### Exchanges and queues configuration
 
-At RabbitMq should be created exchange with name:
+At RabbitMq should be created exchanges and queues with names:
 
-**name:** `indexing-progress`
+**Exchange name:** `indexing-progress`
 
-![Screenshot](./pics/rabbit.PNG)
+**Exchange config** 
+`Type 	fanout`
+`durable:	true`
+
+**Target queue name** `indexer-records-changed`
+
+**Target queue config** 
+`x-delivery-limit:	5`
+`x-queue-type:	quorum`
+`durable:	true`
+
+**Exchange name:** `reprocess`
+
+**Exchange config**
+`Type 	fanout`
+`durable:	true`
+
+**Target queue name** `indexer-reprocess`
+
+**Target queue config**
+`x-delivery-limit:	5`
+`x-queue-type:	quorum`
+`durable:	true`
 
 ## Keycloak configuration
 
