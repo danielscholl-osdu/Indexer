@@ -19,14 +19,25 @@ package org.opengroup.osdu.indexer.provider.gcp.common.di;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
+@Primary
 @Configuration
 @ConfigurationProperties
 @Getter
 @Setter
-public class ElasticSearchConfigurationProperties {
+public class GcpConfigurationProperties extends IndexerConfigurationProperties {
 
     private String elasticsearchPropertiesPrefix = "elasticsearch";
+
+    private String redisGroupPassword;
+    private Integer redisGroupExpiration = 30;
+    private Boolean redisGroupWithSsl = false;
+
+    private String redisSearchPassword;
+    private Integer redisSearchExpiration = 60 * 60;
+    private Boolean redisSearchWithSsl = false;
 }
