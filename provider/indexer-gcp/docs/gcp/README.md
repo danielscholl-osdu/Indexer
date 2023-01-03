@@ -43,17 +43,15 @@ Usage of spring profiles is preferred.
 
 ## Pubsub configuration:
 
-At Pubsub should be created topics and subscribers with names:
+Pubsub should have topics and subscribers with names and configs:
 
-**Topic name:** `indexing-progress`
+| TOPIC NAME        | Subscription name          | Subscription config                                                                                                                                                             |
+|-------------------|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| indexing-progress | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                      |
+| records-changed   | indexer-records-changed    | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds` |
+| reprocess         | indexer-reprocess          | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds` |
+| schema-changed    | indexer-schema-changed     | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds` |
 
-**Topic name:** `records-changed`
-
-**Subscriber name** `indexer-records-changed`
-
-**Topic name:** `reprocess`
-
-**Subscriber name** `indexer-reprocess`
 
 ### Properties set in Partition service:
 

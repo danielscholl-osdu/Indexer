@@ -188,33 +188,15 @@ curl -L -X PATCH 'https://dev.osdu.club/api/partition/v1/partitions/opendes' -H 
 
 #### Exchanges and queues configuration
 
-At RabbitMq should be created exchanges and queues with names:
+RabbitMq should have exchanges and queues with names and configs:
 
-**Exchange name:** `indexing-progress`
+| EXCHANGE NAME     | EXCHANGE CONFIG                     | Target queue name          | Target queue config                                                  |
+|-------------------|-------------------------------------|----------------------------|----------------------------------------------------------------------|
+| indexing-progress | `Type 	fanout` <br/>`durable:	true` | (Consumer not implemented) | (Consumer not implemented)                                           |
+| records-changed   | `Type 	fanout` <br/>`durable:	true` | indexer-records-changed    | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| reprocess         | `Type 	fanout` <br/>`durable:	true` | indexer-reprocess          | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| schema-changed    | `Type 	fanout` <br/>`durable:	true` | indexer-schema-changed     | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
 
-**Exchange config** 
-`Type 	fanout`
-`durable:	true`
-
-**Target queue name** `indexer-records-changed`
-
-**Target queue config** 
-`x-delivery-limit:	5`
-`x-queue-type:	quorum`
-`durable:	true`
-
-**Exchange name:** `reprocess`
-
-**Exchange config**
-`Type 	fanout`
-`durable:	true`
-
-**Target queue name** `indexer-reprocess`
-
-**Target queue config**
-`x-delivery-limit:	5`
-`x-queue-type:	quorum`
-`durable:	true`
 
 ## Keycloak configuration
 
@@ -257,9 +239,9 @@ You will need to have the following environment variables defined.
 
 **Entitlements configuration for integration accounts**
 
-| INTEGRATION_TESTER | NO_DATA_ACCESS_TESTER | 
-| ---  | ---   |
-| users<br/>users.datalake.ops<br/>service.storage.creator<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{domain}.com |
+| INTEGRATION_TESTER                                                                                                                                                                                                | NO_DATA_ACCESS_TESTER | 
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
+| users<br/>users.datalake.ops<br/>service.storage.creator<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{domain}.com |                       |
 
 Execute following command to build code and run all the integration tests:
 
