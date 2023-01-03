@@ -116,6 +116,10 @@ public class StorageServiceImpl implements StorageService {
             throw new AppException(HttpStatus.SC_NOT_FOUND, "Invalid request", "Storage service returned empty response");
         }
 
+        if (response.getResponseCode() == 500) {
+            throw new AppException(295, "Server error", "Storage service unknown error");
+        }
+
         Records records = null;
         try {
             records = this.objectMapper.readValue(bulkStorageData, Records.class);
@@ -231,4 +235,5 @@ public class StorageServiceImpl implements StorageService {
         JsonElement results = asJsonObject.get("results");
         return response.getResponseCode() != HttpStatus.SC_OK ? null : this.gson.fromJson(results,List.class);
     }
+
 }
