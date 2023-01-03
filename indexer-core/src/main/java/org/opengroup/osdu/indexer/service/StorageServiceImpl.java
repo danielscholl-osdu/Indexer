@@ -235,5 +235,4 @@ public class StorageServiceImpl implements StorageService {
         JsonElement results = asJsonObject.get("results");
         return response.getResponseCode() != HttpStatus.SC_OK ? null : this.gson.fromJson(results,List.class);
     }
-
 }
