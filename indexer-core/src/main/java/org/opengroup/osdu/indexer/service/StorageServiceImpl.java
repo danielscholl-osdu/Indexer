@@ -117,7 +117,7 @@ public class StorageServiceImpl implements StorageService {
         }
 
         if (response.getResponseCode() == 500) {
-            throw new AppException(295, "Server error", "Storage service unknown error");
+            throw new AppException(RequestStatus.NO_RETRY, "Server error", "Storage service unknown error");
         }
 
         Records records = null;
