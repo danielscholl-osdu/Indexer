@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Configuration;
 public class IndexerMessagingConfigProperties {
 
     private String recordsChangedTopicName;
-    //TODO schema-changed events consuming not implemented
     private String schemaChangedTopicName;
     private String defaultRelativeIndexerWorkerUrl;
     private String reprocessTopicName;

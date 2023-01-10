@@ -190,13 +190,15 @@ curl -L -X PATCH 'https://dev.osdu.club/api/partition/v1/partitions/opendes' -H 
 
 RabbitMq should have exchanges and queues with names and configs:
 
-| EXCHANGE NAME     | EXCHANGE CONFIG                     | Target queue name          | Target queue config                                                  |
-|-------------------|-------------------------------------|----------------------------|----------------------------------------------------------------------|
-| indexing-progress | `Type 	fanout` <br/>`durable:	true` | (Consumer not implemented) | (Consumer not implemented)                                           |
-| records-changed   | `Type 	fanout` <br/>`durable:	true` | indexer-records-changed    | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
-| reprocess         | `Type 	fanout` <br/>`durable:	true` | indexer-reprocess          | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
-| schema-changed    | `Type 	fanout` <br/>`durable:	true` | indexer-schema-changed     | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
-
+| EXCHANGE NAME                | EXCHANGE CONFIG                     | Target queue name                    | Target queue config                                                                                                            |
+|------------------------------|-------------------------------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| indexing-progress            | `Type 	fanout` <br/>`durable:	true` | (Consumer not implemented)           | (Consumer not implemented)                                                                                                     |
+| records-changed              | `Type 	fanout` <br/>`durable:	true` | indexer-records-changed              | `x-delivery-limit:	5`<br/>`x-dead-letter-exchange:	records-changed-dead-letter`<br/>`x-queue-type: quorum`<br/>`durable: true`  |
+| records-changed-dead-letter  | `Type 	fanout` <br/>`durable:	true` | indexer-records-changed-dead-letter  | `x-queue-type: classic`<br/>`durable: true`<br/>`x-message-ttl: 604800000`                                                                                    |
+| reprocess                    | `Type 	fanout` <br/>`durable:	true` | indexer-reprocess                    | `x-delivery-limit:	5`<br/>`x-dead-letter-exchange:	reprocess-dead-letter`<br/>`x-queue-type: quorum`<br/>`durable: true`  |
+| reprocess-dead-letter        | `Type 	fanout` <br/>`durable:	true` | indexer-reprocess-dead-letter        | `x-queue-type: classic`<br/>`durable: true`<br/>`x-message-ttl: 604800000`                                                                                    |
+| schema-changed               | `Type 	fanout` <br/>`durable:	true` | indexer-schema-changed               | `x-delivery-limit:	5`<br/>`x-dead-letter-exchange:	schema-changed-dead-letter`<br/>`x-queue-type: quorum`<br/>`durable: true`  |
+| schema-changed-dead-letter   | `Type 	fanout` <br/>`durable:	true` | indexer-schema-changed-dead-letter   | `x-queue-type: classic`<br/>`durable: true`<br/>`x-message-ttl: 604800000`                                                                                    |
 
 ## Keycloak configuration
 

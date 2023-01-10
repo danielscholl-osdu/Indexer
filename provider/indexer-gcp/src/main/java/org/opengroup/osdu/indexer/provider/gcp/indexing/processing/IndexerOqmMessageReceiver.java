@@ -39,6 +39,8 @@ import org.opengroup.osdu.indexer.provider.gcp.indexing.thread.ThreadScopeContex
 @RequiredArgsConstructor
 public class IndexerOqmMessageReceiver implements OqmMessageReceiver {
 
+    private static final String SCHEMA_SERVICE_NAME = "schema";
+
     private final ThreadDpsHeaders dpsHeaders;
     private final SubscriptionConsumer consumer;
     private final TokenProvider tokenProvider;
@@ -87,9 +89,12 @@ public class IndexerOqmMessageReceiver implements OqmMessageReceiver {
 
     private boolean sendMessage(OqmMessage oqmMessage) {
         CloudTaskRequest cloudTaskRequest;
+        String serviceName = oqmMessage.getAttributes().get("service");
         JsonElement jsonElement = JsonParser.parseString(oqmMessage.getData());
 
-        if (jsonElement.isJsonArray()) {
+        if (SCHEMA_SERVICE_NAME.equalsIgnoreCase(serviceName)) {
+            cloudTaskRequest = getCloudTaskRequestProducedBySchemaService(oqmMessage);
+        } else if (jsonElement.isJsonArray()) {
             cloudTaskRequest = getCloudTaskRequestProducedByStorageService(oqmMessage);
         } else {
             cloudTaskRequest = getCloudTaskRequestProducedByIndexerService(oqmMessage);
@@ -115,6 +120,13 @@ public class IndexerOqmMessageReceiver implements OqmMessageReceiver {
             .url(WORKER_RELATIVE_URL)
             .message(gson.toJson(oqmMessage))
             .build();
+    }
+
+    private CloudTaskRequest getCloudTaskRequestProducedBySchemaService(OqmMessage oqmMessage) {
+        return CloudTaskRequest.builder()
+                .url(SCHEMA_SERVICE_NAME)
+                .message(gson.toJson(oqmMessage))
+                .build();
     }
 
     @NotNull
