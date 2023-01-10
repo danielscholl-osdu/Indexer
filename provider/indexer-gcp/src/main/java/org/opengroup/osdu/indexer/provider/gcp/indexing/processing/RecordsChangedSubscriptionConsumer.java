@@ -28,6 +28,7 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
+import org.opengroup.osdu.core.common.model.indexer.SchemaChangedMessages;
 import org.opengroup.osdu.core.common.model.search.CloudTaskRequest;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.api.RecordIndexerApi;
@@ -39,6 +40,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class RecordsChangedSubscriptionConsumer implements SubscriptionConsumer {
+
+    private static final String SCHEMA_RELATIVE_URL = "schema";
 
     private final DpsHeaders dpsHeaders;
     private final RecordIndexerApi recordIndexerApi;
@@ -60,6 +63,11 @@ public class RecordsChangedSubscriptionConsumer implements SubscriptionConsumer 
                 log.debug("Reindex job message body: {}", reindexBody);
                 ResponseEntity<?> reindexResponse = reindexApi.reindex(reindexBody, false);
                 log.info("Reindex job status: {}", reindexResponse);
+            } else if (url.equals(SCHEMA_RELATIVE_URL)) {
+                SchemaChangedMessages schemaChangedMessage = getSchemaWorkerRequestBody(request);
+                log.debug("Schema changed job message body: {}", schemaChangedMessage);
+                ResponseEntity<?> schemaChangeResponse = recordIndexerApi.schemaWorker(schemaChangedMessage);
+                log.info("Schema changed job status: {}", schemaChangeResponse);
             }
             return true;
         } catch (AppException e) {
@@ -89,6 +97,13 @@ public class RecordsChangedSubscriptionConsumer implements SubscriptionConsumer 
         recordChangedMessages.setMessageId(dpsHeaders.getCorrelationId());
         recordChangedMessages.setPublishTime(LocalDateTime.now().toString());
         return recordChangedMessages;
+    }
+
+    private SchemaChangedMessages getSchemaWorkerRequestBody(CloudTaskRequest request) {
+        SchemaChangedMessages schemaChangedMessage = this.gson.fromJson(request.getMessage(), SchemaChangedMessages.class);
+        schemaChangedMessage.setMessageId(dpsHeaders.getCorrelationId());
+        schemaChangedMessage.setPublishTime(LocalDateTime.now().toString());
+        return schemaChangedMessage;
     }
 
 }

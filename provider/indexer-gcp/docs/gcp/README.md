@@ -45,12 +45,15 @@ Usage of spring profiles is preferred.
 
 Pubsub should have topics and subscribers with names and configs:
 
-| TOPIC NAME        | Subscription name          | Subscription config                                                                                                                                                             |
-|-------------------|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| indexing-progress | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                      |
-| records-changed   | indexer-records-changed    | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds` |
-| reprocess         | indexer-reprocess          | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds` |
-| schema-changed    | indexer-schema-changed     | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds` |
+| TOPIC NAME                  | Subscription name                  | Subscription config                                                                                                                                                                                                                |
+|-----------------------------|------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| indexing-progress           | (Consumer not implemented)         | (Consumer not implemented)                                                                                                                                                                                                         |
+| records-changed             | indexer-records-changed            | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
+| records-changed-dead-letter | indexer-records-changed            | `Subscription message retention duration:	7 days`                                                                                                                                                                                  |
+| reprocess                   | indexer-reprocess                  | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
+| reprocess-dead-letter       | indexer-reprocess-dead-letter      | `Subscription message retention duration:	7 days`                                                                                                                                                                                                                                   |
+| schema-changed              | indexer-schema-changed             | `Maximum delivery attempts:	5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
+| schema-changed-dead-letter  | indexer-schema-changed-dead-letter | `Subscription message retention duration:	7 days`                                                                                                                                                                                                                                   |
 
 
 ### Properties set in Partition service:

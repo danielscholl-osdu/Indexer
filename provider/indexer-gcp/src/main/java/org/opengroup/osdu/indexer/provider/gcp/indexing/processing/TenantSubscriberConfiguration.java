@@ -52,15 +52,18 @@ public class TenantSubscriberConfiguration {
         log.info("OqmSubscriberManager provisioning STARTED");
         IndexerOqmMessageReceiver recordsChangedMessageReceiver = new IndexerOqmMessageReceiver(headers, consumer, tokenProvider);
         IndexerOqmMessageReceiver reprocessOqmMessageReceiver = new IndexerOqmMessageReceiver(headers, consumer, tokenProvider);
+        IndexerOqmMessageReceiver schemaOqmMessageReceiver = new IndexerOqmMessageReceiver(headers, consumer, tokenProvider);
 
         String recordsChangedTopicName = properties.getRecordsChangedTopicName();
         String reprocessTopicName = properties.getReprocessTopicName();
+        String schemaChangedTopicName = properties.getSchemaChangedTopicName();
 
         Collection<TenantInfo> tenantInfos = tenantInfoFactory.listTenantInfo();
 
         for (TenantInfo tenantInfo : tenantInfos) {
             subscriberManager.registerSubscriber(tenantInfo, recordsChangedTopicName, getSubscriptionName(recordsChangedTopicName), recordsChangedMessageReceiver);
             subscriberManager.registerSubscriber(tenantInfo, reprocessTopicName, getSubscriptionName(reprocessTopicName), reprocessOqmMessageReceiver);
+            subscriberManager.registerSubscriber(tenantInfo, schemaChangedTopicName, getSubscriptionName(schemaChangedTopicName), schemaOqmMessageReceiver);
         }
         log.info("OqmSubscriberManager provisioning COMPLETED");
     }
