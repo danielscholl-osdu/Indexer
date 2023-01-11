@@ -1,10 +1,10 @@
-<!--- Configmap -->
+<!--- Deploy -->
 
-# Configmap helm chart
+# Deploy helm chart
 
 ## Introduction
 
-This chart bootstraps a configmap deployment on a [Kubernetes](https://kubernetes.io) cluster using [Helm](https://helm.sh) package manager.
+This chart bootstraps a deployment on a [Kubernetes](https://kubernetes.io) cluster using [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
@@ -24,43 +24,39 @@ Packages are only needed for installation from a local computer.
 
 ## Installation
 
+Before installing deploy Helm chart you need to install [configmap Helm chart](../configmap).
 First you need to set variables in **values.yaml** file using any code editor. Some of the values are prefilled, but you need to specify some values as well. You can find more information about them below.
 
 ### Common variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**entitlementsHost** | entitlements host | string | "http://entitlements" | yes
-**indexerQueueHost** | indexer-queue host | string | "http://indexer-queue" | yes
-**logLevel** | logging level | string | INFO | yes
-**partitionHost** | partition host | string | "http://partition" | yes
-**redisGroupHost** | redis group host | string | redis-group-master | yes
-**redisSearchHost** | redis search host | string | redis-search-master | yes
-**schemaHost** | schema host | string | "http://schema" | yes
-**securityHttpsCertificateTrust** | whether https is enabled | boolean | true | yes
-**springProfilesActive** | active spring profile | string | gcp | yes
-**storageHost** | storage host | string | "http://storage" | yes
-
-##***REMOVED*** variables
-
-| Name | Description | Type | Default |Required |
-|------|-------------|------|---------|---------|
-**googleAudiences** | your Google Cloud client ID | string | - | yes
+**requestsCpu** | amount of requested CPU | string | 0.1 | yes
+**requestsMemory** | amount of requested memory| string | 640M | yes
+**limitsCpu** | CPU limit | string | 1 | yes
+**limitsMemory** | memory limit | string | 1G | yes
+**image** | service image | string | - | yes
+**imagePullPolicy** | when to pull image | string | IfNotPresent | yes
+**serviceAccountName** | name of your service account | string | indexer | yes
 
 ### Config variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**configmap** | configmap to be used | string | indexer-config | yes
-**appName** | name of the app | string | indexer | yes
+**appName** | name of the app | string | `indexer` | yes
+**configmap** | configmap to be used | string | `indexer-config` | yes
+**elasticSecretName** | secret for elastic | string | `indexer-elastic-secret` | yes
+**keycloakSecretName** | secret for keycloak | string | `indexer-keycloak-secret` | yes
+**rabbitmqSecretName** | secret for rabbitmq | string | `rabbitmq-secret` | yes
 **onPremEnabled** | whether on-prem is enabled | boolean | false | yes
+**domain** | your domain | string | - | yes
 
 ### Install the helm chart
 
 Run this command from within this directory:
 
 ```console
-helm install gcp-indexer-configmap .
+helm install gc-indexer-deploy .
 ```
 
 ## Uninstalling the Chart
@@ -68,7 +64,7 @@ helm install gcp-indexer-configmap .
 To uninstall the helm deployment:
 
 ```console
-helm uninstall gcp-indexer-configmap
+helm uninstall gc-indexer-deploy
 ```
 
-[Move-to-Top](#configmap-helm-chart)
+[Move-to-Top](#deploy-helm-chart)
