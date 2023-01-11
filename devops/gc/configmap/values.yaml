@@ -14,7 +14,7 @@ data:
   securityHttpsCertificateTrust: "true"
   springProfilesActive: "gcp"
   storageHost: "http://storage"
-  # gcp
+  ***REMOVED***
   googleAudiences: ""
 conf:
   appName: "indexer"

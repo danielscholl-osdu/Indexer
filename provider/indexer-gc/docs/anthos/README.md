@@ -85,7 +85,7 @@ curl -L -X PATCH 'http://partition.com/api/partition/v1/partitions/opendes' -H '
   "properties": {
     "elasticsearch.host": {
       "sensitive": false,
-      "value": "elastic.us-central1.gcp.cloud.es.io"
+      "value": "elastic.us-central1.gc.cloud.es.io"
     },
     "elasticsearch.port": {
       "sensitive": false,
