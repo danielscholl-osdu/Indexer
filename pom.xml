@@ -173,7 +173,7 @@
         <module>indexer-core</module>
         <module>provider/indexer-aws</module>
         <module>provider/indexer-azure</module>
-        <module>provider/indexer-gcp</module>
+        <module>provider/indexer-gc</module>
         <module>provider/indexer-ibm</module>
     </modules>
 

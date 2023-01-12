@@ -205,18 +205,24 @@
             </execution>
           </executions>
         </plugin>
-        <plugin>
-          <groupId>org.owasp</groupId>
-          <artifactId>dependency-check-maven</artifactId>
-          <version>6.2.2</version>
-          <executions>
-              <execution>
-                  <goals>
-                      <goal>check</goal>
-                  </goals>
-              </execution>
-          </executions>
-      </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>7.4.4</version>
+                <configuration>
+                    <!-- .Disable Net content-->
+                    <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+                    <nugetconfAnalyzerEnabled>false</nugetconfAnalyzerEnabled>
+                    <nuspecAnalyzerEnabled>false</nuspecAnalyzerEnabled>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
       </plugins>
   </build>
 </project>
