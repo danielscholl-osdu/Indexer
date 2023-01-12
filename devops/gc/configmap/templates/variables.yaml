@@ -16,6 +16,3 @@ data:
   SECURITY_HTTPS_CERTIFICATE_TRUST: "{{ .Values.data.securityHttpsCertificateTrust }}"
   SPRING_PROFILES_ACTIVE: "{{ .Values.data.springProfilesActive }}"
   STORAGE_HOST: "{{ .Values.data.storageHost }}"
-  {{- if not .Values.conf.onPremEnabled }}
-  GOOGLE_AUDIENCES: "{{ .Values.data.googleAudiences }}"
-  {{- end }}

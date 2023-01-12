@@ -67,7 +67,6 @@ public class IndexerConfigurationProperties {
 	private String gaeVersion;
 	private String googleCloudProject;
 	private String googleCloudProjectRegion;
-	private String googleAudiences;
 
 	public DeploymentEnvironment getDeploymentEnvironment(){
 		return DeploymentEnvironment.valueOf(deploymentEnvironment);

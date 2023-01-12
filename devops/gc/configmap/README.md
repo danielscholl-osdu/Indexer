@@ -41,12 +41,6 @@ First you need to set variables in **values.yaml** file using any code editor. S
 **springProfilesActive** | active spring profile | string | gcp | yes
 **storageHost** | storage host | string | "http://storage" | yes
 
-##***REMOVED*** variables
-
-| Name | Description | Type | Default |Required |
-|------|-------------|------|---------|---------|
-**googleAudiences** | your Google Cloud client ID | string | - | yes
-
 ### Config variables
 
 | Name | Description | Type | Default |Required |
