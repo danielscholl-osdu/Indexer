@@ -66,8 +66,6 @@ class JwtTokenUtil {
     }
 
     private static String getJwt(String serviceAccountFile) throws IOException {
-
-        String targetAudience = Config.getTargetAudience();
         long currentTime = Clock.SYSTEM.currentTimeMillis();
 
         InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(serviceAccountFile));
@@ -83,7 +81,7 @@ class JwtTokenUtil {
         payload.setExpirationTimeSeconds(currentTime / 1000 + 3600);
         payload.setAudience("https://www.googleapis.com/oauth2/v4/token");
         payload.setIssuer(credential.getServiceAccountId());
-        payload.set("target_audience", targetAudience);
+        payload.set("target_audience", "osdu");
 
         JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
         String signedJwt = null;

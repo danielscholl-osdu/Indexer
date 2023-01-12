@@ -14,7 +14,6 @@
 5) Update **DEFAULT_SEARCH_INTEGRATION_TESTER** variable in Config file with base64 encoded value to service account json key
 6) Update **DEFAULT_SEARCH_ON_BEHALF_INTEGRATION_TESTER** variable in Config file with base64 encoded value to service account json key (it will be used for slb-on-behalf-header)
 7) Have credentials for Elastic Cluster and update **DEFAULT_ELASTIC_HOST**, **DEFAULT_ELASTIC_USER_NAME** and **DEFAULT_ELASTIC_PASSWORD**.
-8) Update **DEFAULT_TARGET_AUDIENCE** with the Google audience
 
 Note: 
 1) Config (Config.java) file is present in org.opengroup.osdu.util package

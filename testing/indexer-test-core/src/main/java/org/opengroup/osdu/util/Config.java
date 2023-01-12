@@ -16,8 +16,6 @@ public class Config {
     private static final String DEFAULT_DATA_PARTITION_ID_TENANT2 = "";
     private static final String DEFAULT_SEARCH_INTEGRATION_TESTER = "";
 
-    private static final String DEFAULT_TARGET_AUDIENCE = "";
-
     private static final String DEFAULT_LEGAL_TAG = "";
     private static final String DEFAULT_OTHER_RELEVANT_DATA_COUNTRIES = "";
 
@@ -37,10 +35,6 @@ public class Config {
 
     public static String getLegalTag() {
         return getEnvironmentVariableOrDefaultValue("LEGAL_TAG", DEFAULT_LEGAL_TAG);
-    }
-
-    public static String getTargetAudience() {
-        return getEnvironmentVariableOrDefaultValue("INTEGRATION_TEST_AUDIENCE", DEFAULT_TARGET_AUDIENCE);
     }
 
     public static String getKeyValue() {
