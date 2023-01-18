@@ -27,29 +27,54 @@ Packages are only needed for installation from a local computer.
 Before installing deploy Helm chart you need to install [configmap Helm chart](../configmap).
 First you need to set variables in **values.yaml** file using any code editor. Some of the values are prefilled, but you need to specify some values as well. You can find more information about them below.
 
-### Common variables
+### Configmap variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**requestsCpu** | amount of requested CPU | string | 0.1 | yes
-**requestsMemory** | amount of requested memory| string | 640M | yes
-**limitsCpu** | CPU limit | string | 1 | yes
-**limitsMemory** | memory limit | string | 1G | yes
-**image** | service image | string | - | yes
-**imagePullPolicy** | when to pull image | string | IfNotPresent | yes
-**serviceAccountName** | name of your service account | string | indexer | yes
+**data.entitlementsHost** | entitlements host | string | "http://entitlements" | yes
+**data.indexerQueueHost** | indexer-queue host | string | "http://indexer-queue" | yes
+**data.logLevel** | logging level | string | INFO | yes
+**data.partitionHost** | partition host | string | "http://partition" | yes
+**data.redisGroupHost** | redis group host | string | redis-group-master | yes
+**data.redisSearchHost** | redis search host | string | redis-search-master | yes
+**data.schemaHost** | schema host | string | "http://schema" | yes
+**data.securityHttpsCertificateTrust** | whether https is enabled | boolean | true | yes
+**data.springProfilesActive** | active spring profile | string | gcp | yes
+**data.storageHost** | storage host | string | "http://storage" | yes
+
+### Deploy variables
+
+| Name | Description | Type | Default |Required |
+|------|-------------|------|---------|---------|
+**data.requestsCpu** | amount of requested CPU | string | 0.1 | yes
+**data.requestsMemory** | amount of requested memory| string | 640M | yes
+**data.limitsCpu** | CPU limit | string | 1 | yes
+**data.limitsMemory** | memory limit | string | 1G | yes
+**data.image** | service image | string | - | yes
+**data.imagePullPolicy** | when to pull image | string | IfNotPresent | yes
+**data.serviceAccountName** | name of your service account | string | indexer | yes
 
 ### Config variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**appName** | name of the app | string | `indexer` | yes
-**configmap** | configmap to be used | string | `indexer-config` | yes
-**elasticSecretName** | secret for elastic | string | `indexer-elastic-secret` | yes
-**keycloakSecretName** | secret for keycloak | string | `indexer-keycloak-secret` | yes
-**rabbitmqSecretName** | secret for rabbitmq | string | `rabbitmq-secret` | yes
-**onPremEnabled** | whether on-prem is enabled | boolean | false | yes
-**domain** | your domain | string | - | yes
+**conf.appName** | name of the app | string | `indexer` | yes
+**conf.configmap** | configmap to be used | string | `indexer-config` | yes
+**conf.elasticSecretName** | secret for elastic | string | `indexer-elastic-secret` | yes
+**conf.keycloakSecretName** | secret for keycloak | string | `indexer-keycloak-secret` | yes
+**conf.rabbitmqSecretName** | secret for rabbitmq | string | `rabbitmq-secret` | yes
+**conf.onPremEnabled** | whether on-prem is enabled | boolean | false | yes
+**conf.domain** | your domain | string | - | yes
+
+### ISTIO variables
+
+| Name | Description | Type | Default |Required |
+|------|-------------|------|---------|---------|
+**istio.proxyCPU** | CPU request for Envoy sidecars | string | 50m | yes
+**istio.proxyCPULimit** | CPU limit for Envoy sidecars | string | 500m | yes
+**istio.proxyMemory** | memory request for Envoy sidecars | string | 64Mi | yes
+**istio.proxyMemoryLimit** | memory limit for Envoy sidecars | string | 512Mi | yes
+
 
 ### Install the helm chart
 
