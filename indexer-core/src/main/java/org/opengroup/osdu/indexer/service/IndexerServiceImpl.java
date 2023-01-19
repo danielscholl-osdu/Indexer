@@ -367,20 +367,11 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
     private Map<String, Object> mergeDataFromPropertyConfiguration(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
-        Map<String, SearchRecord> relatedObjects = new HashMap<>();
         for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations()) {
             for(Path path: configuration.getPaths()) {
                 Map<String, Object> value = null;
                 if(path.mappedRelatedObject()) {
-                    String combinedObjectId = path.getRelatedObjectKind() + ":" + path.getRelatedObjectID();
-                    SearchRecord searchRecord = null;
-                    if(relatedObjects.containsKey(combinedObjectId)) {
-                        searchRecord = relatedObjects.get(combinedObjectId);
-                    }
-                    else {
-                        searchRecord = getRelatedObject(originalDataMap, path);
-                        relatedObjects.put(combinedObjectId, searchRecord);
-                    }
+                    SearchRecord searchRecord = getRelatedObject(originalDataMap, path);
                     if(searchRecord != null) {
                         String valuePath = VirtualPropertyUtil.removeDataPrefix(path.getValuePath());
                         value = retrievePropertyValues(configuration.getName(), valuePath, searchRecord.getData());

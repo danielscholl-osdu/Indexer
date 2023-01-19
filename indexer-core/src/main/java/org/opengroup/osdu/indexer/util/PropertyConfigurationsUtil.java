@@ -3,11 +3,13 @@ package org.opengroup.osdu.indexer.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import org.opengroup.osdu.indexer.cache.KindCache;
+import org.opengroup.osdu.indexer.cache.PropertyConfigurationsCache;
+import org.opengroup.osdu.indexer.cache.SearchRecordCache;
 import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.IPropertyConfigurationsCache;
 import org.opengroup.osdu.indexer.service.SearchService;
 import org.springframework.stereotype.Component;
 
@@ -20,9 +22,15 @@ import java.util.List;
 public class PropertyConfigurationsUtil {
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final PropertyConfigurations emptyConfigurations = new PropertyConfigurations();
 
     @Inject
-    private IPropertyConfigurationsCache propertyConfigurationCache;
+    private PropertyConfigurationsCache propertyConfigurationCache;
+    @Inject
+    private KindCache kindCache;
+    @Inject
+    private SearchRecordCache searchRecordCache;
+
     @Inject
     private SearchService searchService;
 
@@ -31,13 +39,11 @@ public class PropertyConfigurationsUtil {
             return null;
 
         List<String> kinds = Arrays.asList(kind, getKindWithMajor(kind)); // Specified version of kind first
-        PropertyConfigurations configuration = null;
         for(String kd: kinds) {
-            configuration =(PropertyConfigurations) propertyConfigurationCache.get(kd);
-            if(configuration != null) {
-                if(Strings.isNullOrEmpty(configuration.getCode())) {
-                    configuration = null; //reset
-                }
+            PropertyConfigurations configuration = null;
+            if(propertyConfigurationCache.containsKey(kd)) {
+                if(!isEmptyConfiguration(propertyConfigurationCache.get(kd)))
+                    configuration = propertyConfigurationCache.get(kd);
             }
             else {
                 configuration = searchConfigurations(kd);
@@ -45,49 +51,61 @@ public class PropertyConfigurationsUtil {
                     propertyConfigurationCache.put(kd, configuration);
                 }
                 else {
-                    propertyConfigurationCache.put(kd, new PropertyConfigurations());
+                    // It is common that a kind does not have extended property. So we need to cache an empty configuration
+                    // to avoid unnecessary search
+                    propertyConfigurationCache.put(kd, emptyConfigurations);
                 }
             }
 
-            if(configuration != null)
-                break;
+            if(configuration != null) {
+                return configuration;
+            }
         }
 
-        return configuration;
+        return null;
     }
 
     public String resolveConcreteKind(String kind) {
-        if(isConcreteKind(kind))
-            return kind;
+        if(Strings.isNullOrEmpty(kind)) {
+            return null;
+        }
 
-        //TODO: cache the mapping
-        String concreteKind = searchConcreteKind(kind);
-        return concreteKind;
+        if(isConcreteKind(kind)) {
+            return kind;
+        }
+
+        if(kindCache.containsKey(kind)) {
+            return kindCache.get(kind);
+        }
+        else {
+            String concreteKind = searchConcreteKind(kind);
+            if (!Strings.isNullOrEmpty(concreteKind)) {
+                kindCache.put(kind, concreteKind);
+            }
+            return concreteKind;
+        }
     }
 
     public SearchRecord getRelatedRecord(String relatedObjectKind, String relatedObjectId) {
-        String kind = isConcreteKind(relatedObjectKind)? relatedObjectKind : relatedObjectKind + "*";
-        String id = relatedObjectId.endsWith(":")? relatedObjectId.substring(0, relatedObjectId.length() - 1) : relatedObjectId;
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(kind);
-        String query = String.format("id: \"%s\"",id);
-        searchRequest.setQuery(query);
-        searchRequest.setLimit(10);
-        try {
-            SearchResponse searchResponse = searchService.query(searchRequest);
-            List<SearchRecord> results = searchResponse.getResults();
-            if(results != null && !results.isEmpty())
-            {
-                //TODO: get the best match
-                SearchRecord searchRecord = results.get(0);
-
-                // Cache it
-                return searchRecord;
-            }
-        } catch (URISyntaxException e) {
-            // TODO: log the error
+        if(Strings.isNullOrEmpty(relatedObjectKind) || Strings.isNullOrEmpty(relatedObjectId)) {
+            return null;
         }
-        return null;
+
+        String key =  relatedObjectKind + ":" + relatedObjectId;
+        if(searchRecordCache.containsKey(key)) {
+            return searchRecordCache.get(key);
+        }
+        else {
+            SearchRecord searchRecord = searchRelatedRecord(relatedObjectKind, relatedObjectId);
+            if(searchRecord != null) {
+                searchRecordCache.put(key, searchRecord);
+            }
+            return searchRecord;
+        }
+    }
+
+    private boolean isEmptyConfiguration(PropertyConfigurations propertyConfigurations) {
+        return propertyConfigurations != null && Strings.isNullOrEmpty(propertyConfigurations.getCode());
     }
 
     private boolean isConcreteKind(String kind) {
@@ -155,5 +173,27 @@ public class PropertyConfigurationsUtil {
         }
 
         return configurations;
+    }
+
+    private SearchRecord searchRelatedRecord(String relatedObjectKind, String relatedObjectId) {
+        String kind = isConcreteKind(relatedObjectKind)? relatedObjectKind : relatedObjectKind + "*";
+        String id = relatedObjectId.endsWith(":")? relatedObjectId.substring(0, relatedObjectId.length() - 1) : relatedObjectId;
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setKind(kind);
+        String query = String.format("id: \"%s\"",id);
+        searchRequest.setQuery(query);
+        searchRequest.setLimit(10);
+        try {
+            SearchResponse searchResponse = searchService.query(searchRequest);
+            List<SearchRecord> results = searchResponse.getResults();
+            if(results != null && !results.isEmpty())
+            {
+                //TODO: get the best match
+                return results.get(0);
+            }
+        } catch (URISyntaxException e) {
+            // TODO: log the error
+        }
+        return null;
     }
 }
