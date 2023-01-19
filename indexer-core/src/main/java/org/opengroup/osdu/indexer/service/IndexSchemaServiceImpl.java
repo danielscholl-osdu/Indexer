@@ -31,20 +31,23 @@ import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.model.Kind;
+import org.opengroup.osdu.indexer.model.indexproperty.Path;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.indexer.util.PropertyConfigurationsUtil;
 import org.opengroup.osdu.indexer.util.TypeMapper;
+import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
@@ -69,6 +72,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private ISchemaCache schemaCache;
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    @Inject
+    private PropertyConfigurationsUtil propertyConfigurationsUtil;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
@@ -161,13 +166,13 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             if (Strings.isNullOrEmpty(schema)) {
                 return this.getEmptySchema(kind);
             } else {
-                // cache the schema
-                this.schemaCache.put(kind, schema);
-                // get flatten schema and cache it
-                IndexSchema flatSchemaObj = normalizeSchema(schema);
-                if (flatSchemaObj != null) {
-                    this.schemaCache.put(kind + FLATTENED_SCHEMA, gson.toJson(flatSchemaObj));
+                // Merge schema of the extended properties if needed
+                PropertyConfigurations propertyConfigurations = propertyConfigurationsUtil.getPropertyConfiguration(kind);
+                if(propertyConfigurations != null) {
+                    schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
                 }
+
+                IndexSchema flatSchemaObj = cacheAndNormalizeSchema(kind, schema);
                 return flatSchemaObj;
             }
         } else {
@@ -178,6 +183,84 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             }
             return this.gson.fromJson(flattenedSchema, IndexSchema.class);
         }
+    }
+
+    private IndexSchema cacheAndNormalizeSchema(String kind, String schema) {
+        // cache the schema
+        this.schemaCache.put(kind, schema);
+        // get flatten schema and cache it
+        IndexSchema flatSchemaObj = normalizeSchema(schema);
+        if (flatSchemaObj != null) {
+            this.schemaCache.put(kind + FLATTENED_SCHEMA, gson.toJson(flatSchemaObj));
+        }
+        return flatSchemaObj;
+    }
+
+    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, PropertyConfigurations propertyConfigurations) {
+        Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
+        Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
+
+        List<SchemaItem> schemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
+        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations()) {
+            String relatedObjectKind = configuration.getRelatedObjectKind();
+            if(relatedObjectKind != null) {
+                Path propertyPath = configuration.getPaths().stream().filter(p -> relatedObjectKind.equals(p.getRelatedObjectKind())).findFirst().orElse(null);
+                if (propertyPath == null)
+                    continue; // Should not reach here
+
+                String relatedPropertyPath = VirtualPropertyUtil.removeDataPrefix(propertyPath.getValuePath());
+                for (SchemaItem schemaItem : relatedObjectKindSchemas.get(relatedObjectKind).getSchema()) {
+                    if (VirtualPropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
+                        String path = schemaItem.getPath();
+                        path = path.replace(relatedPropertyPath, configuration.getName());
+                        SchemaItem extendedSchemaItem = new SchemaItem();
+                        extendedSchemaItem.setPath(path);
+                        extendedSchemaItem.setKind(schemaItem.getKind());
+                        schemaItems.add(extendedSchemaItem);
+                    }
+                }
+            }
+            else {
+                //TODO: handle same object reference
+            }
+        }
+        originalSchema.setSchema(schemaItems.toArray(new SchemaItem[0]));
+        return gson.toJson(originalSchema);
+    }
+
+    private Map<String, Schema> getSchemaOfRelatedObjectKinds(PropertyConfigurations propertyConfigurations) {
+        Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
+
+        List<String> relatedObjectKinds = propertyConfigurations.getRelatedObjectKinds();
+        if(relatedObjectKinds != null && !relatedObjectKinds.isEmpty()) {
+            for(String relatedObjectKind: relatedObjectKinds) {
+                // The relatedObjectKind defined in property configuration can be kind having major version only
+                // e.g. "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1."
+                String concreteRelatedObjectKind = propertyConfigurationsUtil.resolveConcreteKind(relatedObjectKind);
+                if(Strings.isNullOrEmpty(concreteRelatedObjectKind))
+                    continue;
+
+                String relatedObjectKindSchema = (String) this.schemaCache.get(concreteRelatedObjectKind);
+                if(Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                    try {
+                        relatedObjectKindSchema = this.schemaProvider.getSchema(concreteRelatedObjectKind);
+                        if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                            cacheAndNormalizeSchema(concreteRelatedObjectKind, relatedObjectKindSchema);
+                        }
+                    } catch (URISyntaxException e) {
+                        // Fail or log?
+                    } catch (UnsupportedEncodingException e) {
+                        // Fail or log?
+                    }
+                }
+
+                if(!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                    Schema schema = gson.fromJson(relatedObjectKindSchema, Schema.class);
+                    relatedObjectKindSchemas.put(relatedObjectKind, schema);
+                }
+            }
+        }
+        return relatedObjectKindSchemas;
     }
 
     private IndexSchema getEmptySchema(String kind) {

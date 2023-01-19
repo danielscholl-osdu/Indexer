@@ -43,9 +43,15 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.SearchRecord;
+import org.opengroup.osdu.indexer.model.indexproperty.Path;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
+import org.opengroup.osdu.indexer.util.PropertyConfigurationsUtil;
+import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
@@ -96,6 +102,8 @@ public class IndexerServiceImpl implements IndexerService {
     private IRequestInfo requestInfo;
     @Inject
     private JobStatus jobStatus;
+    @Inject
+    private PropertyConfigurationsUtil propertyConfigurationsUtil;
 
     private DpsHeaders headers;
 
@@ -294,6 +302,13 @@ public class IndexerServiceImpl implements IndexerService {
                     String message = String.format("complete schema mismatch: none of the data attribute can be mapped | data: %s", storageRecordData);
                     this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, message, String.format("record-id: %s | %s", storageRecord.getId(), message));
                 }
+
+                // Merge extended properties if needed
+                PropertyConfigurations propertyConfigurations = propertyConfigurationsUtil.getPropertyConfiguration(storageRecord.getKind());
+                if(propertyConfigurations != null) {
+                    dataMap = mergeDataFromPropertyConfiguration(dataMap, propertyConfigurations);
+                }
+
                 document.setData(dataMap);
             }
         } catch (AppException e) {
@@ -342,6 +357,63 @@ public class IndexerServiceImpl implements IndexerService {
             jaxRsDpsLog.error(String.format("record-id: %s | error parsing meta data, error-message: %s", storageRecord.getId(), e.getMessage()), e);
         }
         return document;
+    }
+
+    private Map<String, Object> mergeDataFromPropertyConfiguration(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
+        Map<String, SearchRecord> relatedObjects = new HashMap<>();
+        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations()) {
+            for(Path path: configuration.getPaths()) {
+                Map<String, Object> value = null;
+                if(path.mappedRelatedObject()) {
+                    String combinedObjectId = path.getRelatedObjectKind() + ":" + path.getRelatedObjectID();
+                    SearchRecord searchRecord = null;
+                    if(relatedObjects.containsKey(combinedObjectId)) {
+                        searchRecord = relatedObjects.get(combinedObjectId);
+                    }
+                    else {
+                        searchRecord = getRelatedObject(originalDataMap, path);
+                        relatedObjects.put(combinedObjectId, searchRecord);
+                    }
+                    if(searchRecord != null) {
+                        String valuePath = VirtualPropertyUtil.removeDataPrefix(path.getValuePath());
+                        value = retrievePropertyValues(configuration.getName(), valuePath, searchRecord.getData());
+                    }
+                }
+                else {
+                    //TODO to support self-reference
+                }
+
+                if(value != null && !value.isEmpty()) {
+                    if(configuration.isExtractFirstMatch()) {
+                        originalDataMap.putAll(value);
+                        break;
+                    }
+                    else {
+                        //TODO to support ExtractAllMatch
+                    }
+                }
+            }
+
+        }
+        return originalDataMap;
+    }
+
+    private SearchRecord getRelatedObject(Map<String, Object> originalDataMap, Path path) {
+        String relatedObjectIdPath = VirtualPropertyUtil.removeDataPrefix(path.getRelatedObjectID());
+        String relatedObjectId = (String)originalDataMap.get(relatedObjectIdPath);
+        return propertyConfigurationsUtil.getRelatedRecord(path.getRelatedObjectKind(), relatedObjectId);
+    }
+
+    private Map<String, Object> retrievePropertyValues(String propertyRootPath, String valuePath, Map<String, Object> relatedObjectPayload) {
+        Map<String, Object> values = new HashMap<>();
+        for (Map.Entry<String, Object> entry: relatedObjectPayload.entrySet()) {
+            String key = entry.getKey();
+            if(key.equals(valuePath) || key.startsWith(valuePath + ".")) {
+                key = key.replace(valuePath, propertyRootPath);
+                values.put(key, entry.getValue());
+            }
+        }
+        return values;
     }
 
     private List<String> processElasticMappingAndUpsertRecords(RecordIndexerPayload recordIndexerPayload) throws Exception {

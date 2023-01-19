@@ -26,13 +26,10 @@ import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.IPropertyConfigurationCache;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.Priority;
-import org.opengroup.osdu.indexer.schema.converter.tags.PropertyConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
-import org.opengroup.osdu.indexer.util.ExtendedPropertyUtil;
 import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
 import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
@@ -60,13 +57,9 @@ public class StorageIndexerPayloadMapper {
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
-    private IPropertyConfigurationCache propertyConfigurationCache;
-    @Inject
     private GeoShapeDecimator decimator;
     @Inject
     private GeoShapeDecimationSetting decimationSetting;
-    @Inject
-    private ExtendedPropertyUtil extendedPropertyUtil;
 
     public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {
@@ -80,7 +73,6 @@ public class StorageIndexerPayloadMapper {
 
         mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
         mapVirtualPropertiesPayload(storageSchema, recordId, dataCollectorMap);
-        mapExtendedProperties(storageSchema, dataCollectorMap);
 
         return dataCollectorMap;
     }
@@ -243,7 +235,7 @@ public class StorageIndexerPayloadMapper {
             });
 
             if(virtualPropertyPath.equals(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
-               dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+                    dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
                 originalGeoShapeProperty = originalPropertyPath + VirtualPropertyUtil.FIELD_WGS84_COORDINATES;
             }
         }
@@ -312,31 +304,5 @@ public class StorageIndexerPayloadMapper {
 
         // None of the original properties has value, return the default one
         return priorities.get(0);
-    }
-
-    private void mapExtendedProperties(IndexSchema storageSchema, Map<String, Object> dataCollectorMap) {
-        Map<String, List<PropertyConfiguration>> propertyConfigurationMap =(Map<String, List<PropertyConfiguration>>)propertyConfigurationCache.get(storageSchema.getKind());
-        if(propertyConfigurationMap == null || propertyConfigurationMap.isEmpty())
-            return;
-
-        for (Map.Entry<String, List<PropertyConfiguration>> entry: propertyConfigurationMap.entrySet()) {
-            mapExtendedProperty(entry.getKey(), entry.getValue(), dataCollectorMap);
-        }
-    }
-
-    private void mapExtendedProperty(String propertyPath, List<PropertyConfiguration> propertyConfigurationList, Map<String, Object> dataCollectorMap) {
-        for (PropertyConfiguration propertyConfiguration: propertyConfigurationList) {
-            if(mapExtendedProperty(propertyPath, propertyConfiguration, dataCollectorMap))
-                return;
-        }
-    }
-
-    private boolean mapExtendedProperty(String propertyPath, PropertyConfiguration propertyConfiguration, Map<String, Object> dataCollectorMap) {
-        Map<String, Object> values = extendedPropertyUtil.getExtendedPropertyValue(propertyPath, propertyConfiguration, dataCollectorMap);
-        if(values != null && !values.isEmpty()) {
-            dataCollectorMap.putAll(values);
-            return true;
-        }
-        return false;
     }
 }
