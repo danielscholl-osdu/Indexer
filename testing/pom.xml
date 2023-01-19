@@ -35,7 +35,7 @@
 
 	<modules>
 		<module>indexer-test-core</module>
-		<module>indexer-test-gcp</module>
+		<module>indexer-test-gc</module>
 		<module>indexer-test-aws</module>
 		<module>indexer-test-azure</module>
 		<module>indexer-test-ibm</module>

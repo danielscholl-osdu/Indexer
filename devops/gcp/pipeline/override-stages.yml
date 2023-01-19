@@ -1,7 +1,0 @@
-variables:
-  OSDU_GCP_SERVICE: indexer
-  OSDU_GCP_VENDOR: gcp
-
-osdu-gcp-anthos-test:
-  variables:
-    OSDU_GCP_VENDOR: anthos

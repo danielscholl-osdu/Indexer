@@ -9,7 +9,7 @@ running the `os-indexer` Azure implementation
 
 #***REMOVED*** Implementation
 
-All documentation for the Google Cloud implementation of `os-indexer` lives [here](./provider/indexer-gcp/README.md)
+All documentation for the Google Cloud implementation of `os-indexer` lives [here](./provider/indexer-gc/README.md)
 
 #***REMOVED*** Implementation
 

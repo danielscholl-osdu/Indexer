@@ -1,0 +1,5 @@
+{
+    "url": "/api/indexer/v2/_dps/task-handlers/reindex-worker",
+    "message": "{\"kind\":\"osdu:wks:reference-data--AgreementType:1.0.0\",\"cursor\":\"12345\\u003d\\u003d\"}",
+    "initialDelayMillis": 30000
+}

@@ -60,7 +60,7 @@ public abstract class HTTPClient {
             log.info(String.format("Request correlation id: %s", correlationId));
             headers.put(HEADER_CORRELATION_ID, correlationId);
             Client client = getClient();
-            client.setReadTimeout(180000);
+            client.setReadTimeout(300000);
             client.setConnectTimeout(300000);
             log.info("URL: = " + url);
             WebResource webResource = client.resource(url);
