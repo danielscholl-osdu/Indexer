@@ -317,10 +317,10 @@ public class PropertiesProcessor {
         Preconditions.checkNotNull(definitionProperty, "definitionProperty cannot be null");
 
         return Stream.of(
-                        getFromPattern(definitionProperty.getPattern()),
-                        getFromItemsPattern(() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getPattern() : null),
-                        getFromFormat(definitionProperty::getFormat),
-                        getFromItemsType(() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null))
+                getFromPattern(definitionProperty.getPattern()),
+                getFromItemsPattern(() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getPattern() : null),
+                getFromFormat(definitionProperty::getFormat),
+                getFromItemsType(() -> definitionProperty.getItems() != null ? definitionProperty.getItems().getType() : null))
                 .filter(x -> x.get() != null)
                 .findFirst()
                 .orElse(getFromType(definitionProperty::getType)).get();
