@@ -8,20 +8,22 @@ data:
   indexerQueueHost: "http://indexer-queue"
   logLevel: "ERROR"
   partitionHost: "http://partition"
-  redisGroupHost: "redis-group-master"
-  redisSearchHost: "redis-search-master"
   schemaHost: "http://schema"
   securityHttpsCertificateTrust: "true"
   springProfilesActive: "gcp"
   storageHost: "http://storage"
   # Deployment
-  requestsCpu: "0.1"
+  requestsCpu: "75m"
   requestsMemory: "640M"
   limitsCpu: "1"
   limitsMemory: "1G"
   image: ""
   imagePullPolicy: "IfNotPresent"
   serviceAccountName: "indexer"
+  # redis connection. Change it if you want to use external redis
+  redisIndexerHost: ""
+  redisIndexerPort: 6379
+  redisImage: "redis:7"
 
 conf:
   appName: "indexer"
@@ -31,9 +33,10 @@ conf:
   rabbitmqSecretName: "rabbitmq-secret"
   onPremEnabled: false
   domain: ""
+  indexerRedisSecretName: "indexer-redis-secret"
 
 istio:
-  proxyCPU: "50m"
-  proxyCPULimit: "500m"
+  proxyCPU: "25m"
+  proxyCPULimit: "200m"
   proxyMemory: "64Mi"
-  proxyMemoryLimit: "512Mi"
+  proxyMemoryLimit: "256Mi"
