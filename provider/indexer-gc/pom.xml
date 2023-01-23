@@ -15,6 +15,10 @@
     <description>Indexer Service Google Cloud</description>
     <packaging>jar</packaging>
 
+    <properties>
+    <os-core-common.version>0.19.0-rc3</os-core-common.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.opengroup.osdu</groupId>

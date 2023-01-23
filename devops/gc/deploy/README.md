@@ -35,12 +35,12 @@ First you need to set variables in **values.yaml** file using any code editor. S
 **data.indexerQueueHost** | indexer-queue host | string | "http://indexer-queue" | yes
 **data.logLevel** | logging level | string | INFO | yes
 **data.partitionHost** | partition host | string | "http://partition" | yes
-**data.redisGroupHost** | redis group host | string | redis-group-master | yes
-**data.redisSearchHost** | redis search host | string | redis-search-master | yes
 **data.schemaHost** | schema host | string | "http://schema" | yes
 **data.securityHttpsCertificateTrust** | whether https is enabled | boolean | true | yes
 **data.springProfilesActive** | active spring profile | string | gcp | yes
 **data.storageHost** | storage host | string | "http://storage" | yes
+**data.redisIndexerHost** | The host for redis instance. If empty (by default), helm installs an internal redis instance | string | - | yes
+**data.redisIndexerPort** | The port for redis instance | digit | 6379 | yes
 
 ### Deploy variables
 
@@ -53,6 +53,7 @@ First you need to set variables in **values.yaml** file using any code editor. S
 **data.image** | service image | string | - | yes
 **data.imagePullPolicy** | when to pull image | string | IfNotPresent | yes
 **data.serviceAccountName** | name of your service account | string | indexer | yes
+**data.redisImage** | service image | string | `redis:7` | yes
 
 ### Config variables
 
@@ -65,6 +66,7 @@ First you need to set variables in **values.yaml** file using any code editor. S
 **conf.rabbitmqSecretName** | secret for rabbitmq | string | `rabbitmq-secret` | yes
 **conf.onPremEnabled** | whether on-prem is enabled | boolean | false | yes
 **conf.domain** | your domain | string | - | yes
+**conf.indexerRedisSecretName** | indexer Redis secret that contains redis password with REDIS_PASSWORD key | string | `indexer-redis-secret` | yes
 
 ### ISTIO variables
 
@@ -74,7 +76,6 @@ First you need to set variables in **values.yaml** file using any code editor. S
 **istio.proxyCPULimit** | CPU limit for Envoy sidecars | string | 500m | yes
 **istio.proxyMemory** | memory request for Envoy sidecars | string | 64Mi | yes
 **istio.proxyMemoryLimit** | memory limit for Envoy sidecars | string | 512Mi | yes
-
 
 ### Install the helm chart
 
