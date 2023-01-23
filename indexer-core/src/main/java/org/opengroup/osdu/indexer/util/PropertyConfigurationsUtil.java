@@ -3,6 +3,14 @@ package org.opengroup.osdu.indexer.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.model.indexer.OperationType;
+import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
+import org.opengroup.osdu.core.common.model.search.IndexInfo;
+import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.common.model.storage.SchemaItem;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.cache.KindCache;
 import org.opengroup.osdu.indexer.cache.PropertyConfigurationsCache;
 import org.opengroup.osdu.indexer.cache.SearchRecordCache;
@@ -15,14 +23,17 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class PropertyConfigurationsUtil {
+    public static final String ASSOCIATED_IDENTITIES_PROPERTY = "AssociatedIdentities";
+    private static final String ASSOCIATED_IDENTITIES_PROPERTY_STORAGE_FORMAT_TYPE = "[]string";
+    private static final String WILD_CARD_KIND = "*:*:*:*";
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
+
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final PropertyConfigurations emptyConfigurations = new PropertyConfigurations();
+    private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations();
 
     @Inject
     private PropertyConfigurationsCache propertyConfigurationCache;
@@ -33,6 +44,10 @@ public class PropertyConfigurationsUtil {
 
     @Inject
     private SearchService searchService;
+    @Inject
+    private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
+    @Inject
+    private IRequestInfo requestInfo;
 
     public PropertyConfigurations getPropertyConfiguration(String kind) {
         if (Strings.isNullOrEmpty(kind))
@@ -53,7 +68,7 @@ public class PropertyConfigurationsUtil {
                 else {
                     // It is common that a kind does not have extended property. So we need to cache an empty configuration
                     // to avoid unnecessary search
-                    propertyConfigurationCache.put(kd, emptyConfigurations);
+                    propertyConfigurationCache.put(kd, EMPTY_CONFIGURATIONS);
                 }
             }
 
@@ -102,6 +117,85 @@ public class PropertyConfigurationsUtil {
             }
             return searchRecord;
         }
+    }
+
+    public String removeColumnPostfix(String relatedObjectId) {
+        if(relatedObjectId != null && relatedObjectId.endsWith(":")) {
+            relatedObjectId = relatedObjectId.substring(0, relatedObjectId.length() - 1);
+        }
+
+        return relatedObjectId;
+    }
+
+    public SchemaItem createAssociatedIdentitiesSchemaItem() {
+        SchemaItem extendedSchemaItem = new SchemaItem();
+        extendedSchemaItem.setPath(ASSOCIATED_IDENTITIES_PROPERTY);
+        extendedSchemaItem.setKind(ASSOCIATED_IDENTITIES_PROPERTY_STORAGE_FORMAT_TYPE);
+        return extendedSchemaItem;
+    }
+
+    public void updateAssociatedRecords(List<String> associatedRecordIds) {
+        if(associatedRecordIds == null || associatedRecordIds.isEmpty())
+            return;
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for(String id : associatedRecordIds) {
+            if(stringBuilder.length() > 0) {
+                stringBuilder.append(",");
+            }
+            stringBuilder.append("\"");
+            stringBuilder.append(id);
+            stringBuilder.append("\"");
+        }
+        String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, stringBuilder.toString());
+
+        int limit = 100;
+        int offset = 0;
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setKind(WILD_CARD_KIND);
+        searchRequest.setQuery(query);
+        searchRequest.setLimit(limit);
+        searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
+        try {
+            while(true) {
+                SearchResponse searchResponse = searchService.query(searchRequest);
+                List<SearchRecord> results = searchResponse.getResults();
+                createWorkerTask(results);
+
+                if(results == null || results.size() < limit)
+                    break;
+
+                offset += results.size();
+                searchRequest.setOffset(offset);
+            }
+        } catch (URISyntaxException e) {
+            // TODO: log the error
+        }
+    }
+
+    private void createWorkerTask(List<SearchRecord> results) {
+        if(results == null || results.isEmpty())
+            return;
+
+        List<RecordInfo> msgs = new ArrayList<>();
+        for (SearchRecord record: results) {
+            RecordInfo recordInfo = new RecordInfo();
+            recordInfo.setKind(record.getKind());
+            recordInfo.setId(record.getId());
+            recordInfo.setOp(OperationType.update.getValue());
+            msgs.add(recordInfo);
+        }
+
+        DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
+        attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
+        attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+
+        Gson gson = new Gson();
+        RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(msgs)).attributes(attributes).build();
+        String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
+        this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, headers);
     }
 
     private boolean isEmptyConfiguration(PropertyConfigurations propertyConfigurations) {
@@ -177,7 +271,7 @@ public class PropertyConfigurationsUtil {
 
     private SearchRecord searchRelatedRecord(String relatedObjectKind, String relatedObjectId) {
         String kind = isConcreteKind(relatedObjectKind)? relatedObjectKind : relatedObjectKind + "*";
-        String id = relatedObjectId.endsWith(":")? relatedObjectId.substring(0, relatedObjectId.length() - 1) : relatedObjectId;
+        String id = removeColumnPostfix(relatedObjectId);
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(kind);
         String query = String.format("id: \"%s\"",id);
@@ -196,4 +290,7 @@ public class PropertyConfigurationsUtil {
         }
         return null;
     }
+
+
+
 }

@@ -224,6 +224,10 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 //TODO: handle same object reference
             }
         }
+        if(!propertyConfigurations.getRelatedObjectKinds().isEmpty()) {
+            schemaItems.add(propertyConfigurationsUtil.createAssociatedIdentitiesSchemaItem());
+        }
+
         originalSchema.setSchema(schemaItems.toArray(new SchemaItem[0]));
         return gson.toJson(originalSchema);
     }

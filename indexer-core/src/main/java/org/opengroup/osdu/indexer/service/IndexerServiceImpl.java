@@ -57,12 +57,7 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -222,6 +217,10 @@ public class IndexerServiceImpl implements IndexerService {
         // index records
         failedOrRetryRecordIds.addAll(processElasticMappingAndUpsertRecords(recordIndexerPayload));
 
+        // ids of successfully indexed records
+        List<String> upsertedRecordIds = recordIds.stream().filter(id -> !failedOrRetryRecordIds.contains(id)).collect(Collectors.toList());
+        propertyConfigurationsUtil.updateAssociatedRecords(upsertedRecordIds);
+
         return failedOrRetryRecordIds;
     }
 
@@ -367,10 +366,16 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
     private Map<String, Object> mergeDataFromPropertyConfiguration(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
+        Set<String> associatedIdentities = new HashSet<>();
         for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations()) {
             for(Path path: configuration.getPaths()) {
                 Map<String, Object> value = null;
                 if(path.mappedRelatedObject()) {
+                    String relatedObjectId = getRelatedObjectId(originalDataMap, path);
+                    if(!Strings.isNullOrEmpty(relatedObjectId)) {
+                        associatedIdentities.add(propertyConfigurationsUtil.removeColumnPostfix(relatedObjectId));
+                    }
+
                     SearchRecord searchRecord = getRelatedObject(originalDataMap, path);
                     if(searchRecord != null) {
                         String valuePath = VirtualPropertyUtil.removeDataPrefix(path.getValuePath());
@@ -393,13 +398,27 @@ public class IndexerServiceImpl implements IndexerService {
             }
 
         }
+        if(!associatedIdentities.isEmpty()) {
+            originalDataMap.put(PropertyConfigurationsUtil.ASSOCIATED_IDENTITIES_PROPERTY, associatedIdentities.toArray());
+        }
+
         return originalDataMap;
     }
 
-    private SearchRecord getRelatedObject(Map<String, Object> originalDataMap, Path path) {
+    private String getRelatedObjectId(Map<String, Object> originalDataMap, Path path) {
         String relatedObjectIdPath = VirtualPropertyUtil.removeDataPrefix(path.getRelatedObjectID());
-        String relatedObjectId = (String)originalDataMap.get(relatedObjectIdPath);
-        return propertyConfigurationsUtil.getRelatedRecord(path.getRelatedObjectKind(), relatedObjectId);
+        if(originalDataMap.containsKey(relatedObjectIdPath)) {
+            return (String) originalDataMap.get(relatedObjectIdPath);
+        }
+        return null;
+    }
+
+    private SearchRecord getRelatedObject(Map<String, Object> originalDataMap, Path path) {
+        String relatedObjectId = getRelatedObjectId(originalDataMap, path);
+        if(!Strings.isNullOrEmpty(relatedObjectId)) {
+            return propertyConfigurationsUtil.getRelatedRecord(path.getRelatedObjectKind(), relatedObjectId);
+        }
+        return null;
     }
 
     private Map<String, Object> retrievePropertyValues(String propertyRootPath, String valuePath, Map<String, Object> relatedObjectPayload) {
@@ -482,19 +501,27 @@ public class IndexerServiceImpl implements IndexerService {
         BulkRequest bulkRequest = new BulkRequest();
         bulkRequest.timeout(BULK_REQUEST_TIMEOUT);
 
+        List<String> deletedRecordIds = new ArrayList<>();
         for (Map.Entry<String, List<String>> record : deleteRecordMap.entrySet()) {
 
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKey());
 
             for (String id : record.getValue()) {
+                deletedRecordIds.add(id);
                 DeleteRequest deleteRequest = new DeleteRequest(index, id);
                 bulkRequest.add(deleteRequest);
             }
         }
 
+        List<String> deleteFailureRecordIds;
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            return processBulkRequest(restClient, bulkRequest);
+            deleteFailureRecordIds = processBulkRequest(restClient, bulkRequest);
         }
+
+        deletedRecordIds = deletedRecordIds.stream().filter(id -> !deleteFailureRecordIds.contains(id)).collect(Collectors.toList());
+        propertyConfigurationsUtil.updateAssociatedRecords(deletedRecordIds);
+
+        return deleteFailureRecordIds;
     }
 
     private List<String> processBulkRequest(RestHighLevelClient restClient, BulkRequest bulkRequest) throws AppException {
