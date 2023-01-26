@@ -24,6 +24,7 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Request;
@@ -107,6 +108,8 @@ public class IndicesServiceImpl implements IndicesService {
             if (indexStatus) {
                 this.indexCache.put(index, true);
                 this.log.info(String.format("Time taken to successfully create new index %s : %d milliseconds", request.index(), stopTime-startTime));
+
+                createIndexAlias(client, index);
             }
 
             return indexStatus;
@@ -302,5 +305,31 @@ public class IndicesServiceImpl implements IndicesService {
             }
             throw exception;
         }
+    }
+
+    private void createIndexAlias(RestHighLevelClient client, String index) throws IOException {
+        String kind = this.elasticIndexNameResolver.getKindFromIndexName(index);
+        String kindWithMajorVersion = getKindWithMajorVersion(kind);
+        for (String kd : Arrays.asList(kind, kindWithMajorVersion)) {
+            index = elasticIndexNameResolver.getIndexNameFromKind(kd);
+            String alias = elasticIndexNameResolver.getIndexAliasFromKind(kd);
+            IndicesAliasesRequest addRequest = new IndicesAliasesRequest();
+            IndicesAliasesRequest.AliasActions aliasActions = new IndicesAliasesRequest.AliasActions(IndicesAliasesRequest.AliasActions.Type.ADD)
+                    .index(index)
+                    .alias(alias);
+            addRequest.addAliasAction(aliasActions);
+            AcknowledgedResponse response = client.indices().updateAliases(addRequest, RequestOptions.DEFAULT);
+            if (response.isAcknowledged()) {
+                this.log.info(String.format("Alias %s was created for index %s", alias, index));
+            }
+        }
+    }
+
+    private String getKindWithMajorVersion(String kind) {
+        // If kind is common:welldb:wellbore:1.2.0, then kind with major version is common:welldb:wellbore:1.*.*
+        int idx = kind.lastIndexOf(":");
+        String version = kind.substring(idx+1);
+        String majorVersion = version.substring(0, version.indexOf("."));
+        return String.format("%s:%s.*.*", kind.substring(0, idx), majorVersion);
     }
 }
