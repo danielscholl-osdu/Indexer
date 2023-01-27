@@ -307,21 +307,27 @@ public class IndicesServiceImpl implements IndicesService {
         }
     }
 
-    private void createIndexAlias(RestHighLevelClient client, String index) throws IOException {
+    private void createIndexAlias(RestHighLevelClient client, String index) {
         String kind = this.elasticIndexNameResolver.getKindFromIndexName(index);
         String kindWithMajorVersion = getKindWithMajorVersion(kind);
-        for (String kd : Arrays.asList(kind, kindWithMajorVersion)) {
-            index = elasticIndexNameResolver.getIndexNameFromKind(kd);
-            String alias = elasticIndexNameResolver.getIndexAliasFromKind(kd);
-            IndicesAliasesRequest addRequest = new IndicesAliasesRequest();
-            IndicesAliasesRequest.AliasActions aliasActions = new IndicesAliasesRequest.AliasActions(IndicesAliasesRequest.AliasActions.Type.ADD)
-                    .index(index)
-                    .alias(alias);
-            addRequest.addAliasAction(aliasActions);
-            AcknowledgedResponse response = client.indices().updateAliases(addRequest, RequestOptions.DEFAULT);
-            if (response.isAcknowledged()) {
-                this.log.info(String.format("Alias %s was created for index %s", alias, index));
+        try {
+            for (String kd : Arrays.asList(kind, kindWithMajorVersion)) {
+                index = elasticIndexNameResolver.getIndexNameFromKind(kd);
+                String alias = elasticIndexNameResolver.getIndexAliasFromKind(kd);
+                IndicesAliasesRequest addRequest = new IndicesAliasesRequest();
+                IndicesAliasesRequest.AliasActions aliasActions = new IndicesAliasesRequest.AliasActions(IndicesAliasesRequest.AliasActions.Type.ADD)
+                        .index(index)
+                        .alias(alias);
+                addRequest.addAliasAction(aliasActions);
+                AcknowledgedResponse response = client.indices().updateAliases(addRequest, RequestOptions.DEFAULT);
+                if (response.isAcknowledged()) {
+                    this.log.info(String.format("Alias %s was created for index %s", alias, index));
+                }
             }
+        }
+        catch(Exception ex) {
+            // Failed to create alias is not the end. It should not affect the status of index creation
+            this.log.error(String.format("Fail to create aliases for index %s", index), ex);
         }
     }
 
