@@ -17,18 +17,16 @@
 
 package org.opengroup.osdu.indexer.provider.gcp.indexing.processing;
 
-import static org.opengroup.osdu.core.common.Constants.WORKER_RELATIVE_URL;
-
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.opengroup.osdu.core.auth.TokenProvider;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.search.CloudTaskRequest;
+import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmAckReplier;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessageReceiver;
@@ -37,19 +35,15 @@ import org.opengroup.osdu.indexer.provider.gcp.indexing.thread.ThreadScopeContex
 
 @Slf4j
 @RequiredArgsConstructor
-public class IndexerOqmMessageReceiver implements OqmMessageReceiver {
+public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
 
-    private static final String SCHEMA_SERVICE_NAME = "schema";
-
-    private final ThreadDpsHeaders dpsHeaders;
-    private final SubscriptionConsumer consumer;
+    protected final ThreadDpsHeaders dpsHeaders;
     private final TokenProvider tokenProvider;
-    private final Gson gson = new Gson();
-
 
     @Override
     public void receiveMessage(OqmMessage oqmMessage, OqmAckReplier oqmAckReplier) {
-        log.info("OQM message: {} - {} - {}", oqmMessage.getId(), oqmMessage.getData(), oqmMessage.getAttributes());
+        log.info("OQM message: {} - {} - {}", oqmMessage.getId(), oqmMessage.getData(),
+            oqmMessage.getAttributes());
         boolean acked = false;
         try {
             if (!validInput(oqmMessage)) {
@@ -60,9 +54,31 @@ public class IndexerOqmMessageReceiver implements OqmMessageReceiver {
             DpsHeaders headers = getHeaders(oqmMessage);
             // Filling thread context required by the core services.
             dpsHeaders.setThreadContext(headers.getHeaders());
-            acked = sendMessage(oqmMessage);
-        } catch (Exception e) {
-            log.error("Error occurred during message receiving: ", e);
+            sendMessage(oqmMessage);
+            acked = true;
+        } catch (AppException appException) {
+            int statusCode = appException.getError().getCode();
+            if (statusCode > 199 && statusCode < 300 && statusCode != RequestStatus.INVALID_RECORD) {
+                log.info(
+                    "Event : {}, was not processed, and will NOT be rescheduled.",
+                    oqmMessage,
+                    appException
+                );
+                acked = true;
+            } else {
+                //It is possible to get both AppException with wrapped in original Exception or the original Exception without any wrapper
+                Exception exception = Optional.ofNullable(appException.getOriginalException()).orElse(appException);
+                log.warn(
+                    "Event : {}, was not processed, and will BE rescheduled.",
+                    oqmMessage,
+                    exception
+                );
+            }
+        } catch (Exception exception) {
+            log.error(
+                "Error, Event : {}, was not processed, and will BE rescheduled.",
+                oqmMessage,
+                exception);
         } finally {
             if (!acked) {
                 oqmAckReplier.nack();
@@ -87,55 +103,11 @@ public class IndexerOqmMessageReceiver implements OqmMessageReceiver {
         return isValid;
     }
 
-    private boolean sendMessage(OqmMessage oqmMessage) {
-        CloudTaskRequest cloudTaskRequest;
-        String serviceName = oqmMessage.getAttributes().get("service");
-        JsonElement jsonElement = JsonParser.parseString(oqmMessage.getData());
-
-        if (SCHEMA_SERVICE_NAME.equalsIgnoreCase(serviceName)) {
-            cloudTaskRequest = getCloudTaskRequestProducedBySchemaService(oqmMessage);
-        } else if (jsonElement.isJsonArray()) {
-            cloudTaskRequest = getCloudTaskRequestProducedByStorageService(oqmMessage);
-        } else {
-            cloudTaskRequest = getCloudTaskRequestProducedByIndexerService(oqmMessage);
-        }
-
-        return consumer.consume(cloudTaskRequest);
-    }
-
-    /**
-     * @param oqmMessage produced by Indexer packs messages in org.opengroup.osdu.core.common.model.search.CloudTaskRequest
-     * @return CloudTaskRequest as it was packed by Indexer
-     */
-    private CloudTaskRequest getCloudTaskRequestProducedByIndexerService(OqmMessage oqmMessage) {
-        return this.gson.fromJson(oqmMessage.getData(), CloudTaskRequest.class);
-    }
-
-    /**
-     * @param oqmMessage produced by Storage packs messages in array of org.opengroup.osdu.core.common.model.storage.PubSubInfo ;
-     * @return CloudTaskRequest with array of PubSubInfo's packed in message property
-     */
-    private CloudTaskRequest getCloudTaskRequestProducedByStorageService(OqmMessage oqmMessage) {
-        return CloudTaskRequest.builder()
-            .url(WORKER_RELATIVE_URL)
-            .message(gson.toJson(oqmMessage))
-            .build();
-    }
-
-    private CloudTaskRequest getCloudTaskRequestProducedBySchemaService(OqmMessage oqmMessage) {
-        return CloudTaskRequest.builder()
-                .url(SCHEMA_SERVICE_NAME)
-                .message(gson.toJson(oqmMessage))
-                .build();
-    }
+    protected abstract void sendMessage(OqmMessage oqmMessage) throws Exception;
 
     @NotNull
     private DpsHeaders getHeaders(OqmMessage oqmMessage) {
-        DpsHeaders headers = new DpsHeaders();
-        headers.getHeaders().put("data-partition-id", oqmMessage.getAttributes().get("data-partition-id"));
-        headers.getHeaders().put("correlation-id", oqmMessage.getAttributes().get("correlation-id"));
-        headers.getHeaders().put("account-id", oqmMessage.getAttributes().get("account-id"));
-        headers.getHeaders().put("user", oqmMessage.getAttributes().get("user"));
+        DpsHeaders headers = DpsHeaders.createFromMap(oqmMessage.getAttributes());
         headers.getHeaders().put("authorization", "Bearer " + tokenProvider.getIdToken());
         return headers;
     }

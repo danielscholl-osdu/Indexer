@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.search.CloudTaskRequest;
+import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.gcp.oqm.driver.OqmDriver;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmDestination;
@@ -45,61 +45,77 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReprocessingTaskPublisher extends IndexerQueueTaskBuilder {
 
-    private final OqmDriver driver;
+  private final Gson gson = new Gson();
 
-    private final TenantInfo tenantInfo;
+  private final OqmDriver driver;
 
-    private final IndexerMessagingConfigProperties properties;
+  private final TenantInfo tenantInfo;
 
-    private OqmTopic oqmTopic;
+  private final IndexerMessagingConfigProperties properties;
 
-    @PostConstruct
-    public void setUp() {
-        oqmTopic = OqmTopic.builder().name(properties.getReprocessTopicName()).build();
-    }
+  private OqmTopic reprocessOqmTopic;
 
-    public void createWorkerTask(String payload, DpsHeaders headers) {
-        createTask(WORKER_RELATIVE_URL, payload, 0l, headers);
-    }
+  private OqmTopic recordsChangedTopic;
 
-    public void createWorkerTask(String payload, Long countdownMillis, DpsHeaders headers) {
-        createTask(WORKER_RELATIVE_URL, payload, countdownMillis, headers);
-    }
+  @PostConstruct
+  public void setUp() {
+    reprocessOqmTopic = OqmTopic.builder().name(properties.getReprocessTopicName()).build();
+    recordsChangedTopic = OqmTopic.builder().name(properties.getRecordsChangedTopicName()).build();
+  }
 
-    public void createReIndexTask(String payload, DpsHeaders headers) {
-        createTask(REINDEX_RELATIVE_URL, payload, 0l, headers);
-    }
+  public void createWorkerTask(String payload, DpsHeaders headers) {
+    publishRecordsChangedTask(WORKER_RELATIVE_URL, payload, 0l, headers);
+  }
 
-    public void createReIndexTask(String payload, Long countdownMillis, DpsHeaders headers) {
-        createTask(REINDEX_RELATIVE_URL, payload, countdownMillis, headers);
-    }
+  public void createWorkerTask(String payload, Long countdownMillis, DpsHeaders headers) {
+    publishRecordsChangedTask(WORKER_RELATIVE_URL, payload, countdownMillis, headers);
+  }
 
-    private void createTask(String url, String payload, Long countdownMillis, DpsHeaders headers) {
-        CloudTaskRequest cloudTaskRequest = CloudTaskRequest.builder()
-            .message(payload)
-            .url(url)
-            .initialDelayMillis(countdownMillis)
-            .build();
+  public void createReIndexTask(String payload, DpsHeaders headers) {
+    publishReindexTask(REINDEX_RELATIVE_URL, payload, 0l, headers);
+  }
 
-        OqmDestination oqmDestination = OqmDestination.builder().partitionId(headers.getPartitionId()).build();
+  public void createReIndexTask(String payload, Long countdownMillis, DpsHeaders headers) {
+    publishReindexTask(REINDEX_RELATIVE_URL, payload, countdownMillis, headers);
+  }
 
-        Map<String, String> attributes = getAttributesFromHeaders(headers);
+  private void publishReindexTask(String url, String payload, Long countdownMillis,
+      DpsHeaders headers) {
+    OqmDestination oqmDestination = OqmDestination.builder().partitionId(headers.getPartitionId())
+        .build();
+    Map<String, String> attributes = getAttributesFromHeaders(headers);
+    OqmMessage oqmMessage = OqmMessage.builder().data(payload).attributes(attributes).build();
+    log.info("Reprocessing task: {} ,has been published.", oqmMessage);
+    driver.publish(oqmMessage, reprocessOqmTopic, oqmDestination);
+  }
 
-        String json = new Gson().toJson(cloudTaskRequest);
+  private void publishRecordsChangedTask(String url, String payload, Long countdownMillis,
+      DpsHeaders headers) {
+    OqmDestination oqmDestination = OqmDestination.builder()
+        .partitionId(headers.getPartitionId())
+        .build();
 
-        OqmMessage oqmMessage = OqmMessage.builder().data(json).attributes(attributes).build();
-        log.info("Reprocessing task: {} ,has been published.", oqmMessage);
-        driver.publish(oqmMessage, oqmTopic, oqmDestination);
-    }
+    RecordChangedMessages recordChangedMessages = gson.fromJson(payload,
+        RecordChangedMessages.class);
 
-    @NotNull
-    private Map<String, String> getAttributesFromHeaders(DpsHeaders headers) {
-        Map<String, String> attributes = new HashMap<>();
-        attributes.put(DpsHeaders.USER_EMAIL, headers.getUserEmail());
-        attributes.put(DpsHeaders.ACCOUNT_ID, this.tenantInfo.getName());
-        attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
-        headers.addCorrelationIdIfMissing();
-        attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
-        return attributes;
-    }
+    OqmMessage oqmMessage = OqmMessage.builder()
+        .id(headers.getCorrelationId())
+        .data(recordChangedMessages.getData())
+        .attributes(getAttributesFromHeaders(headers))
+        .build();
+
+    log.info("Reprocessing task: {} ,has been published.", oqmMessage);
+    driver.publish(oqmMessage, recordsChangedTopic, oqmDestination);
+  }
+
+  @NotNull
+  private Map<String, String> getAttributesFromHeaders(DpsHeaders headers) {
+    Map<String, String> attributes = new HashMap<>();
+    attributes.put(DpsHeaders.USER_EMAIL, headers.getUserEmail());
+    attributes.put(DpsHeaders.ACCOUNT_ID, this.tenantInfo.getName());
+    attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
+    headers.addCorrelationIdIfMissing();
+    attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+    return attributes;
+  }
 }
