@@ -25,6 +25,7 @@ import org.opengroup.osdu.core.gcp.oqm.driver.OqmDriver;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmDestination;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessageReceiver;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriber;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriberThroughput;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscription;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriptionQuery;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmTopic;
@@ -81,7 +82,7 @@ public class OqmSubscriberManager {
         return driver.createAndGetSubscription(request, getDestination(tenantInfo));
     }
 
-    public void registerSubscriber(TenantInfo tenantInfo, String topicName, String subscriptionName, OqmMessageReceiver messageReceiver) {
+    public void registerSubscriber(TenantInfo tenantInfo, String topicName, String subscriptionName, OqmMessageReceiver messageReceiver, OqmSubscriberThroughput throughput) {
         OqmSubscription subscriptionForTenant = getOrCreateSubscriptionForTenant(tenantInfo, topicName, subscriptionName);
         log.info("OQM: registering Subscriber for subscription {}", subscriptionName);
         OqmDestination destination = getDestination(tenantInfo);
@@ -89,6 +90,7 @@ public class OqmSubscriberManager {
         OqmSubscriber subscriber = OqmSubscriber.builder()
             .subscription(subscriptionForTenant)
             .messageReceiver(messageReceiver)
+            .throughput(throughput)
             .build();
         driver.subscribe(subscriber, destination);
         log.info("OQM: provisioning subscription {}: Subscriber REGISTERED.", subscriptionName);

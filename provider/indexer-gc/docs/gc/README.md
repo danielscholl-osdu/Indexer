@@ -14,21 +14,21 @@ Must have:
 
 Defined in default application property file but possible to override:
 
-| name                               | value                                                                     | description                                                               | sensitive? | source                                                     |
-|------------------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------|------------|------------------------------------------------------------|
-| `LOG_PREFIX`                       | `service`                                                                 | Logging prefix                                                            | no         | -                                                          |
-| `LOG_LEVEL`                        | `****`                                                                    | Logging level                                                             | no         | -                                                          |
-| `SECURITY_HTTPS_CERTIFICATE_TRUST` | ex `false`                                                                | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false      | output of infrastructure deployment                        |
-| `REDIS_SEARCH_HOST`                | ex `127.0.0.1`                                                            | Redis host                                                                | no         |                                                            |
-| `REDIS_SEARCH_PORT`                | ex `6379`                                                                 | Redis host port                                                           | no         |                                                            |
-| `REDIS_SEARCH_PASSWORD`            | ex `*****`                                                                | Redis host password                                                       | yes        |                                                            |
-| `REDIS_SEARCH_WITH_SSL`            | ex `true` or `false`                                                      | Redis host ssl config                                                     | no         |                                                            |
-| `REDIS_SEARCH_EXPIRATION`          | ex `30`                                                                   | Redis cache expiration in seconds                                         | no         |                                                            |
-| `PARTITION_HOST`                   | ex `https://partition.com`                                                | Partition host                                                            | no         | output of infrastructure deployment                        |
-| `ENTITLEMENTS_HOST`                | ex `https://entitlements.com`                                             | Entitlements host                                                         | no         | output of infrastructure deployment                        |
-| `STORAGE_HOST`                     | ex `https://storage.com`                                                  | Storage host                                                              | no         | output of infrastructure deployment                        |
-| `INDEXER_QUEUE_HOST`               | ex `http://indexer-queue/api/indexer-queue/v1/_dps/task-handlers/enqueue` | Indexer-Queue host endpoint used for reprocessing tasks                   | no         | output of infrastructure deployment                        |
-| `SCHEMA_BASE_HOST`                 | ex `https://schema.com`                                                   | Schema service host                                                       | no         | output of infrastructure deployment                        |
+| name                               | value                                                                     | description                                                               | sensitive? | source                                                       |
+|------------------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------|------------|--------------------------------------------------------------|
+| `LOG_PREFIX`                       | `service`                                                                 | Logging prefix                                                            | no         | -                                                            |
+| `LOG_LEVEL`                        | `****`                                                                    | Logging level                                                             | no         | -                                                            |
+| `SECURITY_HTTPS_CERTIFICATE_TRUST` | ex `false`                                                                | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false      | output of infrastructure deployment                          |
+| `REDIS_SEARCH_HOST`                | ex `127.0.0.1`                                                            | Redis host                                                                | no         |                                                              |
+| `REDIS_SEARCH_PORT`                | ex `6379`                                                                 | Redis host port                                                           | no         |                                                              |
+| `REDIS_SEARCH_PASSWORD`            | ex `*****`                                                                | Redis host password                                                       | yes        |                                                              |
+| `REDIS_SEARCH_WITH_SSL`            | ex `true` or `false`                                                      | Redis host ssl config                                                     | no         |                                                              |
+| `REDIS_SEARCH_EXPIRATION`          | ex `30`                                                                   | Redis cache expiration in seconds                                         | no         |                                                              |
+| `PARTITION_HOST`                   | ex `https://partition.com`                                                | Partition host                                                            | no         | output of infrastructure deployment                          |
+| `ENTITLEMENTS_HOST`                | ex `https://entitlements.com`                                             | Entitlements host                                                         | no         | output of infrastructure deployment                          |
+| `STORAGE_HOST`                     | ex `https://storage.com`                                                  | Storage host                                                              | no         | output of infrastructure deployment                          |
+| `INDEXER_QUEUE_HOST`               | ex `http://indexer-queue/api/indexer-queue/v1/_dps/task-handlers/enqueue` | Indexer-Queue host endpoint used for reprocessing tasks                   | no         | output of infrastructure deployment                          |
+| `SCHEMA_BASE_HOST`                 | ex `https://schema.com`                                                   | Schema service host                                                       | no         | output of infrastructure deployment                          |
 | `GOOGLE_APPLICATION_CREDENTIALS`   | ex `/path/to/directory/service-key.json`                                  | Service account credentials, you only need this if running locally        | yes        | <https://console.cloud.google.com/iam-admin/serviceaccounts> |
 
 These variables define service behavior, and are used to switch between `Reference` or `Google Cloud` environments, their overriding and usage in mixed mode was not tested.
@@ -44,15 +44,41 @@ Usage of spring profiles is preferred.
 
 Pubsub should have topics and subscribers with names and configs:
 
-| TOPIC NAME                  | Subscription name                  | Subscription config                                                                                                                                                                                                                |
-|-----------------------------|------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| indexing-progress           | (Consumer not implemented)         | (Consumer not implemented)                                                                                                                                                                                                         |
-| records-changed             | indexer-records-changed            | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
-| records-changed-dead-letter | indexer-records-changed            | `Subscription message retention duration: 7 days`                                                                                                                                                                                  |
-| reprocess                   | indexer-reprocess                  | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
-| reprocess-dead-letter       | indexer-reprocess-dead-letter      | `Subscription message retention duration: 7 days`                                                                                                                                                                                                                                   |
-| schema-changed              | indexer-schema-changed             | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
-| schema-changed-dead-letter  | indexer-schema-changed-dead-letter | `Subscription message retention duration: 7 days`                                                                                                                                                                                                                                   |
+| TOPIC NAME                  | Subscription name          | Subscription config                                                                                                                                                                                                                |
+|-----------------------------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| indexing-progress           | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+| records-changed             | indexer-records-changed    | `Maximum delivery attempts: 10`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 0 seconds`<br/>`Maximum backoff duration: 30 seconds`<br/>`Grant forwarding permissions for dead letter`  |
+| records-changed-dead-letter | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+| reprocess                   | indexer-reprocess          | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
+| reprocess-dead-letter       | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+| schema-changed              | indexer-schema-changed     | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
+| schema-changed-dead-letter  | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+
+### Additional throughput configuration for PubSub subscription consumer via Partition service
+
+It is possible, but not necessary to adjust consumer throughput via Partition service, there are 3 levels of consumers:
+
+*MIN* - for mildly consumers, defaults(streams = 1, threads = 2, outstanding elements = 20)
+*MID* - for consumers with the average load, defaults(streams = 2, threads = 2, outstanding elements = 40)
+*MAX* - for maximum loaded consumers, defaults(streams = 2, threads = 5, outstanding elements = 100)
+
+https://community.opengroup.org/osdu/platform/system/lib/cloud/gcp/oqm/-/blob/master/src/main/java/org/opengroup/osdu/core/gcp/oqm/driver/pubsub/config/PsThroughputConfiguration.java
+
+```
+    "max.sub.parallel.streams": {
+      "sensitive": false, 
+      "value": 2 
+    },
+    "max.sub.thread.per.stream": {
+      "sensitive": false, 
+      "value": 5
+    },
+    "max.sub.max.outstanding.elements": {
+      "sensitive": true, 
+      "value": 100
+    }
+```
+
 
 ### Properties set in Partition service
 

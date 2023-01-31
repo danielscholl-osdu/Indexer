@@ -24,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.auth.TokenProvider;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriberThroughput;
+import org.opengroup.osdu.indexer.api.RecordIndexerApi;
+import org.opengroup.osdu.indexer.api.ReindexApi;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.scope.ThreadDpsHeaders;
 import org.springframework.stereotype.Component;
 
@@ -40,8 +43,9 @@ public class TenantSubscriberConfiguration {
     private final OqmSubscriberManager subscriberManager;
     private final ITenantFactory tenantInfoFactory;
     private final TokenProvider tokenProvider;
-    private final SubscriptionConsumer consumer;
-    private final ThreadDpsHeaders headers;
+        private final ThreadDpsHeaders headers;
+    private final RecordIndexerApi recordIndexerApi;
+    private final ReindexApi reindexApi;
 
     /**
      * Tenant configurations provided by the Partition service will be used to configure subscribers. If tenants use the same message broker(The same RabbitMQ
@@ -50,10 +54,6 @@ public class TenantSubscriberConfiguration {
     @PostConstruct
     void postConstruct() {
         log.info("OqmSubscriberManager provisioning STARTED");
-        IndexerOqmMessageReceiver recordsChangedMessageReceiver = new IndexerOqmMessageReceiver(headers, consumer, tokenProvider);
-        IndexerOqmMessageReceiver reprocessOqmMessageReceiver = new IndexerOqmMessageReceiver(headers, consumer, tokenProvider);
-        IndexerOqmMessageReceiver schemaOqmMessageReceiver = new IndexerOqmMessageReceiver(headers, consumer, tokenProvider);
-
         String recordsChangedTopicName = properties.getRecordsChangedTopicName();
         String reprocessTopicName = properties.getReprocessTopicName();
         String schemaChangedTopicName = properties.getSchemaChangedTopicName();
@@ -61,9 +61,27 @@ public class TenantSubscriberConfiguration {
         Collection<TenantInfo> tenantInfos = tenantInfoFactory.listTenantInfo();
 
         for (TenantInfo tenantInfo : tenantInfos) {
-            subscriberManager.registerSubscriber(tenantInfo, recordsChangedTopicName, getSubscriptionName(recordsChangedTopicName), recordsChangedMessageReceiver);
-            subscriberManager.registerSubscriber(tenantInfo, reprocessTopicName, getSubscriptionName(reprocessTopicName), reprocessOqmMessageReceiver);
-            subscriberManager.registerSubscriber(tenantInfo, schemaChangedTopicName, getSubscriptionName(schemaChangedTopicName), schemaOqmMessageReceiver);
+          subscriberManager.registerSubscriber(
+              tenantInfo,
+              recordsChangedTopicName,
+              getSubscriptionName(recordsChangedTopicName),
+              new RecordsChangedMessageReceiver(headers, tokenProvider, recordIndexerApi),
+              OqmSubscriberThroughput.MAX
+          );
+          subscriberManager.registerSubscriber(
+              tenantInfo,
+              reprocessTopicName,
+              getSubscriptionName(reprocessTopicName),
+              new RepressorMessageReceiver(headers, tokenProvider, reindexApi),
+              OqmSubscriberThroughput.MIN
+          );
+          subscriberManager.registerSubscriber(
+              tenantInfo,
+              schemaChangedTopicName,
+              getSubscriptionName(schemaChangedTopicName),
+              new SchemaChangedMessageReceiver(headers, tokenProvider, recordIndexerApi),
+              OqmSubscriberThroughput.MIN
+          );
         }
         log.info("OqmSubscriberManager provisioning COMPLETED");
     }
