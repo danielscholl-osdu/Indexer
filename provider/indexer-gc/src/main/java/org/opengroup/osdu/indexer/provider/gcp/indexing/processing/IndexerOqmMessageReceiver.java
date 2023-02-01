@@ -60,8 +60,7 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
             int statusCode = appException.getError().getCode();
             if (statusCode > 199 && statusCode < 300 && statusCode != RequestStatus.INVALID_RECORD) {
                 log.info(
-                    "Event : {}, was not processed, and will NOT be rescheduled.",
-                    oqmMessage,
+                    "Event id : " + oqmMessage.getId() + ", was not processed, and will NOT be rescheduled.",
                     appException
                 );
                 acked = true;
@@ -69,16 +68,15 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
                 //It is possible to get both AppException with wrapped in original Exception or the original Exception without any wrapper
                 Exception exception = Optional.ofNullable(appException.getOriginalException()).orElse(appException);
                 log.warn(
-                    "Event : {}, was not processed, and will BE rescheduled.",
-                    oqmMessage,
+                    "Event id : " + oqmMessage.getId() + ", was not processed, and will BE rescheduled.",
                     exception
                 );
             }
         } catch (Exception exception) {
             log.error(
-                "Error, Event : {}, was not processed, and will BE rescheduled.",
-                oqmMessage,
-                exception);
+                "Event id : " + oqmMessage.getId() + ", was not processed, and will BE rescheduled.",
+                exception
+            );
         } finally {
             if (!acked) {
                 oqmAckReplier.nack();
