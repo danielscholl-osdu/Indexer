@@ -17,12 +17,56 @@
 
 package org.opengroup.osdu.indexer.provider.gcp.indexing.thread;
 
-import org.springframework.context.support.SimpleThreadScope;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.config.Scope;
 
-public class ThreadScope extends SimpleThreadScope {
+@Slf4j
+public class ThreadScope implements Scope {
 
-    @Override
-    public void registerDestructionCallback(String name, Runnable callback) {
-        ThreadScopeContextHolder.currentThreadScopeAttributes().registerRequestDestructionCallback(name, callback);
+  public Object get(String name, ObjectFactory<?> factory) {
+    log.trace("Get bean:{} with factory: {} current Thread: {}", name, factory,
+        Thread.currentThread().getName());
+    Object result = null;
+    Map<String, Object> hBeans = ThreadScopeContextHolder.currentThreadScopeAttributes()
+        .getBeanMap();
+    if (!hBeans.containsKey(name)) {
+      result = factory.getObject();
+      log.trace(
+          "No bean in context with name: {} factory provisioning result is: {} current Thread: {}",
+          name, result, Thread.currentThread().getName());
+      hBeans.put(name, result);
+    } else {
+      result = hBeans.get(name);
     }
+
+    return result;
+  }
+
+  public Object remove(String name) {
+    log.trace("Removing bean : {} current Thread: {}", name, Thread.currentThread().getName());
+    Object result = null;
+    Map<String, Object> hBeans = ThreadScopeContextHolder.currentThreadScopeAttributes()
+        .getBeanMap();
+    if (hBeans.containsKey(name)) {
+      result = hBeans.get(name);
+      hBeans.remove(name);
+    }
+
+    return result;
+  }
+
+  public void registerDestructionCallback(String name, Runnable callback) {
+    ThreadScopeContextHolder.currentThreadScopeAttributes().registerRequestDestructionCallback(name, callback);
+  }
+
+  public Object resolveContextualObject(String key) {
+    return null;
+  }
+
+  public String getConversationId() {
+    return Thread.currentThread().getName();
+  }
 }
+
