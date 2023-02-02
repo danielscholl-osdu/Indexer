@@ -14,6 +14,7 @@ import org.opengroup.osdu.indexer.cache.KindCache;
 import org.opengroup.osdu.indexer.cache.PropertyConfigurationsCache;
 import org.opengroup.osdu.indexer.cache.SearchRecordCache;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
@@ -31,7 +32,6 @@ public class PropertyConfigurationsUtil {
     private static final String ASSOCIATED_IDENTITIES_PROPERTY_STORAGE_FORMAT_TYPE = "[]string";
     private static final String WILD_CARD_KIND = "*:*:*:*";
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
-    private static final String ANCESTRY_KINDS = "ancestry_kinds";
     private static final String ANCESTRY_KINDS_DELIMITER = ",";
 
     private final Gson gson = new Gson();
@@ -147,11 +147,11 @@ public class PropertyConfigurationsUtil {
         attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
         attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
-        final String ancestors = attributes.containsKey(ANCESTRY_KINDS)? attributes.get(ANCESTRY_KINDS) : "";
+        final String ancestors = attributes.containsKey(Constants.ANCESTRY_KINDS)? attributes.get(Constants.ANCESTRY_KINDS) : "";
         for (Map.Entry<String, List<String>> entry :  processedRecordIds.entrySet()) {
             String kind = entry.getKey();
-            String newTraceHistory = ancestors.isEmpty()? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
-            attributes.put(ANCESTRY_KINDS, newTraceHistory);
+            String updatedAncestors = ancestors.isEmpty()? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
+            attributes.put(Constants.ANCESTRY_KINDS, updatedAncestors);
             updateAssociatedRecords(attributes, entry.getValue());
         }
     }
@@ -171,9 +171,9 @@ public class PropertyConfigurationsUtil {
         }
         String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, stringBuilder.toString());
         String kind = WILD_CARD_KIND;
-        for(String ancestryKind: attributes.get(ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)) {
+        for(String ancestryKind: attributes.get(Constants.ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)) {
             if(!Strings.isNullOrEmpty(ancestryKind)) {
-                // Exclude the kinds in the ancestryKinds to prevent circular tracing
+                // Exclude the kinds in the ancestryKinds to prevent circular chasing
                 kind += ",-" + ancestryKind.trim();
             }
         }
