@@ -149,6 +149,11 @@ public class IndexerServiceImpl implements IndexerService {
             if (retryRecordIds.size() > 0) {
                 retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
             }
+
+            Map<String, List<String>> processedRecordIds = getProcessedRecordIs(upsertRecordMap, deleteRecordMap, retryRecordIds);
+            if(!processedRecordIds.isEmpty()) {
+                propertyConfigurationsUtil.updateAssociatedRecords(message, processedRecordIds);
+            }
         } catch (IOException e) {
             errorMessage = e.getMessage();
             throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, "Internal communication failure", errorMessage, e);
@@ -181,6 +186,30 @@ public class IndexerServiceImpl implements IndexerService {
                 });
             }
         }
+    }
+
+    private Map<String, List<String>> getProcessedRecordIs(Map<String, Map<String, OperationType>> upsertRecordMap,
+                                                        Map<String, List<String>> deleteRecordMap, List<String> retryRecordIds) {
+        Map<String, List<String>> recordIds = new HashMap<>();
+        for(Map.Entry<String, Map<String, OperationType>> entry: upsertRecordMap.entrySet()) {
+            String kind = entry.getKey();
+            List<String> ids = recordIds.containsKey(kind)? recordIds.get(kind):new ArrayList<>();
+            List<String> processedIds = entry.getValue().keySet().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
+            ids.addAll(processedIds);
+            if(!ids.isEmpty()) {
+                recordIds.put(kind, ids);
+            }
+        }
+        for(Map.Entry<String, List<String>> entry: deleteRecordMap.entrySet()) {
+            String kind = entry.getKey();
+            List<String> ids = recordIds.containsKey(kind)? recordIds.get(kind):new ArrayList<>();
+            List<String> processedIds = entry.getValue().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
+            ids.addAll(processedIds);
+            if(!ids.isEmpty()) {
+                recordIds.put(kind, ids);
+            }
+        }
+        return recordIds;
     }
 
     private void processSchemaEvents(RestHighLevelClient restClient,
@@ -216,10 +245,6 @@ public class IndexerServiceImpl implements IndexerService {
 
         // index records
         failedOrRetryRecordIds.addAll(processElasticMappingAndUpsertRecords(recordIndexerPayload));
-
-        // ids of successfully indexed records
-        List<String> upsertedRecordIds = recordIds.stream().filter(id -> !failedOrRetryRecordIds.contains(id)).collect(Collectors.toList());
-        propertyConfigurationsUtil.updateAssociatedRecords(upsertedRecordIds);
 
         return failedOrRetryRecordIds;
     }
@@ -501,27 +526,19 @@ public class IndexerServiceImpl implements IndexerService {
         BulkRequest bulkRequest = new BulkRequest();
         bulkRequest.timeout(BULK_REQUEST_TIMEOUT);
 
-        List<String> deletedRecordIds = new ArrayList<>();
         for (Map.Entry<String, List<String>> record : deleteRecordMap.entrySet()) {
 
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKey());
 
             for (String id : record.getValue()) {
-                deletedRecordIds.add(id);
                 DeleteRequest deleteRequest = new DeleteRequest(index, id);
                 bulkRequest.add(deleteRequest);
             }
         }
 
-        List<String> deleteFailureRecordIds;
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            deleteFailureRecordIds = processBulkRequest(restClient, bulkRequest);
+            return processBulkRequest(restClient, bulkRequest);
         }
-
-        deletedRecordIds = deletedRecordIds.stream().filter(id -> !deleteFailureRecordIds.contains(id)).collect(Collectors.toList());
-        propertyConfigurationsUtil.updateAssociatedRecords(deletedRecordIds);
-
-        return deleteFailureRecordIds;
     }
 
     private List<String> processBulkRequest(RestHighLevelClient restClient, BulkRequest bulkRequest) throws AppException {

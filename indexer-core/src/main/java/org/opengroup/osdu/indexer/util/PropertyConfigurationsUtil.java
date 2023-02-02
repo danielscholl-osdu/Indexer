@@ -7,13 +7,13 @@ import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
-import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.cache.KindCache;
 import org.opengroup.osdu.indexer.cache.PropertyConfigurationsCache;
 import org.opengroup.osdu.indexer.cache.SearchRecordCache;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
@@ -31,17 +31,21 @@ public class PropertyConfigurationsUtil {
     private static final String ASSOCIATED_IDENTITIES_PROPERTY_STORAGE_FORMAT_TYPE = "[]string";
     private static final String WILD_CARD_KIND = "*:*:*:*";
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
+    private static final String ANCESTRY_KINDS = "ancestry_kinds";
+    private static final String ANCESTRY_KINDS_DELIMITER = ",";
 
+    private final Gson gson = new Gson();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations();
 
+    @Inject
+    private IndexerConfigurationProperties configurationProperties;
     @Inject
     private PropertyConfigurationsCache propertyConfigurationCache;
     @Inject
     private KindCache kindCache;
     @Inject
     private SearchRecordCache searchRecordCache;
-
     @Inject
     private SearchService searchService;
     @Inject
@@ -134,7 +138,25 @@ public class PropertyConfigurationsUtil {
         return extendedSchemaItem;
     }
 
-    public void updateAssociatedRecords(List<String> associatedRecordIds) {
+    public void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> processedRecordIds) {
+        if(processedRecordIds == null || processedRecordIds.isEmpty())
+            return;
+
+        Map<String, String> attributes = message.getAttributes();
+        DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
+        attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
+        attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
+        attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+        final String ancestors = attributes.containsKey(ANCESTRY_KINDS)? attributes.get(ANCESTRY_KINDS) : "";
+        for (Map.Entry<String, List<String>> entry :  processedRecordIds.entrySet()) {
+            String kind = entry.getKey();
+            String newTraceHistory = ancestors.isEmpty()? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
+            attributes.put(ANCESTRY_KINDS, newTraceHistory);
+            updateAssociatedRecords(attributes, entry.getValue());
+        }
+    }
+
+    private void updateAssociatedRecords(Map<String, String> attributes, List<String> associatedRecordIds) {
         if(associatedRecordIds == null || associatedRecordIds.isEmpty())
             return;
 
@@ -148,19 +170,28 @@ public class PropertyConfigurationsUtil {
             stringBuilder.append("\"");
         }
         String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, stringBuilder.toString());
+        String kind = WILD_CARD_KIND;
+        for(String ancestryKind: attributes.get(ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)) {
+            if(!Strings.isNullOrEmpty(ancestryKind)) {
+                // Exclude the kinds in the ancestryKinds to prevent circular tracing
+                kind += ",-" + ancestryKind.trim();
+            }
+        }
 
-        int limit = 100;
-        int offset = 0;
+        final int limit = configurationProperties.getStorageRecordsByKindBatchSize();
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(WILD_CARD_KIND);
+        searchRequest.setKind(kind);
         searchRequest.setQuery(query);
         searchRequest.setLimit(limit);
         searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
+        int offset = 0;
         try {
             while(true) {
                 SearchResponse searchResponse = searchService.query(searchRequest);
                 List<SearchRecord> results = searchResponse.getResults();
-                createWorkerTask(results);
+                if(results != null && !results.isEmpty()) {
+                    createWorkerTask(attributes, results);
+                }
 
                 if(results == null || results.size() < limit)
                     break;
@@ -173,29 +204,22 @@ public class PropertyConfigurationsUtil {
         }
     }
 
-    private void createWorkerTask(List<SearchRecord> results) {
+    private void createWorkerTask(Map<String, String> attributes, List<SearchRecord> results) {
         if(results == null || results.isEmpty())
             return;
 
-        List<RecordInfo> msgs = new ArrayList<>();
+        List<RecordInfo> data = new ArrayList<>();
         for (SearchRecord record: results) {
             RecordInfo recordInfo = new RecordInfo();
             recordInfo.setKind(record.getKind());
             recordInfo.setId(record.getId());
             recordInfo.setOp(OperationType.update.getValue());
-            msgs.add(recordInfo);
+            data.add(recordInfo);
         }
 
-        DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
-        Map<String, String> attributes = new HashMap<>();
-        attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
-        attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
-        attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
-
-        Gson gson = new Gson();
-        RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(msgs)).attributes(attributes).build();
+        RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(data)).attributes(attributes).build();
         String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-        this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, headers);
+        this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
     }
 
     private boolean isEmptyConfiguration(PropertyConfigurations propertyConfigurations) {
