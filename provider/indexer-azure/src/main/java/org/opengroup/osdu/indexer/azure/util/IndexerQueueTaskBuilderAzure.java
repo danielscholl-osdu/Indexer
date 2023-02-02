@@ -162,6 +162,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         jo.addProperty(DpsHeaders.ACCOUNT_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+        // Append the ancestry kinds used to prevent circular chasing
         if(attributes.containsKey(Constants.ANCESTRY_KINDS)) {
             jo.addProperty(Constants.ANCESTRY_KINDS, attributes.get(Constants.ANCESTRY_KINDS));
         }
