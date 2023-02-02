@@ -19,12 +19,12 @@ package org.opengroup.osdu.indexer.provider.gcp.common.publish;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
+import com.google.gson.JsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.core.gcp.oqm.driver.OqmDriver;
@@ -35,25 +35,30 @@ import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.IndexerMessag
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.springframework.stereotype.Component;
 
-@Log
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class StatusPublisherImpl implements IPublisher {
 
     private final OqmDriver driver;
     private final IndexerMessagingConfigProperties properties;
+    private final JsonSerializer<JobStatus> statusJsonSerializer;
     private OqmTopic oqmTopic;
+    private Gson gson;
 
     @PostConstruct
     public void setUp() {
-        oqmTopic = OqmTopic.builder().name(properties.getStatusChangedTopicName()).build();
+        this.oqmTopic = OqmTopic.builder().name(properties.getStatusChangedTopicName()).build();
+        this.gson = new GsonBuilder()
+            .registerTypeHierarchyAdapter(JobStatus.class, statusJsonSerializer)
+            .create();
     }
 
-    @Override
+  @Override
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) {
         OqmDestination oqmDestination =
             OqmDestination.builder().partitionId(headers.getPartitionId()).build();
-        String json = generatePubSubMessage(indexerBatchStatus);
+        String json = this.gson.toJson(indexerBatchStatus);
 
         Map<String, String> attributes = getAttributes(headers);
         OqmMessage oqmMessage = OqmMessage.builder().data(json).attributes(attributes).build();
@@ -67,11 +72,5 @@ public class StatusPublisherImpl implements IPublisher {
         headers.addCorrelationIdIfMissing();
         attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
         return attributes;
-    }
-
-    private String generatePubSubMessage(JobStatus jobStatus) {
-        Gson gson = new GsonBuilder().create();
-        JsonElement statusChangedTagsJson = gson.toJsonTree(jobStatus, JobStatus.class);
-        return statusChangedTagsJson.toString();
     }
 }

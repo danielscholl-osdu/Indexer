@@ -508,6 +508,7 @@ The following software have components provided under the terms of this license:
 - Mojo's Maven plugin for Cobertura (from http://mojo.codehaus.org/cobertura-maven-plugin/)
 - MongoDB Driver (from https://www.mongodb.com/)
 - MongoDB Java Driver (from http://mongodb.org/, http://www.mongodb.org, https://www.mongodb.com/)
+- NanoHttpd-Core (from https://repo1.maven.org/maven2/org/nanohttpd/nanohttpd)
 - Netty Reactive Streams Implementation (from https://repo1.maven.org/maven2/com/typesafe/netty/netty-reactive-streams)
 - Netty/Buffer (from https://repo1.maven.org/maven2/io/netty/netty-buffer)
 - Netty/Codec (from https://repo1.maven.org/maven2/io/netty/netty-codec)
@@ -773,6 +774,7 @@ The following software have components provided under the terms of this license:
 - Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Mockito (from http://mockito.org, http://www.mockito.org, https://github.com/mockito/mockito)
+- NanoHttpd-Core (from https://repo1.maven.org/maven2/org/nanohttpd/nanohttpd)
 - Netty/Codec/HTTP (from https://repo1.maven.org/maven2/io/netty/netty-codec-http)
 - Plexus Common Utilities (from http://plexus.codehaus.org/plexus-utils, https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils)
 - PostgreSQL JDBC Driver
@@ -1093,6 +1095,8 @@ LGPL-2.1-only
 The following software have components provided under the terms of this license:
 
 - Cobertura (from http://cobertura.sourceforge.net)
+- Java Native Access (from https://github.com/java-native-access/jna, https://github.com/twall/jna)
+- Java Native Access Platform (from https://github.com/java-native-access/jna)
 - Logback Classic Module (from http://logback.qos.ch, https://repo1.maven.org/maven2/ch/qos/logback/logback-classic)
 - Logback Contrib :: JSON :: Classic (from https://repo1.maven.org/maven2/ch/qos/logback/contrib/logback-json-classic)
 - Logback Contrib :: JSON :: Core (from https://repo1.maven.org/maven2/ch/qos/logback/contrib/logback-json-core)
@@ -1316,6 +1320,7 @@ The following software have components provided under the terms of this license:
 - JBoss Logging 3 (from http://www.jboss.org)
 - JSON in Java (from https://github.com/douglascrockford/JSON-java)
 - LatencyUtils (from http://latencyutils.github.io/LatencyUtils/)
+- Microsoft Azure client library for Blob Storage (from https://github.com/Azure/azure-sdk-for-java)
 - PostgreSQL JDBC Driver
 - jersey-core-common (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-common)
 

@@ -40,6 +40,8 @@ Usage of spring profiles is preferred.
 | `PARTITION_AUTH_ENABLED` | ex `true` or `false`   | Disable or enable auth token provisioning for requests to Partition service                                               | no         | -      |
 | `OQMDRIVER`              | `rabbitmq` or `pubsub` | Oqm driver mode that defines which message broker will be used                                                            | no         | -      |
 | `SERVICE_TOKEN_PROVIDER` | `GCP` or `OPENID`      | Service account token provider, `GCP` means use Google service account `OPEIND` means use OpenId provider like `Keycloak` | no         | -      |
+| `RABBITMQ_RETRY_DELAY`   | ex `20000`             | Message retry interval after unsuccessful processing                                                                      | no         | -      |
+| `RABBITMQ_RETRY_LIMIT`   | ex `5`                 | Number of retries to send a message after unsuccessful processing                                                         | no         | -      |
 
 ### Properties set in Partition service:
 
@@ -190,15 +192,15 @@ curl -L -X PATCH 'https://dev.osdu.club/api/partition/v1/partitions/opendes' -H 
 
 RabbitMq should have exchanges and queues with names and configs:
 
-| EXCHANGE NAME                | EXCHANGE CONFIG                     | Target queue name                    | Target queue config                                                                                                            |
-|------------------------------|-------------------------------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
-| indexing-progress            | `Type 	fanout` <br/>`durable:	true` | (Consumer not implemented)           | (Consumer not implemented)                                                                                                     |
-| records-changed              | `Type 	fanout` <br/>`durable:	true` | indexer-records-changed              | `x-delivery-limit:	5`<br/>`x-dead-letter-exchange:	records-changed-dead-letter`<br/>`x-queue-type: quorum`<br/>`durable: true`  |
-| records-changed-dead-letter  | `Type 	fanout` <br/>`durable:	true` | indexer-records-changed-dead-letter  | `x-queue-type: classic`<br/>`durable: true`<br/>`x-message-ttl: 604800000`                                                                                    |
-| reprocess                    | `Type 	fanout` <br/>`durable:	true` | indexer-reprocess                    | `x-delivery-limit:	5`<br/>`x-dead-letter-exchange:	reprocess-dead-letter`<br/>`x-queue-type: quorum`<br/>`durable: true`  |
-| reprocess-dead-letter        | `Type 	fanout` <br/>`durable:	true` | indexer-reprocess-dead-letter        | `x-queue-type: classic`<br/>`durable: true`<br/>`x-message-ttl: 604800000`                                                                                    |
-| schema-changed               | `Type 	fanout` <br/>`durable:	true` | indexer-schema-changed               | `x-delivery-limit:	5`<br/>`x-dead-letter-exchange:	schema-changed-dead-letter`<br/>`x-queue-type: quorum`<br/>`durable: true`  |
-| schema-changed-dead-letter   | `Type 	fanout` <br/>`durable:	true` | indexer-schema-changed-dead-letter   | `x-queue-type: classic`<br/>`durable: true`<br/>`x-message-ttl: 604800000`                                                                                    |
+| EXCHANGE NAME                    | EXCHANGE CONFIG                                                             | Target queue name         | Target queue config                                                  |
+|----------------------------------|-----------------------------------------------------------------------------|---------------------------|----------------------------------------------------------------------|
+| indexing-progress                | `Type 	fanout` <br/>`durable:	true`                                         | (Consumer not implemented) | (Consumer not implemented)                                           |
+| records-changed                  | `Type 	fanout` <br/>`durable:	true`                                         | indexer-records-changed   | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| indexer-records-changed-exchange | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-records-changed   | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| reprocess                        | `Type 	fanout` <br/>`durable:	true`                                         | indexer-reprocess         | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| indexer-reprocess-exchange       | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-reprocess         | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| schema-changed                   | `Type 	fanout` <br/>`durable:	true`                                         | indexer-schema-changed    | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| indexer-schema-changed-exchange  | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-schema-changed    | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
 
 ## Keycloak configuration
 
