@@ -102,6 +102,7 @@ public class IndicesServiceTest {
         when(elasticIndexNameResolver.getKindFromIndexName(any())).thenReturn(kind);
         when(elasticIndexNameResolver.getIndexNameFromKind(any())).thenReturn(index);
         when(elasticIndexNameResolver.getIndexAliasFromKind(any())).thenReturn("a12345678");
+        when(elasticIndexNameResolver.isIndexAliasSupported(any())).thenReturn(true);
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
         when(indicesClient.create(any(CreateIndexRequest.class), any(RequestOptions.class))).thenReturn(indexResponse);
         when(indicesClient.updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class))).thenReturn(acknowledgedResponse);

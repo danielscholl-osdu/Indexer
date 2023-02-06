@@ -312,8 +312,9 @@ public class IndicesServiceImpl implements IndicesService {
         try {
             List<String> kinds = new ArrayList<>();
             kinds.add(kind);
-            if(getKindWithMajorVersion(kind) != null) {
-                kinds.add(getKindWithMajorVersion(kind));
+            String kindWithMajorVersion = getKindWithMajorVersion(kind);
+            if(elasticIndexNameResolver.isIndexAliasSupported(kindWithMajorVersion)) {
+                kinds.add(kindWithMajorVersion);
             }
             for (String kd : kinds) {
                 index = elasticIndexNameResolver.getIndexNameFromKind(kd);
