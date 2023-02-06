@@ -52,10 +52,7 @@ import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequestScope
@@ -309,9 +306,16 @@ public class IndicesServiceImpl implements IndicesService {
 
     private void createIndexAlias(RestHighLevelClient client, String index) {
         String kind = this.elasticIndexNameResolver.getKindFromIndexName(index);
-        String kindWithMajorVersion = getKindWithMajorVersion(kind);
+        if(!elasticIndexNameResolver.isIndexAliasSupported(kind))
+            return;
+
         try {
-            for (String kd : Arrays.asList(kind, kindWithMajorVersion)) {
+            List<String> kinds = new ArrayList<>();
+            kinds.add(kind);
+            if(getKindWithMajorVersion(kind) != null) {
+                kinds.add(getKindWithMajorVersion(kind));
+            }
+            for (String kd : kinds) {
                 index = elasticIndexNameResolver.getIndexNameFromKind(kd);
                 String alias = elasticIndexNameResolver.getIndexAliasFromKind(kd);
                 IndicesAliasesRequest addRequest = new IndicesAliasesRequest();
@@ -335,7 +339,11 @@ public class IndicesServiceImpl implements IndicesService {
         // If kind is common:welldb:wellbore:1.2.0, then kind with major version is common:welldb:wellbore:1.*.*
         int idx = kind.lastIndexOf(":");
         String version = kind.substring(idx+1);
-        String majorVersion = version.substring(0, version.indexOf("."));
-        return String.format("%s:%s.*.*", kind.substring(0, idx), majorVersion);
+        if(version.indexOf(".") > 0) {
+            String kindWithoutVersion = kind.substring(0, idx);
+            String majorVersion = version.substring(0, version.indexOf("."));
+            return String.format("%s:%s.*.*", kindWithoutVersion, majorVersion);
+        }
+        return null;
     }
 }
