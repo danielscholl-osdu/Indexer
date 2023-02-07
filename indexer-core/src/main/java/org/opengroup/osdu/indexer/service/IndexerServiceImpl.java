@@ -335,6 +335,7 @@ public class IndexerServiceImpl implements IndexerService {
                 if(propertyConfigurations != null) {
                     dataMap = mergeDataFromPropertyConfiguration(dataMap, propertyConfigurations);
                 }
+                propertyConfigurationsUtil.setRelatedObject(storageRecord.getId(), dataMap);
 
                 document.setData(dataMap);
             }
@@ -401,10 +402,10 @@ public class IndexerServiceImpl implements IndexerService {
                         associatedIdentities.add(propertyConfigurationsUtil.removeColumnPostfix(relatedObjectId));
                     }
 
-                    SearchRecord searchRecord = getRelatedObject(originalDataMap, path);
-                    if(searchRecord != null) {
+                    Map<String, Object> relatedObject = getRelatedObject(originalDataMap, path);
+                    if(relatedObject != null) {
                         String valuePath = VirtualPropertyUtil.removeDataPrefix(path.getValuePath());
-                        value = retrievePropertyValues(configuration.getName(), valuePath, searchRecord.getData());
+                        value = retrievePropertyValues(configuration.getName(), valuePath, relatedObject);
                     }
                 }
                 else {
@@ -438,10 +439,10 @@ public class IndexerServiceImpl implements IndexerService {
         return null;
     }
 
-    private SearchRecord getRelatedObject(Map<String, Object> originalDataMap, Path path) {
+    private Map<String, Object> getRelatedObject(Map<String, Object> originalDataMap, Path path) {
         String relatedObjectId = getRelatedObjectId(originalDataMap, path);
         if(!Strings.isNullOrEmpty(relatedObjectId)) {
-            return propertyConfigurationsUtil.getRelatedRecord(path.getRelatedObjectKind(), relatedObjectId);
+            return propertyConfigurationsUtil.getRelatedObject(path.getRelatedObjectKind(), relatedObjectId);
         }
         return null;
     }

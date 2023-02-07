@@ -9,8 +9,4 @@ public class PropertyConfigurationsCache extends VmCache<String, PropertyConfigu
     public PropertyConfigurationsCache() {
         super(600, 1000);
     }
-
-    public boolean containsKey(final String key) {
-        return this.get(key) != null;
-    }
 }

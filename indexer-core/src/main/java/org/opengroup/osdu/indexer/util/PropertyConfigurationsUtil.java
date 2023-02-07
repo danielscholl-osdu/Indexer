@@ -12,7 +12,7 @@ import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.cache.KindCache;
 import org.opengroup.osdu.indexer.cache.PropertyConfigurationsCache;
-import org.opengroup.osdu.indexer.cache.SearchRecordCache;
+import org.opengroup.osdu.indexer.cache.RelatedObjectCache;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.model.SearchRecord;
@@ -33,10 +33,13 @@ public class PropertyConfigurationsUtil {
     private static final String WILD_CARD_KIND = "*:*:*:*";
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
     private static final String ANCESTRY_KINDS_DELIMITER = ",";
+    private static final String EMPTY_CODE = "__EMPTY_CODE__";
+    private static final int DEFAULT_SEARCH_LIMIT = 100;
 
     private final Gson gson = new Gson();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations();
+    private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations() {{ setCode(EMPTY_CODE); }};
+
 
     @Inject
     private IndexerConfigurationProperties configurationProperties;
@@ -45,7 +48,7 @@ public class PropertyConfigurationsUtil {
     @Inject
     private KindCache kindCache;
     @Inject
-    private SearchRecordCache searchRecordCache;
+    private RelatedObjectCache relatedObjectCache;
     @Inject
     private SearchService searchService;
     @Inject
@@ -57,26 +60,28 @@ public class PropertyConfigurationsUtil {
         if (Strings.isNullOrEmpty(kind))
             return null;
 
+        String dataPartitionId = requestInfo.getHeaders().getPartitionId();
         List<String> kinds = Arrays.asList(kind, getKindWithMajor(kind)); // Specified version of kind first
         for(String kd: kinds) {
-            PropertyConfigurations configuration = null;
-            if(propertyConfigurationCache.containsKey(kd)) {
-                if(!isEmptyConfiguration(propertyConfigurationCache.get(kd)))
-                    configuration = propertyConfigurationCache.get(kd);
+            String key = dataPartitionId + " | " + kd;
+
+            PropertyConfigurations configuration = propertyConfigurationCache.get(key);
+            if(configuration != null) {
+                configuration = propertyConfigurationCache.get(key);
             }
             else {
                 configuration = searchConfigurations(kd);
                 if(configuration != null) {
-                    propertyConfigurationCache.put(kd, configuration);
+                    propertyConfigurationCache.put(key, configuration);
                 }
                 else {
                     // It is common that a kind does not have extended property. So we need to cache an empty configuration
                     // to avoid unnecessary search
-                    propertyConfigurationCache.put(kd, EMPTY_CONFIGURATIONS);
+                    propertyConfigurationCache.put(key, EMPTY_CONFIGURATIONS);
                 }
             }
 
-            if(configuration != null) {
+            if(configuration != null && !isEmptyConfiguration(configuration)) {
                 return configuration;
             }
         }
@@ -105,22 +110,38 @@ public class PropertyConfigurationsUtil {
         }
     }
 
-    public SearchRecord getRelatedRecord(String relatedObjectKind, String relatedObjectId) {
+    public Map<String, Object> getRelatedObject(String relatedObjectKind, String relatedObjectId) {
         if(Strings.isNullOrEmpty(relatedObjectKind) || Strings.isNullOrEmpty(relatedObjectId)) {
             return null;
         }
 
-        String key =  relatedObjectKind + ":" + relatedObjectId;
-        if(searchRecordCache.containsKey(key)) {
-            return searchRecordCache.get(key);
+        String key = (relatedObjectId.endsWith(":"))
+                    ? relatedObjectId.substring(0, relatedObjectId.length() -1)
+                    : relatedObjectId;
+
+        Map<String, Object> relatedObject = relatedObjectCache.get(key);
+        if(relatedObject != null) {
+            return relatedObject;
         }
         else {
             SearchRecord searchRecord = searchRelatedRecord(relatedObjectKind, relatedObjectId);
             if(searchRecord != null) {
-                searchRecordCache.put(key, searchRecord);
+                relatedObjectCache.put(key, searchRecord.getData());
             }
-            return searchRecord;
+            return searchRecord.getData();
         }
+    }
+
+    public void setRelatedObject(String relatedObjectId, Map<String, Object> relatedObject) {
+        if(Strings.isNullOrEmpty(relatedObjectId) || relatedObject == null) {
+            return;
+        }
+
+        String key = (relatedObjectId.endsWith(":"))
+                ? relatedObjectId.substring(0, relatedObjectId.length() -1)
+                : relatedObjectId;
+
+        relatedObjectCache.put(key, relatedObject);
     }
 
     public String removeColumnPostfix(String relatedObjectId) {
@@ -223,7 +244,7 @@ public class PropertyConfigurationsUtil {
     }
 
     private boolean isEmptyConfiguration(PropertyConfigurations propertyConfigurations) {
-        return propertyConfigurations != null && Strings.isNullOrEmpty(propertyConfigurations.getCode());
+        return propertyConfigurations != null && EMPTY_CODE.equals(propertyConfigurations.getCode());
     }
 
     private boolean isConcreteKind(String kind) {
@@ -249,7 +270,7 @@ public class PropertyConfigurationsUtil {
     private String searchConcreteKind(String kindWithMajor) {
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(kindWithMajor + "*");
-        searchRequest.setLimit(10);
+        searchRequest.setLimit(DEFAULT_SEARCH_LIMIT);
         searchRequest.setReturnedFields(Arrays.asList("kind"));
         try {
             SearchResponse searchResponse = searchService.query(searchRequest);
@@ -269,19 +290,18 @@ public class PropertyConfigurationsUtil {
     private PropertyConfigurations searchConfigurations(String kind) {
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
-        searchRequest.setLimit(10);
+        searchRequest.setLimit(DEFAULT_SEARCH_LIMIT);
         String query = String.format("data.Code: \"%s\"",kind);
         searchRequest.setQuery(query);
-        PropertyConfigurations configurations = null;
         try {
             SearchResponse searchResponse = searchService.query(searchRequest);
             List<SearchRecord> results = searchResponse.getResults();
-            if(results != null && !results.isEmpty())
-            {
-                //TODO: get the best match
-                SearchRecord searchRecord = results.get(0);
+            for(SearchRecord searchRecord : results) {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
-                configurations = objectMapper.readValue(data, PropertyConfigurations.class);
+                PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
+                if(kind.equals(configurations.getCode())) {
+                    return configurations;
+                }
             }
         } catch (URISyntaxException e) {
             // TODO: log the error
@@ -290,7 +310,7 @@ public class PropertyConfigurationsUtil {
             // TODO: log the error
         }
 
-        return configurations;
+        return null;
     }
 
     private SearchRecord searchRelatedRecord(String relatedObjectKind, String relatedObjectId) {
@@ -300,7 +320,7 @@ public class PropertyConfigurationsUtil {
         searchRequest.setKind(kind);
         String query = String.format("id: \"%s\"",id);
         searchRequest.setQuery(query);
-        searchRequest.setLimit(10);
+        searchRequest.setLimit(DEFAULT_SEARCH_LIMIT);
         try {
             SearchResponse searchResponse = searchService.query(searchRequest);
             List<SearchRecord> results = searchResponse.getResults();
