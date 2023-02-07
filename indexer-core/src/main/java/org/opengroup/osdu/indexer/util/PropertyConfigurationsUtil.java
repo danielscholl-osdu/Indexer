@@ -38,7 +38,9 @@ public class PropertyConfigurationsUtil {
 
     private final Gson gson = new Gson();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations() {{ setCode(EMPTY_CODE); }};
+    private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations() {{
+        setCode(EMPTY_CODE);
+    }};
 
 
     @Inject
@@ -62,26 +64,21 @@ public class PropertyConfigurationsUtil {
 
         String dataPartitionId = requestInfo.getHeaders().getPartitionId();
         List<String> kinds = Arrays.asList(kind, getKindWithMajor(kind)); // Specified version of kind first
-        for(String kd: kinds) {
+        for (String kd : kinds) {
             String key = dataPartitionId + " | " + kd;
-
             PropertyConfigurations configuration = propertyConfigurationCache.get(key);
-            if(configuration != null) {
-                configuration = propertyConfigurationCache.get(key);
-            }
-            else {
+            if (configuration == null) {
                 configuration = searchConfigurations(kd);
-                if(configuration != null) {
+                if (configuration != null) {
                     propertyConfigurationCache.put(key, configuration);
-                }
-                else {
+                } else {
                     // It is common that a kind does not have extended property. So we need to cache an empty configuration
                     // to avoid unnecessary search
                     propertyConfigurationCache.put(key, EMPTY_CONFIGURATIONS);
                 }
             }
 
-            if(configuration != null && !isEmptyConfiguration(configuration)) {
+            if (configuration != null && !EMPTY_CODE.equals(configuration.getCode())) {
                 return configuration;
             }
         }
@@ -90,18 +87,17 @@ public class PropertyConfigurationsUtil {
     }
 
     public String resolveConcreteKind(String kind) {
-        if(Strings.isNullOrEmpty(kind)) {
+        if (Strings.isNullOrEmpty(kind)) {
             return null;
         }
 
-        if(isConcreteKind(kind)) {
+        if (isConcreteKind(kind)) {
             return kind;
         }
 
-        if(kindCache.containsKey(kind)) {
+        if (kindCache.containsKey(kind)) {
             return kindCache.get(kind);
-        }
-        else {
+        } else {
             String concreteKind = searchConcreteKind(kind);
             if (!Strings.isNullOrEmpty(concreteKind)) {
                 kindCache.put(kind, concreteKind);
@@ -111,41 +107,32 @@ public class PropertyConfigurationsUtil {
     }
 
     public Map<String, Object> getRelatedObject(String relatedObjectKind, String relatedObjectId) {
-        if(Strings.isNullOrEmpty(relatedObjectKind) || Strings.isNullOrEmpty(relatedObjectId)) {
+        if (Strings.isNullOrEmpty(relatedObjectKind) || Strings.isNullOrEmpty(relatedObjectId)) {
             return null;
         }
 
-        String key = (relatedObjectId.endsWith(":"))
-                    ? relatedObjectId.substring(0, relatedObjectId.length() -1)
-                    : relatedObjectId;
-
+        String key = removeIdPostfix(relatedObjectId);
         Map<String, Object> relatedObject = relatedObjectCache.get(key);
-        if(relatedObject != null) {
-            return relatedObject;
-        }
-        else {
+        if (relatedObject == null) {
             SearchRecord searchRecord = searchRelatedRecord(relatedObjectKind, relatedObjectId);
-            if(searchRecord != null) {
-                relatedObjectCache.put(key, searchRecord.getData());
+            if (searchRecord != null) {
+                relatedObject = searchRecord.getData();
+                relatedObjectCache.put(key, relatedObject);
             }
-            return searchRecord.getData();
         }
+
+        return relatedObject;
     }
 
     public void setRelatedObject(String relatedObjectId, Map<String, Object> relatedObject) {
-        if(Strings.isNullOrEmpty(relatedObjectId) || relatedObject == null) {
-            return;
+        if (!Strings.isNullOrEmpty(relatedObjectId) && relatedObject != null) {
+            String key = removeIdPostfix(relatedObjectId);
+            relatedObjectCache.put(key, relatedObject);
         }
-
-        String key = (relatedObjectId.endsWith(":"))
-                ? relatedObjectId.substring(0, relatedObjectId.length() -1)
-                : relatedObjectId;
-
-        relatedObjectCache.put(key, relatedObject);
     }
 
     public String removeColumnPostfix(String relatedObjectId) {
-        if(relatedObjectId != null && relatedObjectId.endsWith(":")) {
+        if (relatedObjectId != null && relatedObjectId.endsWith(":")) {
             relatedObjectId = relatedObjectId.substring(0, relatedObjectId.length() - 1);
         }
 
@@ -160,7 +147,7 @@ public class PropertyConfigurationsUtil {
     }
 
     public void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> processedRecordIds) {
-        if(processedRecordIds == null || processedRecordIds.isEmpty())
+        if (processedRecordIds == null || processedRecordIds.isEmpty())
             return;
 
         Map<String, String> attributes = message.getAttributes();
@@ -168,22 +155,22 @@ public class PropertyConfigurationsUtil {
         attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
         attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
-        final String ancestors = attributes.containsKey(Constants.ANCESTRY_KINDS)? attributes.get(Constants.ANCESTRY_KINDS) : "";
-        for (Map.Entry<String, List<String>> entry :  processedRecordIds.entrySet()) {
+        final String ancestors = attributes.containsKey(Constants.ANCESTRY_KINDS) ? attributes.get(Constants.ANCESTRY_KINDS) : "";
+        for (Map.Entry<String, List<String>> entry : processedRecordIds.entrySet()) {
             String kind = entry.getKey();
-            String updatedAncestors = ancestors.isEmpty()? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
+            String updatedAncestors = ancestors.isEmpty() ? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
             attributes.put(Constants.ANCESTRY_KINDS, updatedAncestors);
             updateAssociatedRecords(attributes, entry.getValue());
         }
     }
 
     private void updateAssociatedRecords(Map<String, String> attributes, List<String> associatedRecordIds) {
-        if(associatedRecordIds == null || associatedRecordIds.isEmpty())
+        if (associatedRecordIds == null || associatedRecordIds.isEmpty())
             return;
 
         StringBuilder stringBuilder = new StringBuilder();
-        for(String id : associatedRecordIds) {
-            if(stringBuilder.length() > 0) {
+        for (String id : associatedRecordIds) {
+            if (stringBuilder.length() > 0) {
                 stringBuilder.append(",");
             }
             stringBuilder.append("\"");
@@ -192,8 +179,8 @@ public class PropertyConfigurationsUtil {
         }
         String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, stringBuilder.toString());
         String kind = WILD_CARD_KIND;
-        for(String ancestryKind: attributes.get(Constants.ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)) {
-            if(!Strings.isNullOrEmpty(ancestryKind)) {
+        for (String ancestryKind : attributes.get(Constants.ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)) {
+            if (!Strings.isNullOrEmpty(ancestryKind)) {
                 // Exclude the kinds in the ancestryKinds to prevent circular chasing
                 kind += ",-" + ancestryKind.trim();
             }
@@ -207,14 +194,14 @@ public class PropertyConfigurationsUtil {
         searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
         int offset = 0;
         try {
-            while(true) {
+            while (true) {
                 SearchResponse searchResponse = searchService.query(searchRequest);
                 List<SearchRecord> results = searchResponse.getResults();
-                if(results != null && !results.isEmpty()) {
+                if (results != null && !results.isEmpty()) {
                     createWorkerTask(attributes, results);
                 }
 
-                if(results == null || results.size() < limit)
+                if (results == null || results.size() < limit)
                     break;
 
                 offset += results.size();
@@ -226,11 +213,11 @@ public class PropertyConfigurationsUtil {
     }
 
     private void createWorkerTask(Map<String, String> attributes, List<SearchRecord> results) {
-        if(results == null || results.isEmpty())
+        if (results == null || results.isEmpty())
             return;
 
         List<RecordInfo> data = new ArrayList<>();
-        for (SearchRecord record: results) {
+        for (SearchRecord record : results) {
             RecordInfo recordInfo = new RecordInfo();
             recordInfo.setKind(record.getKind());
             recordInfo.setId(record.getId());
@@ -241,10 +228,6 @@ public class PropertyConfigurationsUtil {
         RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(data)).attributes(attributes).build();
         String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
         this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
-    }
-
-    private boolean isEmptyConfiguration(PropertyConfigurations propertyConfigurations) {
-        return propertyConfigurations != null && EMPTY_CODE.equals(propertyConfigurations.getCode());
     }
 
     private boolean isConcreteKind(String kind) {
@@ -260,11 +243,18 @@ public class PropertyConfigurationsUtil {
 
         String version = kind.substring(index + 1);
         String[] subVersions = version.split("\\.");
-        if(subVersions.length > 0) {
+        if (subVersions.length > 0) {
             kindWithMajor += subVersions[0] + ".";
         }
 
         return kindWithMajor;
+    }
+
+    private String removeIdPostfix(String objectId) {
+        if (objectId != null && objectId.endsWith(":")) {
+            objectId = objectId.substring(0, objectId.length() -1);
+        }
+        return objectId;
     }
 
     private String searchConcreteKind(String kindWithMajor) {
