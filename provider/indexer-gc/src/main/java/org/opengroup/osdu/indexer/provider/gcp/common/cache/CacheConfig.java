@@ -33,47 +33,59 @@ import org.springframework.context.annotation.Configuration;
 public class CacheConfig {
 
     @Bean
-    public ISchemaCache fieldTypeMappingCache(GcpConfigurationProperties appProperties) {
-        RedisCacheBuilder<String, String> cacheBuilder = new RedisCacheBuilder<>();
-        RedisCache<String, String> schemaCache = cacheBuilder.buildRedisCache(
-            appProperties.getRedisSearchHost(),
-            Integer.parseInt(appProperties.getRedisSearchPort()),
-            appProperties.getRedisSearchPassword(),
-            appProperties.getRedisSearchExpiration(),
-            appProperties.getRedisSearchWithSsl(),
-            String.class,
-            String.class
-        );
+    public ISchemaCache fieldTypeMappingCache(RedisCache<String, String> schemaCache) {
         return new SchemaCache(schemaCache);
     }
 
     @Bean
-    public IElasticCredentialsCache<String, ClusterSettings> elasticCredentialsCache(GcpConfigurationProperties gcpAppServiceConfig) {
-        RedisCacheBuilder<String, ClusterSettings> cacheBuilder = new RedisCacheBuilder<>();
-        RedisCache<String, ClusterSettings> clusterSettingCache = cacheBuilder.buildRedisCache(
-            gcpAppServiceConfig.getRedisSearchHost(),
-            Integer.parseInt(gcpAppServiceConfig.getRedisSearchPort()),
-            gcpAppServiceConfig.getRedisSearchPassword(),
-            gcpAppServiceConfig.getRedisSearchExpiration(),
-            gcpAppServiceConfig.getRedisSearchWithSsl(),
-            String.class,
-            ClusterSettings.class
+    public RedisCache<String, String> schemaCache(GcpConfigurationProperties appProperties) {
+        RedisCacheBuilder<String, String> cacheBuilder = new RedisCacheBuilder<>();
+        return cacheBuilder.buildRedisCache(
+                appProperties.getRedisSearchHost(),
+                Integer.parseInt(appProperties.getRedisSearchPort()),
+                appProperties.getRedisSearchPassword(),
+                appProperties.getRedisSearchExpiration(),
+                appProperties.getRedisSearchWithSsl(),
+                String.class,
+                String.class
         );
-        return new ElasticCredentialsCache(clusterSettingCache);
     }
 
     @Bean
-    public IIndexCache cursorCache(GcpConfigurationProperties gcpAppServiceConfig) {
-        RedisCacheBuilder<String, Boolean> cacheBuilder = new RedisCacheBuilder<>();
-        RedisCache<String, Boolean> indexCache = cacheBuilder.buildRedisCache(
-            gcpAppServiceConfig.getRedisSearchHost(),
-            Integer.parseInt(gcpAppServiceConfig.getRedisSearchPort()),
-            gcpAppServiceConfig.getRedisSearchPassword(),
-            gcpAppServiceConfig.getRedisSearchExpiration(),
-            gcpAppServiceConfig.getRedisSearchWithSsl(),
-            String.class,
-            Boolean.class
+    public IElasticCredentialsCache<String, ClusterSettings> elasticCredentialsCache(RedisCache<String, ClusterSettings> elasticCache) {
+        return new ElasticCredentialsCache(elasticCache);
+    }
+
+    @Bean
+    public RedisCache<String, ClusterSettings> elasticCache(GcpConfigurationProperties gcpAppServiceConfig) {
+        RedisCacheBuilder<String, ClusterSettings> cacheBuilder = new RedisCacheBuilder<>();
+        return cacheBuilder.buildRedisCache(
+                gcpAppServiceConfig.getRedisSearchHost(),
+                Integer.parseInt(gcpAppServiceConfig.getRedisSearchPort()),
+                gcpAppServiceConfig.getRedisSearchPassword(),
+                gcpAppServiceConfig.getRedisSearchExpiration(),
+                gcpAppServiceConfig.getRedisSearchWithSsl(),
+                String.class,
+                ClusterSettings.class
         );
-        return new IndexCache(indexCache);
+    }
+
+    @Bean
+    public IIndexCache cursorCache(RedisCache<String, Boolean> redisCache) {
+        return new IndexCache(redisCache);
+    }
+
+    @Bean
+    public RedisCache<String, Boolean> redisCache(GcpConfigurationProperties gcpAppServiceConfig) {
+        RedisCacheBuilder<String, Boolean> cacheBuilder = new RedisCacheBuilder<>();
+        return cacheBuilder.buildRedisCache(
+                gcpAppServiceConfig.getRedisSearchHost(),
+                Integer.parseInt(gcpAppServiceConfig.getRedisSearchPort()),
+                gcpAppServiceConfig.getRedisSearchPassword(),
+                gcpAppServiceConfig.getRedisSearchExpiration(),
+                gcpAppServiceConfig.getRedisSearchWithSsl(),
+                String.class,
+                Boolean.class
+        );
     }
 }
