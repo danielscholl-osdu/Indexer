@@ -24,6 +24,7 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Request;
@@ -51,10 +52,7 @@ import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequestScope
@@ -107,6 +105,8 @@ public class IndicesServiceImpl implements IndicesService {
             if (indexStatus) {
                 this.indexCache.put(index, true);
                 this.log.info(String.format("Time taken to successfully create new index %s : %d milliseconds", request.index(), stopTime-startTime));
+
+                createIndexAlias(client, index);
             }
 
             return indexStatus;
@@ -302,5 +302,49 @@ public class IndicesServiceImpl implements IndicesService {
             }
             throw exception;
         }
+    }
+
+    private void createIndexAlias(RestHighLevelClient client, String index) {
+        String kind = this.elasticIndexNameResolver.getKindFromIndexName(index);
+        if(!elasticIndexNameResolver.isIndexAliasSupported(kind))
+            return;
+
+        try {
+            List<String> kinds = new ArrayList<>();
+            kinds.add(kind);
+            String kindWithMajorVersion = getKindWithMajorVersion(kind);
+            if(elasticIndexNameResolver.isIndexAliasSupported(kindWithMajorVersion)) {
+                kinds.add(kindWithMajorVersion);
+            }
+            for (String kd : kinds) {
+                index = elasticIndexNameResolver.getIndexNameFromKind(kd);
+                String alias = elasticIndexNameResolver.getIndexAliasFromKind(kd);
+                IndicesAliasesRequest addRequest = new IndicesAliasesRequest();
+                IndicesAliasesRequest.AliasActions aliasActions = new IndicesAliasesRequest.AliasActions(IndicesAliasesRequest.AliasActions.Type.ADD)
+                        .index(index)
+                        .alias(alias);
+                addRequest.addAliasAction(aliasActions);
+                AcknowledgedResponse response = client.indices().updateAliases(addRequest, RequestOptions.DEFAULT);
+                if (response.isAcknowledged()) {
+                    this.log.info(String.format("Alias %s was created for index %s", alias, index));
+                }
+            }
+        }
+        catch(Exception ex) {
+            // Failed to create alias is not the end. It should not affect the status of index creation
+            this.log.error(String.format("Fail to create aliases for index %s", index), ex);
+        }
+    }
+
+    private String getKindWithMajorVersion(String kind) {
+        // If kind is common:welldb:wellbore:1.2.0, then kind with major version is common:welldb:wellbore:1.*.*
+        int idx = kind.lastIndexOf(":");
+        String version = kind.substring(idx+1);
+        if(version.indexOf(".") > 0) {
+            String kindWithoutVersion = kind.substring(0, idx);
+            String majorVersion = version.substring(0, version.indexOf("."));
+            return String.format("%s:%s.*.*", kindWithoutVersion, majorVersion);
+        }
+        return null;
     }
 }
