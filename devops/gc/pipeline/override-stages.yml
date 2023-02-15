@@ -1,8 +1,6 @@
 variables:
   GC_SERVICE: indexer
   GC_VENDOR: gc
-# FIXME remove when all services are migrated to a single helm 
-  GC_ENABLE_HELM_CONFIG: "false"
 
 gc-anthos-test:
   variables:

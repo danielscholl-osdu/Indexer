@@ -24,8 +24,11 @@ import org.apache.http.util.EntityUtils;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.*;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.rest.RestStatus;
@@ -47,10 +50,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -85,6 +90,52 @@ public class IndicesServiceTest {
         indicesClient = PowerMockito.mock(IndicesClient.class);
         clusterClient = PowerMockito.mock(ClusterClient.class);
         restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
+    }
+
+    @Test
+    public void create_elasticIndex() throws Exception {
+        String kind = "common:welldb:wellbore:1.2.0";
+        String index = "common-welldb-wellbore-1.2.0";
+        CreateIndexResponse indexResponse = new CreateIndexResponse(true, true, index);
+        AcknowledgedResponse acknowledgedResponse = new AcknowledgedResponse(true);
+
+        when(elasticIndexNameResolver.getKindFromIndexName(any())).thenReturn(kind);
+        when(elasticIndexNameResolver.getIndexNameFromKind(any())).thenReturn(index);
+        when(elasticIndexNameResolver.getIndexAliasFromKind(any())).thenReturn("a12345678");
+        when(elasticIndexNameResolver.isIndexAliasSupported(any())).thenReturn(true);
+        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.create(any(CreateIndexRequest.class), any(RequestOptions.class))).thenReturn(indexResponse);
+        when(indicesClient.updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class))).thenReturn(acknowledgedResponse);
+        boolean response = this.sut.createIndex(restHighLevelClient, index, null, "anytype", new HashMap<>());
+        assertTrue(response);
+        when(this.indicesExistCache.get(index)).thenReturn(true);
+        verify(this.indicesClient, times(2)).updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class));
+    }
+
+    @Test
+    public void create_elasticIndex_fail() throws Exception {
+        String index = "common-welldb-wellbore-1.2.0";
+        CreateIndexResponse indexResponse = new CreateIndexResponse(false, false, index);
+
+        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.create(any(CreateIndexRequest.class), any(RequestOptions.class))).thenReturn(indexResponse);
+        boolean response = this.sut.createIndex(restHighLevelClient, index, null, "anytype", new HashMap<>());
+        assertFalse(response);
+        verify(this.indicesExistCache, times(0)).put(any(), any());
+        verify(this.indicesClient, times(0)).updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class));
+    }
+
+    @Test
+    public void create_existingElasticIndex() throws Exception {
+        String index = "common-welldb-wellbore-1.2.0";
+        ElasticsearchStatusException elasticsearchStatusException = new ElasticsearchStatusException("resource_already_exists_exception", RestStatus.BAD_REQUEST);
+
+        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.create(any(CreateIndexRequest.class), any(RequestOptions.class))).thenThrow(elasticsearchStatusException);
+        boolean response = this.sut.createIndex(restHighLevelClient, index, null, "anytype", new HashMap<>());
+        assertTrue(response);
+        verify(this.indicesExistCache, times(1)).put(any(), any());
+        verify(this.indicesClient, times(0)).updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class));
     }
 
     @Test
