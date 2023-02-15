@@ -12,7 +12,6 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
-import org.opengroup.osdu.core.common.partition.*;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
@@ -21,7 +20,10 @@ import org.opengroup.osdu.indexer.service.mock.PartitionFactoryMock;
 import org.opengroup.osdu.indexer.service.mock.PartitionProviderMock;
 import org.opengroup.osdu.indexer.service.mock.ServiceAccountJwtClientMock;
 import org.opengroup.osdu.indexer.service.mock.VirtualPropertiesSchemaCacheMock;
-import org.opengroup.osdu.indexer.util.geo.decimator.*;
+import org.opengroup.osdu.indexer.util.geo.decimator.DecimationSettingCache;
+import org.opengroup.osdu.indexer.util.geo.decimator.DouglasPeuckerReducer;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeometryDecimator;
 import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
@@ -45,7 +47,7 @@ import static org.junit.Assert.*;
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
         BooleanParser.class, DateTimeParser.class, GeoShapeParser.class, DouglasPeuckerReducer.class, GeoShapeDecimator.class,
         GeometryDecimator.class, GeometryConversionService.class, DecimationSettingCache.class,
-        GeoShapeDecimationSetting.class, DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
+        DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
         PartitionFactoryMock.class, PartitionProviderMock.class, ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, })
 public class StorageIndexerPayloadMapperTest {
 
