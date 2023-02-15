@@ -32,8 +32,8 @@ import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
 import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
 import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
-import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimationSetting;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimationSetting;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -235,15 +235,15 @@ public class StorageIndexerPayloadMapper {
             });
 
             if(virtualPropertyPath.equals(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
-               dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+                    dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
                 originalGeoShapeProperty = originalPropertyPath + VirtualPropertyUtil.FIELD_WGS84_COORDINATES;
             }
         }
 
         // No VirtualProperties.DefaultLocation.Wgs84Coordinates defined, use the default geo-shape property
-        if (originalGeoShapeProperty == null && decimationSetting.isDecimationEnabled())
+        if (originalGeoShapeProperty == null)
             originalGeoShapeProperty = getDefaultGeoShapeProperty(dataCollectorMap);
-        if(originalGeoShapeProperty != null) {
+        if(originalGeoShapeProperty != null && decimationSetting.isDecimationEnabled()) {
             try {
                 decimateGeoShape(originalGeoShapeProperty, dataCollectorMap);
             } catch (JsonProcessingException ex) {

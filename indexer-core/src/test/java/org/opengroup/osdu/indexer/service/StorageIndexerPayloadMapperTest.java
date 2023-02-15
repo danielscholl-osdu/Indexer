@@ -12,6 +12,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.core.common.partition.*;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
