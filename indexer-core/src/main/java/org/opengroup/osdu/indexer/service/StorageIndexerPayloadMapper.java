@@ -235,7 +235,7 @@ public class StorageIndexerPayloadMapper {
             });
 
             if(virtualPropertyPath.equals(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
-                    dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+               dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
                 originalGeoShapeProperty = originalPropertyPath + VirtualPropertyUtil.FIELD_WGS84_COORDINATES;
             }
         }
