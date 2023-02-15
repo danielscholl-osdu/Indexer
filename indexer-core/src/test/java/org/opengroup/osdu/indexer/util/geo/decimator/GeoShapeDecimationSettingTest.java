@@ -91,18 +91,20 @@ public class GeoShapeDecimationSettingTest {
     }
 
     @Test
-    public void isDecimationEnabled_return_false_when_property_does_not_exist() throws PartitionException {
+    public void isDecimationEnabled_return_true_when_property_does_not_exist() throws PartitionException {
+        // The feature flag is enabled by default
         PartitionInfo partitionInfo = new PartitionInfo();
         when(this.partitionProvider.get(anyString())).thenReturn(partitionInfo);
         boolean enabled = sut.isDecimationEnabled();
-        Assert.assertFalse(enabled);
+        Assert.assertTrue(enabled);
     }
 
     @Test
-    public void isDecimationEnabled_return_false_when_partitionProvider_throws_exception() throws PartitionException {
+    public void isDecimationEnabled_return_true_when_partitionProvider_throws_exception() throws PartitionException {
+        // The feature flag is enabled by default
         when(this.partitionProvider.get(anyString())).thenThrow(PartitionException.class);
         boolean enabled = sut.isDecimationEnabled();
-        Assert.assertFalse(enabled);
+        Assert.assertTrue(enabled);
     }
 
 }
