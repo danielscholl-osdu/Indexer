@@ -43,8 +43,7 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
-import org.opengroup.osdu.indexer.model.SearchRecord;
-import org.opengroup.osdu.indexer.model.indexproperty.Path;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyPath;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
@@ -394,9 +393,9 @@ public class IndexerServiceImpl implements IndexerService {
     private Map<String, Object> mergeDataFromPropertyConfiguration(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
         Set<String> associatedIdentities = new HashSet<>();
         for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations()) {
-            for(Path path: configuration.getPaths()) {
+            for(PropertyPath path: configuration.getPaths()) {
                 Map<String, Object> value = null;
-                if(path.mappedRelatedObject()) {
+                if(path.hasValidRelatedObjectsSpec()) {
                     String relatedObjectId = getRelatedObjectId(originalDataMap, path);
                     if(!Strings.isNullOrEmpty(relatedObjectId)) {
                         associatedIdentities.add(propertyConfigurationsUtil.removeColumnPostfix(relatedObjectId));
@@ -404,7 +403,7 @@ public class IndexerServiceImpl implements IndexerService {
 
                     Map<String, Object> relatedObject = getRelatedObject(originalDataMap, path);
                     if(relatedObject != null) {
-                        String valuePath = VirtualPropertyUtil.removeDataPrefix(path.getValuePath());
+                        String valuePath = VirtualPropertyUtil.removeDataPrefix(path.getValueExtraction().getValuePath());
                         value = retrievePropertyValues(configuration.getName(), valuePath, relatedObject);
                     }
                 }
@@ -431,18 +430,18 @@ public class IndexerServiceImpl implements IndexerService {
         return originalDataMap;
     }
 
-    private String getRelatedObjectId(Map<String, Object> originalDataMap, Path path) {
-        String relatedObjectIdPath = VirtualPropertyUtil.removeDataPrefix(path.getRelatedObjectID());
+    private String getRelatedObjectId(Map<String, Object> originalDataMap, PropertyPath path) {
+        String relatedObjectIdPath = VirtualPropertyUtil.removeDataPrefix(path.getRelatedObjectsSpec().getRelatedObjectID());
         if(originalDataMap.containsKey(relatedObjectIdPath)) {
             return (String) originalDataMap.get(relatedObjectIdPath);
         }
         return null;
     }
 
-    private Map<String, Object> getRelatedObject(Map<String, Object> originalDataMap, Path path) {
+    private Map<String, Object> getRelatedObject(Map<String, Object> originalDataMap, PropertyPath path) {
         String relatedObjectId = getRelatedObjectId(originalDataMap, path);
         if(!Strings.isNullOrEmpty(relatedObjectId)) {
-            return propertyConfigurationsUtil.getRelatedObject(path.getRelatedObjectKind(), relatedObjectId);
+            return propertyConfigurationsUtil.getRelatedObjectData(path.getRelatedObjectsSpec().getRelatedObjectKind(), relatedObjectId);
         }
         return null;
     }

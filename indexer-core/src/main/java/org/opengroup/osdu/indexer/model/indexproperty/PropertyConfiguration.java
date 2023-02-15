@@ -2,7 +2,6 @@ package org.opengroup.osdu.indexer.model.indexproperty;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Strings;
 import lombok.Data;
 import lombok.ToString;
 
@@ -13,6 +12,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PropertyConfiguration {
     private final String EXTRACT_FIRST_MATCH_POLICY = "ExtractFirstMatch";
+    private final String EXTRACT_ALL_MATCHES_POLICY = "ExtractAllMatches";
 
     @JsonProperty("Name")
     private String name;
@@ -27,19 +27,27 @@ public class PropertyConfiguration {
     private String useCase;
 
     @JsonProperty("Paths")
-    private List<Path> paths;
+    private List<PropertyPath> paths;
 
     public boolean isExtractFirstMatch() {
-        return EXTRACT_FIRST_MATCH_POLICY.equals(policy);
+        return EXTRACT_FIRST_MATCH_POLICY.equalsIgnoreCase(policy);
+    }
+
+    public boolean isExtractAllMatches() {
+        return EXTRACT_ALL_MATCHES_POLICY.equalsIgnoreCase(policy);
+    }
+
+    public boolean hasValidPolicy() {
+        return isExtractFirstMatch() || isExtractAllMatches();
     }
 
     public String getRelatedObjectKind() {
         if(paths == null || paths.isEmpty())
             return null;
 
-        for(Path path : paths) {
-            if(path.mappedRelatedObject()) {
-                return path.getRelatedObjectKind();
+        for(PropertyPath path : paths) {
+            if(path.hasValidRelatedObjectsSpec()) {
+                return path.getRelatedObjectsSpec().getRelatedObjectKind();
             }
         }
         return null;

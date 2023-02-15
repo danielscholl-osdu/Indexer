@@ -106,7 +106,7 @@ public class PropertyConfigurationsUtil {
         }
     }
 
-    public Map<String, Object> getRelatedObject(String relatedObjectKind, String relatedObjectId) {
+    public Map<String, Object> getRelatedObjectData(String relatedObjectKind, String relatedObjectId) {
         if (Strings.isNullOrEmpty(relatedObjectKind) || Strings.isNullOrEmpty(relatedObjectId)) {
             return null;
         }

@@ -31,7 +31,7 @@ import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.model.Kind;
-import org.opengroup.osdu.indexer.model.indexproperty.Path;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyPath;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
@@ -204,11 +204,11 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations()) {
             String relatedObjectKind = configuration.getRelatedObjectKind();
             if(relatedObjectKind != null) {
-                Path propertyPath = configuration.getPaths().stream().filter(p -> relatedObjectKind.equals(p.getRelatedObjectKind())).findFirst().orElse(null);
+                PropertyPath propertyPath = configuration.getPaths().stream().filter(p -> relatedObjectKind.equals(p.getRelatedObjectsSpec().getRelatedObjectKind())).findFirst().orElse(null);
                 if (propertyPath == null)
                     continue; // Should not reach here
 
-                String relatedPropertyPath = VirtualPropertyUtil.removeDataPrefix(propertyPath.getValuePath());
+                String relatedPropertyPath = VirtualPropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
                 for (SchemaItem schemaItem : relatedObjectKindSchemas.get(relatedObjectKind).getSchema()) {
                     if (VirtualPropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
                         String path = schemaItem.getPath();
