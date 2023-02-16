@@ -16,7 +16,6 @@ package org.opengroup.osdu.indexer.schema.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.util.Strings;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.search.Preconditions;
@@ -25,7 +24,7 @@ import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingExce
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.opengroup.osdu.indexer.schema.converter.tags.*;
-import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
+import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -159,12 +158,12 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
             // The schema for different properties in the list of Priority should be the same
             Priority priority = entry.getValue().getPriorities().get(0);
-            String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
-            hasVirtualDefaultLocation |= VirtualPropertyUtil.isPropertyPathMatched(virtualPropertyPath, VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION);
+            String virtualPropertyPath = PropertyUtil.removeDataPrefix(entry.getKey());
+            hasVirtualDefaultLocation |= PropertyUtil.isPropertyPathMatched(virtualPropertyPath, PropertyUtil.VIRTUAL_DEFAULT_LOCATION);
 
-            String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
+            String originalPropertyPath = PropertyUtil.removeDataPrefix(priority.getPath());
             List<Map<String, Object>> matchedItems = storageSchemaItems.stream().filter(item ->
-                            VirtualPropertyUtil.isPropertyPathMatched((String) item.get("path"), originalPropertyPath))
+                            PropertyUtil.isPropertyPathMatched((String) item.get("path"), originalPropertyPath))
                     .collect(Collectors.toList());
             storageSchemaItems.addAll(matchedItems.stream().map(item ->
                             cloneVirtualProperty(item, virtualPropertyPath, originalPropertyPath))
@@ -173,7 +172,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
 
         if(hasVirtualDefaultLocation) {
             Map<String, Object> isDecimatedProperty = new HashMap<>();
-            isDecimatedProperty.put("path", VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH);
+            isDecimatedProperty.put("path", PropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH);
             isDecimatedProperty.put("kind", "boolean");
             storageSchemaItems.add(isDecimatedProperty);
         }

@@ -50,7 +50,7 @@ import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.indexer.util.PropertyConfigurationsUtil;
-import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
+import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
@@ -403,7 +403,7 @@ public class IndexerServiceImpl implements IndexerService {
             Map<String, Object> allPropertyValues = new HashMap<>();
             for(PropertyPath path: configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
                 if(path.hasValidRelatedObjectsSpec()) {
-                    List<String> relatedObjectIds = VirtualPropertyUtil.getRelatedObjectIds(originalDataMap, path.getRelatedObjectsSpec());
+                    List<String> relatedObjectIds = PropertyUtil.getRelatedObjectIds(originalDataMap, path.getRelatedObjectsSpec());
                     for(String relatedObjectId: relatedObjectIds) {
                         // Store all ids
                         associatedIdentities.add(propertyConfigurationsUtil.removeColumnPostfix(relatedObjectId));
@@ -411,7 +411,7 @@ public class IndexerServiceImpl implements IndexerService {
 
                     for(String relatedObjectId: relatedObjectIds) {
                         Map<String, Object> relatedObject = propertyConfigurationsUtil.getRelatedObjectData(path.getRelatedObjectsSpec().getRelatedObjectKind(), relatedObjectId);
-                        Map<String, Object> propertyValues = VirtualPropertyUtil.getPropertyValues(relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
+                        Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
                         propertyValues = replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
 
                         if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
@@ -424,7 +424,7 @@ public class IndexerServiceImpl implements IndexerService {
                     }
                 }
                 else {
-                    Map<String, Object> propertyValues = VirtualPropertyUtil.getPropertyValues(originalDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
+                    Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(originalDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
                     propertyValues = replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
 
                     if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
@@ -467,25 +467,9 @@ public class IndexerServiceImpl implements IndexerService {
         return to;
     }
 
-    private String getRelatedObjectId(Map<String, Object> originalDataMap, PropertyPath path) {
-        String relatedObjectIdPath = VirtualPropertyUtil.removeDataPrefix(path.getRelatedObjectsSpec().getRelatedObjectID());
-        if(originalDataMap.containsKey(relatedObjectIdPath)) {
-            return (String) originalDataMap.get(relatedObjectIdPath);
-        }
-        return null;
-    }
-
-    private Map<String, Object> getRelatedObject(Map<String, Object> originalDataMap, PropertyPath path) {
-        String relatedObjectId = getRelatedObjectId(originalDataMap, path);
-        if(!Strings.isNullOrEmpty(relatedObjectId)) {
-            return propertyConfigurationsUtil.getRelatedObjectData(path.getRelatedObjectsSpec().getRelatedObjectKind(), relatedObjectId);
-        }
-        return null;
-    }
-
     private Map<String, Object> replacePropertyPaths(String propertyRootPath, String valuePath, Map<String, Object> relatedObjectPayload) {
-        propertyRootPath = VirtualPropertyUtil.removeDataPrefix(propertyRootPath);
-        valuePath = VirtualPropertyUtil.removeDataPrefix(valuePath);
+        propertyRootPath = PropertyUtil.removeDataPrefix(propertyRootPath);
+        valuePath = PropertyUtil.removeDataPrefix(valuePath);
 
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, Object> entry: relatedObjectPayload.entrySet()) {

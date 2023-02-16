@@ -40,7 +40,7 @@ import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualProperties
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.PropertyConfigurationsUtil;
 import org.opengroup.osdu.indexer.util.TypeMapper;
-import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
+import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -209,9 +209,9 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 if (propertyPath == null)
                     continue; // Should not reach here
 
-                String relatedPropertyPath = VirtualPropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
+                String relatedPropertyPath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
                 for (SchemaItem schemaItem : relatedObjectKindSchemas.get(relatedObjectKind).getSchema()) {
-                    if (VirtualPropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
+                    if (PropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
                         String path = schemaItem.getPath();
                         path = path.replace(relatedPropertyPath, configuration.getName());
                         SchemaItem extendedSchemaItem = new SchemaItem();

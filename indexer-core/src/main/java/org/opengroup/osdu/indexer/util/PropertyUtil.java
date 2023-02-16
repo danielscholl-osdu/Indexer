@@ -22,7 +22,7 @@ import org.opengroup.osdu.indexer.model.indexproperty.ValueExtraction;
 
 import java.util.*;
 
-public class VirtualPropertyUtil {
+public class PropertyUtil {
     public static final String DATA_VIRTUAL_DEFAULT_LOCATION = "data.VirtualProperties.DefaultLocation";
     public static final String VIRTUAL_DEFAULT_LOCATION = "VirtualProperties.DefaultLocation";
     public static final String FIELD_WGS84_COORDINATES = ".Wgs84Coordinates";
@@ -59,13 +59,13 @@ public class VirtualPropertyUtil {
         List<String> relatedObjectIds = new ArrayList<>();
         if(propertyValues.containsKey(relatedObjectId)) {
             Object value = propertyValues.get(relatedObjectId);
-            if(value instanceof String) {
-                relatedObjectIds.add(value.toString());
-            }
-            else if(value instanceof List) {
+            if(value instanceof List) {
                 for(Object obj : (List)value) {
                     relatedObjectIds.add(obj.toString());
                 }
+            }
+            else {
+                relatedObjectIds.add(value.toString());
             }
 
         }
@@ -87,7 +87,7 @@ public class VirtualPropertyUtil {
             // Nested
             List<Object> valueList = new ArrayList<>();
             if(relatedCondition == null) {
-                valueList = doGetPropertyValues(dataMap, extractProperty, isExtractFirstMatch);
+                valueList = getPropertyValuesFromNestedObjects(dataMap, extractProperty, isExtractFirstMatch);
             }
             else {
                 Set<Object> valueSet = new HashSet<>();
@@ -126,7 +126,7 @@ public class VirtualPropertyUtil {
         return propertyValues;
     }
 
-    private static List<Object> doGetPropertyValues(Map<String, Object> dataMap, String propertyPath, boolean isExtractFirstMatch) {
+    private static List<Object> getPropertyValuesFromNestedObjects(Map<String, Object> dataMap, String propertyPath, boolean isExtractFirstMatch) {
         Set<Object> propertyValues = new HashSet<>();
 
         if(propertyPath.contains(ARRAY_SYMBOL)) {
@@ -142,7 +142,7 @@ public class VirtualPropertyUtil {
                                 if (Strings.isNullOrEmpty(postPath)) {
                                     propertyValues.add(obj);
                                 } else {
-                                    List<Object> values = doGetPropertyValues((Map<String, Object>) obj, postPath, isExtractFirstMatch);
+                                    List<Object> values = getPropertyValuesFromNestedObjects((Map<String, Object>) obj, postPath, isExtractFirstMatch);
                                     propertyValues.addAll(values);
                                 }
 
