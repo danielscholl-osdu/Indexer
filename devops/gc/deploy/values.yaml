@@ -13,8 +13,8 @@ data:
   springProfilesActive: "gcp"
   storageHost: "http://storage"
   # Deployment
-  requestsCpu: "75m"
-  requestsMemory: "640M"
+  requestsCpu: "480m"
+  requestsMemory: "700Mi"
   limitsCpu: "1"
   limitsMemory: "1G"
   image: ""
@@ -36,7 +36,7 @@ conf:
   indexerRedisSecretName: "indexer-redis-secret"
 
 istio:
-  proxyCPU: "25m"
+  proxyCPU: "130m"
   proxyCPULimit: "200m"
-  proxyMemory: "64Mi"
+  proxyMemory: "100Mi"
   proxyMemoryLimit: "256Mi"
