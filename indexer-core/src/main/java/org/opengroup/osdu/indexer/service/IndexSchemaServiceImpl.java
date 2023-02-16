@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
@@ -201,7 +202,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
 
         List<SchemaItem> schemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
-        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations()) {
+        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.hasValidPolicy()).collect(Collectors.toList())) {
             String relatedObjectKind = configuration.getRelatedObjectKind();
             if(relatedObjectKind != null) {
                 PropertyPath propertyPath = configuration.getPaths().stream().filter(p -> relatedObjectKind.equals(p.getRelatedObjectsSpec().getRelatedObjectKind())).findFirst().orElse(null);
@@ -215,7 +216,13 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                         path = path.replace(relatedPropertyPath, configuration.getName());
                         SchemaItem extendedSchemaItem = new SchemaItem();
                         extendedSchemaItem.setPath(path);
-                        extendedSchemaItem.setKind(schemaItem.getKind());
+                        if(configuration.isExtractFirstMatch()) {
+                            extendedSchemaItem.setKind(schemaItem.getKind());
+                        }
+                        else {
+                            //FIXME: nested objects
+                            extendedSchemaItem.setKind("[]" + schemaItem.getKind());
+                        }
                         schemaItems.add(extendedSchemaItem);
                     }
                 }

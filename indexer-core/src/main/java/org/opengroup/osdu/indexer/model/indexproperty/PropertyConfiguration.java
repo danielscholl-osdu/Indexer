@@ -17,9 +17,6 @@ public class PropertyConfiguration {
     @JsonProperty("Name")
     private String name;
 
-    @JsonProperty("Array")
-    private boolean array;
-
     @JsonProperty("Policy")
     private String policy;
 

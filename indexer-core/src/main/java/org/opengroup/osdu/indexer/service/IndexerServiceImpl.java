@@ -392,42 +392,79 @@ public class IndexerServiceImpl implements IndexerService {
 
     private Map<String, Object> mergeDataFromPropertyConfiguration(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
         Set<String> associatedIdentities = new HashSet<>();
-        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations()) {
-            for(PropertyPath path: configuration.getPaths()) {
-                Map<String, Object> value = null;
+        Map<String, Object> extendedDataMap = new HashMap<>();
+        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.hasValidPolicy()).collect(Collectors.toList())) {
+            if(originalDataMap.containsKey(configuration.getName()) && originalDataMap.get(configuration.getName()) != null) {
+                // If the original record already has the property, then we should not override.
+                // For example, if the trajectory record already SpatialLocation value, then it should not be overridden by the SpatialLocation of the well bore.
+                continue;
+            }
+
+            Map<String, Object> allPropertyValues = new HashMap<>();
+            for(PropertyPath path: configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
                 if(path.hasValidRelatedObjectsSpec()) {
-                    String relatedObjectId = getRelatedObjectId(originalDataMap, path);
-                    if(!Strings.isNullOrEmpty(relatedObjectId)) {
+                    List<String> relatedObjectIds = VirtualPropertyUtil.getRelatedObjectIds(originalDataMap, path.getRelatedObjectsSpec());
+                    for(String relatedObjectId: relatedObjectIds) {
+                        // Store all ids
                         associatedIdentities.add(propertyConfigurationsUtil.removeColumnPostfix(relatedObjectId));
                     }
 
-                    Map<String, Object> relatedObject = getRelatedObject(originalDataMap, path);
-                    if(relatedObject != null) {
-                        String valuePath = VirtualPropertyUtil.removeDataPrefix(path.getValueExtraction().getValuePath());
-                        value = retrievePropertyValues(configuration.getName(), valuePath, relatedObject);
+                    for(String relatedObjectId: relatedObjectIds) {
+                        Map<String, Object> relatedObject = propertyConfigurationsUtil.getRelatedObjectData(path.getRelatedObjectsSpec().getRelatedObjectKind(), relatedObjectId);
+                        Map<String, Object> propertyValues = VirtualPropertyUtil.getPropertyValues(relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
+                        propertyValues = replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
+
+                        if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
+                            allPropertyValues = propertyValues;
+                            break;
+                        }
+                        else {
+                            allPropertyValues = combineDataMap(allPropertyValues, propertyValues);
+                        }
                     }
                 }
                 else {
-                    //TODO to support self-reference
-                }
+                    Map<String, Object> propertyValues = VirtualPropertyUtil.getPropertyValues(originalDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
+                    propertyValues = replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
 
-                if(value != null && !value.isEmpty()) {
-                    if(configuration.isExtractFirstMatch()) {
-                        originalDataMap.putAll(value);
-                        break;
+                    if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
+                        allPropertyValues = propertyValues;
                     }
                     else {
-                        //TODO to support ExtractAllMatch
+                        allPropertyValues = combineDataMap(allPropertyValues, propertyValues);
                     }
                 }
+
+                if(!allPropertyValues.isEmpty() && configuration.isExtractFirstMatch())
+                    break;
             }
 
+            extendedDataMap.putAll(allPropertyValues);
         }
         if(!associatedIdentities.isEmpty()) {
             originalDataMap.put(PropertyConfigurationsUtil.ASSOCIATED_IDENTITIES_PROPERTY, associatedIdentities.toArray());
         }
+        if(!extendedDataMap.isEmpty()) {
+            originalDataMap.putAll(extendedDataMap);
+        }
 
         return originalDataMap;
+    }
+
+    private Map<String, Object> combineDataMap(Map<String, Object> to, Map<String, Object> from) {
+        for (Map.Entry<String, Object> entry: from.entrySet()) {
+            if(to.containsKey(entry.getKey())) {
+                List values = (List)to.get(entry.getKey());
+                values.add(entry.getValue()); //FIXME
+            }
+            else {
+                List<Object> values = new ArrayList<>();
+                values.add(entry);
+                to.put(entry.getKey(), values);
+            }
+        }
+
+        return to;
     }
 
     private String getRelatedObjectId(Map<String, Object> originalDataMap, PropertyPath path) {
@@ -446,7 +483,10 @@ public class IndexerServiceImpl implements IndexerService {
         return null;
     }
 
-    private Map<String, Object> retrievePropertyValues(String propertyRootPath, String valuePath, Map<String, Object> relatedObjectPayload) {
+    private Map<String, Object> replacePropertyPaths(String propertyRootPath, String valuePath, Map<String, Object> relatedObjectPayload) {
+        propertyRootPath = VirtualPropertyUtil.removeDataPrefix(propertyRootPath);
+        valuePath = VirtualPropertyUtil.removeDataPrefix(valuePath);
+
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, Object> entry: relatedObjectPayload.entrySet()) {
             String key = entry.getKey();
