@@ -116,6 +116,10 @@ public class StorageServiceImpl implements StorageService {
             throw new AppException(HttpStatus.SC_NOT_FOUND, "Invalid request", "Storage service returned empty response");
         }
 
+        if (response.getResponseCode() == 500) {
+            throw new AppException(RequestStatus.NO_RETRY, "Server error", String.format("Storage service error: %s", response.getBody()));
+        }
+
         Records records = null;
         try {
             records = this.objectMapper.readValue(bulkStorageData, Records.class);
