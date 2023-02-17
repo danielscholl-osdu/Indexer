@@ -24,11 +24,11 @@ public abstract class HTTPClient {
     private static Random random = new Random();
     private final int MAX_ID_SIZE = 50;
 
-    private static final String HEADER_CORRELATION_ID = "correlation-id";
+    protected static final String HEADER_CORRELATION_ID = "correlation-id";
     
     public abstract String getAccessToken();
 
-    private static Client getClient() {
+    protected static Client getClient() {
         TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
             @Override
             public X509Certificate[] getAcceptedIssuers() {
@@ -60,8 +60,8 @@ public abstract class HTTPClient {
             log.info(String.format("Request correlation id: %s", correlationId));
             headers.put(HEADER_CORRELATION_ID, correlationId);
             Client client = getClient();
-            client.setReadTimeout(180000);
-            client.setConnectTimeout(10000);
+            client.setReadTimeout(300000);
+            client.setConnectTimeout(300000);
             log.info("URL: = " + url);
             WebResource webResource = client.resource(url);
             response = this.getClientResponse(httpMethod, payLoad, webResource, headers, token);
@@ -73,7 +73,7 @@ public abstract class HTTPClient {
         return response;
     }
 
-    private ClientResponse getClientResponse(String httpMethod, String requestBody, WebResource webResource, Map<String, String> headers, String token) {
+    protected ClientResponse getClientResponse(String httpMethod, String requestBody, WebResource webResource, Map<String, String> headers, String token) {
         final WebResource.Builder builder = webResource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON).header("Authorization", token);
         headers.forEach(builder::header);
         log.info("making request to datalake api");

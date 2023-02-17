@@ -1,0 +1,7 @@
+variables:
+  GC_SERVICE: indexer
+  GC_VENDOR: gc
+
+gc-anthos-test:
+  variables:
+    GC_VENDOR: anthos

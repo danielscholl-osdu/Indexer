@@ -70,6 +70,9 @@ public class IndexerServiceImpl implements IndexerService {
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
+    // we index a normalized kind (authority + source + entity type + major version) as a tags attribute for all records
+    private static String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
+
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
     @Inject
@@ -310,6 +313,7 @@ public class IndexerServiceImpl implements IndexerService {
             String authority = kindParts[0];
             String source = kindParts[1];
             String type = kindParts[2];
+            String[] versionParts = kindParts[3].split("\\.");
             document.setKind(storageRecord.getKind());
             document.setNamespace(authority + ":" + source);
             document.setAuthority(authority);
@@ -319,9 +323,12 @@ public class IndexerServiceImpl implements IndexerService {
             document.setVersion(storageRecord.getVersion());
             document.setAcl(storageRecord.getAcl());
             document.setLegal(storageRecord.getLegal());
-            if (storageRecord.getTags() != null) {
-                document.setTags(storageRecord.getTags());
+            if (storageRecord.getTags() == null) {
+                Map<String, String> constantTags = new HashMap<>();
+                constantTags.put(IndexerServiceImpl.NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME, String.format("%s:%s:%s:%s", authority, source, type, versionParts[0]));
+                storageRecord.setTags(constantTags);
             }
+            document.setTags(storageRecord.getTags());
             document.setCreateUser(storageRecord.getCreateUser());
             document.setCreateTime(storageRecord.getCreateTime());
             if (!Strings.isNullOrEmpty(storageRecord.getModifyUser())) {
