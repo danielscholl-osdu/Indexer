@@ -401,41 +401,38 @@ public class IndexerServiceImpl implements IndexerService {
             }
 
             Map<String, Object> allPropertyValues = new HashMap<>();
-            for(PropertyPath path: configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
-                if(path.hasValidRelatedObjectsSpec()) {
+            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
+                if (path.hasValidRelatedObjectsSpec()) {
                     List<String> relatedObjectIds = PropertyUtil.getRelatedObjectIds(originalDataMap, path.getRelatedObjectsSpec());
-                    for(String relatedObjectId: relatedObjectIds) {
+                    for (String relatedObjectId : relatedObjectIds) {
                         // Store all ids
                         associatedIdentities.add(propertyConfigurationsUtil.removeColumnPostfix(relatedObjectId));
                     }
 
-                    for(String relatedObjectId: relatedObjectIds) {
+                    for (String relatedObjectId : relatedObjectIds) {
                         Map<String, Object> relatedObject = propertyConfigurationsUtil.getRelatedObjectData(path.getRelatedObjectsSpec().getRelatedObjectKind(), relatedObjectId);
                         Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
-                        propertyValues = replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
+                        propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
 
                         if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                             allPropertyValues = propertyValues;
                             break;
-                        }
-                        else {
-                            allPropertyValues = combineDataMap(allPropertyValues, propertyValues);
+                        } else {
+                            allPropertyValues = PropertyUtil.combineObjectMap(allPropertyValues, propertyValues);
                         }
                     }
-                }
-                else {
+                } else {
                     Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(originalDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
-                    propertyValues = replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
+                    propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
 
                     if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                         allPropertyValues = propertyValues;
-                    }
-                    else {
-                        allPropertyValues = combineDataMap(allPropertyValues, propertyValues);
+                    } else {
+                        allPropertyValues = PropertyUtil.combineObjectMap(allPropertyValues, propertyValues);
                     }
                 }
 
-                if(!allPropertyValues.isEmpty() && configuration.isExtractFirstMatch())
+                if (!allPropertyValues.isEmpty() && configuration.isExtractFirstMatch())
                     break;
             }
 
@@ -449,37 +446,6 @@ public class IndexerServiceImpl implements IndexerService {
         }
 
         return originalDataMap;
-    }
-
-    private Map<String, Object> combineDataMap(Map<String, Object> to, Map<String, Object> from) {
-        for (Map.Entry<String, Object> entry: from.entrySet()) {
-            if(to.containsKey(entry.getKey())) {
-                List values = (List)to.get(entry.getKey());
-                values.add(entry.getValue()); //FIXME
-            }
-            else {
-                List<Object> values = new ArrayList<>();
-                values.add(entry);
-                to.put(entry.getKey(), values);
-            }
-        }
-
-        return to;
-    }
-
-    private Map<String, Object> replacePropertyPaths(String propertyRootPath, String valuePath, Map<String, Object> relatedObjectPayload) {
-        propertyRootPath = PropertyUtil.removeDataPrefix(propertyRootPath);
-        valuePath = PropertyUtil.removeDataPrefix(valuePath);
-
-        Map<String, Object> values = new HashMap<>();
-        for (Map.Entry<String, Object> entry: relatedObjectPayload.entrySet()) {
-            String key = entry.getKey();
-            if(key.equals(valuePath) || key.startsWith(valuePath + ".")) {
-                key = key.replace(valuePath, propertyRootPath);
-                values.put(key, entry.getValue());
-            }
-        }
-        return values;
     }
 
     private List<String> processElasticMappingAndUpsertRecords(RecordIndexerPayload recordIndexerPayload) throws Exception {

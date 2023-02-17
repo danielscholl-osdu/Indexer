@@ -48,6 +48,52 @@ public class PropertyUtil {
         return path;
     }
 
+    public static Map<String, Object> combineObjectMap(Map<String, Object> to, Map<String, Object> from) {
+        for (Map.Entry<String, Object> entry: from.entrySet()) {
+            if(to.containsKey(entry.getKey())) {
+                Set<Object> objectSet = new HashSet<>();
+
+                Object toObject = to.get(entry.getKey());
+                if(toObject instanceof List) {
+                    objectSet.addAll((List)toObject);
+                }
+                else {
+                    objectSet.add(toObject);
+                }
+
+                Object fromObject = entry.getValue();
+                if(fromObject instanceof  List) {
+                    objectSet.addAll((List)fromObject);
+                }
+                else {
+                    objectSet.add(fromObject);
+                }
+
+                to.put(entry.getKey(), new ArrayList<>(objectSet));
+            }
+            else {
+                to.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return to;
+    }
+
+    public static Map<String, Object> replacePropertyPaths(String propertyRootPath, String valuePath, Map<String, Object> objectMap) {
+        propertyRootPath = removeDataPrefix(propertyRootPath);
+        valuePath = removeDataPrefix(valuePath);
+
+        Map<String, Object> values = new HashMap<>();
+        for (Map.Entry<String, Object> entry: objectMap.entrySet()) {
+            String key = entry.getKey();
+            if(key.equals(valuePath) || key.startsWith(valuePath + ".")) {
+                key = key.replace(valuePath, propertyRootPath);
+                values.put(key, entry.getValue());
+            }
+        }
+        return values;
+    }
+
     public static List<String> getRelatedObjectIds(Map<String, Object> dataMap, RelatedObjectsSpec relatedObjectsSpec) {
         if(dataMap == null ||  dataMap.isEmpty() || relatedObjectsSpec == null || !relatedObjectsSpec.isValid())
             return new ArrayList<>();
@@ -100,9 +146,8 @@ public class PropertyUtil {
                         if(nestedObject.get(extractPropertyParts[1]) != null && nestedObject.get(extractPropertyParts[1]) != null) {
                             Object extractPropertyValue = nestedObject.get(extractPropertyParts[1]);
                             String conditionPropertyValue = nestedObject.get(relatedConditionPropertyParts[1]).toString();
-                            if(relatedCondition.getRelatedConditionMatches().contains(conditionPropertyValue)) {
+                            if(relatedCondition.getRelatedConditionMatches().contains(conditionPropertyValue) && extractPropertyValue != null) {
                                 valueSet.add(extractPropertyValue);
-
                                 if(isExtractFirstMatch)
                                     break;
                             }
@@ -112,13 +157,27 @@ public class PropertyUtil {
                 valueList.addAll(valueSet);
             }
 
-            propertyValues.put(extractProperty, valueList);
+            if(isExtractFirstMatch) {
+                if(valueList.size() > 0) {
+                    propertyValues.put(extractProperty, valueList.get(0));
+                }
+            }
+            else {
+                propertyValues.put(extractProperty, valueList);
+            }
         } else {
             // Flatten
             for (Map.Entry<String, Object> entry: dataMap.entrySet()) {
                 String key = entry.getKey();
                 if(key.equals(extractProperty) || key.startsWith(extractProperty + ".")) {
-                    propertyValues.put(key, entry.getValue());
+                    if(isExtractFirstMatch) {
+                        propertyValues.put(key, entry.getValue());
+                    }
+                    else {
+                        List<Object> values = new ArrayList<>();
+                        values.add(entry.getValue());
+                        propertyValues.put(key, values);
+                    }
                 }
             }
         }
