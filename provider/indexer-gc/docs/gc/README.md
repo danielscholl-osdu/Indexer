@@ -9,8 +9,8 @@ Must have:
 | name                                         | value                                 | description                                                                                                                                                                                                                                                                                               | sensitive? | source                                            |
 |----------------------------------------------|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|---------------------------------------------------|
 | `SPRING_PROFILES_ACTIVE`                     | ex `gcp`                              | Spring profile that activate default configuration for Google Cloud environment                                                                                                                                                                                                                           | false      | -                                                 |
-| `<ELASTICSEARCH_USER_ENV_VARIABLE_NAME>`     | ex `user`                             | Elasticsearch user, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#Properties-set-in-Partition-service)     | yes        | -                                                 |
-| `<ELASTICSEARCH_PASSWORD_ENV_VARIABLE_NAME>` | ex `password`                         | Elasticsearch password, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#Properties-set-in-Partition-service) | false      | -                                                 |
+| `<ELASTICSEARCH_USER_ENV_VARIABLE_NAME>`     | ex `user`                             | Elasticsearch user, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#properties-set-in-partition-service)     | yes        | -                                                 |
+| `<ELASTICSEARCH_PASSWORD_ENV_VARIABLE_NAME>` | ex `password`                         | Elasticsearch password, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#properties-set-in-partition-service) | false      | -                                                 |
 
 Defined in default application property file but possible to override:
 
@@ -27,7 +27,6 @@ Defined in default application property file but possible to override:
 | `PARTITION_HOST`                   | ex `https://partition.com`                                                | Partition host                                                            | no         | output of infrastructure deployment                          |
 | `ENTITLEMENTS_HOST`                | ex `https://entitlements.com`                                             | Entitlements host                                                         | no         | output of infrastructure deployment                          |
 | `STORAGE_HOST`                     | ex `https://storage.com`                                                  | Storage host                                                              | no         | output of infrastructure deployment                          |
-| `INDEXER_QUEUE_HOST`               | ex `http://indexer-queue/api/indexer-queue/v1/_dps/task-handlers/enqueue` | Indexer-Queue host endpoint used for reprocessing tasks                   | no         | output of infrastructure deployment                          |
 | `SCHEMA_BASE_HOST`                 | ex `https://schema.com`                                                   | Schema service host                                                       | no         | output of infrastructure deployment                          |
 | `GOOGLE_APPLICATION_CREDENTIALS`   | ex `/path/to/directory/service-key.json`                                  | Service account credentials, you only need this if running locally        | yes        | <https://console.cloud.google.com/iam-admin/serviceaccounts> |
 
@@ -62,7 +61,7 @@ It is possible, but not necessary to adjust consumer throughput via Partition se
 *MID* - for consumers with the average load, defaults(streams = 2, threads = 2, outstanding elements = 40)
 *MAX* - for maximum loaded consumers, defaults(streams = 2, threads = 5, outstanding elements = 100)
 
-https://community.opengroup.org/osdu/platform/system/lib/cloud/gcp/oqm/-/blob/master/src/main/java/org/opengroup/osdu/core/gcp/oqm/driver/pubsub/config/PsThroughputConfiguration.java
+<https://community.opengroup.org/osdu/platform/system/lib/cloud/gcp/oqm/-/blob/master/src/main/java/org/opengroup/osdu/core/gcp/oqm/driver/pubsub/config/PsThroughputConfiguration.java>
 
 ```
     "max.sub.parallel.streams": {
@@ -78,7 +77,6 @@ https://community.opengroup.org/osdu/platform/system/lib/cloud/gcp/oqm/-/blob/ma
       "value": 100
     }
 ```
-
 
 ### Properties set in Partition service
 

@@ -1,5 +1,3 @@
-<!--- Deploy -->
-
 # Deploy helm chart
 
 ## Introduction
@@ -32,7 +30,6 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
 **data.entitlementsHost** | entitlements host | string | "http://entitlements" | yes
-**data.indexerQueueHost** | indexer-queue host | string | "http://indexer-queue" | yes
 **data.logLevel** | logging level | string | INFO | yes
 **data.partitionHost** | partition host | string | "http://partition" | yes
 **data.schemaHost** | schema host | string | "http://schema" | yes
