@@ -7,7 +7,6 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
 data:
   ENTITLEMENTS_HOST: {{ .Values.data.entitlementsHost | quote }}
-  INDEXER_QUEUE_BASE_HOST: {{ .Values.data.indexerQueueHost | quote }}
   LOG_LEVEL: {{ .Values.data.logLevel | quote }}
   PARTITION_HOST: {{ .Values.data.partitionHost | quote }}
   {{- if .Values.data.redisIndexerHost }}

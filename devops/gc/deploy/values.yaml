@@ -5,7 +5,6 @@
 data:
   # Configmap
   entitlementsHost: "http://entitlements"
-  indexerQueueHost: "http://indexer-queue"
   logLevel: "ERROR"
   partitionHost: "http://partition"
   schemaHost: "http://schema"
