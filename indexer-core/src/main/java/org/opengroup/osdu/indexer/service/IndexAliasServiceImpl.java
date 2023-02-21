@@ -19,12 +19,17 @@ import com.google.api.client.util.Strings;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.GetAliasesResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.cluster.metadata.AliasMetadata;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
@@ -40,8 +45,6 @@ import java.util.stream.Collectors;
 @Component
 public class IndexAliasServiceImpl implements IndexAliasService{
     @Inject
-    private StorageService storageService;
-    @Inject
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Inject
     private ElasticClientHandler elasticClientHandler;
@@ -50,19 +53,9 @@ public class IndexAliasServiceImpl implements IndexAliasService{
 
     @Override
     public IndexAliasesResult createIndexAliasesForAll() {
-        List<String> allKinds = null;
-        try {
-            allKinds = storageService.getAllKinds();
-        } catch (Exception e) {
-            jaxRsDpsLog.error("storage service all kinds request failed", e);
-            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "an unknown error has occurred.", e);
-        }
-        if (Objects.isNull(allKinds)) {
-            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "index aliases provision failed");
-        }
-
         IndexAliasesResult result = new IndexAliasesResult();
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+            List<String> allKinds = getAllKinds(restClient);
             Set<String> allExistingAliases = getAllExistingAliases(restClient);
             for (String kind : allKinds) {
                 String alias = elasticIndexNameResolver.getIndexAliasFromKind(kind);
@@ -102,14 +95,11 @@ public class IndexAliasServiceImpl implements IndexAliasService{
 
             Map<String, String> indexAliasMap = new HashMap<>();
             indexAliasMap.put(actualIndexName, elasticIndexNameResolver.getIndexAliasFromKind(kind));
-            if(actualIndexName.equals(elasticIndexNameResolver.getIndexNameFromKind(kind))) {
-                // We create alias for major version kind only if the actual index name matches the name converted from the kind
-                String kindWithMajorVersion = getKindWithMajorVersion(kind);
-                if(elasticIndexNameResolver.isIndexAliasSupported(kindWithMajorVersion)) {
-                    String index = elasticIndexNameResolver.getIndexNameFromKind(kindWithMajorVersion);
-                    String alias = elasticIndexNameResolver.getIndexAliasFromKind(kindWithMajorVersion);
-                    indexAliasMap.put(index, alias);
-                }
+            String kindWithMajorVersion = getKindWithMajorVersion(kind);
+            if(elasticIndexNameResolver.isIndexAliasSupported(kindWithMajorVersion)) {
+                String index = elasticIndexNameResolver.getIndexNameFromKind(kindWithMajorVersion);
+                String alias = elasticIndexNameResolver.getIndexAliasFromKind(kindWithMajorVersion);
+                indexAliasMap.put(index, alias);
             }
 
             boolean ok = true;
@@ -193,5 +183,20 @@ public class IndexAliasServiceImpl implements IndexAliasService{
             }
         }
         return null;
+    }
+
+    private List<String> getAllKinds(RestHighLevelClient client) throws IOException {
+        List<String> kinds;
+        SearchRequest elasticSearchRequest = new SearchRequest("_all");
+        TermsAggregationBuilder termsAggregationBuilder = new TermsAggregationBuilder("kinds");
+        termsAggregationBuilder.field("kind");
+        termsAggregationBuilder.size(10000);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.aggregation(termsAggregationBuilder);
+        elasticSearchRequest.source(sourceBuilder);
+        SearchResponse searchResponse = client.search(elasticSearchRequest, RequestOptions.DEFAULT);
+        Terms kindBuckets = searchResponse.getAggregations().get("kinds");
+        kinds = kindBuckets.getBuckets().stream().map(bucket -> bucket.getKey().toString()).collect(Collectors.toList());
+        return kinds;
     }
 }

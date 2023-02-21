@@ -36,6 +36,7 @@ public class IndexProvisionApi {
     @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
     @PostMapping(path = "/aliases")
     public ResponseEntity<IndexAliasesResult> createIndexAliases()  {
-       return new ResponseEntity<>(indexAliasService.createIndexAliasesForAll(), HttpStatus.OK);
+       IndexAliasesResult result = indexAliasService.createIndexAliasesForAll();
+       return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }
