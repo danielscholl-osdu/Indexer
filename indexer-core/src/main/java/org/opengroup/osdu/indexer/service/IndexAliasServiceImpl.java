@@ -13,7 +13,7 @@ import org.elasticsearch.rest.RestStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.indexer.model.IndexAliasesProvisionResult;
+import org.opengroup.osdu.indexer.model.IndexAliasesResult;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +34,7 @@ public class IndexAliasServiceImpl implements IndexAliasService{
     private JaxRsDpsLog jaxRsDpsLog;
 
     @Override
-    public IndexAliasesProvisionResult createIndexAliasesForAll() {
+    public IndexAliasesResult createIndexAliasesForAll() {
         List<String> allKinds = null;
         try {
             allKinds = storageService.getAllKinds();
@@ -46,25 +46,21 @@ public class IndexAliasServiceImpl implements IndexAliasService{
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "storage service cannot respond with all kinds", "index aliases provision failed");
         }
 
-        List<String> indicesWithoutAliases = allKinds.stream()
-                .filter(k -> !elasticIndexNameResolver.isIndexAliasSupported(k))
-                .map(k -> elasticIndexNameResolver.getIndexNameFromKind(k)).collect(Collectors.toList());
-        List<String> indicesWithAliases = new ArrayList<>();
+        IndexAliasesResult result = new IndexAliasesResult();
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
             Set<String> allExistingAliases = getAllExistingAliases(restClient);
-            List<String> validKinds = allKinds.stream().filter(k -> elasticIndexNameResolver.isIndexAliasSupported(k)).collect(Collectors.toList());
-            for (String kind : validKinds) {
+            for (String kind : allKinds) {
                 String alias = elasticIndexNameResolver.getIndexAliasFromKind(kind);
                 String indexName = elasticIndexNameResolver.getIndexNameFromKind(kind);
                 if(allExistingAliases.contains(alias)) {
-                    indicesWithAliases.add(indexName);
+                    result.getIndicesWithAliases().add(indexName);
                 }
                 else {
                     if(createIndexAlias(restClient, kind)) {
-                        indicesWithAliases.add(indexName);
+                        result.getIndicesWithAliases().add(indexName);
                     }
                     else {
-                        indicesWithoutAliases.add(indexName);
+                        result.getIndicesWithoutAliases().add(indexName);
                     }
                 }
             }
@@ -74,11 +70,6 @@ public class IndexAliasServiceImpl implements IndexAliasService{
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "elastic search cannot respond", "an unknown error has occurred.", e);
         }
 
-        IndexAliasesProvisionResult result = new IndexAliasesProvisionResult();
-        result.setIndicesWithAliasesCreated(indicesWithAliases);
-        result.setIndicesWithAliasesCount(indicesWithAliases.size());
-        result.setIndicesWithoutAliasesCreated(indicesWithoutAliases);
-        result.setIndicesWithoutAliasesCount(indicesWithoutAliases.size());
         return result;
     }
 
