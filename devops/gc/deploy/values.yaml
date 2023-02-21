@@ -5,7 +5,6 @@
 data:
   # Configmap
   entitlementsHost: "http://entitlements"
-  indexerQueueHost: "http://indexer-queue"
   logLevel: "ERROR"
   partitionHost: "http://partition"
   schemaHost: "http://schema"
@@ -13,8 +12,8 @@ data:
   springProfilesActive: "gcp"
   storageHost: "http://storage"
   # Deployment
-  requestsCpu: "480m"
-  requestsMemory: "700Mi"
+  requestsCpu: "35m"
+  requestsMemory: "640Mi"
   limitsCpu: "1"
   limitsMemory: "1G"
   image: ""
@@ -36,7 +35,7 @@ conf:
   indexerRedisSecretName: "indexer-redis-secret"
 
 istio:
-  proxyCPU: "130m"
+  proxyCPU: "10m"
   proxyCPULimit: "200m"
   proxyMemory: "100Mi"
   proxyMemoryLimit: "256Mi"
