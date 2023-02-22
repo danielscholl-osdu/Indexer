@@ -38,6 +38,28 @@ public class ValueExtractionTest {
     }
 
     @Test
+    public void hasValidCondition_return_true_with_multi_nested() {
+        ValueExtraction valueExtraction = new ValueExtraction();
+        valueExtraction.setValuePath("data.TechnicalAssurances[].Reviewers[].Name");
+        valueExtraction.setRelatedConditionProperty("data.TechnicalAssurances[].Reviewers[].RoleTypeID");
+        List<String> matches = Arrays.asList("opendes:reference-data--ContactRoleType:AccountOwner:");
+        valueExtraction.setRelatedConditionMatches(matches);
+
+        Assert.assertTrue(valueExtraction.hasValidCondition());
+    }
+
+    @Test
+    public void hasValidCondition_return_false_with_unmatched_multi_nested() {
+        ValueExtraction valueExtraction = new ValueExtraction();
+        valueExtraction.setValuePath("data.TechnicalAssurances[].Reviewers[].Name");
+        valueExtraction.setRelatedConditionProperty("data.TechnicalAssurances[].Auditors[].RoleTypeID");
+        List<String> matches = Arrays.asList("opendes:reference-data--ContactRoleType:AccountOwner:");
+        valueExtraction.setRelatedConditionMatches(matches);
+
+        Assert.assertFalse(valueExtraction.hasValidCondition());
+    }
+
+    @Test
     public void hasValidCondition_return_false_with_null_propertyPath() {
         ValueExtraction valueExtraction = new ValueExtraction();
         valueExtraction.setValuePath("data.NameAliases[].AliasName");

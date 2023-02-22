@@ -38,18 +38,6 @@ public class ValueExtraction extends RelatedCondition {
      * @return
      */
     public boolean hasValidCondition() {
-        if(!isValid() ||
-                Strings.isNullOrEmpty(relatedConditionProperty) ||
-                relatedConditionMatches == null ||
-                relatedConditionMatches.isEmpty())
-            return false;
-
-        if(valuePath.indexOf(ARRAY_SYMBOL + "." ) <= 0 || relatedConditionProperty.indexOf(ARRAY_SYMBOL + "." ) <= 0)
-            return false;
-
-        String delimiter = "\\[\\]\\.";
-        String[] valuePathParts = valuePath.split(delimiter);
-        String[] relatedConditionPropertyParts = relatedConditionProperty.split(delimiter);
-        return valuePathParts.length == 2 && relatedConditionPropertyParts.length == 2 && valuePathParts[0].equals(relatedConditionPropertyParts[0]);
+        return isValid() && super.hasValidCondition(valuePath);
     }
 }

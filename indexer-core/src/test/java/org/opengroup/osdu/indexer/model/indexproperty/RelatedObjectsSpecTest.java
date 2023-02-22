@@ -40,6 +40,30 @@ public class RelatedObjectsSpecTest {
     }
 
     @Test
+    public void hasValidCondition_return_true_with_multi_nested() {
+        RelatedObjectsSpec spec = new RelatedObjectsSpec();
+        spec.setRelatedObjectKind("osdu:wks:master-data--Organisation:1.");
+        spec.setRelatedObjectID("data.TechnicalAssurances[].Reviewers[].OrganisationID");
+        spec.setRelatedConditionProperty("data.TechnicalAssurances[].Reviewers[].RoleTypeID");
+        List<String> matches = Arrays.asList("opendes:reference-data--ContactRoleType:AccountOwner:");
+        spec.setRelatedConditionMatches(matches);
+
+        Assert.assertTrue(spec.hasValidCondition());
+    }
+
+    @Test
+    public void hasValidCondition_return_false_with_unmatched_multi_nested() {
+        RelatedObjectsSpec spec = new RelatedObjectsSpec();
+        spec.setRelatedObjectKind("osdu:wks:master-data--Organisation:1.");
+        spec.setRelatedObjectID("data.TechnicalAssurances[].Reviewers[].OrganisationID");
+        spec.setRelatedConditionProperty("data.TechnicalAssurances[].Auditors[].RoleTypeID");
+        List<String> matches = Arrays.asList("opendes:reference-data--ContactRoleType:AccountOwner:");
+        spec.setRelatedConditionMatches(matches);
+
+        Assert.assertFalse(spec.hasValidCondition());
+    }
+
+    @Test
     public void hasValidCondition_return_false_with_null_propertyPath() {
         RelatedObjectsSpec spec = new RelatedObjectsSpec();
         spec.setRelatedObjectKind("osdu:wks:master-data--GeoPoliticalEntity:1.");

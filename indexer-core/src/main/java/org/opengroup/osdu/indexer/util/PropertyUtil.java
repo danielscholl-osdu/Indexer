@@ -31,7 +31,6 @@ public class PropertyUtil {
 
 
     private static final String PROPERTY_DELIMITER = ".";
-    private static final String PROPERTY_SPLIT_DELIMITER = "\\.";
     private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
     private static final String ARRAY_SYMBOL = "[]";
 
@@ -86,7 +85,7 @@ public class PropertyUtil {
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, Object> entry: objectMap.entrySet()) {
             String key = entry.getKey();
-            if(key.equals(valuePath) || key.startsWith(valuePath + ".")) {
+            if(key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) {
                 key = key.replace(valuePath, propertyRootPath);
                 values.put(key, entry.getValue());
             }
@@ -99,8 +98,7 @@ public class PropertyUtil {
             return new ArrayList<>();
 
         String relatedObjectId = removeDataPrefix(relatedObjectsSpec.getRelatedObjectID());
-        RelatedCondition relatedCondition = relatedObjectsSpec.hasValidCondition()? relatedObjectsSpec : null;
-        Map<String, Object> propertyValues = getPropertyValues(dataMap, relatedObjectId, relatedCondition, false);
+        Map<String, Object> propertyValues = getPropertyValues(dataMap, relatedObjectId, relatedObjectsSpec, relatedObjectsSpec.hasValidCondition(), false);
 
         List<String> relatedObjectIds = new ArrayList<>();
         if(propertyValues.containsKey(relatedObjectId)) {
@@ -123,53 +121,33 @@ public class PropertyUtil {
             return new HashMap<>();
 
         String valuePath = removeDataPrefix(valueExtraction.getValuePath());
-        RelatedCondition relatedCondition = valueExtraction.hasValidCondition()? valueExtraction : null;
-        return getPropertyValues(dataMap, valuePath, relatedCondition, isExtractFirstMatch);
+        return getPropertyValues(dataMap, valuePath, valueExtraction, valueExtraction.hasValidCondition(), isExtractFirstMatch);
     }
 
-    private static Map<String, Object> getPropertyValues(Map<String, Object> dataMap, String extractProperty, RelatedCondition relatedCondition, boolean isExtractFirstMatch) {
+    private static Map<String, Object> getPropertyValues(Map<String, Object> dataMap, String valuePath, RelatedCondition relatedCondition, boolean hasValidCondition, boolean isExtractFirstMatch) {
         Map<String, Object> propertyValues = new HashMap<>();
-        if (extractProperty.contains(ARRAY_SYMBOL)) {
-            // Nested
-            List<Object> valueList = new ArrayList<>();
-            if(relatedCondition == null) {
-                valueList = getPropertyValuesFromNestedObjects(dataMap, extractProperty, isExtractFirstMatch);
-            }
-            else {
-                Set<Object> valueSet = new HashSet<>();
-                String delimiter = "\\[\\]\\.";
-                String[] extractPropertyParts = extractProperty.split(delimiter);
-                String[] relatedConditionPropertyParts = removeDataPrefix(relatedCondition.getRelatedConditionProperty()).split(delimiter);
-                if(dataMap.containsKey(extractPropertyParts[0]) && dataMap.get(extractPropertyParts[0]) != null) {
-                    List<Map<String, Object>> nestedObjects = (List<Map<String, Object>>)dataMap.get(extractPropertyParts[0]);
-                    for (Map<String, Object> nestedObject: nestedObjects) {
-                        if(nestedObject.get(extractPropertyParts[1]) != null && nestedObject.get(extractPropertyParts[1]) != null) {
-                            Object extractPropertyValue = nestedObject.get(extractPropertyParts[1]);
-                            String conditionPropertyValue = nestedObject.get(relatedConditionPropertyParts[1]).toString();
-                            if(relatedCondition.getRelatedConditionMatches().contains(conditionPropertyValue) && extractPropertyValue != null) {
-                                valueSet.add(extractPropertyValue);
-                                if(isExtractFirstMatch)
-                                    break;
-                            }
-                        }
-                    }
-                }
-                valueList.addAll(valueSet);
+        if (valuePath.contains(ARRAY_SYMBOL)) { // Nested
+            String conditionProperty = null;
+            List<String> conditionMatches = null;
+            if(hasValidCondition) {
+                int idx = relatedCondition.getRelatedConditionProperty().lastIndexOf(PROPERTY_DELIMITER);
+                conditionProperty = relatedCondition.getRelatedConditionProperty().substring(idx + 1);
+                conditionMatches = relatedCondition.getRelatedConditionMatches();
             }
 
-            if(isExtractFirstMatch) {
-                if(valueList.size() > 0) {
-                    propertyValues.put(extractProperty, valueList.get(0));
+            List<Object> valueList = getPropertyValuesFromNestedObjects(dataMap, valuePath, conditionProperty, conditionMatches, hasValidCondition, isExtractFirstMatch);
+            if(!valueList.isEmpty()) {
+                if(isExtractFirstMatch) {
+                    propertyValues.put(valuePath, valueList.get(0));
+                }
+                else {
+                    propertyValues.put(valuePath, valueList);
                 }
             }
-            else {
-                propertyValues.put(extractProperty, valueList);
-            }
-        } else {
-            // Flatten
+        } else { // Flatten
             for (Map.Entry<String, Object> entry: dataMap.entrySet()) {
                 String key = entry.getKey();
-                if(key.equals(extractProperty) || key.startsWith(extractProperty + ".")) {
+                if(key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) {
                     if(isExtractFirstMatch) {
                         propertyValues.put(key, entry.getValue());
                     }
@@ -185,40 +163,55 @@ public class PropertyUtil {
         return propertyValues;
     }
 
-    private static List<Object> getPropertyValuesFromNestedObjects(Map<String, Object> dataMap, String propertyPath, boolean isExtractFirstMatch) {
+    private static List<Object> getPropertyValuesFromNestedObjects(Map<String, Object> dataMap, String valuePath, String conditionProperty, List<String> conditionMatches, boolean hasCondition, boolean isExtractFirstMatch) {
         Set<Object> propertyValues = new HashSet<>();
 
-        if(propertyPath.contains(ARRAY_SYMBOL)) {
-            String[] subPaths = propertyPath.split(PROPERTY_SPLIT_DELIMITER);
-            for(int i = 0; i < subPaths.length; i++) {
-                String subPath = subPaths[i];
-                if(subPath.endsWith(ARRAY_SYMBOL)) {
-                    String prePath = String.join(PROPERTY_DELIMITER,  Arrays.copyOfRange(subPaths, 0, i + 1)).replace(ARRAY_SYMBOL, "");
-                    String postPath = (i < subPaths.length - 1)? String.join(PROPERTY_DELIMITER, Arrays.copyOfRange(subPaths, i + 1, subPaths.length)) : "";
-                    try {
-                        if (dataMap.containsKey(prePath)) {
-                            for (Object obj : (List<Object>) dataMap.get(prePath)) {
-                                if (Strings.isNullOrEmpty(postPath)) {
-                                    propertyValues.add(obj);
-                                } else {
-                                    List<Object> values = getPropertyValuesFromNestedObjects((Map<String, Object>) obj, postPath, isExtractFirstMatch);
-                                    propertyValues.addAll(values);
-                                }
-
-                                if(isExtractFirstMatch && !propertyValues.isEmpty()) {
+        if(valuePath.contains(PROPERTY_DELIMITER)) {
+            int idx = valuePath.indexOf(PROPERTY_DELIMITER);
+            String prePath = valuePath.substring(0, idx);
+            String postPath = valuePath.substring(idx + 1);
+            try {
+                if(prePath.endsWith(ARRAY_SYMBOL)) {
+                    prePath = prePath.replace(ARRAY_SYMBOL, "");
+                    if (dataMap.containsKey(prePath) && dataMap.get(prePath) != null) {
+                        List<Map<String, Object>> nestedObjects = (List<Map<String, Object>>)dataMap.get(prePath);
+                        for (Map<String, Object> nestedObject: nestedObjects) {
+                            List<Object> valueList = getPropertyValuesFromNestedObjects(nestedObject, postPath, conditionProperty, conditionMatches, hasCondition, isExtractFirstMatch);
+                            if(valueList != null && !valueList.isEmpty()) {
+                                propertyValues.addAll(valueList);
+                                if(isExtractFirstMatch)
                                     break;
-                                }
                             }
                         }
                     }
-                    catch(Exception ex) {
-                        //Ignore cast exception
+                }
+                else {
+                    if (dataMap.containsKey(prePath) && dataMap.get(prePath) != null) {
+                        Map<String, Object> nestedObject = (Map<String, Object>)dataMap.get(prePath);
+                        List<Object> valueList = getPropertyValuesFromNestedObjects(nestedObject, postPath, conditionProperty, conditionMatches, hasCondition, isExtractFirstMatch);
+                        if(valueList != null && !valueList.isEmpty()) {
+                            propertyValues.addAll(valueList);
+                        }
                     }
                 }
             }
+            catch(Exception ex) {
+                //Ignore cast exception
+            }
         }
-        else if(dataMap.containsKey(propertyPath) && dataMap.get(propertyPath) != null) {
-            propertyValues.add(dataMap.get(propertyPath));
+        else if(dataMap.containsKey(valuePath) && dataMap.get(valuePath) != null) {
+            Object extractPropertyValue = dataMap.get(valuePath);
+            if(hasCondition) {
+                if(dataMap.containsKey(conditionProperty) && dataMap.get(conditionProperty) != null) {
+                    String conditionPropertyValue = dataMap.get(conditionProperty).toString();
+                    if(conditionMatches.contains(conditionPropertyValue) && extractPropertyValue != null) {
+                        propertyValues.add(extractPropertyValue);
+                    }
+                }
+            }
+            else {
+                propertyValues.add(extractPropertyValue);
+            }
         }
         return new ArrayList<>(propertyValues);
     }

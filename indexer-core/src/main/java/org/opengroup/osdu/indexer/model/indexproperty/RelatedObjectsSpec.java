@@ -41,18 +41,6 @@ public class RelatedObjectsSpec extends RelatedCondition {
      * @return
      */
     public boolean hasValidCondition() {
-        if(!isValid() ||
-                Strings.isNullOrEmpty(relatedConditionProperty) ||
-                relatedConditionMatches == null ||
-                relatedConditionMatches.isEmpty())
-            return false;
-
-        if(relatedObjectID.indexOf(ARRAY_SYMBOL + "." ) <= 0 || relatedConditionProperty.indexOf(ARRAY_SYMBOL + "." ) <= 0)
-            return false;
-
-        String delimiter = "\\[\\]\\.";
-        String[] relatedObjectIDParts = relatedObjectID.split(delimiter);
-        String[] relatedConditionPropertyParts = relatedConditionProperty.split(delimiter);
-        return relatedObjectIDParts.length == 2 && relatedConditionPropertyParts.length == 2 && relatedObjectIDParts[0].equals(relatedConditionPropertyParts[0]);
+        return isValid() && super.hasValidCondition(relatedObjectID);
     }
 }
