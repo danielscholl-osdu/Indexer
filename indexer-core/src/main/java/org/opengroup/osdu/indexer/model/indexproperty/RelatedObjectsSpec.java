@@ -25,14 +25,25 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RelatedObjectsSpec extends RelatedCondition {
+    private final String CHILD_TO_PARENT = "ChildToParent";
+    private final String PARENT_TO_CHILDREN = "ParentToChildren";
+
     @JsonProperty("RelatedObjectID")
     private String relatedObjectID;
 
     @JsonProperty("RelatedObjectKind")
     private String relatedObjectKind;
 
+    @JsonProperty("RelationshipDirection")
+    private String relationshipDirection;
+
+    public boolean isChildToParent() { return CHILD_TO_PARENT.equalsIgnoreCase(relationshipDirection);  }
+
+    public boolean isParentToChildren() { return PARENT_TO_CHILDREN.equalsIgnoreCase(relationshipDirection); }
+
     public boolean isValid() {
-        return !Strings.isNullOrEmpty(relatedObjectID) && !Strings.isNullOrEmpty(relatedObjectKind);
+        return !Strings.isNullOrEmpty(relatedObjectID) && !Strings.isNullOrEmpty(relatedObjectKind) &&
+                (isChildToParent() || isParentToChildren());
     }
 
     /**

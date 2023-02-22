@@ -49,17 +49,17 @@ public class PropertyConfiguration {
         return EXTRACT_ALL_MATCHES_POLICY.equalsIgnoreCase(policy);
     }
 
-    public boolean hasValidPolicy() {
-        return isExtractFirstMatch() || isExtractAllMatches();
+    public boolean isValid() {
+        boolean hasValidPath = (paths != null && paths.stream().filter(p -> p.isValid()).findFirst().orElse(null) != null);
+        return hasValidPath && (isExtractFirstMatch() || isExtractAllMatches());
     }
 
     public String getRelatedObjectKind() {
-        if(paths == null || paths.isEmpty())
-            return null;
-
-        for(PropertyPath path : paths) {
-            if(path.hasValidRelatedObjectsSpec()) {
-                return path.getRelatedObjectsSpec().getRelatedObjectKind();
+        if(paths != null) {
+            for (PropertyPath path : paths) {
+                if (path.hasValidRelatedObjectsSpec()) {
+                    return path.getRelatedObjectsSpec().getRelatedObjectKind();
+                }
             }
         }
         return null;

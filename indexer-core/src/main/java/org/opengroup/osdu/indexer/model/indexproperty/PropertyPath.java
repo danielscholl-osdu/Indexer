@@ -37,4 +37,13 @@ public class PropertyPath {
     public boolean hasValidValueExtraction() {
         return valueExtraction != null && valueExtraction.isValid();
     }
+
+    public boolean isValid() {
+        if(relatedObjectsSpec != null) {
+            return hasValidRelatedObjectsSpec() && hasValidValueExtraction();
+        }
+        else {
+            return hasValidValueExtraction();
+        }
+    }
 }

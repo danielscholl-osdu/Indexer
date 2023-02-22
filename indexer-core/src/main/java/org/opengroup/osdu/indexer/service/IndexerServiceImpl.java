@@ -393,7 +393,7 @@ public class IndexerServiceImpl implements IndexerService {
     private Map<String, Object> mergeDataFromPropertyConfiguration(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
         Set<String> associatedIdentities = new HashSet<>();
         Map<String, Object> extendedDataMap = new HashMap<>();
-        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.hasValidPolicy()).collect(Collectors.toList())) {
+        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
             if(originalDataMap.containsKey(configuration.getName()) && originalDataMap.get(configuration.getName()) != null) {
                 // If the original record already has the property, then we should not override.
                 // For example, if the trajectory record already SpatialLocation value, then it should not be overridden by the SpatialLocation of the well bore.

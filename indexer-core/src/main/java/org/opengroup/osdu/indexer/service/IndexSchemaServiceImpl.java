@@ -202,7 +202,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
 
         List<SchemaItem> schemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
-        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.hasValidPolicy()).collect(Collectors.toList())) {
+        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
             String relatedObjectKind = configuration.getRelatedObjectKind();
             if(relatedObjectKind != null) {
                 PropertyPath propertyPath = configuration.getPaths().stream().filter(p -> relatedObjectKind.equals(p.getRelatedObjectsSpec().getRelatedObjectKind())).findFirst().orElse(null);
