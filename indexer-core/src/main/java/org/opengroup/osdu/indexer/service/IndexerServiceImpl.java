@@ -43,14 +43,11 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyPath;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.indexer.util.PropertyConfigurationsUtil;
-import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 

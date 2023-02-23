@@ -69,7 +69,9 @@ public class PropertyUtil {
                     objectSet.add(fromObject);
                 }
 
-                to.put(entry.getKey(), new ArrayList<>(objectSet));
+                List<Object> propertyValueList = new ArrayList<>(objectSet);
+                Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
+                to.put(entry.getKey(), propertyValueList);
             }
             else {
                 to.put(entry.getKey(), entry.getValue());
@@ -99,6 +101,18 @@ public class PropertyUtil {
         String relatedPropertyPath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
         if (relatedPropertyPath.contains(ARRAY_SYMBOL)) { // Nested
             extendedSchemaItems = getExtendedSchemaItemsFromNestedSchema(Arrays.asList(originalSchema.getSchema()), configuration, relatedPropertyPath);
+            if(extendedSchemaItems.isEmpty()) {
+                // It is possible that the format of the source property is not defined
+                // In this case, we assume that the format of property is string in order to make its value(s) searchable
+                SchemaItem extendedSchemaItem = new SchemaItem();
+                extendedSchemaItem.setPath(configuration.getName());
+                if (configuration.isExtractFirstMatch()) {
+                    extendedSchemaItem.setKind("string");
+                } else {
+                    extendedSchemaItem.setKind("[]string");
+                }
+                extendedSchemaItems.add(extendedSchemaItem);
+            }
         }
         else {// Flatten
             for (SchemaItem schemaItem : originalSchema.getSchema()) {
@@ -276,6 +290,9 @@ public class PropertyUtil {
                 propertyValues.add(extractPropertyValue);
             }
         }
-        return new ArrayList<>(propertyValues);
+
+        List<Object> propertyValueList = new ArrayList<>(propertyValues);
+        Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
+        return propertyValueList;
     }
 }

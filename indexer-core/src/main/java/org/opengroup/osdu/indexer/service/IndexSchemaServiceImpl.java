@@ -31,8 +31,6 @@ import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.model.Kind;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyPath;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
@@ -40,7 +38,6 @@ import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualProperties
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.PropertyConfigurationsUtil;
 import org.opengroup.osdu.indexer.util.TypeMapper;
-import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -48,7 +45,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {

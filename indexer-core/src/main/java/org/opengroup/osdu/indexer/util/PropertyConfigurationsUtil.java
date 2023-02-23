@@ -17,7 +17,6 @@ package org.opengroup.osdu.indexer.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
@@ -43,7 +42,6 @@ import org.opengroup.osdu.indexer.service.SearchService;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
