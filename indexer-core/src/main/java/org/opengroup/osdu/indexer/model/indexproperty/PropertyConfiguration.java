@@ -57,7 +57,7 @@ public class PropertyConfiguration {
     public String getRelatedObjectKind() {
         if(paths != null) {
             for (PropertyPath path : paths) {
-                if (path.hasValidRelatedObjectsSpec()) {
+                if (path.isValid() && path.hasValidRelatedObjectsSpec()) {
                     return path.getRelatedObjectsSpec().getRelatedObjectKind();
                 }
             }

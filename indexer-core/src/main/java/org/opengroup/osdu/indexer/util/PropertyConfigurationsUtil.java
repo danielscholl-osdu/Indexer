@@ -17,12 +17,14 @@ package org.opengroup.osdu.indexer.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.cache.KindCache;
@@ -33,13 +35,18 @@ import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyPath;
+import org.opengroup.osdu.indexer.model.indexproperty.RelatedObjectsSpec;
 import org.opengroup.osdu.indexer.service.SearchService;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class PropertyConfigurationsUtil {
@@ -50,6 +57,7 @@ public class PropertyConfigurationsUtil {
     private static final String ANCESTRY_KINDS_DELIMITER = ",";
     private static final String EMPTY_CODE = "__EMPTY_CODE__";
     private static final int DEFAULT_SEARCH_LIMIT = 100;
+    private static final int MAX_SEARCH_LIMIT = 1000;
 
     private final Gson gson = new Gson();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -138,6 +146,116 @@ public class PropertyConfigurationsUtil {
 
         return relatedObject;
     }
+
+    public Map<String, Object> getExtendedProperties(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
+        Set<String> associatedIdentities = new HashSet<>();
+        Map<String, Object> extendedDataMap = new HashMap<>();
+        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
+            if(originalDataMap.containsKey(configuration.getName()) && originalDataMap.get(configuration.getName()) != null) {
+                // If the original record already has the property, then we should not override.
+                // For example, if the trajectory record already SpatialLocation value, then it should not be overridden by the SpatialLocation of the well bore.
+                continue;
+            }
+
+            Map<String, Object> allPropertyValues = new HashMap<>();
+            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
+                if (path.hasValidRelatedObjectsSpec()) {
+                    RelatedObjectsSpec relatedObjectsSpec = path.getRelatedObjectsSpec();
+                    if(relatedObjectsSpec.isChildToParent()) {
+                        List<String> relatedObjectIds = PropertyUtil.getRelatedObjectIds(originalDataMap, relatedObjectsSpec);
+                        for (String relatedObjectId : relatedObjectIds) {
+                            // Store all ids
+                            associatedIdentities.add(removeColumnPostfix(relatedObjectId));
+                        }
+
+                        for (String relatedObjectId : relatedObjectIds) {
+                            Map<String, Object> relatedObject = getRelatedObjectData(relatedObjectsSpec.getRelatedObjectKind(), relatedObjectId);
+                            Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
+                            propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
+
+                            if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
+                                allPropertyValues = propertyValues;
+                                break;
+                            } else {
+                                allPropertyValues = PropertyUtil.combineObjectMap(allPropertyValues, propertyValues);
+                            }
+                        }
+                    }
+                    else {
+                        List<SearchRecord> childrenRecords = searchChildrenRecords(relatedObjectsSpec.getRelatedObjectKind(), relatedObjectsSpec.getRelatedObjectID(), objectId);
+                        for (SearchRecord record: childrenRecords) {
+                            Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(record.getData(), path.getValueExtraction(), configuration.isExtractFirstMatch());
+                            propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
+                            if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
+                                allPropertyValues = propertyValues;
+                                break;
+                            } else {
+                                allPropertyValues = PropertyUtil.combineObjectMap(allPropertyValues, propertyValues);
+                            }
+                        }
+                    }
+                } else {
+                    Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(originalDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
+                    propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
+
+                    if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
+                        allPropertyValues = propertyValues;
+                    } else {
+                        allPropertyValues = PropertyUtil.combineObjectMap(allPropertyValues, propertyValues);
+                    }
+                }
+
+                if (!allPropertyValues.isEmpty() && configuration.isExtractFirstMatch())
+                    break;
+            }
+
+            extendedDataMap.putAll(allPropertyValues);
+        }
+        if(!associatedIdentities.isEmpty()) {
+            extendedDataMap.put(PropertyConfigurationsUtil.ASSOCIATED_IDENTITIES_PROPERTY, associatedIdentities.toArray());
+        }
+
+        return extendedDataMap;
+    }
+
+    public List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, Map<String, Schema> relatedObjectKindSchemas, PropertyConfigurations propertyConfigurations) {
+        List<SchemaItem> extendedSchemaItems = new ArrayList<>();
+        boolean hasChildToParentRelationship = false;
+        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
+            Schema schema = null;
+            PropertyPath propertyPath = null;
+            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidRelatedObjectsSpec()).collect(Collectors.toList())) {
+                RelatedObjectsSpec relatedObjectsSpec = path.getRelatedObjectsSpec();
+                if(relatedObjectsSpec.isChildToParent()) {
+                    hasChildToParentRelationship = true;
+                }
+                if (relatedObjectKindSchemas.containsKey(relatedObjectsSpec.getRelatedObjectKind())) {
+                    // Refer to the schema of the related object
+                    schema = relatedObjectKindSchemas.get(relatedObjectsSpec.getRelatedObjectKind());
+                    propertyPath = path;
+                    break;
+                }
+            }
+            if(schema == null) {
+                // Refer to the schema of the object itself
+                schema = originalSchema;
+                propertyPath = configuration.getPaths().stream().filter(p -> p.getRelatedObjectsSpec() == null && p.hasValidValueExtraction()).findFirst().orElse(null);
+            }
+
+            if(schema != null && propertyPath != null) {
+                List<SchemaItem> schemaItems = PropertyUtil.getExtendedSchemaItems(schema, configuration, propertyPath);
+                extendedSchemaItems.addAll(schemaItems);
+            }
+        }
+
+        if(hasChildToParentRelationship) {
+            extendedSchemaItems.add(createAssociatedIdentitiesSchemaItem());
+        }
+
+        return extendedSchemaItems;
+    }
+
+
 
     public void setRelatedObject(String relatedObjectId, Map<String, Object> relatedObject) {
         if (!Strings.isNullOrEmpty(relatedObjectId) && relatedObject != null) {
@@ -340,6 +458,32 @@ public class PropertyConfigurationsUtil {
         return null;
     }
 
+    private List<SearchRecord> searchChildrenRecords(String childrenObjectKind, String childrenObjectField, String parentId) {
+        List<SearchRecord> childrenRecords = new ArrayList<>();
+        String kind = isConcreteKind(childrenObjectKind)? childrenObjectKind : childrenObjectKind + "*";
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setKind(kind);
+        String query = String.format("%s: \"%s\"",childrenObjectField, parentId);
+        searchRequest.setQuery(query);
+        searchRequest.setLimit(MAX_SEARCH_LIMIT);
+        int offset = 0;
+        try {
+            while (true) {
+                SearchResponse searchResponse = searchService.query(searchRequest);
+                List<SearchRecord> results = searchResponse.getResults();
+                if (results != null && !results.isEmpty()) {
+                    childrenRecords.addAll(results);
+                }
 
+                if (results == null || results.size() < MAX_SEARCH_LIMIT)
+                    break;
 
+                offset += results.size();
+                searchRequest.setOffset(offset);
+            }
+        } catch (URISyntaxException e) {
+            // TODO: log the error
+        }
+        return childrenRecords;
+    }
 }

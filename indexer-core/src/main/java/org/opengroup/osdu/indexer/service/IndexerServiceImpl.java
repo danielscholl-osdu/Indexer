@@ -332,7 +332,7 @@ public class IndexerServiceImpl implements IndexerService {
                 // Merge extended properties if needed
                 PropertyConfigurations propertyConfigurations = propertyConfigurationsUtil.getPropertyConfiguration(storageRecord.getKind());
                 if(propertyConfigurations != null) {
-                    dataMap = mergeDataFromPropertyConfiguration(dataMap, propertyConfigurations);
+                    dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
                 }
                 propertyConfigurationsUtil.setRelatedObject(storageRecord.getId(), dataMap);
 
@@ -390,57 +390,8 @@ public class IndexerServiceImpl implements IndexerService {
         return document;
     }
 
-    private Map<String, Object> mergeDataFromPropertyConfiguration(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
-        Set<String> associatedIdentities = new HashSet<>();
-        Map<String, Object> extendedDataMap = new HashMap<>();
-        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
-            if(originalDataMap.containsKey(configuration.getName()) && originalDataMap.get(configuration.getName()) != null) {
-                // If the original record already has the property, then we should not override.
-                // For example, if the trajectory record already SpatialLocation value, then it should not be overridden by the SpatialLocation of the well bore.
-                continue;
-            }
-
-            Map<String, Object> allPropertyValues = new HashMap<>();
-            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
-                if (path.hasValidRelatedObjectsSpec()) {
-                    List<String> relatedObjectIds = PropertyUtil.getRelatedObjectIds(originalDataMap, path.getRelatedObjectsSpec());
-                    for (String relatedObjectId : relatedObjectIds) {
-                        // Store all ids
-                        associatedIdentities.add(propertyConfigurationsUtil.removeColumnPostfix(relatedObjectId));
-                    }
-
-                    for (String relatedObjectId : relatedObjectIds) {
-                        Map<String, Object> relatedObject = propertyConfigurationsUtil.getRelatedObjectData(path.getRelatedObjectsSpec().getRelatedObjectKind(), relatedObjectId);
-                        Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
-                        propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
-
-                        if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
-                            allPropertyValues = propertyValues;
-                            break;
-                        } else {
-                            allPropertyValues = PropertyUtil.combineObjectMap(allPropertyValues, propertyValues);
-                        }
-                    }
-                } else {
-                    Map<String, Object> propertyValues = PropertyUtil.getPropertyValues(originalDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
-                    propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
-
-                    if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
-                        allPropertyValues = propertyValues;
-                    } else {
-                        allPropertyValues = PropertyUtil.combineObjectMap(allPropertyValues, propertyValues);
-                    }
-                }
-
-                if (!allPropertyValues.isEmpty() && configuration.isExtractFirstMatch())
-                    break;
-            }
-
-            extendedDataMap.putAll(allPropertyValues);
-        }
-        if(!associatedIdentities.isEmpty()) {
-            originalDataMap.put(PropertyConfigurationsUtil.ASSOCIATED_IDENTITIES_PROPERTY, associatedIdentities.toArray());
-        }
+    private Map<String, Object> mergeDataFromPropertyConfiguration(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
+        Map<String, Object> extendedDataMap = propertyConfigurationsUtil.getExtendedProperties(objectId, originalDataMap, propertyConfigurations);
         if(!extendedDataMap.isEmpty()) {
             originalDataMap.putAll(extendedDataMap);
         }

@@ -16,9 +16,9 @@
 package org.opengroup.osdu.indexer.util;
 
 import com.google.api.client.util.Strings;
-import org.opengroup.osdu.indexer.model.indexproperty.RelatedCondition;
-import org.opengroup.osdu.indexer.model.indexproperty.RelatedObjectsSpec;
-import org.opengroup.osdu.indexer.model.indexproperty.ValueExtraction;
+import org.opengroup.osdu.core.common.model.storage.Schema;
+import org.opengroup.osdu.core.common.model.storage.SchemaItem;
+import org.opengroup.osdu.indexer.model.indexproperty.*;
 
 import java.util.*;
 
@@ -33,6 +33,7 @@ public class PropertyUtil {
     private static final String PROPERTY_DELIMITER = ".";
     private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
     private static final String ARRAY_SYMBOL = "[]";
+    private static final String SCHEMA_NESTED_KIND = "nested";
 
     public static boolean isPropertyPathMatched(String propertyPath, String parentPropertyPath) {
         // We should not just use propertyPath.startsWith(parentPropertyPath)
@@ -91,6 +92,68 @@ public class PropertyUtil {
             }
         }
         return values;
+    }
+
+    public static List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, PropertyConfiguration configuration, PropertyPath propertyPath) {
+        List<SchemaItem> extendedSchemaItems = new ArrayList<>();
+        String relatedPropertyPath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
+        if (relatedPropertyPath.contains(ARRAY_SYMBOL)) { // Nested
+            extendedSchemaItems = getExtendedSchemaItemsFromNestedSchema(Arrays.asList(originalSchema.getSchema()), configuration, relatedPropertyPath);
+        }
+        else {// Flatten
+            for (SchemaItem schemaItem : originalSchema.getSchema()) {
+                if (PropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
+                    String path = schemaItem.getPath();
+                    path = path.replace(relatedPropertyPath, configuration.getName());
+                    SchemaItem extendedSchemaItem = new SchemaItem();
+                    extendedSchemaItem.setPath(path);
+                    if (configuration.isExtractFirstMatch()) {
+                        extendedSchemaItem.setKind(schemaItem.getKind());
+                    } else {
+                        extendedSchemaItem.setKind("[]" + schemaItem.getKind());
+                    }
+                    extendedSchemaItems.add(extendedSchemaItem);
+                }
+            }
+        }
+        return extendedSchemaItems;
+    }
+
+    private static List<SchemaItem> getExtendedSchemaItemsFromNestedSchema(List<SchemaItem> schemaItems, PropertyConfiguration configuration, String relatedPropertyPath) {
+        List<SchemaItem> extendedSchemaItems = new ArrayList<>();
+        if(relatedPropertyPath.contains(PROPERTY_DELIMITER)) {
+            int idx = relatedPropertyPath.indexOf(PROPERTY_DELIMITER);
+            String prePath = relatedPropertyPath.substring(0, idx);
+            String postPath = relatedPropertyPath.substring(idx + 1);
+            if(prePath.endsWith(ARRAY_SYMBOL)) {
+                prePath = prePath.replace(ARRAY_SYMBOL, "");
+            }
+            for(SchemaItem schemaItem: schemaItems) {
+                if(schemaItem.getPath().equals(prePath)) {
+                    if(schemaItem.getKind().equals(SCHEMA_NESTED_KIND) && schemaItem.getProperties() != null) {
+                        schemaItems = Arrays.asList(schemaItem.getProperties());
+                        extendedSchemaItems = getExtendedSchemaItemsFromNestedSchema(schemaItems, configuration, postPath);
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            for (SchemaItem schemaItem : schemaItems) {
+                if(schemaItem.getPath().equals(relatedPropertyPath)) {
+                    SchemaItem extendedSchemaItem = new SchemaItem();
+                    extendedSchemaItem.setPath(configuration.getName());
+                    if (configuration.isExtractFirstMatch()) {
+                        extendedSchemaItem.setKind(schemaItem.getKind());
+                    } else {
+                        extendedSchemaItem.setKind("[]" + schemaItem.getKind());
+                    }
+                    extendedSchemaItems.add(extendedSchemaItem);
+                }
+            }
+        }
+
+        return extendedSchemaItems;
     }
 
     public static List<String> getRelatedObjectIds(Map<String, Object> dataMap, RelatedObjectsSpec relatedObjectsSpec) {

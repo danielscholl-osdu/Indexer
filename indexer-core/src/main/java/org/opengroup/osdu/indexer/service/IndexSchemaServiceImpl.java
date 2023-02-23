@@ -198,45 +198,18 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     }
 
     private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, PropertyConfigurations propertyConfigurations) {
-        Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
         Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
-
-        List<SchemaItem> schemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
-        for(PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
-            String relatedObjectKind = configuration.getRelatedObjectKind();
-            if(relatedObjectKind != null) {
-                PropertyPath propertyPath = configuration.getPaths().stream().filter(p -> relatedObjectKind.equals(p.getRelatedObjectsSpec().getRelatedObjectKind())).findFirst().orElse(null);
-                if (propertyPath == null)
-                    continue; // Should not reach here
-
-                String relatedPropertyPath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
-                for (SchemaItem schemaItem : relatedObjectKindSchemas.get(relatedObjectKind).getSchema()) {
-                    if (PropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
-                        String path = schemaItem.getPath();
-                        path = path.replace(relatedPropertyPath, configuration.getName());
-                        SchemaItem extendedSchemaItem = new SchemaItem();
-                        extendedSchemaItem.setPath(path);
-                        if(configuration.isExtractFirstMatch()) {
-                            extendedSchemaItem.setKind(schemaItem.getKind());
-                        }
-                        else {
-                            //FIXME: nested objects
-                            extendedSchemaItem.setKind("[]" + schemaItem.getKind());
-                        }
-                        schemaItems.add(extendedSchemaItem);
-                    }
-                }
-            }
-            else {
-                //TODO: handle same object reference
-            }
+        Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
+        List<SchemaItem> extendedSchemaItems = propertyConfigurationsUtil.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        if(!extendedSchemaItems.isEmpty()) {
+            List<SchemaItem> originalSchemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
+            originalSchemaItems.addAll(extendedSchemaItems);
+            originalSchema.setSchema(originalSchemaItems.toArray(new SchemaItem[0]));
+            return gson.toJson(originalSchema);
         }
-        if(!propertyConfigurations.getRelatedObjectKinds().isEmpty()) {
-            schemaItems.add(propertyConfigurationsUtil.createAssociatedIdentitiesSchemaItem());
+        else {
+            return originalSchemaStr;
         }
-
-        originalSchema.setSchema(schemaItems.toArray(new SchemaItem[0]));
-        return gson.toJson(originalSchema);
     }
 
     private Map<String, Schema> getSchemaOfRelatedObjectKinds(PropertyConfigurations propertyConfigurations) {
