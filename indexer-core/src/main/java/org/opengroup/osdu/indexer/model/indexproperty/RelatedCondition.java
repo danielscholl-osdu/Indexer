@@ -16,7 +16,6 @@
 package org.opengroup.osdu.indexer.model.indexproperty;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.client.util.Strings;
 import lombok.Data;
 import lombok.ToString;
@@ -29,13 +28,8 @@ import java.util.List;
 public class RelatedCondition {
     protected static final String ARRAY_SYMBOL = "[]";
 
-    @JsonProperty("RelatedObjectKind")
-    protected String relatedObjectKind;
-
-    @JsonProperty("RelatedConditionProperty")
     protected String relatedConditionProperty;
 
-    @JsonProperty("RelatedConditionMatches")
     protected List<String> relatedConditionMatches;
 
     protected boolean hasValidCondition(String property) {

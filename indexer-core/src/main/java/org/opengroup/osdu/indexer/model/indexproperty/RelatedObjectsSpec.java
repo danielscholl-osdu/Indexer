@@ -16,7 +16,6 @@
 package org.opengroup.osdu.indexer.model.indexproperty;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.client.util.Strings;
 import lombok.Data;
 import lombok.ToString;
@@ -28,13 +27,10 @@ public class RelatedObjectsSpec extends RelatedCondition {
     private final String CHILD_TO_PARENT = "ChildToParent";
     private final String PARENT_TO_CHILDREN = "ParentToChildren";
 
-    @JsonProperty("RelatedObjectID")
     private String relatedObjectID;
 
-    @JsonProperty("RelatedObjectKind")
     private String relatedObjectKind;
 
-    @JsonProperty("RelationshipDirection")
     private String relationshipDirection;
 
     public boolean isChildToParent() { return CHILD_TO_PARENT.equalsIgnoreCase(relationshipDirection);  }

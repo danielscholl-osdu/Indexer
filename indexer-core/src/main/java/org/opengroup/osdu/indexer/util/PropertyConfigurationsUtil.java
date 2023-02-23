@@ -27,6 +27,7 @@ import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.cache.KindCache;
+import org.opengroup.osdu.indexer.cache.ParentChildRelatedObjectsSpecsCache;
 import org.opengroup.osdu.indexer.cache.PropertyConfigurationsCache;
 import org.opengroup.osdu.indexer.cache.RelatedObjectCache;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
@@ -34,10 +35,7 @@ import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyPath;
-import org.opengroup.osdu.indexer.model.indexproperty.RelatedObjectsSpec;
+import org.opengroup.osdu.indexer.model.indexproperty.*;
 import org.opengroup.osdu.indexer.service.SearchService;
 import org.springframework.stereotype.Component;
 
@@ -53,6 +51,8 @@ public class PropertyConfigurationsUtil {
     private static final String WILD_CARD_KIND = "*:*:*:*";
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
     private static final String ANCESTRY_KINDS_DELIMITER = ",";
+    private static final String PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT =
+            "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ParentToChildren AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
     private static final String EMPTY_CODE = "__EMPTY_CODE__";
     private static final int DEFAULT_SEARCH_LIMIT = 100;
     private static final int MAX_SEARCH_LIMIT = 1000;
@@ -69,6 +69,8 @@ public class PropertyConfigurationsUtil {
     @Inject
     private PropertyConfigurationsCache propertyConfigurationCache;
     @Inject
+    private ParentChildRelatedObjectsSpecsCache parentChildRelatedObjectsSpecsCache;
+    @Inject
     private KindCache kindCache;
     @Inject
     private RelatedObjectCache relatedObjectCache;
@@ -82,26 +84,24 @@ public class PropertyConfigurationsUtil {
     public PropertyConfigurations getPropertyConfiguration(String kind) {
         if (Strings.isNullOrEmpty(kind))
             return null;
-
         String dataPartitionId = requestInfo.getHeaders().getPartitionId();
-        List<String> kinds = Arrays.asList(kind, getKindWithMajor(kind)); // Specified version of kind first
-        for (String kd : kinds) {
-            String key = dataPartitionId + " | " + kd;
-            PropertyConfigurations configuration = propertyConfigurationCache.get(key);
-            if (configuration == null) {
-                configuration = searchConfigurations(kd);
-                if (configuration != null) {
-                    propertyConfigurationCache.put(key, configuration);
-                } else {
-                    // It is common that a kind does not have extended property. So we need to cache an empty configuration
-                    // to avoid unnecessary search
-                    propertyConfigurationCache.put(key, EMPTY_CONFIGURATIONS);
-                }
-            }
+        kind = getKindWithMajor(kind);
+        String key = dataPartitionId + " | " + kind;
 
-            if (configuration != null && !EMPTY_CODE.equals(configuration.getCode())) {
-                return configuration;
+        PropertyConfigurations configuration = propertyConfigurationCache.get(key);
+        if (configuration == null) {
+            configuration = searchConfigurations(kind);
+            if (configuration != null) {
+                propertyConfigurationCache.put(key, configuration);
+            } else {
+                // It is common that a kind does not have extended property. So we need to cache an empty configuration
+                // to avoid unnecessary search
+                propertyConfigurationCache.put(key, EMPTY_CONFIGURATIONS);
             }
+        }
+
+        if (configuration != null && !EMPTY_CODE.equals(configuration.getCode())) {
+            return configuration;
         }
 
         return null;
@@ -287,15 +287,49 @@ public class PropertyConfigurationsUtil {
         attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
         final String ancestors = attributes.containsKey(Constants.ANCESTRY_KINDS) ? attributes.get(Constants.ANCESTRY_KINDS) : "";
+
         for (Map.Entry<String, List<String>> entry : processedRecordIds.entrySet()) {
             String kind = entry.getKey();
             String updatedAncestors = ancestors.isEmpty() ? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
             attributes.put(Constants.ANCESTRY_KINDS, updatedAncestors);
-            updateAssociatedRecords(attributes, entry.getValue());
+
+            updateAssociatedParentRecords(attributes, entry.getKey(), entry.getValue());
+            updateAssociatedChildrenRecords(attributes, entry.getValue());
         }
     }
 
-    private void updateAssociatedRecords(Map<String, String> attributes, List<String> associatedRecordIds) {
+
+    private void updateAssociatedParentRecords(Map<String, String> attributes, String childKind, List<String> associatedRecordIds) {
+        if (associatedRecordIds == null || associatedRecordIds.isEmpty())
+            return;
+
+        List<ParentChildRelatedObjectsSpec> specList = getParentChildRelatedObjectsSpecs(childKind);
+        Set ancestors = new HashSet<>(Arrays.asList(attributes.get(Constants.ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)));
+        for(ParentChildRelatedObjectsSpec spec: specList) {
+            List<String> parentIds = searchParentIds(childKind, associatedRecordIds, spec.getParentObjectId());
+            if(parentIds.isEmpty())
+                continue;
+
+            Map<String, List<String>> parentKindIds = resolveKindIds(spec.getParentKind(), parentIds);
+            for(Map.Entry<String, List<String>> entry : parentKindIds.entrySet()) {
+                if(ancestors.contains(entry.getKey()))
+                    continue; // circular indexing found.
+
+                List<RecordInfo> recordInfos = new ArrayList<>();
+                for (String id : entry.getValue()) {
+                    RecordInfo recordInfo = new RecordInfo();
+                    recordInfo.setKind(entry.getKey());
+                    recordInfo.setId(id);
+                    recordInfo.setOp(OperationType.update.getValue());
+                    recordInfos.add(recordInfo);
+                }
+
+                createWorkerTask(attributes, recordInfos);
+            }
+        }
+    }
+
+    private void updateAssociatedChildrenRecords(Map<String, String> attributes, List<String> associatedRecordIds) {
         if (associatedRecordIds == null || associatedRecordIds.isEmpty())
             return;
 
@@ -305,7 +339,7 @@ public class PropertyConfigurationsUtil {
                 stringBuilder.append(",");
             }
             stringBuilder.append("\"");
-            stringBuilder.append(id);
+            stringBuilder.append(removeIdPostfix(id));
             stringBuilder.append("\"");
         }
         String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, stringBuilder.toString());
@@ -329,7 +363,15 @@ public class PropertyConfigurationsUtil {
                 SearchResponse searchResponse = searchService.query(searchRequest);
                 List<SearchRecord> results = searchResponse.getResults();
                 if (results != null && !results.isEmpty()) {
-                    createWorkerTask(attributes, results);
+                    List<RecordInfo> recordInfos = new ArrayList<>();
+                    for (SearchRecord record : results) {
+                        RecordInfo recordInfo = new RecordInfo();
+                        recordInfo.setKind(record.getKind());
+                        recordInfo.setId(record.getId());
+                        recordInfo.setOp(OperationType.update.getValue());
+                        recordInfos.add(recordInfo);
+                    }
+                    createWorkerTask(attributes, recordInfos);
                 }
 
                 if (results == null || results.size() < limit)
@@ -343,20 +385,44 @@ public class PropertyConfigurationsUtil {
         }
     }
 
-    private void createWorkerTask(Map<String, String> attributes, List<SearchRecord> results) {
-        if (results == null || results.isEmpty())
-            return;
+    private List<ParentChildRelatedObjectsSpec> getParentChildRelatedObjectsSpecs(String childKind) {
+        String dataPartitionId = requestInfo.getHeaders().getPartitionId();
+        final String kindWithMajor = getKindWithMajor(childKind);
+        String key = dataPartitionId + " | " + kindWithMajor;
 
-        List<RecordInfo> data = new ArrayList<>();
-        for (SearchRecord record : results) {
-            RecordInfo recordInfo = new RecordInfo();
-            recordInfo.setKind(record.getKind());
-            recordInfo.setId(record.getId());
-            recordInfo.setOp(OperationType.update.getValue());
-            data.add(recordInfo);
+        List<ParentChildRelatedObjectsSpec> specsList = parentChildRelatedObjectsSpecsCache.get(key);
+        if(specsList == null) {
+            Set<ParentChildRelatedObjectsSpec> specs = new HashSet<>();
+            List<PropertyConfigurations> configurationsList = searchParentKindConfigurations((kindWithMajor));
+            for (PropertyConfigurations configurations : configurationsList) {
+                for (PropertyConfiguration configuration : configurations.getConfigurations()) {
+                    PropertyPath propertyPath = configuration.getPaths().stream().filter(p ->
+                                    p.hasValidRelatedObjectsSpec() &&
+                                            p.getRelatedObjectsSpec().isParentToChildren() &&
+                                            p.getRelatedObjectsSpec().getRelatedObjectKind().contains(kindWithMajor))
+                            .findFirst().orElse(null);
+                    if (propertyPath != null) {
+                        ParentChildRelatedObjectsSpec spec = new ParentChildRelatedObjectsSpec();
+                        spec.setParentKind(configurations.getCode());
+                        spec.setChildKind(kindWithMajor);
+                        spec.setParentObjectId(propertyPath.getRelatedObjectsSpec().getRelatedObjectID());
+                        specs.add(spec);
+                    }
+                }
+            }
+
+            specsList = new ArrayList<>(specs);
+            parentChildRelatedObjectsSpecsCache.put(key, specsList);
         }
 
-        RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(data)).attributes(attributes).build();
+        return specsList;
+    }
+
+    private void createWorkerTask(Map<String, String> attributes, List<RecordInfo> recordInfos) {
+        if (recordInfos == null || recordInfos.isEmpty())
+            return;
+
+        RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(recordInfos)).attributes(attributes).build();
         String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
         this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
     }
@@ -434,6 +500,31 @@ public class PropertyConfigurationsUtil {
         return null;
     }
 
+    private List<PropertyConfigurations> searchParentKindConfigurations(String childKind) {
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
+        searchRequest.setLimit(DEFAULT_SEARCH_LIMIT);
+        String query = String.format(PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT,childKind);
+        searchRequest.setQuery(query);
+        List<PropertyConfigurations> configurationsList = new ArrayList<>();
+        try {
+            SearchResponse searchResponse = searchService.query(searchRequest);
+            List<SearchRecord> results = searchResponse.getResults();
+            for(SearchRecord searchRecord : results) {
+                String data = objectMapper.writeValueAsString(searchRecord.getData());
+                PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
+                configurationsList.add(configurations);
+            }
+        } catch (URISyntaxException e) {
+            // TODO: log the error
+        }
+        catch (JsonProcessingException e) {
+            // TODO: log the error
+        }
+
+        return configurationsList;
+    }
+
     private SearchRecord searchRelatedRecord(String relatedObjectKind, String relatedObjectId) {
         String kind = isConcreteKind(relatedObjectKind)? relatedObjectKind : relatedObjectKind + "*";
         String id = removeColumnPostfix(relatedObjectId);
@@ -454,6 +545,106 @@ public class PropertyConfigurationsUtil {
             // TODO: log the error
         }
         return null;
+    }
+
+    private Map<String, List<String>> resolveKindIds(String majorKind, List<String> ids) {
+        Map<String, List<String>> kindIds = new HashMap<>();
+
+        StringBuilder idsBuilder = new StringBuilder();
+        for(String id: ids) {
+            if(idsBuilder.length() > 0) {
+                idsBuilder.append(" OR ");
+            }
+            idsBuilder.append("\"");
+            idsBuilder.append(removeIdPostfix(id));
+            idsBuilder.append("\"");
+        }
+
+        SearchRequest searchRequest = new SearchRequest();
+        String kind = isConcreteKind(majorKind)? majorKind : majorKind + "*";
+        searchRequest.setKind(kind);
+        String query = String.format("id: (%s)",idsBuilder.toString());
+        searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
+        searchRequest.setQuery(query);
+        searchRequest.setLimit(MAX_SEARCH_LIMIT);
+        int offset = 0;
+        try {
+            while (true) {
+                SearchResponse searchResponse = searchService.query(searchRequest);
+                List<SearchRecord> results = searchResponse.getResults();
+                if (results != null) {
+                    for (SearchRecord record: results) {
+                        if(kindIds.containsKey(record.getKind())) {
+                            kindIds.get(record.getKind()).add(record.getId());
+                        }
+                        else {
+                            List<String> idList = new ArrayList<>();
+                            idList.add(record.getId());
+                            kindIds.put(record.getKind(), idList);
+                        }
+                    }
+                }
+
+                if (results == null || results.size() < MAX_SEARCH_LIMIT)
+                    break;
+
+                offset += results.size();
+                searchRequest.setOffset(offset);
+            }
+        } catch (URISyntaxException e) {
+            // TODO: log the error
+        }
+
+        return kindIds;
+    }
+
+    private List<String> searchParentIds(String childKind, List<String> childRecordIds, String parentObjectId) {
+        Set<String> parentIds = new HashSet<>();
+
+        StringBuilder idsBuilder = new StringBuilder();
+        for(String id: childRecordIds) {
+            if(idsBuilder.length() > 0) {
+                idsBuilder.append(" OR ");
+            }
+            idsBuilder.append("\"");
+            idsBuilder.append(removeIdPostfix(id));
+            idsBuilder.append("\"");
+        }
+
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setKind(childKind);
+        String query = String.format("id: (%s)",idsBuilder.toString());
+        searchRequest.setReturnedFields(Arrays.asList(parentObjectId));
+        searchRequest.setQuery(query);
+        searchRequest.setLimit(MAX_SEARCH_LIMIT);
+        int offset = 0;
+        parentObjectId = PropertyUtil.removeDataPrefix(parentObjectId);
+        try {
+            while (true) {
+                SearchResponse searchResponse = searchService.query(searchRequest);
+                List<SearchRecord> results = searchResponse.getResults();
+                if (results != null) {
+                    for (SearchRecord record: results) {
+                        if(record.getData().containsKey(parentObjectId)) {
+                            Object id = record.getData().get(parentObjectId);
+                            if(id != null) {
+                                parentIds.add(id.toString());
+                            }
+                        }
+                    }
+                }
+
+                if (results == null || results.size() < MAX_SEARCH_LIMIT)
+                    break;
+
+                offset += results.size();
+                searchRequest.setOffset(offset);
+            }
+        } catch (URISyntaxException e) {
+            // TODO: log the error
+        }
+
+        return new ArrayList<>(parentIds);
     }
 
     private List<SearchRecord> searchChildrenRecords(String childrenObjectKind, String childrenObjectField, String parentId) {

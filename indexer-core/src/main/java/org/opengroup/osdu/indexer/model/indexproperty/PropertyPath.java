@@ -16,18 +16,18 @@
 package org.opengroup.osdu.indexer.model.indexproperty;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import lombok.ToString;
+import org.opengroup.osdu.indexer.model.indexproperty.jackson.PropertyPathDeserializer;
 
 @Data
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonDeserialize(using = PropertyPathDeserializer.class)
 public class PropertyPath {
-    @JsonProperty("RelatedObjectsSpec")
     private RelatedObjectsSpec relatedObjectsSpec;
 
-    @JsonProperty("ValueExtraction")
     private ValueExtraction valueExtraction;
 
     public boolean hasValidRelatedObjectsSpec() {
