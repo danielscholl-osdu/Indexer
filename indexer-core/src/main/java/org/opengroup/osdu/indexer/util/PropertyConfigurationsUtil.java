@@ -54,7 +54,6 @@ public class PropertyConfigurationsUtil {
     private static final String PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT =
             "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ParentToChildren AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
     private static final String EMPTY_CODE = "__EMPTY_CODE__";
-    private static final int DEFAULT_SEARCH_LIMIT = 100;
     private static final int MAX_SEARCH_LIMIT = 1000;
 
     private final Gson gson = new Gson();
@@ -333,16 +332,7 @@ public class PropertyConfigurationsUtil {
         if (associatedRecordIds == null || associatedRecordIds.isEmpty())
             return;
 
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String id : associatedRecordIds) {
-            if (stringBuilder.length() > 0) {
-                stringBuilder.append(",");
-            }
-            stringBuilder.append("\"");
-            stringBuilder.append(removeIdPostfix(id));
-            stringBuilder.append("\"");
-        }
-        String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, stringBuilder.toString());
+        String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, buildIdsFilter(associatedRecordIds));
         String kind = WILD_CARD_KIND;
         for (String ancestryKind : attributes.get(Constants.ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)) {
             if (!Strings.isNullOrEmpty(ancestryKind)) {
@@ -355,33 +345,21 @@ public class PropertyConfigurationsUtil {
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(kind);
         searchRequest.setQuery(query);
-        searchRequest.setLimit(limit);
         searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
-        int offset = 0;
-        try {
-            while (true) {
-                SearchResponse searchResponse = searchService.query(searchRequest);
-                List<SearchRecord> results = searchResponse.getResults();
-                if (results != null && !results.isEmpty()) {
-                    List<RecordInfo> recordInfos = new ArrayList<>();
-                    for (SearchRecord record : results) {
-                        RecordInfo recordInfo = new RecordInfo();
-                        recordInfo.setKind(record.getKind());
-                        recordInfo.setId(record.getId());
-                        recordInfo.setOp(OperationType.update.getValue());
-                        recordInfos.add(recordInfo);
-                    }
-                    createWorkerTask(attributes, recordInfos);
-                }
-
-                if (results == null || results.size() < limit)
-                    break;
-
-                offset += results.size();
-                searchRequest.setOffset(offset);
+        List<RecordInfo> recordInfos = new ArrayList<>();
+        for (SearchRecord record : getAllRecords(searchRequest)) {
+            RecordInfo recordInfo = new RecordInfo();
+            recordInfo.setKind(record.getKind());
+            recordInfo.setId(record.getId());
+            recordInfo.setOp(OperationType.update.getValue());
+            recordInfos.add(recordInfo);
+            if(recordInfos.size() >= limit) {
+                createWorkerTask(attributes, recordInfos);
+                recordInfos = new ArrayList<>();
             }
-        } catch (URISyntaxException e) {
-            // TODO: log the error
+        }
+        if(recordInfos.size() > 0) {
+            createWorkerTask(attributes, recordInfos);
         }
     }
 
@@ -457,19 +435,10 @@ public class PropertyConfigurationsUtil {
     private String searchConcreteKind(String kindWithMajor) {
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(kindWithMajor + "*");
-        searchRequest.setLimit(DEFAULT_SEARCH_LIMIT);
         searchRequest.setReturnedFields(Arrays.asList("kind"));
-        try {
-            SearchResponse searchResponse = searchService.query(searchRequest);
-            List<SearchRecord> results = searchResponse.getResults();
-            if(results != null && !results.isEmpty())
-            {
-                //TODO: get the best match
-                SearchRecord searchRecord = results.get(0);
-                return searchRecord.getKind();
-            }
-        } catch (URISyntaxException e) {
-            // TODO: log the error
+        SearchRecord searchRecord = getFirstRecord(searchRequest);
+        if(searchRecord != null) {
+            searchRecord.getKind();
         }
         return null;
     }
@@ -477,51 +446,37 @@ public class PropertyConfigurationsUtil {
     private PropertyConfigurations searchConfigurations(String kind) {
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
-        searchRequest.setLimit(DEFAULT_SEARCH_LIMIT);
         String query = String.format("data.Code: \"%s\"",kind);
         searchRequest.setQuery(query);
-        try {
-            SearchResponse searchResponse = searchService.query(searchRequest);
-            List<SearchRecord> results = searchResponse.getResults();
-            for(SearchRecord searchRecord : results) {
+        for(SearchRecord searchRecord : getAllRecords(searchRequest)) {
+            try {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
                 PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
                 if(kind.equals(configurations.getCode())) {
                     return configurations;
                 }
+            }catch (JsonProcessingException e) {
+                // TODO: log the error
             }
-        } catch (URISyntaxException e) {
-            // TODO: log the error
         }
-        catch (JsonProcessingException e) {
-            // TODO: log the error
-        }
-
         return null;
     }
 
     private List<PropertyConfigurations> searchParentKindConfigurations(String childKind) {
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
-        searchRequest.setLimit(DEFAULT_SEARCH_LIMIT);
         String query = String.format(PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT,childKind);
         searchRequest.setQuery(query);
         List<PropertyConfigurations> configurationsList = new ArrayList<>();
-        try {
-            SearchResponse searchResponse = searchService.query(searchRequest);
-            List<SearchRecord> results = searchResponse.getResults();
-            for(SearchRecord searchRecord : results) {
+        for(SearchRecord searchRecord : getAllRecords(searchRequest)) {
+            try {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
                 PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
                 configurationsList.add(configurations);
+            }catch (JsonProcessingException e) {
+                // TODO: log the error
             }
-        } catch (URISyntaxException e) {
-            // TODO: log the error
         }
-        catch (JsonProcessingException e) {
-            // TODO: log the error
-        }
-
         return configurationsList;
     }
 
@@ -532,24 +487,59 @@ public class PropertyConfigurationsUtil {
         searchRequest.setKind(kind);
         String query = String.format("id: \"%s\"",id);
         searchRequest.setQuery(query);
-        searchRequest.setLimit(DEFAULT_SEARCH_LIMIT);
-        try {
-            SearchResponse searchResponse = searchService.query(searchRequest);
-            List<SearchRecord> results = searchResponse.getResults();
-            if(results != null && !results.isEmpty())
-            {
-                //TODO: get the best match
-                return results.get(0);
-            }
-        } catch (URISyntaxException e) {
-            // TODO: log the error
-        }
-        return null;
+        return getFirstRecord(searchRequest);
     }
 
     private Map<String, List<String>> resolveKindIds(String majorKind, List<String> ids) {
         Map<String, List<String>> kindIds = new HashMap<>();
+        SearchRequest searchRequest = new SearchRequest();
+        String kind = isConcreteKind(majorKind)? majorKind : majorKind + "*";
+        searchRequest.setKind(kind);
+        String query = String.format("id: (%s)", buildIdsFilter(ids));
+        searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
+        searchRequest.setQuery(query);
+        for(SearchRecord record: getAllRecords(searchRequest)) {
+            if(kindIds.containsKey(record.getKind())) {
+                kindIds.get(record.getKind()).add(record.getId());
+            }
+            else {
+                List<String> idList = new ArrayList<>();
+                idList.add(record.getId());
+                kindIds.put(record.getKind(), idList);
+            }
+        }
+        return kindIds;
+    }
 
+    private List<String> searchParentIds(String childKind, List<String> childRecordIds, String parentObjectId) {
+        Set<String> parentIds = new HashSet<>();
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setKind(childKind);
+        String query = String.format("id: (%s)", buildIdsFilter(childRecordIds));
+        searchRequest.setReturnedFields(Arrays.asList(parentObjectId));
+        searchRequest.setQuery(query);
+        parentObjectId = PropertyUtil.removeDataPrefix(parentObjectId);
+        for(SearchRecord record: getAllRecords(searchRequest)) {
+            if(record.getData().containsKey(parentObjectId)) {
+                Object id = record.getData().get(parentObjectId);
+                if(id != null) {
+                    parentIds.add(id.toString());
+                }
+            }
+        }
+        return new ArrayList<>(parentIds);
+    }
+
+    private List<SearchRecord> searchChildrenRecords(String childrenObjectKind, String childrenObjectField, String parentId) {
+        String kind = isConcreteKind(childrenObjectKind)? childrenObjectKind : childrenObjectKind + "*";
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setKind(kind);
+        String query = String.format("%s: \"%s\"",childrenObjectField, parentId);
+        searchRequest.setQuery(query);
+        return getAllRecords(searchRequest);
+    }
+
+    private String buildIdsFilter(List<String> ids) {
         StringBuilder idsBuilder = new StringBuilder();
         for(String id: ids) {
             if(idsBuilder.length() > 0) {
@@ -559,120 +549,47 @@ public class PropertyConfigurationsUtil {
             idsBuilder.append(removeIdPostfix(id));
             idsBuilder.append("\"");
         }
-
-        SearchRequest searchRequest = new SearchRequest();
-        String kind = isConcreteKind(majorKind)? majorKind : majorKind + "*";
-        searchRequest.setKind(kind);
-        String query = String.format("id: (%s)",idsBuilder.toString());
-        searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
-        searchRequest.setQuery(query);
-        searchRequest.setLimit(MAX_SEARCH_LIMIT);
-        int offset = 0;
-        try {
-            while (true) {
-                SearchResponse searchResponse = searchService.query(searchRequest);
-                List<SearchRecord> results = searchResponse.getResults();
-                if (results != null) {
-                    for (SearchRecord record: results) {
-                        if(kindIds.containsKey(record.getKind())) {
-                            kindIds.get(record.getKind()).add(record.getId());
-                        }
-                        else {
-                            List<String> idList = new ArrayList<>();
-                            idList.add(record.getId());
-                            kindIds.put(record.getKind(), idList);
-                        }
-                    }
-                }
-
-                if (results == null || results.size() < MAX_SEARCH_LIMIT)
-                    break;
-
-                offset += results.size();
-                searchRequest.setOffset(offset);
-            }
-        } catch (URISyntaxException e) {
-            // TODO: log the error
-        }
-
-        return kindIds;
+        return idsBuilder.toString();
     }
 
-    private List<String> searchParentIds(String childKind, List<String> childRecordIds, String parentObjectId) {
-        Set<String> parentIds = new HashSet<>();
-
-        StringBuilder idsBuilder = new StringBuilder();
-        for(String id: childRecordIds) {
-            if(idsBuilder.length() > 0) {
-                idsBuilder.append(" OR ");
-            }
-            idsBuilder.append("\"");
-            idsBuilder.append(removeIdPostfix(id));
-            idsBuilder.append("\"");
-        }
-
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(childKind);
-        String query = String.format("id: (%s)",idsBuilder.toString());
-        searchRequest.setReturnedFields(Arrays.asList(parentObjectId));
-        searchRequest.setQuery(query);
+    /*
+      It is assumed that the search request in this method won't return millions of records
+     */
+    private List<SearchRecord> getAllRecords(SearchRequest searchRequest) {
         searchRequest.setLimit(MAX_SEARCH_LIMIT);
-        int offset = 0;
-        parentObjectId = PropertyUtil.removeDataPrefix(parentObjectId);
+        List<SearchRecord> allRecords = new ArrayList<>();
+        boolean done = false;
         try {
-            while (true) {
-                SearchResponse searchResponse = searchService.query(searchRequest);
+            while (!done) {
+                SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
                 List<SearchRecord> results = searchResponse.getResults();
                 if (results != null) {
-                    for (SearchRecord record: results) {
-                        if(record.getData().containsKey(parentObjectId)) {
-                            Object id = record.getData().get(parentObjectId);
-                            if(id != null) {
-                                parentIds.add(id.toString());
-                            }
-                        }
-                    }
+                    allRecords.addAll(results);
                 }
-
-                if (results == null || results.size() < MAX_SEARCH_LIMIT)
-                    break;
-
-                offset += results.size();
-                searchRequest.setOffset(offset);
+                if(searchResponse.getCursor() != null && results.size() == MAX_SEARCH_LIMIT) {
+                    searchRequest.setCursor(searchResponse.getCursor());
+                }
+                else {
+                    done = true;
+                }
             }
         } catch (URISyntaxException e) {
             // TODO: log the error
         }
-
-        return new ArrayList<>(parentIds);
+        return allRecords;
     }
 
-    private List<SearchRecord> searchChildrenRecords(String childrenObjectKind, String childrenObjectField, String parentId) {
-        List<SearchRecord> childrenRecords = new ArrayList<>();
-        String kind = isConcreteKind(childrenObjectKind)? childrenObjectKind : childrenObjectKind + "*";
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(kind);
-        String query = String.format("%s: \"%s\"",childrenObjectField, parentId);
-        searchRequest.setQuery(query);
-        searchRequest.setLimit(MAX_SEARCH_LIMIT);
-        int offset = 0;
+    private SearchRecord getFirstRecord(SearchRequest searchRequest) {
+        searchRequest.setLimit(1);
         try {
-            while (true) {
-                SearchResponse searchResponse = searchService.query(searchRequest);
-                List<SearchRecord> results = searchResponse.getResults();
-                if (results != null && !results.isEmpty()) {
-                    childrenRecords.addAll(results);
-                }
-
-                if (results == null || results.size() < MAX_SEARCH_LIMIT)
-                    break;
-
-                offset += results.size();
-                searchRequest.setOffset(offset);
+            SearchResponse searchResponse = searchService.query(searchRequest);
+            List<SearchRecord> results = searchResponse.getResults();
+            if (results != null && !results.isEmpty()) {
+               return results.get(0);
             }
         } catch (URISyntaxException e) {
             // TODO: log the error
         }
-        return childrenRecords;
+        return null;
     }
 }
