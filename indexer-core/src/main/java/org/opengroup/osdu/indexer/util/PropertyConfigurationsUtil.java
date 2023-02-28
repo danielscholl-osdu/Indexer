@@ -276,66 +276,67 @@ public class PropertyConfigurationsUtil {
         return extendedSchemaItem;
     }
 
-    public void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> processedRecordIds) {
-        if (processedRecordIds == null || processedRecordIds.isEmpty())
+    public void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> processedKindIdsMap) {
+        if (processedKindIdsMap == null || processedKindIdsMap.isEmpty())
             return;
 
         Map<String, String> attributes = message.getAttributes();
-        DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
-        attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
-        attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
-        attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
         final String ancestors = attributes.containsKey(Constants.ANCESTRY_KINDS) ? attributes.get(Constants.ANCESTRY_KINDS) : "";
-
-        for (Map.Entry<String, List<String>> entry : processedRecordIds.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : processedKindIdsMap.entrySet()) {
             String kind = entry.getKey();
             String updatedAncestors = ancestors.isEmpty() ? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
-            attributes.put(Constants.ANCESTRY_KINDS, updatedAncestors);
 
-            updateAssociatedParentRecords(attributes, entry.getKey(), entry.getValue());
-            updateAssociatedChildrenRecords(attributes, entry.getValue());
+            updateAssociatedParentRecords(updatedAncestors, entry.getKey(), entry.getValue());
+            updateAssociatedChildrenRecords(updatedAncestors, entry.getValue());
         }
     }
 
 
-    private void updateAssociatedParentRecords(Map<String, String> attributes, String childKind, List<String> associatedRecordIds) {
-        if (associatedRecordIds == null || associatedRecordIds.isEmpty())
+    private void updateAssociatedParentRecords(String ancestors, String childKind, List<String> processedIds) {
+        if (processedIds == null || processedIds.isEmpty())
             return;
 
         List<ParentChildRelatedObjectsSpec> specList = getParentChildRelatedObjectsSpecs(childKind);
-        Set ancestors = new HashSet<>(Arrays.asList(attributes.get(Constants.ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)));
+        Set ancestorSet = new HashSet<>(Arrays.asList(ancestors.split(ANCESTRY_KINDS_DELIMITER)));
         for(ParentChildRelatedObjectsSpec spec: specList) {
-            List<String> parentIds = searchParentIds(childKind, associatedRecordIds, spec.getParentObjectId());
+            List<String> parentIds = getUniqueParentIds(childKind, processedIds, spec.getParentObjectId());
             if(parentIds.isEmpty())
                 continue;
 
+            final int limit = configurationProperties.getStorageRecordsByKindBatchSize();
             Map<String, List<String>> parentKindIds = resolveKindIds(spec.getParentKind(), parentIds);
+            List<RecordInfo> recordInfos = new ArrayList<>();
             for(Map.Entry<String, List<String>> entry : parentKindIds.entrySet()) {
-                if(ancestors.contains(entry.getKey()))
+                if(ancestorSet.contains(entry.getKey()))
                     continue; // circular indexing found.
 
-                List<RecordInfo> recordInfos = new ArrayList<>();
                 for (String id : entry.getValue()) {
                     RecordInfo recordInfo = new RecordInfo();
                     recordInfo.setKind(entry.getKey());
                     recordInfo.setId(id);
                     recordInfo.setOp(OperationType.update.getValue());
                     recordInfos.add(recordInfo);
-                }
 
-                createWorkerTask(attributes, recordInfos);
+                    if(recordInfos.size() >= limit) {
+                        createWorkerTask(ancestors, recordInfos);
+                        recordInfos = new ArrayList<>();
+                    }
+                }
+            }
+            if(!recordInfos.isEmpty()) {
+                createWorkerTask(ancestors, recordInfos);
             }
         }
     }
 
-    private void updateAssociatedChildrenRecords(Map<String, String> attributes, List<String> associatedRecordIds) {
-        if (associatedRecordIds == null || associatedRecordIds.isEmpty())
+    private void updateAssociatedChildrenRecords(String ancestors, List<String> processedIds) {
+        if (processedIds == null || processedIds.isEmpty())
             return;
 
-        String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, buildIdsFilter(associatedRecordIds));
+        String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, buildIdsFilter(processedIds));
         String kind = WILD_CARD_KIND;
-        for (String ancestryKind : attributes.get(Constants.ANCESTRY_KINDS).split(ANCESTRY_KINDS_DELIMITER)) {
-            if (!Strings.isNullOrEmpty(ancestryKind)) {
+        for (String ancestryKind : ancestors.split(ANCESTRY_KINDS_DELIMITER)) {
+            if (!ancestryKind.trim().isEmpty()) {
                 // Exclude the kinds in the ancestryKinds to prevent circular chasing
                 kind += ",-" + ancestryKind.trim();
             }
@@ -353,13 +354,14 @@ public class PropertyConfigurationsUtil {
             recordInfo.setId(record.getId());
             recordInfo.setOp(OperationType.update.getValue());
             recordInfos.add(recordInfo);
+
             if(recordInfos.size() >= limit) {
-                createWorkerTask(attributes, recordInfos);
+                createWorkerTask(ancestors, recordInfos);
                 recordInfos = new ArrayList<>();
             }
         }
-        if(recordInfos.size() > 0) {
-            createWorkerTask(attributes, recordInfos);
+        if(!recordInfos.isEmpty()) {
+            createWorkerTask(ancestors, recordInfos);
         }
     }
 
@@ -396,9 +398,16 @@ public class PropertyConfigurationsUtil {
         return specsList;
     }
 
-    private void createWorkerTask(Map<String, String> attributes, List<RecordInfo> recordInfos) {
+    private void createWorkerTask(String ancestors, List<RecordInfo> recordInfos) {
         if (recordInfos == null || recordInfos.isEmpty())
             return;
+
+        Map<String, String> attributes = new HashMap<>();
+        DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
+        attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
+        attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
+        attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+        attributes.put(Constants.ANCESTRY_KINDS, ancestors);
 
         RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(recordInfos)).attributes(attributes).build();
         String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
@@ -511,7 +520,7 @@ public class PropertyConfigurationsUtil {
         return kindIds;
     }
 
-    private List<String> searchParentIds(String childKind, List<String> childRecordIds, String parentObjectId) {
+    private List<String> getUniqueParentIds(String childKind, List<String> childRecordIds, String parentObjectId) {
         Set<String> parentIds = new HashSet<>();
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(childKind);
@@ -522,7 +531,7 @@ public class PropertyConfigurationsUtil {
         for(SearchRecord record: getAllRecords(searchRequest)) {
             if(record.getData().containsKey(parentObjectId)) {
                 Object id = record.getData().get(parentObjectId);
-                if(id != null) {
+                if(id != null && !parentIds.contains(id)) {
                     parentIds.add(id.toString());
                 }
             }

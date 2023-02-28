@@ -146,9 +146,9 @@ public class IndexerServiceImpl implements IndexerService {
                 retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
             }
 
-            Map<String, List<String>> processedRecordIds = getProcessedRecordIs(upsertRecordMap, deleteRecordMap, retryRecordIds);
-            if(!processedRecordIds.isEmpty()) {
-                propertyConfigurationsUtil.updateAssociatedRecords(message, processedRecordIds);
+            Map<String, List<String>> processedKindIds = getProcessedKindIds(upsertRecordMap, deleteRecordMap, retryRecordIds);
+            if(!processedKindIds.isEmpty()) {
+                propertyConfigurationsUtil.updateAssociatedRecords(message, processedKindIds);
             }
         } catch (IOException e) {
             errorMessage = e.getMessage();
@@ -184,28 +184,28 @@ public class IndexerServiceImpl implements IndexerService {
         }
     }
 
-    private Map<String, List<String>> getProcessedRecordIs(Map<String, Map<String, OperationType>> upsertRecordMap,
-                                                        Map<String, List<String>> deleteRecordMap, List<String> retryRecordIds) {
-        Map<String, List<String>> recordIds = new HashMap<>();
+    private Map<String, List<String>> getProcessedKindIds(Map<String, Map<String, OperationType>> upsertRecordMap,
+                                                          Map<String, List<String>> deleteRecordMap, List<String> retryRecordIds) {
+        Map<String, List<String>> processedKindIdsMap = new HashMap<>();
         for(Map.Entry<String, Map<String, OperationType>> entry: upsertRecordMap.entrySet()) {
             String kind = entry.getKey();
-            List<String> ids = recordIds.containsKey(kind)? recordIds.get(kind):new ArrayList<>();
+            List<String> ids = processedKindIdsMap.containsKey(kind)? processedKindIdsMap.get(kind):new ArrayList<>();
             List<String> processedIds = entry.getValue().keySet().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
             ids.addAll(processedIds);
             if(!ids.isEmpty()) {
-                recordIds.put(kind, ids);
+                processedKindIdsMap.put(kind, ids);
             }
         }
         for(Map.Entry<String, List<String>> entry: deleteRecordMap.entrySet()) {
             String kind = entry.getKey();
-            List<String> ids = recordIds.containsKey(kind)? recordIds.get(kind):new ArrayList<>();
+            List<String> ids = processedKindIdsMap.containsKey(kind)? processedKindIdsMap.get(kind):new ArrayList<>();
             List<String> processedIds = entry.getValue().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
             ids.addAll(processedIds);
             if(!ids.isEmpty()) {
-                recordIds.put(kind, ids);
+                processedKindIdsMap.put(kind, ids);
             }
         }
-        return recordIds;
+        return processedKindIdsMap;
     }
 
     private void processSchemaEvents(RestHighLevelClient restClient,

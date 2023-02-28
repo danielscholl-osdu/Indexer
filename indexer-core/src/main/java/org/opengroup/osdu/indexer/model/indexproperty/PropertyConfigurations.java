@@ -47,7 +47,7 @@ public class PropertyConfigurations {
     @JsonProperty("Configurations")
     private List<PropertyConfiguration> configurations;
 
-    public List<String> getRelatedObjectKinds() {
+    public List<String> getUniqueRelatedObjectKinds() {
         if(configurations == null || configurations.isEmpty())
             return new ArrayList<>();
 

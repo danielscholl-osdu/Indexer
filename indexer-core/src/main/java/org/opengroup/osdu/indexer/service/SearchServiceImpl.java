@@ -54,7 +54,6 @@ public class SearchServiceImpl implements SearchService {
     }
 
     private SearchResponse searchRecords(SearchRequest searchRequest, String path) throws URISyntaxException {
-        // The following statements should be removed later
         if(Strings.isNullOrEmpty(configurationProperties.getSearchHost()))
             throw new URISyntaxException("SEARCH_HOST", "The environment variable SEARCH_HOST is not setup");
 

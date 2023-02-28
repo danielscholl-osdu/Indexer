@@ -193,7 +193,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         return flatSchemaObj;
     }
 
-    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, PropertyConfigurations propertyConfigurations) {
+    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
         Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
         Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
         List<SchemaItem> extendedSchemaItems = propertyConfigurationsUtil.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
@@ -208,36 +208,27 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         }
     }
 
-    private Map<String, Schema> getSchemaOfRelatedObjectKinds(PropertyConfigurations propertyConfigurations) {
+    private Map<String, Schema> getSchemaOfRelatedObjectKinds(PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
+        List<String> relatedObjectKinds = propertyConfigurations.getUniqueRelatedObjectKinds();
         Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
+        for(String relatedObjectKind: relatedObjectKinds) {
+            // The relatedObjectKind defined in property configuration can be kind having major version only
+            // e.g. "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1."
+            String concreteRelatedObjectKind = propertyConfigurationsUtil.resolveConcreteKind(relatedObjectKind);
+            if(Strings.isNullOrEmpty(concreteRelatedObjectKind))
+                continue;
 
-        List<String> relatedObjectKinds = propertyConfigurations.getRelatedObjectKinds();
-        if(relatedObjectKinds != null && !relatedObjectKinds.isEmpty()) {
-            for(String relatedObjectKind: relatedObjectKinds) {
-                // The relatedObjectKind defined in property configuration can be kind having major version only
-                // e.g. "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1."
-                String concreteRelatedObjectKind = propertyConfigurationsUtil.resolveConcreteKind(relatedObjectKind);
-                if(Strings.isNullOrEmpty(concreteRelatedObjectKind))
-                    continue;
-
-                String relatedObjectKindSchema = (String) this.schemaCache.get(concreteRelatedObjectKind);
-                if(Strings.isNullOrEmpty(relatedObjectKindSchema)) {
-                    try {
-                        relatedObjectKindSchema = this.schemaProvider.getSchema(concreteRelatedObjectKind);
-                        if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
-                            cacheAndNormalizeSchema(concreteRelatedObjectKind, relatedObjectKindSchema);
-                        }
-                    } catch (URISyntaxException e) {
-                        // Fail or log?
-                    } catch (UnsupportedEncodingException e) {
-                        // Fail or log?
-                    }
+            String relatedObjectKindSchema = (String) this.schemaCache.get(concreteRelatedObjectKind);
+            if(Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                relatedObjectKindSchema = this.schemaProvider.getSchema(concreteRelatedObjectKind);
+                if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                    cacheAndNormalizeSchema(concreteRelatedObjectKind, relatedObjectKindSchema);
                 }
+            }
 
-                if(!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
-                    Schema schema = gson.fromJson(relatedObjectKindSchema, Schema.class);
-                    relatedObjectKindSchemas.put(relatedObjectKind, schema);
-                }
+            if(!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                Schema schema = gson.fromJson(relatedObjectKindSchema, Schema.class);
+                relatedObjectKindSchemas.put(relatedObjectKind, schema);
             }
         }
         return relatedObjectKindSchemas;
