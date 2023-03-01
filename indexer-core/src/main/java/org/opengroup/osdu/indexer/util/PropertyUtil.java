@@ -47,6 +47,16 @@ public class PropertyUtil {
     }
 
     public static Map<String, Object> combineObjectMap(Map<String, Object> to, Map<String, Object> from) {
+        if((to == null || to.isEmpty()) && (from == null || from.isEmpty())) {
+            return new HashMap<>();
+        }
+        else if(to == null || to.isEmpty()) {
+            return from;
+        }
+        else if(from == null || from.isEmpty()) {
+            return to;
+        }
+
         for (Map.Entry<String, Object> entry : from.entrySet()) {
             if (to.containsKey(entry.getKey())) {
                 Set<Object> objectSet = new HashSet<>();
@@ -77,6 +87,10 @@ public class PropertyUtil {
     }
 
     public static Map<String, Object> replacePropertyPaths(String propertyRootPath, String valuePath, Map<String, Object> objectMap) {
+        if(Strings.isNullOrEmpty(propertyRootPath) || Strings.isNullOrEmpty(propertyRootPath) || objectMap == null || objectMap.isEmpty()) {
+            return new HashMap<>();
+        }
+
         propertyRootPath = removeDataPrefix(propertyRootPath);
         valuePath = removeDataPrefix(valuePath);
 
@@ -92,6 +106,10 @@ public class PropertyUtil {
     }
 
     public static boolean isConcreteKind(String kind) {
+        if(Strings.isNullOrEmpty(kind)) {
+            return false;
+        }
+
         int index = kind.lastIndexOf(":");
         String version = kind.substring(index + 1);
         String[] subVersions = version.split("\\.");
@@ -99,15 +117,17 @@ public class PropertyUtil {
     }
 
     public static String getKindWithMajor(String kind) {
+        if(Strings.isNullOrEmpty(kind)) {
+            return kind;
+        }
+
         int index = kind.lastIndexOf(":");
         String kindWithMajor = kind.substring(0, index) + ":";
-
         String version = kind.substring(index + 1);
         String[] subVersions = version.split("\\.");
         if (subVersions.length > 0) {
             kindWithMajor += subVersions[0] + ".";
         }
-
         return kindWithMajor;
     }
 
@@ -115,7 +135,6 @@ public class PropertyUtil {
         if (objectId != null && objectId.endsWith(":")) {
             objectId = objectId.substring(0, objectId.length() - 1);
         }
-
         return objectId;
     }
 }
