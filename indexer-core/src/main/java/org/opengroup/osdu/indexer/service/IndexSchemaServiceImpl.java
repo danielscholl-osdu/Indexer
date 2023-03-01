@@ -36,7 +36,6 @@ import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.opengroup.osdu.indexer.util.PropertyConfigurationsUtil;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
 
@@ -70,7 +69,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
-    private PropertyConfigurationsUtil propertyConfigurationsUtil;
+    private PropertyConfigurationsService propertyConfigurationsService;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
@@ -164,8 +163,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 return this.getEmptySchema(kind);
             } else {
                 // Merge schema of the extended properties if needed
-                PropertyConfigurations propertyConfigurations = propertyConfigurationsUtil.getPropertyConfiguration(kind);
-                if(propertyConfigurations != null) {
+                PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfiguration(kind);
+                if (propertyConfigurations != null) {
                     schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
                 }
 
@@ -196,14 +195,13 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
         Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
         Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
-        List<SchemaItem> extendedSchemaItems = propertyConfigurationsUtil.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
-        if(!extendedSchemaItems.isEmpty()) {
+        List<SchemaItem> extendedSchemaItems = propertyConfigurationsService.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        if (!extendedSchemaItems.isEmpty()) {
             List<SchemaItem> originalSchemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
             originalSchemaItems.addAll(extendedSchemaItems);
             originalSchema.setSchema(originalSchemaItems.toArray(new SchemaItem[0]));
             return gson.toJson(originalSchema);
-        }
-        else {
+        } else {
             return originalSchemaStr;
         }
     }
@@ -211,22 +209,22 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private Map<String, Schema> getSchemaOfRelatedObjectKinds(PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
         List<String> relatedObjectKinds = propertyConfigurations.getUniqueRelatedObjectKinds();
         Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
-        for(String relatedObjectKind: relatedObjectKinds) {
+        for (String relatedObjectKind : relatedObjectKinds) {
             // The relatedObjectKind defined in property configuration can be kind having major version only
             // e.g. "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1."
-            String concreteRelatedObjectKind = propertyConfigurationsUtil.resolveConcreteKind(relatedObjectKind);
-            if(Strings.isNullOrEmpty(concreteRelatedObjectKind))
+            String concreteRelatedObjectKind = propertyConfigurationsService.resolveConcreteKind(relatedObjectKind);
+            if (Strings.isNullOrEmpty(concreteRelatedObjectKind))
                 continue;
 
             String relatedObjectKindSchema = (String) this.schemaCache.get(concreteRelatedObjectKind);
-            if(Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+            if (Strings.isNullOrEmpty(relatedObjectKindSchema)) {
                 relatedObjectKindSchema = this.schemaProvider.getSchema(concreteRelatedObjectKind);
                 if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
                     cacheAndNormalizeSchema(concreteRelatedObjectKind, relatedObjectKindSchema);
                 }
             }
 
-            if(!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+            if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
                 Schema schema = gson.fromJson(relatedObjectKindSchema, Schema.class);
                 relatedObjectKindSchemas.put(relatedObjectKind, schema);
             }

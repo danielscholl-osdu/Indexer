@@ -42,12 +42,12 @@ import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.indexer.cache.RelatedObjectCache;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
-import org.opengroup.osdu.indexer.util.PropertyConfigurationsUtil;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
@@ -97,7 +97,9 @@ public class IndexerServiceImpl implements IndexerService {
     @Inject
     private JobStatus jobStatus;
     @Inject
-    private PropertyConfigurationsUtil propertyConfigurationsUtil;
+    private PropertyConfigurationsService propertyConfigurationsService;
+    @Inject
+    private RelatedObjectCache relatedObjectCache;
 
     private DpsHeaders headers;
 
@@ -147,8 +149,8 @@ public class IndexerServiceImpl implements IndexerService {
             }
 
             Map<String, List<String>> processedKindIds = getProcessedKindIds(upsertRecordMap, deleteRecordMap, retryRecordIds);
-            if(!processedKindIds.isEmpty()) {
-                propertyConfigurationsUtil.updateAssociatedRecords(message, processedKindIds);
+            if (!processedKindIds.isEmpty()) {
+                propertyConfigurationsService.updateAssociatedRecords(message, processedKindIds);
             }
         } catch (IOException e) {
             errorMessage = e.getMessage();
@@ -187,21 +189,21 @@ public class IndexerServiceImpl implements IndexerService {
     private Map<String, List<String>> getProcessedKindIds(Map<String, Map<String, OperationType>> upsertRecordMap,
                                                           Map<String, List<String>> deleteRecordMap, List<String> retryRecordIds) {
         Map<String, List<String>> processedKindIdsMap = new HashMap<>();
-        for(Map.Entry<String, Map<String, OperationType>> entry: upsertRecordMap.entrySet()) {
+        for (Map.Entry<String, Map<String, OperationType>> entry : upsertRecordMap.entrySet()) {
             String kind = entry.getKey();
-            List<String> ids = processedKindIdsMap.containsKey(kind)? processedKindIdsMap.get(kind):new ArrayList<>();
+            List<String> ids = processedKindIdsMap.containsKey(kind) ? processedKindIdsMap.get(kind) : new ArrayList<>();
             List<String> processedIds = entry.getValue().keySet().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
             ids.addAll(processedIds);
-            if(!ids.isEmpty()) {
+            if (!ids.isEmpty()) {
                 processedKindIdsMap.put(kind, ids);
             }
         }
-        for(Map.Entry<String, List<String>> entry: deleteRecordMap.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : deleteRecordMap.entrySet()) {
             String kind = entry.getKey();
-            List<String> ids = processedKindIdsMap.containsKey(kind)? processedKindIdsMap.get(kind):new ArrayList<>();
+            List<String> ids = processedKindIdsMap.containsKey(kind) ? processedKindIdsMap.get(kind) : new ArrayList<>();
             List<String> processedIds = entry.getValue().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
             ids.addAll(processedIds);
-            if(!ids.isEmpty()) {
+            if (!ids.isEmpty()) {
                 processedKindIdsMap.put(kind, ids);
             }
         }
@@ -309,7 +311,7 @@ public class IndexerServiceImpl implements IndexerService {
     private RecordIndexerPayload.Record prepareIndexerPayload(IndexSchema schemaObj, Records.Entity storageRecord, Map<String, OperationType> idToOperationMap) {
 
         RecordIndexerPayload.Record document = null;
-        
+
         try {
             Map<String, Object> storageRecordData = storageRecord.getData();
             document = new RecordIndexerPayload.Record();
@@ -326,12 +328,13 @@ public class IndexerServiceImpl implements IndexerService {
                     this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, message, String.format("record-id: %s | %s", storageRecord.getId(), message));
                 }
 
-                // Merge extended properties if needed
-                PropertyConfigurations propertyConfigurations = propertyConfigurationsUtil.getPropertyConfiguration(storageRecord.getKind());
-                if(propertyConfigurations != null) {
+                PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfiguration(storageRecord.getKind());
+                if (propertyConfigurations != null) {
+                    // Merge extended properties
                     dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
                 }
-                propertyConfigurationsUtil.setRelatedObject(storageRecord.getId(), dataMap);
+                // We cache the dataMap in case the update of this object will trigger update of the related objects.
+                relatedObjectCache.put(storageRecord.getId(), dataMap);
 
                 document.setData(dataMap);
             }
@@ -388,8 +391,8 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
     private Map<String, Object> mergeDataFromPropertyConfiguration(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
-        Map<String, Object> extendedDataMap = propertyConfigurationsUtil.getExtendedProperties(objectId, originalDataMap, propertyConfigurations);
-        if(!extendedDataMap.isEmpty()) {
+        Map<String, Object> extendedDataMap = propertyConfigurationsService.getExtendedProperties(objectId, originalDataMap, propertyConfigurations);
+        if (!extendedDataMap.isEmpty()) {
             originalDataMap.putAll(extendedDataMap);
         }
 
@@ -518,10 +521,11 @@ public class IndexerServiceImpl implements IndexerService {
             }
             if (!bulkFailures.isEmpty()) this.jaxRsDpsLog.warning(bulkFailures);
 
-            jaxRsDpsLog.info(String.format("records in elasticsearch service bulk request: %s | successful: %s | failed: %s | time taken for bulk request: %d milliseconds", bulkRequest.numberOfActions(), succeededResponses, failedResponses, stopTime-startTime));
+            jaxRsDpsLog.info(String.format("records in elasticsearch service bulk request: %s | successful: %s | failed: %s | time taken for bulk request: %d milliseconds", bulkRequest.numberOfActions(), succeededResponses, failedResponses, stopTime - startTime));
 
             // retry entire message if all records are failing
-            if (bulkRequest.numberOfActions() == failureRecordIds.size()) throw new AppException(failedRequestStatus,  "Elastic error", failedRequestCause.getMessage(), failedRequestCause);
+            if (bulkRequest.numberOfActions() == failureRecordIds.size())
+                throw new AppException(failedRequestStatus, "Elastic error", failedRequestCause.getMessage(), failedRequestCause);
         } catch (IOException e) {
             // throw explicit 504 for IOException
             throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, "Elastic error", "Request cannot be completed in specified time.", e);

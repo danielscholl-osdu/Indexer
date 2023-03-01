@@ -32,8 +32,6 @@ public class PropertyUtil {
 
     private static final String PROPERTY_DELIMITER = ".";
     private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
-    private static final String ARRAY_SYMBOL = "[]";
-    private static final String SCHEMA_NESTED_KIND = "nested";
 
     public static boolean isPropertyPathMatched(String propertyPath, String parentPropertyPath) {
         // We should not just use propertyPath.startsWith(parentPropertyPath)
@@ -49,31 +47,28 @@ public class PropertyUtil {
     }
 
     public static Map<String, Object> combineObjectMap(Map<String, Object> to, Map<String, Object> from) {
-        for (Map.Entry<String, Object> entry: from.entrySet()) {
-            if(to.containsKey(entry.getKey())) {
+        for (Map.Entry<String, Object> entry : from.entrySet()) {
+            if (to.containsKey(entry.getKey())) {
                 Set<Object> objectSet = new HashSet<>();
 
                 Object toObject = to.get(entry.getKey());
-                if(toObject instanceof List) {
-                    objectSet.addAll((List)toObject);
-                }
-                else {
+                if (toObject instanceof List) {
+                    objectSet.addAll((List) toObject);
+                } else {
                     objectSet.add(toObject);
                 }
 
                 Object fromObject = entry.getValue();
-                if(fromObject instanceof  List) {
-                    objectSet.addAll((List)fromObject);
-                }
-                else {
+                if (fromObject instanceof List) {
+                    objectSet.addAll((List) fromObject);
+                } else {
                     objectSet.add(fromObject);
                 }
 
                 List<Object> propertyValueList = new ArrayList<>(objectSet);
                 Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
                 to.put(entry.getKey(), propertyValueList);
-            }
-            else {
+            } else {
                 to.put(entry.getKey(), entry.getValue());
             }
         }
@@ -86,9 +81,9 @@ public class PropertyUtil {
         valuePath = removeDataPrefix(valuePath);
 
         Map<String, Object> values = new HashMap<>();
-        for (Map.Entry<String, Object> entry: objectMap.entrySet()) {
+        for (Map.Entry<String, Object> entry : objectMap.entrySet()) {
             String key = entry.getKey();
-            if(key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) {
+            if (key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) {
                 key = key.replace(valuePath, propertyRootPath);
                 values.put(key, entry.getValue());
             }
@@ -96,203 +91,31 @@ public class PropertyUtil {
         return values;
     }
 
-    public static List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, PropertyConfiguration configuration, PropertyPath propertyPath) {
-        List<SchemaItem> extendedSchemaItems = new ArrayList<>();
-        String relatedPropertyPath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
-        if (relatedPropertyPath.contains(ARRAY_SYMBOL)) { // Nested
-            extendedSchemaItems = getExtendedSchemaItemsFromNestedSchema(Arrays.asList(originalSchema.getSchema()), configuration, relatedPropertyPath);
-            if(extendedSchemaItems.isEmpty()) {
-                // It is possible that the format of the source property is not defined
-                // In this case, we assume that the format of property is string in order to make its value(s) searchable
-                SchemaItem extendedSchemaItem = new SchemaItem();
-                extendedSchemaItem.setPath(configuration.getName());
-                if (configuration.isExtractFirstMatch()) {
-                    extendedSchemaItem.setKind("string");
-                } else {
-                    extendedSchemaItem.setKind("[]string");
-                }
-                extendedSchemaItems.add(extendedSchemaItem);
-            }
-        }
-        else {// Flatten
-            for (SchemaItem schemaItem : originalSchema.getSchema()) {
-                if (PropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
-                    String path = schemaItem.getPath();
-                    path = path.replace(relatedPropertyPath, configuration.getName());
-                    SchemaItem extendedSchemaItem = new SchemaItem();
-                    extendedSchemaItem.setPath(path);
-                    if (configuration.isExtractFirstMatch()) {
-                        extendedSchemaItem.setKind(schemaItem.getKind());
-                    } else {
-                        extendedSchemaItem.setKind("[]" + schemaItem.getKind());
-                    }
-                    extendedSchemaItems.add(extendedSchemaItem);
-                }
-            }
-        }
-        return extendedSchemaItems;
+    public static boolean isConcreteKind(String kind) {
+        int index = kind.lastIndexOf(":");
+        String version = kind.substring(index + 1);
+        String[] subVersions = version.split("\\.");
+        return (subVersions.length == 3);
     }
 
-    private static List<SchemaItem> getExtendedSchemaItemsFromNestedSchema(List<SchemaItem> schemaItems, PropertyConfiguration configuration, String relatedPropertyPath) {
-        List<SchemaItem> extendedSchemaItems = new ArrayList<>();
-        if(relatedPropertyPath.contains(PROPERTY_DELIMITER)) {
-            int idx = relatedPropertyPath.indexOf(PROPERTY_DELIMITER);
-            String prePath = relatedPropertyPath.substring(0, idx);
-            String postPath = relatedPropertyPath.substring(idx + 1);
-            if(prePath.endsWith(ARRAY_SYMBOL)) {
-                prePath = prePath.replace(ARRAY_SYMBOL, "");
-            }
-            for(SchemaItem schemaItem: schemaItems) {
-                if(schemaItem.getPath().equals(prePath)) {
-                    if(schemaItem.getKind().equals(SCHEMA_NESTED_KIND) && schemaItem.getProperties() != null) {
-                        schemaItems = Arrays.asList(schemaItem.getProperties());
-                        extendedSchemaItems = getExtendedSchemaItemsFromNestedSchema(schemaItems, configuration, postPath);
-                    }
-                    break;
-                }
-            }
-        }
-        else {
-            for (SchemaItem schemaItem : schemaItems) {
-                if(schemaItem.getPath().equals(relatedPropertyPath)) {
-                    SchemaItem extendedSchemaItem = new SchemaItem();
-                    extendedSchemaItem.setPath(configuration.getName());
-                    if (configuration.isExtractFirstMatch()) {
-                        extendedSchemaItem.setKind(schemaItem.getKind());
-                    } else {
-                        extendedSchemaItem.setKind("[]" + schemaItem.getKind());
-                    }
-                    extendedSchemaItems.add(extendedSchemaItem);
-                }
-            }
+    public static String getKindWithMajor(String kind) {
+        int index = kind.lastIndexOf(":");
+        String kindWithMajor = kind.substring(0, index) + ":";
+
+        String version = kind.substring(index + 1);
+        String[] subVersions = version.split("\\.");
+        if (subVersions.length > 0) {
+            kindWithMajor += subVersions[0] + ".";
         }
 
-        return extendedSchemaItems;
+        return kindWithMajor;
     }
 
-    public static List<String> getRelatedObjectIds(Map<String, Object> dataMap, RelatedObjectsSpec relatedObjectsSpec) {
-        if(dataMap == null ||  dataMap.isEmpty() || relatedObjectsSpec == null || !relatedObjectsSpec.isValid())
-            return new ArrayList<>();
-
-        String relatedObjectId = removeDataPrefix(relatedObjectsSpec.getRelatedObjectID());
-        Map<String, Object> propertyValues = getPropertyValues(dataMap, relatedObjectId, relatedObjectsSpec, relatedObjectsSpec.hasValidCondition(), false);
-
-        List<String> relatedObjectIds = new ArrayList<>();
-        if(propertyValues.containsKey(relatedObjectId)) {
-            Object value = propertyValues.get(relatedObjectId);
-            if(value instanceof List) {
-                for(Object obj : (List)value) {
-                    relatedObjectIds.add(obj.toString());
-                }
-            }
-            else {
-                relatedObjectIds.add(value.toString());
-            }
-
-        }
-        return relatedObjectIds;
-    }
-
-    public static Map<String, Object> getPropertyValues(Map<String, Object> dataMap, ValueExtraction valueExtraction, boolean isExtractFirstMatch) {
-        if(dataMap == null ||  dataMap.isEmpty() || valueExtraction == null || !valueExtraction.isValid())
-            return new HashMap<>();
-
-        String valuePath = removeDataPrefix(valueExtraction.getValuePath());
-        return getPropertyValues(dataMap, valuePath, valueExtraction, valueExtraction.hasValidCondition(), isExtractFirstMatch);
-    }
-
-    private static Map<String, Object> getPropertyValues(Map<String, Object> dataMap, String valuePath, RelatedCondition relatedCondition, boolean hasValidCondition, boolean isExtractFirstMatch) {
-        Map<String, Object> propertyValues = new HashMap<>();
-        if (valuePath.contains(ARRAY_SYMBOL)) { // Nested
-            String conditionProperty = null;
-            List<String> conditionMatches = null;
-            if(hasValidCondition) {
-                int idx = relatedCondition.getRelatedConditionProperty().lastIndexOf(PROPERTY_DELIMITER);
-                conditionProperty = relatedCondition.getRelatedConditionProperty().substring(idx + 1);
-                conditionMatches = relatedCondition.getRelatedConditionMatches();
-            }
-
-            List<Object> valueList = getPropertyValuesFromNestedObjects(dataMap, valuePath, conditionProperty, conditionMatches, hasValidCondition, isExtractFirstMatch);
-            if(!valueList.isEmpty()) {
-                if(isExtractFirstMatch) {
-                    propertyValues.put(valuePath, valueList.get(0));
-                }
-                else {
-                    propertyValues.put(valuePath, valueList);
-                }
-            }
-        } else { // Flatten
-            for (Map.Entry<String, Object> entry: dataMap.entrySet()) {
-                String key = entry.getKey();
-                if(key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) {
-                    if(isExtractFirstMatch) {
-                        propertyValues.put(key, entry.getValue());
-                    }
-                    else {
-                        List<Object> values = new ArrayList<>();
-                        values.add(entry.getValue());
-                        propertyValues.put(key, values);
-                    }
-                }
-            }
+    public static String removeIdPostfix(String objectId) {
+        if (objectId != null && objectId.endsWith(":")) {
+            objectId = objectId.substring(0, objectId.length() - 1);
         }
 
-        return propertyValues;
-    }
-
-    private static List<Object> getPropertyValuesFromNestedObjects(Map<String, Object> dataMap, String valuePath, String conditionProperty, List<String> conditionMatches, boolean hasCondition, boolean isExtractFirstMatch) {
-        Set<Object> propertyValues = new HashSet<>();
-
-        if(valuePath.contains(PROPERTY_DELIMITER)) {
-            int idx = valuePath.indexOf(PROPERTY_DELIMITER);
-            String prePath = valuePath.substring(0, idx);
-            String postPath = valuePath.substring(idx + 1);
-            try {
-                if(prePath.endsWith(ARRAY_SYMBOL)) {
-                    prePath = prePath.replace(ARRAY_SYMBOL, "");
-                    if (dataMap.containsKey(prePath) && dataMap.get(prePath) != null) {
-                        List<Map<String, Object>> nestedObjects = (List<Map<String, Object>>)dataMap.get(prePath);
-                        for (Map<String, Object> nestedObject: nestedObjects) {
-                            List<Object> valueList = getPropertyValuesFromNestedObjects(nestedObject, postPath, conditionProperty, conditionMatches, hasCondition, isExtractFirstMatch);
-                            if(valueList != null && !valueList.isEmpty()) {
-                                propertyValues.addAll(valueList);
-                                if(isExtractFirstMatch)
-                                    break;
-                            }
-                        }
-                    }
-                }
-                else {
-                    if (dataMap.containsKey(prePath) && dataMap.get(prePath) != null) {
-                        Map<String, Object> nestedObject = (Map<String, Object>)dataMap.get(prePath);
-                        List<Object> valueList = getPropertyValuesFromNestedObjects(nestedObject, postPath, conditionProperty, conditionMatches, hasCondition, isExtractFirstMatch);
-                        if(valueList != null && !valueList.isEmpty()) {
-                            propertyValues.addAll(valueList);
-                        }
-                    }
-                }
-            }
-            catch(Exception ex) {
-                //Ignore cast exception
-            }
-        }
-        else if(dataMap.containsKey(valuePath) && dataMap.get(valuePath) != null) {
-            Object extractPropertyValue = dataMap.get(valuePath);
-            if(hasCondition) {
-                if(dataMap.containsKey(conditionProperty) && dataMap.get(conditionProperty) != null) {
-                    String conditionPropertyValue = dataMap.get(conditionProperty).toString();
-                    if(conditionMatches.contains(conditionPropertyValue) && extractPropertyValue != null) {
-                        propertyValues.add(extractPropertyValue);
-                    }
-                }
-            }
-            else {
-                propertyValues.add(extractPropertyValue);
-            }
-        }
-
-        List<Object> propertyValueList = new ArrayList<>(propertyValues);
-        Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
-        return propertyValueList;
+        return objectId;
     }
 }
