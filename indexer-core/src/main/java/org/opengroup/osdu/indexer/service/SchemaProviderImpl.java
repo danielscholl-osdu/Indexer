@@ -15,12 +15,15 @@
 package org.opengroup.osdu.indexer.service;
 
 import com.google.api.client.http.HttpMethods;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import javax.inject.Inject;
+
+import com.google.api.client.util.Strings;
+import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
@@ -29,6 +32,7 @@ import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.SchemaInfoResponse;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +41,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SchemaProviderImpl implements SchemaService {
+    private final Gson gson = new Gson();
+    private final int MAX_NUMBER_OF_SCHEMA_INFOS = 10000;
 
     @Inject
     private JaxRsDpsLog log;
@@ -63,6 +69,20 @@ public class SchemaProviderImpl implements SchemaService {
     public String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException {
         String schemaServiceSchema = getFromSchemaService(kind);
         return schemaServiceSchema;
+    }
+
+    @Override
+    public SchemaInfoResponse getSchemaInfos(String authority, String source, String entityType, String majorVersion, String minorVersion, String patchVersion, boolean latestVersion) throws URISyntaxException, UnsupportedEncodingException {
+        String queryParams = buildQueryString(authority, source, entityType, majorVersion, minorVersion, patchVersion, latestVersion);
+        String url = String.format("%s?%s", configurationProperties.getSchemaHost(), queryParams);
+        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
+                .httpMethod(HttpMethods.GET)
+                .headers(this.requestInfo.getHeadersMapWithDwdAuthZ())
+                .url(url)
+                .build();
+
+        HttpResponse response = this.urlFetchService.sendRequest(request);
+        return gson.fromJson(response.getBody(), SchemaInfoResponse.class);
     }
 
     protected String getFromSchemaService(String kind) throws UnsupportedEncodingException, URISyntaxException {
@@ -98,5 +118,30 @@ public class SchemaProviderImpl implements SchemaService {
                 .build();
 
         return this.urlFetchService.sendRequest(request);
+    }
+
+    private String buildQueryString(String authority, String source, String entityType, String majorVersion, String minorVersion, String patchVersion, boolean latestVersion) throws UnsupportedEncodingException {
+        StringBuilder stringBuilder = new StringBuilder();
+        addQueryParam(stringBuilder, "authority", authority);
+        addQueryParam(stringBuilder, "source", source);
+        addQueryParam(stringBuilder, "entityType", entityType);
+        addQueryParam(stringBuilder, "schemaVersionMajor", majorVersion);
+        addQueryParam(stringBuilder, "schemaVersionMinor", minorVersion);
+        addQueryParam(stringBuilder, "schemaVersionPatch", patchVersion);
+        addQueryParam(stringBuilder, "latestVersion", String.valueOf(latestVersion));
+        addQueryParam(stringBuilder, "limit", String.valueOf(MAX_NUMBER_OF_SCHEMA_INFOS));
+        return stringBuilder.toString();
+    }
+
+    private StringBuilder addQueryParam(StringBuilder stringBuilder, String paramName, String paramValue) {
+        if (Strings.isNullOrEmpty(paramName) || Strings.isNullOrEmpty(paramValue))
+            return stringBuilder;
+
+        if (stringBuilder.length() > 0)
+            stringBuilder.append("&");
+        stringBuilder.append(paramName);
+        stringBuilder.append("=");
+        stringBuilder.append(paramValue);
+        return stringBuilder;
     }
 }

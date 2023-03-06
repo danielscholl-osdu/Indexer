@@ -32,16 +32,14 @@ import org.opengroup.osdu.indexer.cache.ParentChildRelatedObjectsSpecsCache;
 import org.opengroup.osdu.indexer.cache.PropertyConfigurationsCache;
 import org.opengroup.osdu.indexer.cache.RelatedObjectCache;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.opengroup.osdu.indexer.model.Constants;
-import org.opengroup.osdu.indexer.model.SearchRecord;
-import org.opengroup.osdu.indexer.model.SearchRequest;
-import org.opengroup.osdu.indexer.model.SearchResponse;
+import org.opengroup.osdu.indexer.model.*;
 import org.opengroup.osdu.indexer.model.indexproperty.*;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -83,6 +81,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private RelatedObjectCache relatedObjectCache;
     @Inject
     private SearchService searchService;
+    @Inject
+    private SchemaService schemaService;
     @Inject
     private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
     @Inject
@@ -235,7 +235,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         if (kindCache.containsKey(kind)) {
             return kindCache.get(kind);
         } else {
-            String concreteKind = searchConcreteKind(kind);
+            String concreteKind = getLatestVersionOfKind(kind);
             if (!Strings.isNullOrEmpty(concreteKind)) {
                 kindCache.put(kind, concreteKind);
             }
@@ -377,6 +377,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     /**
      * public access is for unit test
+     *
      * @param dataMap
      * @param relatedObjectsSpec
      * @return
@@ -387,7 +388,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
         Map<String, Object> propertyValues = getPropertyValues(dataMap, relatedObjectsSpec.getRelatedObjectID(), relatedObjectsSpec, relatedObjectsSpec.hasValidCondition(), false);
         List<String> relatedObjectIds = new ArrayList<>();
-        for(Object value: propertyValues.values()) {
+        for (Object value : propertyValues.values()) {
             if (value instanceof List) {
                 for (Object obj : (List) value) {
                     relatedObjectIds.add(obj.toString());
@@ -401,6 +402,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     /**
      * public access is for unit test
+     *
      * @param dataMap
      * @param valueExtraction
      * @param isExtractFirstMatch
@@ -598,18 +600,29 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         }
     }
 
-    /****************************** search methods that use search service to get the data **************************************/
-
-    private String searchConcreteKind(String kindWithMajor) {
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(kindWithMajor + "*");
-        searchRequest.setReturnedFields(Arrays.asList("kind"));
-        SearchRecord searchRecord = searchFirstRecord(searchRequest);
-        if (searchRecord != null) {
-            return searchRecord.getKind();
+    private String getLatestVersionOfKind(String kindWithMajor) {
+        Kind kind = new Kind(kindWithMajor);
+        String version = kind.getVersion();
+        String[] subVersions = version.split("\\.");
+        String majorVersion = (subVersions.length >= 1) ? subVersions[0] : null;
+        String minorVersion = (subVersions.length >= 2) ? subVersions[1] : null;
+        String patchVersion = (subVersions.length >= 3) ? subVersions[2] : null;
+        try {
+            SchemaInfoResponse response = schemaService.getSchemaInfos(kind.getAuthority(), kind.getSource(), kind.getType(), majorVersion, minorVersion, patchVersion, true);
+            if (response != null && response.getSchemaInfos().size() > 0) {
+                SchemaInfo schemaInfo = response.getSchemaInfos().get(0);
+                return schemaInfo.getSchemaIdentity().getId();
+            }
+        } catch (URISyntaxException e) {
+            jaxRsDpsLog.error("failed to get schema info", e);
+        } catch (UnsupportedEncodingException e) {
+            jaxRsDpsLog.error("failed to get schema info", e);
         }
+
         return null;
     }
+
+    /****************************** search methods that use search service to get the data **************************************/
 
     private PropertyConfigurations searchConfigurations(String kind) {
         SearchRequest searchRequest = new SearchRequest();
