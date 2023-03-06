@@ -32,6 +32,10 @@ import org.springframework.context.annotation.Configuration;
 @RequiredArgsConstructor
 public class CacheConfig {
 
+    private final RedisCacheBuilder<String, String> schemaCacheBuilder;
+    private final RedisCacheBuilder<String, ClusterSettings> clusterSettingsCacheBuilder;
+    private final RedisCacheBuilder<String, Boolean> redisCacheBuilder;
+
     @Bean
     public ISchemaCache fieldTypeMappingCache(RedisCache<String, String> schemaCache) {
         return new SchemaCache(schemaCache);
@@ -39,8 +43,7 @@ public class CacheConfig {
 
     @Bean
     public RedisCache<String, String> schemaCache(GcpConfigurationProperties appProperties) {
-        RedisCacheBuilder<String, String> cacheBuilder = new RedisCacheBuilder<>();
-        return cacheBuilder.buildRedisCache(
+        return schemaCacheBuilder.buildRedisCache(
                 appProperties.getRedisSearchHost(),
                 Integer.parseInt(appProperties.getRedisSearchPort()),
                 appProperties.getRedisSearchPassword(),
@@ -58,8 +61,7 @@ public class CacheConfig {
 
     @Bean
     public RedisCache<String, ClusterSettings> elasticCache(GcpConfigurationProperties gcpAppServiceConfig) {
-        RedisCacheBuilder<String, ClusterSettings> cacheBuilder = new RedisCacheBuilder<>();
-        return cacheBuilder.buildRedisCache(
+        return clusterSettingsCacheBuilder.buildRedisCache(
                 gcpAppServiceConfig.getRedisSearchHost(),
                 Integer.parseInt(gcpAppServiceConfig.getRedisSearchPort()),
                 gcpAppServiceConfig.getRedisSearchPassword(),
@@ -77,8 +79,7 @@ public class CacheConfig {
 
     @Bean
     public RedisCache<String, Boolean> redisCache(GcpConfigurationProperties gcpAppServiceConfig) {
-        RedisCacheBuilder<String, Boolean> cacheBuilder = new RedisCacheBuilder<>();
-        return cacheBuilder.buildRedisCache(
+        return redisCacheBuilder.buildRedisCache(
                 gcpAppServiceConfig.getRedisSearchHost(),
                 Integer.parseInt(gcpAppServiceConfig.getRedisSearchPort()),
                 gcpAppServiceConfig.getRedisSearchPassword(),
