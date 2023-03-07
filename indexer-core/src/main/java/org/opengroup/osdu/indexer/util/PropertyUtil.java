@@ -42,21 +42,20 @@ public class PropertyUtil {
         return !Strings.isNullOrEmpty(propertyPath) && (propertyPath.startsWith(parentPropertyPath + PROPERTY_DELIMITER) || propertyPath.equals(parentPropertyPath));
     }
 
-    public static boolean areMajorKindsSame(String leftKind, String rightKind) {
+    public static boolean hasSameMajorKind(String left, String right) {
         try {
-            Kind left = new Kind(leftKind);
-            Kind right = new Kind(rightKind);
+            Kind leftKind = new Kind(left);
+            Kind rightKind = new Kind(right);
 
-            String[] leftVersions = left.getVersion().split("\\.");
-            String[] rightVersions = right.getVersion().split("\\.");
-            return left.getAuthority().equals(right.getAuthority()) &&
-                    left.getSource().equals(right.getSource()) &&
-                    left.getType().equals(right.getType()) &&
-                    leftVersions.length >= 1 &&
-                    rightVersions.length >= 1 &&
+            String[] leftVersions = leftKind.getVersion().split("\\.");
+            String[] rightVersions = rightKind.getVersion().split("\\.");
+            return leftKind.getAuthority().equals(rightKind.getAuthority()) &&
+                    leftKind.getSource().equals(rightKind.getSource()) &&
+                    leftKind.getType().equals(rightKind.getType()) &&
                     leftVersions[0].equals(rightVersions[0]);
         }
         catch(Exception ex) {
+            // catch exception in case either left kind or right kind is an invalid kind
             return false;
         }
     }

@@ -609,7 +609,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         List<ParentChildRelatedObjectsSpec> specList = getParentChildRelatedObjectsSpecs(childKind);
         Set ancestorSet = new HashSet<>(Arrays.asList(ancestors.split(ANCESTRY_KINDS_DELIMITER)));
         for (ParentChildRelatedObjectsSpec spec : specList) {
-            List childRecordIds = filterChildRecordIds(spec, childRecordChangeInfos);
+            List childRecordIds = getChildRecordIdsWithExtendedPropertiesChanged(spec, childRecordChangeInfos);
             if (childRecordIds.isEmpty())
                 continue;
 
@@ -643,24 +643,27 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         }
     }
 
-    private List<String> filterChildRecordIds(ParentChildRelatedObjectsSpec spec, List<RecordChangeInfo> childRecordChangeInfos) {
+    private List<String> getChildRecordIdsWithExtendedPropertiesChanged(ParentChildRelatedObjectsSpec spec, List<RecordChangeInfo> childRecordChangeInfos) {
         List<String> childRecordIds = new ArrayList<>();
         for (RecordChangeInfo recordChangeInfo : childRecordChangeInfos) {
-            if (recordChangeInfo.getRecordInfo().getOp().equals(OperationType.create.getValue()) ||
-                    recordChangeInfo.getRecordInfo().getOp().equals(OperationType.delete.getValue())) {
-                childRecordIds.add(recordChangeInfo.getRecordInfo().getId());
-            } else if (recordChangeInfo.getRecordInfo().getOp().equals(OperationType.update.getValue())) {
-                List<String> updatedProperties = recordChangeInfo.getUpdatedProperties().stream().filter(updatedProperty -> {
+            if (recordChangeInfo.getRecordInfo().getOp().equals(OperationType.update.getValue())) {
+                String extendedChangedProperty = recordChangeInfo.getUpdatedProperties().stream().filter(p -> {
                     for (String valuePath : spec.getChildValuePaths()) {
-                        if (PropertyUtil.isPropertyPathMatched(valuePath, updatedProperty) || PropertyUtil.isPropertyPathMatched(updatedProperty, valuePath)) {
+                        if (PropertyUtil.isPropertyPathMatched(valuePath, p) ||
+                            PropertyUtil.isPropertyPathMatched(p, valuePath)) {
                             return true;
                         }
                     }
                     return false;
-                }).collect(Collectors.toList());
-                if (!updatedProperties.isEmpty()) {
+                }).findFirst().orElse(null);
+
+                if (extendedChangedProperty != null) {
+                    // The parent property that is extended by the children was updated
                     childRecordIds.add(recordChangeInfo.getRecordInfo().getId());
                 }
+            }
+            else {
+                childRecordIds.add(recordChangeInfo.getRecordInfo().getId());
             }
         }
         return childRecordIds;
@@ -682,7 +685,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
                     // Find any parent record which has changed property that is extended by the child (kind)
                     RecordChangeInfo parentRecordChangeInfo = parentRecordChangeInfos.stream().filter(info -> {
-                        if (PropertyUtil.areMajorKindsSame(info.getRecordInfo().getKind(), relatedObjectKind)) {
+                        if (PropertyUtil.hasSameMajorKind(info.getRecordInfo().getKind(), relatedObjectKind)) {
                             List<String> matchedProperties = info.getUpdatedProperties().stream().filter(
                                     p -> PropertyUtil.isPropertyPathMatched(p, valuePath) || PropertyUtil.isPropertyPathMatched(valuePath, p)).collect(Collectors.toList());
                             return !matchedProperties.isEmpty();
