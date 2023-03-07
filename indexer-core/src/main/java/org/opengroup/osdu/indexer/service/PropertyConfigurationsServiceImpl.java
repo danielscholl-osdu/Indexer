@@ -588,10 +588,14 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                         spec.setParentKind(configurations.getCode());
                         spec.setParentObjectIdPath(propertyPath.getRelatedObjectsSpec().getRelatedObjectID());
                         spec.setChildKind(kindWithMajor);
-                        spec.getChildValuePaths().add(propertyPath.getValueExtraction().getValuePath());
+                        String valuePath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
                         if (specs.containsKey(spec.hashCode())) {
-                            specs.get(spec.hashCode()).getChildValuePaths().add(propertyPath.getValueExtraction().getValuePath());
+                            List<String> childValuePaths = specs.get(spec.hashCode()).getChildValuePaths();
+                            if(!childValuePaths.contains(valuePath)) {
+                                childValuePaths.add(valuePath);
+                            }
                         } else {
+                            spec.getChildValuePaths().add(valuePath);
                             specs.put(spec.hashCode(), spec);
                         }
                     }
