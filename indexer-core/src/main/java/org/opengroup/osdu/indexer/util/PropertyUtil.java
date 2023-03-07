@@ -222,6 +222,14 @@ public class PropertyUtil {
                         }
                     }
                     else {
+                        // Special handle of number. The integer value from the search result could be converted to double
+                        if(left instanceof Double || right instanceof Double) {
+                            double leftValue = Double.parseDouble(left.toString());
+                            double rightValue = Double.parseDouble(right.toString());
+                            if(Double.compare(leftValue, rightValue) == 0) {
+                                continue; // The left/right values are the same in this case
+                            }
+                        }
                         changedProperties.add(entry.getKey());
                     }
                 }
