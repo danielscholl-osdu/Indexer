@@ -181,7 +181,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             extendedDataMap.putAll(allPropertyValues);
         }
         if (!associatedIdentities.isEmpty()) {
-            extendedDataMap.put(ASSOCIATED_IDENTITIES_PROPERTY, associatedIdentities.toArray());
+            extendedDataMap.put(ASSOCIATED_IDENTITIES_PROPERTY, Arrays.asList(associatedIdentities.toArray()));
         }
 
         return extendedDataMap;
