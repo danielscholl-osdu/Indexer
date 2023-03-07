@@ -42,7 +42,6 @@ import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.indexer.cache.RelatedObjectCache;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
@@ -98,8 +97,6 @@ public class IndexerServiceImpl implements IndexerService {
     private JobStatus jobStatus;
     @Inject
     private PropertyConfigurationsService propertyConfigurationsService;
-    @Inject
-    private RelatedObjectCache relatedObjectCache;
 
     private DpsHeaders headers;
 
@@ -148,9 +145,10 @@ public class IndexerServiceImpl implements IndexerService {
                 retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
             }
 
-            Map<String, List<String>> processedKindIds = getProcessedKindIds(upsertRecordMap, deleteRecordMap, retryRecordIds);
-            if (!processedKindIds.isEmpty()) {
-                propertyConfigurationsService.updateAssociatedRecords(message, processedKindIds);
+            Map<String, List<String>> upsertKindIds = getUpsertKindIds(upsertRecordMap, retryRecordIds);
+            Map<String, List<String>> deleteKindIds = getDeleteRecordKindIds(deleteRecordMap, retryRecordIds);
+            if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
+                propertyConfigurationsService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
             }
         } catch (IOException e) {
             errorMessage = e.getMessage();
@@ -186,28 +184,32 @@ public class IndexerServiceImpl implements IndexerService {
         }
     }
 
-    private Map<String, List<String>> getProcessedKindIds(Map<String, Map<String, OperationType>> upsertRecordMap,
-                                                          Map<String, List<String>> deleteRecordMap, List<String> retryRecordIds) {
-        Map<String, List<String>> processedKindIdsMap = new HashMap<>();
+    private Map<String, List<String>> getUpsertKindIds(Map<String, Map<String, OperationType>> upsertRecordMap, List<String> retryRecordIds) {
+        Map<String, List<String>> upsertKindIds = new HashMap<>();
         for (Map.Entry<String, Map<String, OperationType>> entry : upsertRecordMap.entrySet()) {
             String kind = entry.getKey();
-            List<String> ids = processedKindIdsMap.containsKey(kind) ? processedKindIdsMap.get(kind) : new ArrayList<>();
+            List<String> ids = upsertKindIds.containsKey(kind) ? upsertKindIds.get(kind) : new ArrayList<>();
             List<String> processedIds = entry.getValue().keySet().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
             ids.addAll(processedIds);
             if (!ids.isEmpty()) {
-                processedKindIdsMap.put(kind, ids);
+                upsertKindIds.put(kind, ids);
             }
         }
+        return upsertKindIds;
+    }
+
+    private Map<String, List<String>> getDeleteRecordKindIds(Map<String, List<String>> deleteRecordMap, List<String> retryRecordIds) {
+        Map<String, List<String>> deletedRecordKindIdsMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : deleteRecordMap.entrySet()) {
             String kind = entry.getKey();
-            List<String> ids = processedKindIdsMap.containsKey(kind) ? processedKindIdsMap.get(kind) : new ArrayList<>();
+            List<String> ids = deletedRecordKindIdsMap.containsKey(kind) ? deletedRecordKindIdsMap.get(kind) : new ArrayList<>();
             List<String> processedIds = entry.getValue().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
             ids.addAll(processedIds);
             if (!ids.isEmpty()) {
-                processedKindIdsMap.put(kind, ids);
+                deletedRecordKindIdsMap.put(kind, ids);
             }
         }
-        return processedKindIdsMap;
+        return deletedRecordKindIdsMap;
     }
 
     private void processSchemaEvents(RestHighLevelClient restClient,
@@ -334,7 +336,7 @@ public class IndexerServiceImpl implements IndexerService {
                     dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
                 }
                 // We cache the dataMap in case the update of this object will trigger update of the related objects.
-                relatedObjectCache.put(storageRecord.getId(), dataMap);
+                propertyConfigurationsService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
 
                 document.setData(dataMap);
             }

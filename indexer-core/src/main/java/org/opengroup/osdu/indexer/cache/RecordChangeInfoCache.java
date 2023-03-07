@@ -13,18 +13,15 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.model;
+package org.opengroup.osdu.indexer.cache;
 
-import lombok.Data;
-import lombok.ToString;
+import org.opengroup.osdu.core.common.cache.VmCache;
+import org.opengroup.osdu.indexer.model.RecordChangeInfo;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
-
-@Data
-@ToString
-public class SchemaInfoResponse {
-    private List<SchemaInfo> schemaInfos;
-    private int offset;
-    private int count;
-    private int totalCount;
+@Component
+public class RecordChangeInfoCache extends VmCache<String, RecordChangeInfo> {
+    public RecordChangeInfoCache() {
+        super(300, 1000);
+    }
 }

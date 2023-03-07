@@ -16,15 +16,12 @@
 package org.opengroup.osdu.indexer.model;
 
 import lombok.Data;
-import lombok.ToString;
+import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 
 import java.util.List;
 
 @Data
-@ToString
-public class SchemaInfoResponse {
-    private List<SchemaInfo> schemaInfos;
-    private int offset;
-    private int count;
-    private int totalCount;
+public class RecordChangeInfo {
+    private List<String> updatedProperties;
+    private RecordInfo recordInfo;
 }

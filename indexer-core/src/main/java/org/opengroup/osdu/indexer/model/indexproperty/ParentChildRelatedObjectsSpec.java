@@ -17,11 +17,19 @@ package org.opengroup.osdu.indexer.model.indexproperty;
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 public class ParentChildRelatedObjectsSpec {
     private String parentKind;
-    private String parentObjectId;
+    private String parentObjectIdPath;
     private String childKind;
+    private List<String> childValuePaths;
+
+    public ParentChildRelatedObjectsSpec() {
+        childValuePaths = new ArrayList<>();
+    }
 
     @Override
     public boolean equals(Object another) {
@@ -39,7 +47,7 @@ public class ParentChildRelatedObjectsSpec {
         stringBuilder.append("<>");
         stringBuilder.append((childKind != null)? childKind : "__");
         stringBuilder.append("<>");
-        stringBuilder.append((parentObjectId != null)? parentObjectId : "__");
+        stringBuilder.append((parentObjectIdPath != null)? parentObjectIdPath : "__");
         return stringBuilder.toString().hashCode();
     }
 }

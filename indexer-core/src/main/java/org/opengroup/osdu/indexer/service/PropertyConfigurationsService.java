@@ -32,5 +32,7 @@ public interface PropertyConfigurationsService {
 
     String resolveConcreteKind(String kind);
 
-    void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> processedKindIdsMap);
+    void cacheDataRecord(String recordId, String kind, Map<String, Object> dataMap);
+
+    void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> upsertKindIds, Map<String, List<String>> deleteKindIds);
 }

@@ -18,6 +18,7 @@ package org.opengroup.osdu.indexer.util;
 import com.google.api.client.util.Strings;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import org.opengroup.osdu.indexer.model.Kind;
 
 import java.util.*;
 
@@ -39,6 +40,25 @@ public class PropertyUtil {
         // For example, if parentPropertyPath is "data.FacilityName" and propertyPath.startsWith(parentPropertyPath) is used,
         // then the property "data.FacilityNameAlias" will be matched and unexpected result will be returned.
         return !Strings.isNullOrEmpty(propertyPath) && (propertyPath.startsWith(parentPropertyPath + PROPERTY_DELIMITER) || propertyPath.equals(parentPropertyPath));
+    }
+
+    public static boolean areMajorKindsSame(String leftKind, String rightKind) {
+        try {
+            Kind left = new Kind(leftKind);
+            Kind right = new Kind(rightKind);
+
+            String[] leftVersions = left.getVersion().split("\\.");
+            String[] rightVersions = right.getVersion().split("\\.");
+            return left.getAuthority().equals(right.getAuthority()) &&
+                    left.getSource().equals(right.getSource()) &&
+                    left.getType().equals(right.getType()) &&
+                    leftVersions.length >= 1 &&
+                    rightVersions.length >= 1 &&
+                    leftVersions[0].equals(rightVersions[0]);
+        }
+        catch(Exception ex) {
+            return false;
+        }
     }
 
     public static String removeDataPrefix(String path) {
