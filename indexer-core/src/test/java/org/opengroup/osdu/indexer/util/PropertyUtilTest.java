@@ -15,13 +15,25 @@
 
 package org.opengroup.osdu.indexer.util;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import lombok.SneakyThrows;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 @RunWith(SpringRunner.class)
 public class PropertyUtilTest {
+    private static final Gson gson = new Gson();
 
     @Test
     public void isPropertyPathMatched() {
@@ -44,5 +56,40 @@ public class PropertyUtilTest {
         Assert.assertNull(PropertyUtil.removeDataPrefix(null));
     }
 
+    @Test
+    public void getChangedProperties() {
+        Map<String, Object> dataMapLeft = getDataMap("well.json");
+        Map<String, Object> dataMapRight = getDataMap("well2.json");
+        List<String> changedProperties = PropertyUtil.getChangedProperties(dataMapLeft, dataMapRight);
+        Assert.assertEquals(3, changedProperties.size());
+        List<String> expectedChangedWellProperties = Arrays.asList("VirtualProperties.DefaultName", "VerticalMeasurements[].VerticalMeasurementID", "FacilityName");
+        changedProperties.forEach(p -> Assert.assertTrue(expectedChangedWellProperties.contains(p)));
+
+        dataMapLeft = getDataMap("wellLog.json");
+        dataMapRight = getDataMap("wellLog2.json");
+        changedProperties = PropertyUtil.getChangedProperties(dataMapLeft, dataMapRight);
+        List<String> expectedChangedWellLogProperties = Arrays.asList("Curves[].CurveID");
+        changedProperties.forEach(p -> Assert.assertTrue(expectedChangedWellLogProperties.contains(p)));
+    }
+
+
+    private Map<String, Object> getDataMap(String file) {
+        String jsonText = getJsonFromFile(file);
+        Type type = new TypeToken<Map<String, Object>>() {}.getType();
+        return  gson.fromJson(jsonText, type);
+    }
+
+    @SneakyThrows
+    private String getJsonFromFile(String file) {
+        InputStream inStream = this.getClass().getResourceAsStream("/indexproperty/" + file);
+        BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
+        StringBuilder stringBuilder = new StringBuilder();
+        String sCurrentLine;
+        while ((sCurrentLine = br.readLine()) != null)
+        {
+            stringBuilder.append(sCurrentLine).append("\n");
+        }
+        return stringBuilder.toString();
+    }
 
 }

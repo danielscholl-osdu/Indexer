@@ -16,9 +16,8 @@
 package org.opengroup.osdu.indexer.util;
 
 import com.google.api.client.util.Strings;
-import org.opengroup.osdu.core.common.model.storage.Schema;
-import org.opengroup.osdu.core.common.model.storage.SchemaItem;
-import org.opengroup.osdu.indexer.model.indexproperty.*;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 
 import java.util.*;
 
@@ -31,6 +30,8 @@ public class PropertyUtil {
 
 
     private static final String PROPERTY_DELIMITER = ".";
+    private static final String NESTED_OBJECT_DELIMITER = "[].";
+    private static final String ARRAY_SYMBOL = "[]";
     private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
 
     public static boolean isPropertyPathMatched(String propertyPath, String parentPropertyPath) {
@@ -136,5 +137,82 @@ public class PropertyUtil {
             objectId = objectId.substring(0, objectId.length() - 1);
         }
         return objectId;
+    }
+
+    public static List<String> getChangedProperties(Map<String, Object> leftMap, Map<String, Object> rightMap) {
+        if(leftMap == null && rightMap == null) {
+            return new ArrayList<>();
+        }
+
+        if(leftMap == null) {
+            leftMap = new HashMap<>();
+        }
+        if(rightMap == null) {
+            rightMap = new HashMap<>();
+        }
+        MapDifference<String, Object> difference = Maps.difference(leftMap, rightMap);
+        if(difference.areEqual()) {
+            return new ArrayList<>();
+        }
+
+        Set<String> changedProperties = new HashSet<>();
+        if (difference.entriesOnlyOnLeft().size() > 0) {
+            difference.entriesOnlyOnLeft().forEach((key, value) -> changedProperties.add(key));
+        }
+        if (difference.entriesOnlyOnRight().size() > 0) {
+            difference.entriesOnlyOnRight().forEach((key, value) -> changedProperties.add(key));
+        }
+        if (difference.entriesDiffering().size() > 0) {
+            for(Map.Entry<String, MapDifference.ValueDifference<Object>> entry : difference.entriesDiffering().entrySet()) {
+                try {
+                    MapDifference.ValueDifference<Object> valueDifference = entry.getValue();
+                    Object left = valueDifference.leftValue();
+                    Object right = valueDifference.rightValue();
+                    if(left == null && right == null) {
+                        continue;
+                    }
+                    else if(left == null || right == null) {
+                        changedProperties.add(entry.getKey());
+                    }
+                    else if(left instanceof Map) {
+                        Map<String, Object> innerLeftMap = (Map<String, Object>)left;
+                        Map<String, Object> innerRightMap = (Map<String, Object>)right;
+                        List<String> nestedChangedProperties = getChangedProperties(innerLeftMap, innerRightMap);
+                        for (String nestedProperty: nestedChangedProperties) {
+                            String p = entry.getKey() + PROPERTY_DELIMITER + nestedProperty;
+                            changedProperties.add(p);
+                        }
+                    }
+                    else if(left instanceof List) {
+                        List<Object> innerLeftList = (List<Object>)left;
+                        List<Object> innerRightList = (List<Object>)right;
+                        if(innerLeftList.size() != innerRightList.size()) {
+                            String p = entry.getKey() + ARRAY_SYMBOL;
+                            changedProperties.add(p);
+                        }
+                        else {
+                            for(int i = 0; i < innerLeftList.size(); i++) {
+                                Map<String, Object> innerLeftMap = (Map<String, Object>)innerLeftList.get(i);
+                                Map<String, Object> innerRightMap = (Map<String, Object>)innerRightList.get(i);
+                                List<String> nestedChangedProperties = getChangedProperties(innerLeftMap, innerRightMap);
+                                for (String nestedProperty: nestedChangedProperties) {
+                                    String p = entry.getKey() + NESTED_OBJECT_DELIMITER + nestedProperty;
+                                    changedProperties.add(p);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        changedProperties.add(entry.getKey());
+                    }
+                }
+                catch (Exception ex) {
+                    // assume there is difference in this case
+                    changedProperties.add(entry.getKey());
+                }
+            }
+        }
+
+        return new ArrayList<>(changedProperties);
     }
 }
