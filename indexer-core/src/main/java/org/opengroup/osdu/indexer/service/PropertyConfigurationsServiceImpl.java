@@ -153,7 +153,16 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                     } else {
                         List<SearchRecord> childrenRecords = searchChildrenRecords(relatedObjectsSpec.getRelatedObjectKind(), relatedObjectsSpec.getRelatedObjectID(), objectId);
                         for (SearchRecord record : childrenRecords) {
-                            Map<String, Object> propertyValues = getPropertyValues(record.getData(), path.getValueExtraction(), configuration.isExtractFirstMatch());
+                            Map<String, Object> childDataMap;
+                            // If the child record is in the cache, that means the record was updated very recently.
+                            // The search result from elasticsearch may not be the latest version.
+                            if(this.relatedObjectCache.get(record.getId()) != null) {
+                                childDataMap = this.relatedObjectCache.get(record.getId());
+                            }
+                            else {
+                                childDataMap = record.getData();
+                            }
+                            Map<String, Object> propertyValues = getPropertyValues(childDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
                             propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
                             if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                                 allPropertyValues = propertyValues;
