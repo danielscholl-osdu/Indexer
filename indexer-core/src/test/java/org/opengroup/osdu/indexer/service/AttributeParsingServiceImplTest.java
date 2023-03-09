@@ -31,11 +31,15 @@ import org.opengroup.osdu.indexer.util.parser.NumberParser;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.lang.reflect.Type;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -315,8 +319,21 @@ public class AttributeParsingServiceImplTest {
     @Test
     public void should_returnGeoShape_given_validTreeMap_tryGetGeoShapeTest() {
         final String shapeJson = "{\"type\":\"Polygon\",\"coordinates\":[[[100,0],[101,0],[101,1],[100,1],[100,0]]]}";
-        Map<String, Object> storageData = new HashMap<>();
-        storageData.put("location", parseJson(shapeJson));
+        Map<String, Object> storageData = parseJson(shapeJson);
+
+        when(this.geoShapeParser.parseGeoJson(storageData)).thenReturn(new HashMap<>());
+
+        Map<String, Object> dataMap = new HashMap<>();
+
+        this.sut.tryParseGeojson("", "location", storageData, dataMap);
+
+        assertFalse(dataMap.isEmpty());
+    }
+
+    @Test
+    public void should_returnGeoShape_given_validTreeMap_tryGetGeoShapeWithPropertiesTest() {
+        final String shapeJson = "{\"features\":[{\"geometry\":{\"type\":\"Point\",\"coordinates\":[-105.01621,39.57422]},\"properties\":{\"id\":\"opendes:work-product-component--GenericRepresentation:0be3c0de-7844-4bcb-a17d-83de84cd2eca\",\"uri\":\"wdms:opendes:1188d27c-9132-41ec-b281-502a6245d00c:f597df66-4197-4347-99c2-acb58ce27ef3:0be3c0de-7844-4bcb-a17d-83de84cd2eca\"},\"type\":\"Feature\"}],\"type\":\"FeatureCollection\"}";
+        Map<String, Object> storageData = parseJson(shapeJson);
 
         when(this.geoShapeParser.parseGeoJson(storageData)).thenReturn(new HashMap<>());
 
@@ -330,8 +347,7 @@ public class AttributeParsingServiceImplTest {
     @Test
     public void should_throwException_given_geoShapeParingFailed() {
         final String shapeJson = "{\"type\":\"Polygon\",\"coordinates\":[[[100,NaN],[101,0],[101,1],[100,1],[100,0]]]}";
-        Map<String, Object> storageData = new HashMap<>();
-        storageData.put("location", parseJson(shapeJson));
+        Map<String, Object> storageData = parseJson(shapeJson);
 
         when(this.geoShapeParser.parseGeoJson(any())).thenThrow(new IllegalArgumentException("geo coordinates must be numbers"));
 

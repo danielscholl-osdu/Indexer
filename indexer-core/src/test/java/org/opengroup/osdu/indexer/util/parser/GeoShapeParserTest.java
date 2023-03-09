@@ -90,6 +90,13 @@ public class GeoShapeParserTest {
     }
 
     @Test
+    public void should_parseValidWithPropertyPoint() {
+        String shapeJson = getGeoShapeFromFile("input/valid_point_with_property.json");
+        String expectedParsedShape = getGeoShapeFromFile("expected/valid_point.json");
+        this.validateInput(this.sut::parseGeoJson, shapeJson, expectedParsedShape, Strings.EMPTY);
+    }
+
+    @Test
     public void should_parseValidMultiPoint() {
         String shapeJson = getGeoShapeFromFile("input/valid_multi_point.json");
         String expectedParsedShape =  getGeoShapeFromFile("expected/valid_multi_point.json");
