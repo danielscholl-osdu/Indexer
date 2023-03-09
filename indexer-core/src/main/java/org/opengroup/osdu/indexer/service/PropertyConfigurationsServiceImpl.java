@@ -69,11 +69,11 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     @Inject
     private IndexerConfigurationProperties configurationProperties;
     @Inject
-    private PropertyConfigurationsCache propertyConfigurationCache;
+    private PartitionSafePropertyConfigurationsCache propertyConfigurationCache;
     @Inject
-    private ParentChildRelatedObjectsSpecsCache parentChildRelatedObjectsSpecsCache;
+    private PartitionSafeParentChildRelatedObjectsSpecsCache parentChildRelatedObjectsSpecsCache;
     @Inject
-    private KindCache kindCache;
+    private PartitionSafeKindCache kindCache;
     @Inject
     private RelatedObjectCache relatedObjectCache;
     @Inject
@@ -93,19 +93,17 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     public PropertyConfigurations getPropertyConfiguration(String kind) {
         if (Strings.isNullOrEmpty(kind))
             return null;
-        String dataPartitionId = requestInfo.getHeaders().getPartitionId();
         kind = PropertyUtil.getKindWithMajor(kind);
-        String key = dataPartitionId + " | " + kind;
 
-        PropertyConfigurations configuration = propertyConfigurationCache.get(key);
+        PropertyConfigurations configuration = propertyConfigurationCache.get(kind);
         if (configuration == null) {
             configuration = searchConfigurations(kind);
             if (configuration != null) {
-                propertyConfigurationCache.put(key, configuration);
+                propertyConfigurationCache.put(kind, configuration);
             } else {
                 // It is common that a kind does not have extended property. So we need to cache an empty configuration
                 // to avoid unnecessary search
-                propertyConfigurationCache.put(key, EMPTY_CONFIGURATIONS);
+                propertyConfigurationCache.put(kind, EMPTY_CONFIGURATIONS);
             }
         }
 
@@ -240,7 +238,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             return kind;
         }
 
-        if (kindCache.containsKey(kind)) {
+        if (kindCache.get(kind) != null) {
             return kindCache.get(kind);
         } else {
             String concreteKind = getLatestVersionOfKind(kind);
@@ -295,7 +293,6 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     }
 
     /******************************************************** Private methods **************************************************************/
-
     private SchemaItem createAssociatedIdentitiesSchemaItem() {
         SchemaItem extendedSchemaItem = new SchemaItem();
         extendedSchemaItem.setPath(ASSOCIATED_IDENTITIES_PROPERTY);
@@ -577,11 +574,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     }
 
     private List<ParentChildRelatedObjectsSpec> getParentChildRelatedObjectsSpecs(String childKind) {
-        String dataPartitionId = requestInfo.getHeaders().getPartitionId();
         final String kindWithMajor = PropertyUtil.getKindWithMajor(childKind);
-        String key = dataPartitionId + " | " + kindWithMajor;
 
-        List<ParentChildRelatedObjectsSpec> specsList = parentChildRelatedObjectsSpecsCache.get(key);
+        List<ParentChildRelatedObjectsSpec> specsList = parentChildRelatedObjectsSpecsCache.get(kindWithMajor);
         if (specsList == null) {
             Map<Integer, ParentChildRelatedObjectsSpec> specs = new HashMap<>();
             List<PropertyConfigurations> configurationsList = searchParentKindConfigurations((kindWithMajor));
@@ -612,7 +607,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             }
 
             specsList = new ArrayList<>(specs.values());
-            parentChildRelatedObjectsSpecsCache.put(key, specsList);
+            parentChildRelatedObjectsSpecsCache.put(kindWithMajor, specsList);
         }
 
         return specsList;

@@ -16,12 +16,13 @@
 package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.VmCache;
+import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.model.RecordChangeInfo;
 import org.springframework.stereotype.Component;
 
 @Component
 public class RecordChangeInfoCache extends VmCache<String, RecordChangeInfo> {
     public RecordChangeInfoCache() {
-        super(300, 1000);
+        super(Constants.DATA_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
     }
 }

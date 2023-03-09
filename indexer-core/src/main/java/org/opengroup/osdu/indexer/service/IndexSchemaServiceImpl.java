@@ -30,9 +30,9 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
 import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
-import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -47,8 +47,6 @@ import java.util.*;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
-
-    private static final String FLATTENED_SCHEMA = "_flattened";
 
     private final Gson gson = new Gson();
 
@@ -65,7 +63,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private IndicesService indicesService;
     @Inject
-    private ISchemaCache schemaCache;
+    private PartitionSafeSchemaCache schemaCache;
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
@@ -155,7 +153,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             this.invalidateCache(kind);
         }
 
-        String schema = (String) this.schemaCache.get(kind);
+        String schema = this.schemaCache.getSchema(kind);
         if (Strings.isNullOrEmpty(schema)) {
             // get from storage
             schema = this.schemaProvider.getSchema(kind);
@@ -173,7 +171,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             }
         } else {
             // search flattened schema in memcache
-            String flattenedSchema = (String) this.schemaCache.get(kind + FLATTENED_SCHEMA);
+            String flattenedSchema = this.schemaCache.getFlattenedSchema(kind);
             if (Strings.isNullOrEmpty(flattenedSchema)) {
                 return this.getEmptySchema(kind);
             }
@@ -183,11 +181,11 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     private IndexSchema cacheAndNormalizeSchema(String kind, String schema) {
         // cache the schema
-        this.schemaCache.put(kind, schema);
+        this.schemaCache.putSchema(kind, schema);
         // get flatten schema and cache it
         IndexSchema flatSchemaObj = normalizeSchema(schema);
         if (flatSchemaObj != null) {
-            this.schemaCache.put(kind + FLATTENED_SCHEMA, gson.toJson(flatSchemaObj));
+            this.schemaCache.putFlattenedSchema(kind, gson.toJson(flatSchemaObj));
         }
         return flatSchemaObj;
     }
@@ -216,7 +214,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             if (Strings.isNullOrEmpty(concreteRelatedObjectKind))
                 continue;
 
-            String relatedObjectKindSchema = (String) this.schemaCache.get(concreteRelatedObjectKind);
+            String relatedObjectKindSchema = this.schemaCache.getSchema(concreteRelatedObjectKind);
             if (Strings.isNullOrEmpty(relatedObjectKindSchema)) {
                 relatedObjectKindSchema = this.schemaProvider.getSchema(concreteRelatedObjectKind);
                 if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
@@ -258,13 +256,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     }
 
     private void invalidateCache(String kind) {
-        String schema = (String) this.schemaCache.get(kind);
-        if (!Strings.isNullOrEmpty(schema)) this.schemaCache.delete(kind);
-
-        String flattenSchema = (String) this.schemaCache.get(kind + FLATTENED_SCHEMA);
-        if (!Strings.isNullOrEmpty(flattenSchema)) this.schemaCache.delete(kind + FLATTENED_SCHEMA);
-
-        virtualPropertiesSchemaCache.delete(kind);
+        this.schemaCache.delete(kind);
+        this.virtualPropertiesSchemaCache.delete(kind);
     }
 
     private IndexSchema normalizeSchema(String schemaStr) throws AppException {
