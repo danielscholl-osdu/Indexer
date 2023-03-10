@@ -69,10 +69,10 @@ environmentVariables:
 replicaCount: 1
 resources:
   limits:
-    memory: 900M
+    memory: 1200M
   requests:
     cpu: 500m
-    memory: 900M
+    memory: 1200M
 autoscaling:
   enabled: true
   minReplicas: 1
