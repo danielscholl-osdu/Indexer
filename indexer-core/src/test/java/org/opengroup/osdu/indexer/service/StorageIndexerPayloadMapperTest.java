@@ -12,11 +12,11 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
-import org.opengroup.osdu.core.common.partition.*;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
+import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.opengroup.osdu.indexer.service.mock.PartitionFactoryMock;
 import org.opengroup.osdu.indexer.service.mock.PartitionProviderMock;
 import org.opengroup.osdu.indexer.service.mock.ServiceAccountJwtClientMock;
@@ -31,6 +31,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -75,6 +76,9 @@ public class StorageIndexerPayloadMapperTest {
 
     @Autowired
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+
+    @Inject
+    private GeoShapeDecimationSetting decimationSetting;
 
     @BeforeClass
     public static void setUp() {
@@ -199,6 +203,59 @@ public class StorageIndexerPayloadMapperTest {
         assertFalse(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
         assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultName"));
         assertNull(dataCollectorMap.get("VirtualProperties.DefaultName"));
+    }
+
+    @Test
+    public void geoshape_decimation_is_enabled_by_default() {
+        assertTrue(decimationSetting.isDecimationEnabled());
+    }
+
+    @Test
+    public void geoshape_decimation_is_executed_with_virtual_spatial_location() {
+        final String kind = "osdu:wks:master-data--SeismicAcquisitionSurvey:1.0.0";
+        final String record_id = "opendes:master-data--SeismicAcquisitionSurvey:WD86-BO_WD86-PR1228-FS-11";
+        VirtualProperties virtualProperties = loadObject("/converter/index-virtual-properties/virtual-properties.json", VirtualProperties.class);;
+        virtualPropertiesSchemaCache.put(kind, virtualProperties);
+
+        IndexSchema indexSchema = loadObject("/converter/index-virtual-properties/survey_storage_schema.json", IndexSchema.class);
+        Map<String, Object> storageRecordData = new HashMap<>();
+        storageRecordData = loadObject("/converter/index-virtual-properties/survey_storage_data.json", storageRecordData.getClass());
+
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, record_id);
+        assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.Wgs84Coordinates"));
+
+        List<Object> defaultLocationCoordinates =getCoordinates("VirtualProperties.DefaultLocation.Wgs84Coordinates", dataCollectorMap);
+        List<Object> spatialLocationCoordinates =getCoordinates("SpatialLocation.Wgs84Coordinates", dataCollectorMap);
+
+        assertEquals(11, defaultLocationCoordinates.size());
+        assertEquals(11, spatialLocationCoordinates.size());
+    }
+
+    @Test
+    public void geoshape_decimation_is_executed_without_virtual_spatial_location() {
+        virtualPropertiesSchemaCache.clearAll();
+        final String record_id = "opendes:master-data--SeismicAcquisitionSurvey:WD86-BO_WD86-PR1228-FS-11";
+
+        IndexSchema indexSchema = loadObject("/converter/index-virtual-properties/survey_storage_schema.json", IndexSchema.class);
+        Map<String, Object> storageRecordData = new HashMap<>();
+        storageRecordData = loadObject("/converter/index-virtual-properties/survey_storage_data.json", storageRecordData.getClass());
+
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, record_id);
+        assertFalse(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.Wgs84Coordinates"));
+
+        List<Object> spatialLocationCoordinates =getCoordinates("SpatialLocation.Wgs84Coordinates", dataCollectorMap);
+
+        assertEquals(11, spatialLocationCoordinates.size());
+    }
+
+    private List<Object> getCoordinates(String key, Map<String, Object> dataCollectorMap) {
+        Map<String, Object> spatialLocation =(Map<String, Object>)dataCollectorMap.get(key);
+        List<Object> geometries =(List<Object>)spatialLocation.get("geometries");
+        Map<String, Object> firstGeometry = (Map<String, Object>)geometries.get(0);
+        List<Object> coordinates =  (List<Object>)firstGeometry.get("coordinates");
+        return coordinates;
     }
 
     private <T> T loadObject(String file, Class<T> valueType) {
