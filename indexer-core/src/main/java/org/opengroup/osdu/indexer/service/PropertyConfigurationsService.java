@@ -24,7 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface PropertyConfigurationsService {
-    PropertyConfigurations getPropertyConfiguration(String kind);
+    boolean isPropertyConfigurationsEnabled(String kind);
+
+    PropertyConfigurations getPropertyConfigurations(String kind);
 
     Map<String, Object> getExtendedProperties(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations);
 

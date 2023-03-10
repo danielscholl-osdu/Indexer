@@ -2,26 +2,26 @@ package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.VmCache;
 import org.opengroup.osdu.indexer.model.Constants;
-import org.opengroup.osdu.indexer.model.indexproperty.ParentChildRelatedObjectsSpec;
+import org.opengroup.osdu.indexer.model.indexproperty.ParentChildRelationshipSpec;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class ParentChildRelatedObjectsSpecsCacheVmImpl implements IParentChildRelatedObjectsSpecsCache {
-    private VmCache<String, List<ParentChildRelatedObjectsSpec>> cache;
+public class ParentChildRelationshipSpecsCacheVmImpl implements IParentChildRelationshipSpecsCache {
+    private VmCache<String, List<ParentChildRelationshipSpec>> cache;
 
-    public ParentChildRelatedObjectsSpecsCacheVmImpl() {
+    public ParentChildRelationshipSpecsCacheVmImpl() {
         cache = new VmCache<>(Constants.SPEC_CACHE_EXPIRATION, Constants.SPEC_MAX_CACHE_SIZE);
     }
 
     @Override
-    public void put(String s, List<ParentChildRelatedObjectsSpec> o) {
+    public void put(String s, List<ParentChildRelationshipSpec> o) {
         this.cache.put(s, o);
     }
 
     @Override
-    public List<ParentChildRelatedObjectsSpec> get(String s) {
+    public List<ParentChildRelationshipSpec> get(String s) {
         return this.cache.get(s);
     }
 

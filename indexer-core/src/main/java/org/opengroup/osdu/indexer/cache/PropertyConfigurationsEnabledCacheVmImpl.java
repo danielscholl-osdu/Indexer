@@ -15,31 +15,31 @@
 
 package org.opengroup.osdu.indexer.cache;
 
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.core.common.cache.VmCache;
+import org.opengroup.osdu.indexer.model.Constants;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
-
-import javax.inject.Inject;
 
 @Component
-@RequestScope
-public class PartitionSafePropertyConfigurationsCache extends AbstractPartitionSafeCache<String,PropertyConfigurations> {
-    @Inject
-    private IPropertyConfigurationsCache cache;
+public class PropertyConfigurationsEnabledCacheVmImpl implements IPropertyConfigurationsEnabledCache {
+    private VmCache<String, Boolean> cache;
 
-    @Override
-    public void put(String s, PropertyConfigurations o) {
-        this.cache.put(cacheKey(s), o);
+    public PropertyConfigurationsEnabledCacheVmImpl() {
+        cache = new VmCache<>(Constants.SPEC_CACHE_EXPIRATION, Constants.SPEC_MAX_CACHE_SIZE);
     }
 
     @Override
-    public PropertyConfigurations get(String s) {
-        return this.cache.get(cacheKey(s));
+    public void put(String s, Boolean o) {
+        this.cache.put(s,o);
+    }
+
+    @Override
+    public Boolean get(String s) {
+        return this.cache.get(s);
     }
 
     @Override
     public void delete(String s) {
-        this.cache.delete(cacheKey(s));
+        this.cache.delete(s);
     }
 
     @Override

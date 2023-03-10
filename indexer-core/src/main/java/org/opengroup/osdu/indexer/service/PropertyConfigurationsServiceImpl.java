@@ -51,6 +51,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private static final String ANCESTRY_KINDS_DELIMITER = ",";
     private static final String PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT =
             "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ParentToChildren AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
+    private static final String HAS_CONFIGURATIONS_QUERY_FORMAT =  "data.Code: \"%s\" OR nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
     private static final String EMPTY_CODE = "__EMPTY_CODE__";
     private static final int MAX_SEARCH_LIMIT = 1000;
 
@@ -71,7 +72,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     @Inject
     private PartitionSafePropertyConfigurationsCache propertyConfigurationCache;
     @Inject
-    private PartitionSafeParentChildRelatedObjectsSpecsCache parentChildRelatedObjectsSpecsCache;
+    private PartitionSafePropertyConfigurationsEnabledCache propertyConfigurationsEnabledCache;
+    @Inject
+    private PartitionSafeParentChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
     @Inject
     private PartitionSafeKindCache kindCache;
     @Inject
@@ -90,7 +93,31 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private JaxRsDpsLog jaxRsDpsLog;
 
     @Override
-    public PropertyConfigurations getPropertyConfiguration(String kind) {
+    public boolean isPropertyConfigurationsEnabled(String kind) {
+        if (Strings.isNullOrEmpty(kind))
+            return false;
+        kind = PropertyUtil.getKindWithMajor(kind);
+
+        Boolean enabled = propertyConfigurationsEnabledCache.get(kind);
+        if(enabled == null) {
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
+            String query = String.format(HAS_CONFIGURATIONS_QUERY_FORMAT, kind, kind);
+            searchRequest.setQuery(query);
+            if(searchFirstRecord(searchRequest) != null) {
+                enabled = true;
+            }
+            else {
+                enabled = false;
+            }
+            propertyConfigurationsEnabledCache.put(kind, enabled);
+        }
+
+        return enabled;
+    }
+
+    @Override
+    public PropertyConfigurations getPropertyConfigurations(String kind) {
         if (Strings.isNullOrEmpty(kind))
             return null;
         kind = PropertyUtil.getKindWithMajor(kind);
@@ -236,15 +263,14 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             return kind;
         }
 
-        if (kindCache.get(kind) != null) {
-            return kindCache.get(kind);
-        } else {
-            String concreteKind = getLatestVersionOfKind(kind);
+        String concreteKind = kindCache.get(kind);
+        if (concreteKind == null) {
+            concreteKind = getLatestVersionOfKind(kind);
             if (!Strings.isNullOrEmpty(concreteKind)) {
                 kindCache.put(kind, concreteKind);
             }
-            return concreteKind;
         }
+        return concreteKind;
     }
 
     @Override
@@ -324,7 +350,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
         RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(recordInfos)).attributes(attributes).build();
         String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-        this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
+        //this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
     }
 
     private Map<String, Object> getRelatedObjectData(String relatedObjectKind, String relatedObjectId) {
@@ -571,12 +597,12 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return propertyValueList;
     }
 
-    private List<ParentChildRelatedObjectsSpec> getParentChildRelatedObjectsSpecs(String childKind) {
+    private List<ParentChildRelationshipSpec> getParentChildRelatedObjectsSpecs(String childKind) {
         final String kindWithMajor = PropertyUtil.getKindWithMajor(childKind);
 
-        List<ParentChildRelatedObjectsSpec> specsList = parentChildRelatedObjectsSpecsCache.get(kindWithMajor);
+        List<ParentChildRelationshipSpec> specsList = parentChildRelationshipSpecsCache.get(kindWithMajor);
         if (specsList == null) {
-            Map<Integer, ParentChildRelatedObjectsSpec> specs = new HashMap<>();
+            Map<Integer, ParentChildRelationshipSpec> specs = new HashMap<>();
             List<PropertyConfigurations> configurationsList = searchParentKindConfigurations((kindWithMajor));
             for (PropertyConfigurations configurations : configurationsList) {
                 for (PropertyConfiguration configuration : configurations.getConfigurations()) {
@@ -586,7 +612,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                                             p.getRelatedObjectsSpec().getRelatedObjectKind().contains(kindWithMajor))
                             .findFirst().orElse(null);
                     if (propertyPath != null) {
-                        ParentChildRelatedObjectsSpec spec = new ParentChildRelatedObjectsSpec();
+                        ParentChildRelationshipSpec spec = new ParentChildRelationshipSpec();
                         spec.setParentKind(configurations.getCode());
                         spec.setParentObjectIdPath(propertyPath.getRelatedObjectsSpec().getRelatedObjectID());
                         spec.setChildKind(kindWithMajor);
@@ -605,16 +631,16 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             }
 
             specsList = new ArrayList<>(specs.values());
-            parentChildRelatedObjectsSpecsCache.put(kindWithMajor, specsList);
+            parentChildRelationshipSpecsCache.put(kindWithMajor, specsList);
         }
 
         return specsList;
     }
 
     private void updateAssociatedParentRecords(String ancestors, String childKind, List<RecordChangeInfo> childRecordChangeInfos) {
-        List<ParentChildRelatedObjectsSpec> specList = getParentChildRelatedObjectsSpecs(childKind);
+        List<ParentChildRelationshipSpec> specList = getParentChildRelatedObjectsSpecs(childKind);
         Set ancestorSet = new HashSet<>(Arrays.asList(ancestors.split(ANCESTRY_KINDS_DELIMITER)));
-        for (ParentChildRelatedObjectsSpec spec : specList) {
+        for (ParentChildRelationshipSpec spec : specList) {
             List childRecordIds = getChildRecordIdsWithExtendedPropertiesChanged(spec, childRecordChangeInfos);
             if (childRecordIds.isEmpty())
                 continue;
@@ -649,7 +675,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         }
     }
 
-    private List<String> getChildRecordIdsWithExtendedPropertiesChanged(ParentChildRelatedObjectsSpec spec, List<RecordChangeInfo> childRecordChangeInfos) {
+    private List<String> getChildRecordIdsWithExtendedPropertiesChanged(ParentChildRelationshipSpec spec, List<RecordChangeInfo> childRecordChangeInfos) {
         List<String> childRecordIds = new ArrayList<>();
         for (RecordChangeInfo recordChangeInfo : childRecordChangeInfos) {
             if (recordChangeInfo.getRecordInfo().getOp().equals(OperationType.update.getValue())) {
@@ -681,7 +707,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             return true;
         }
 
-        PropertyConfigurations propertyConfigurations = this.getPropertyConfiguration(childKind);
+        PropertyConfigurations propertyConfigurations = this.getPropertyConfigurations(childKind);
         if(propertyConfigurations != null) {
             for (PropertyConfiguration propertyConfiguration : propertyConfigurations.getConfigurations()) {
                 for (PropertyPath propertyPath : propertyConfiguration.getPaths().stream().filter(

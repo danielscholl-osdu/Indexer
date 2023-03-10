@@ -15,7 +15,6 @@
 
 package org.opengroup.osdu.indexer.cache;
 
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -23,17 +22,17 @@ import javax.inject.Inject;
 
 @Component
 @RequestScope
-public class PartitionSafePropertyConfigurationsCache extends AbstractPartitionSafeCache<String,PropertyConfigurations> {
+public class PartitionSafePropertyConfigurationsEnabledCache extends AbstractPartitionSafeCache<String,Boolean> {
     @Inject
-    private IPropertyConfigurationsCache cache;
+    private IPropertyConfigurationsEnabledCache cache;
 
     @Override
-    public void put(String s, PropertyConfigurations o) {
+    public void put(String s, Boolean  o) {
         this.cache.put(cacheKey(s), o);
     }
 
     @Override
-    public PropertyConfigurations get(String s) {
+    public Boolean  get(String s) {
         return this.cache.get(cacheKey(s));
     }
 

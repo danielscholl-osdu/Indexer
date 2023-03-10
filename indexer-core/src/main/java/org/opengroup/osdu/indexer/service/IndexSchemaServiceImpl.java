@@ -30,6 +30,7 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.indexer.cache.PartitionSafeFlattenedSchemaCache;
 import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
 import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
@@ -64,6 +65,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private IndicesService indicesService;
     @Inject
     private PartitionSafeSchemaCache schemaCache;
+    @Inject
+    private PartitionSafeFlattenedSchemaCache flattenedSchemaCache;
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
@@ -153,7 +156,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             this.invalidateCache(kind);
         }
 
-        String schema = this.schemaCache.getSchema(kind);
+        String schema = this.schemaCache.get(kind);
         if (Strings.isNullOrEmpty(schema)) {
             // get from storage
             schema = this.schemaProvider.getSchema(kind);
@@ -161,7 +164,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 return this.getEmptySchema(kind);
             } else {
                 // Merge schema of the extended properties if needed
-                PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfiguration(kind);
+                PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(kind);
                 if (propertyConfigurations != null) {
                     schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
                 }
@@ -171,7 +174,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             }
         } else {
             // search flattened schema in memcache
-            String flattenedSchema = this.schemaCache.getFlattenedSchema(kind);
+            String flattenedSchema = this.flattenedSchemaCache.get(kind);
             if (Strings.isNullOrEmpty(flattenedSchema)) {
                 return this.getEmptySchema(kind);
             }
@@ -181,11 +184,11 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     private IndexSchema cacheAndNormalizeSchema(String kind, String schema) {
         // cache the schema
-        this.schemaCache.putSchema(kind, schema);
+        this.schemaCache.put(kind, schema);
         // get flatten schema and cache it
         IndexSchema flatSchemaObj = normalizeSchema(schema);
         if (flatSchemaObj != null) {
-            this.schemaCache.putFlattenedSchema(kind, gson.toJson(flatSchemaObj));
+            this.flattenedSchemaCache.put(kind, gson.toJson(flatSchemaObj));
         }
         return flatSchemaObj;
     }
@@ -214,7 +217,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             if (Strings.isNullOrEmpty(concreteRelatedObjectKind))
                 continue;
 
-            String relatedObjectKindSchema = this.schemaCache.getSchema(concreteRelatedObjectKind);
+            String relatedObjectKindSchema = this.schemaCache.get(concreteRelatedObjectKind);
             if (Strings.isNullOrEmpty(relatedObjectKindSchema)) {
                 relatedObjectKindSchema = this.schemaProvider.getSchema(concreteRelatedObjectKind);
                 if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
@@ -257,6 +260,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     private void invalidateCache(String kind) {
         this.schemaCache.delete(kind);
+        this.flattenedSchemaCache.delete(kind);
         this.virtualPropertiesSchemaCache.delete(kind);
     }
 

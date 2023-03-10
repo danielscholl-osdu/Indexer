@@ -145,8 +145,8 @@ public class IndexerServiceImpl implements IndexerService {
                 retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
             }
 
-            Map<String, List<String>> upsertKindIds = getUpsertKindIds(upsertRecordMap, retryRecordIds);
-            Map<String, List<String>> deleteKindIds = getDeleteRecordKindIds(deleteRecordMap, retryRecordIds);
+            Map<String, List<String>> upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
+            Map<String, List<String>> deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
             if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
                 propertyConfigurationsService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
             }
@@ -184,10 +184,13 @@ public class IndexerServiceImpl implements IndexerService {
         }
     }
 
-    private Map<String, List<String>> getUpsertKindIds(Map<String, Map<String, OperationType>> upsertRecordMap, List<String> retryRecordIds) {
+    private Map<String, List<String>> getUpsertRecordIdsForConfigurationsEnabledKinds(Map<String, Map<String, OperationType>> upsertRecordMap, List<String> retryRecordIds) {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         for (Map.Entry<String, Map<String, OperationType>> entry : upsertRecordMap.entrySet()) {
             String kind = entry.getKey();
+            if(!propertyConfigurationsService.isPropertyConfigurationsEnabled(kind))
+                continue;
+
             List<String> ids = upsertKindIds.containsKey(kind) ? upsertKindIds.get(kind) : new ArrayList<>();
             List<String> processedIds = entry.getValue().keySet().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
             ids.addAll(processedIds);
@@ -198,10 +201,13 @@ public class IndexerServiceImpl implements IndexerService {
         return upsertKindIds;
     }
 
-    private Map<String, List<String>> getDeleteRecordKindIds(Map<String, List<String>> deleteRecordMap, List<String> retryRecordIds) {
+    private Map<String, List<String>> getDeleteRecordIdsForConfigurationsEnabledKinds(Map<String, List<String>> deleteRecordMap, List<String> retryRecordIds) {
         Map<String, List<String>> deletedRecordKindIdsMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : deleteRecordMap.entrySet()) {
             String kind = entry.getKey();
+            if(!propertyConfigurationsService.isPropertyConfigurationsEnabled(kind))
+                continue;
+
             List<String> ids = deletedRecordKindIdsMap.containsKey(kind) ? deletedRecordKindIdsMap.get(kind) : new ArrayList<>();
             List<String> processedIds = entry.getValue().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
             ids.addAll(processedIds);
@@ -330,13 +336,15 @@ public class IndexerServiceImpl implements IndexerService {
                     this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, message, String.format("record-id: %s | %s", storageRecord.getId(), message));
                 }
 
-                PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfiguration(storageRecord.getKind());
-                if (propertyConfigurations != null) {
-                    // Merge extended properties
-                    dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
+                if(propertyConfigurationsService.isPropertyConfigurationsEnabled(storageRecord.getKind())) {
+                    PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(storageRecord.getKind());
+                    if (propertyConfigurations != null) {
+                        // Merge extended properties
+                        dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
+                    }
+                    // We cache the dataMap in case the update of this object will trigger update of the related objects.
+                    propertyConfigurationsService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
                 }
-                // We cache the dataMap in case the update of this object will trigger update of the related objects.
-                propertyConfigurationsService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
 
                 document.setData(dataMap);
             }

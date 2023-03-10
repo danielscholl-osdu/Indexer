@@ -15,9 +15,7 @@
 
 package org.opengroup.osdu.indexer.cache;
 
-import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.model.indexproperty.ParentChildRelatedObjectsSpec;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.opengroup.osdu.indexer.model.indexproperty.ParentChildRelationshipSpec;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -26,29 +24,27 @@ import java.util.List;
 
 @Component
 @RequestScope
-public class PartitionSafeParentChildRelatedObjectsSpecsCache {
+public class PartitionSafeParentChildRelationshipSpecsCache extends AbstractPartitionSafeCache<String, List<ParentChildRelationshipSpec>> {
     @Inject
-    private IParentChildRelatedObjectsSpecsCache cache;
-    @Autowired
-    private IRequestInfo requestInfo;
+    private IParentChildRelationshipSpecsCache cache;
 
-    public void put(String s, List<ParentChildRelatedObjectsSpec> o) {
+    @Override
+    public void put(String s, List<ParentChildRelationshipSpec> o) {
         this.cache.put(cacheKey(s), o);
     }
 
-    public List<ParentChildRelatedObjectsSpec> get(String s) {
+    @Override
+    public List<ParentChildRelationshipSpec> get(String s) {
         return this.cache.get(cacheKey(s));
     }
 
+    @Override
     public void delete(String s) {
         this.cache.delete(cacheKey(s));
     }
 
+    @Override
     public void clearAll() {
         this.cache.clearAll();
-    }
-
-    private String cacheKey(String s) {
-        return this.requestInfo.getPartitionId() + "-" + s;
     }
 }

@@ -21,22 +21,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class ParentChildRelatedObjectsSpec {
+public class ParentChildRelationshipSpec {
     private String parentKind;
     private String parentObjectIdPath;
     private String childKind;
     private List<String> childValuePaths;
 
-    public ParentChildRelatedObjectsSpec() {
+    public ParentChildRelationshipSpec() {
         childValuePaths = new ArrayList<>();
     }
 
     @Override
     public boolean equals(Object another) {
-        if(another == null || !(another instanceof ParentChildRelatedObjectsSpec))
+        if(another == null || !(another instanceof ParentChildRelationshipSpec))
             return false;
 
-        ParentChildRelatedObjectsSpec anotherSpec = (ParentChildRelatedObjectsSpec)another;
+        ParentChildRelationshipSpec anotherSpec = (ParentChildRelationshipSpec)another;
         return anotherSpec.hashCode() == this.hashCode();
     }
 

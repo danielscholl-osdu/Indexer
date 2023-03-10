@@ -15,8 +15,6 @@
 
 package org.opengroup.osdu.indexer.cache;
 
-import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -24,29 +22,27 @@ import javax.inject.Inject;
 
 @Component
 @RequestScope
-public class PartitionSafeKindCache {
+public class PartitionSafeKindCache extends AbstractPartitionSafeCache<String, String> {
     @Inject
     private IKindCache cache;
-    @Autowired
-    private IRequestInfo requestInfo;
 
+    @Override
     public void put(String s, String o) {
         this.cache.put(cacheKey(s), o);
     }
 
+    @Override
     public String get(String s) {
         return this.cache.get(cacheKey(s));
     }
 
+    @Override
     public void delete(String s) {
         this.cache.delete(cacheKey(s));
     }
 
+    @Override
     public void clearAll() {
         this.cache.clearAll();
-    }
-
-    private String cacheKey(String s) {
-        return this.requestInfo.getPartitionId() + "-" + s;
     }
 }
