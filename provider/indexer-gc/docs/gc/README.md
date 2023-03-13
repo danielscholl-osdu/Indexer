@@ -63,7 +63,7 @@ It is possible, but not necessary to adjust consumer throughput via Partition se
 
 <https://community.opengroup.org/osdu/platform/system/lib/cloud/gcp/oqm/-/blob/master/src/main/java/org/opengroup/osdu/core/gcp/oqm/driver/pubsub/config/PsThroughputConfiguration.java>
 
-```
+```json
     "max.sub.parallel.streams": {
       "sensitive": false, 
       "value": 2 
@@ -85,7 +85,7 @@ This variable should be present in environment of service that need that variabl
 
 Example:
 
-```
+```json
     "elasticsearch.port": {
       "sensitive": false, <- value not sensitive 
       "value": "9243"  <- will be used as is.
@@ -97,6 +97,18 @@ Example:
 ```
 
 There is no hardcode in services, all behaviour defined by sensitivity of property.
+
+## Indexer account configuration
+Google cloud OSDU platform doesn't use a single Tenant account which provides access to all groups for each service,
+instead, separate accounts should be used. But the Indexer should have access to all data groups, no matter when they were created.
+To achieve that add an Indexer account to the partition configuration:
+```json
+    "indexer.service.account": {
+        "sensitive": false,
+        "value": "indexer@service.local"
+    }
+```
+Related issue: https://community.opengroup.org/osdu/platform/system/storage/-/issues/153
 
 ## Elasticsearch configuration
 
