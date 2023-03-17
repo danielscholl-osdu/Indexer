@@ -129,6 +129,7 @@ public class StorageServiceImpl implements StorageService {
 
         // no retry possible, update record status as failed -- storage service cannot locate records
         if (!records.getNotFound().isEmpty()) {
+            jaxRsDpsLog.error(records.getNotFound().size() + " records were not found. Full list: " + records.getNotFound());
             this.jobStatus.addOrUpdateRecordStatus(records.getNotFound(), IndexingStatus.FAIL, RequestStatus.INVALID_RECORD, "Storage service records not found", String.format("Storage service records not found: %s", String.join(",", records.getNotFound())));
         }
 
