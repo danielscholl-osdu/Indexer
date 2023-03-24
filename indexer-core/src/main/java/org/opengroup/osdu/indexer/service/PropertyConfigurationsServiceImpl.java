@@ -350,7 +350,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
         RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(recordInfos)).attributes(attributes).build();
         String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-        //this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
+        this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
     }
 
     private Map<String, Object> getRelatedObjectData(String relatedObjectKind, String relatedObjectId) {
