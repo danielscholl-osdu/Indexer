@@ -211,32 +211,34 @@ public class StorageIndexerPayloadMapper {
     }
 
     private void mapVirtualPropertiesPayload(IndexSchema storageSchema, String recordId, Map<String, Object> dataCollectorMap) {
-        if (dataCollectorMap.isEmpty() || this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) == null) {
+        if (dataCollectorMap.isEmpty()) {
             return;
         }
 
-        VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
         String originalGeoShapeProperty = null;
-        for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
-            if (entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
-                continue;
-            }
-            Priority priority = chooseOriginalProperty(entry.getKey(), entry.getValue().getPriorities(), dataCollectorMap);
-            String virtualPropertyPath = PropertyUtil.removeDataPrefix(entry.getKey());
-            String originalPropertyPath = PropertyUtil.removeDataPrefix(priority.getPath());
+        if(this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) != null) {
+            VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
+            for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
+                if (entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
+                    continue;
+                }
+                Priority priority = chooseOriginalProperty(entry.getKey(), entry.getValue().getPriorities(), dataCollectorMap);
+                String virtualPropertyPath = PropertyUtil.removeDataPrefix(entry.getKey());
+                String originalPropertyPath = PropertyUtil.removeDataPrefix(priority.getPath());
 
-            // Populate the virtual property values from the chosen original property
-            List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
-                    .filter(originalPropertyName -> PropertyUtil.isPropertyPathMatched(originalPropertyName, originalPropertyPath))
-                    .collect(Collectors.toList());
-            originalPropertyNames.forEach(originalPropertyName -> {
-                String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
-                dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
-            });
+                // Populate the virtual property values from the chosen original property
+                List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
+                        .filter(originalPropertyName -> PropertyUtil.isPropertyPathMatched(originalPropertyName, originalPropertyPath))
+                        .collect(Collectors.toList());
+                originalPropertyNames.forEach(originalPropertyName -> {
+                    String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
+                    dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
+                });
 
-            if(virtualPropertyPath.equals(PropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
-               dataCollectorMap.containsKey(PropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
-                originalGeoShapeProperty = originalPropertyPath + PropertyUtil.FIELD_WGS84_COORDINATES;
+                if(virtualPropertyPath.equals(PropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
+                        dataCollectorMap.containsKey(PropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+                    originalGeoShapeProperty = originalPropertyPath + PropertyUtil.FIELD_WGS84_COORDINATES;
+                }
             }
         }
 

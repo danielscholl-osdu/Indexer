@@ -457,17 +457,10 @@ public class IndexerServiceImpl implements IndexerService {
                 jaxRsDpsLog.warning(String.format("data not found for record: %s", record));
             }
 
-            OperationType operation = record.getOperationType();
             Map<String, Object> sourceMap = getSourceMap(record);
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKind());
-
-            if (operation == OperationType.create) {
-                IndexRequest indexRequest = new IndexRequest(index).id(record.getId()).source(this.gson.toJson(sourceMap), XContentType.JSON);
-                bulkRequest.add(indexRequest);
-            } else if (operation == OperationType.update) {
-                UpdateRequest updateRequest = new UpdateRequest(index, "_doc", record.getId()).doc(this.gson.toJson(sourceMap), XContentType.JSON).docAsUpsert(true);
-                bulkRequest.add(updateRequest);
-            }
+            IndexRequest indexRequest = new IndexRequest(index).id(record.getId()).source(this.gson.toJson(sourceMap), XContentType.JSON);
+            bulkRequest.add(indexRequest);
         }
 
         return processBulkRequest(restClient, bulkRequest);

@@ -116,6 +116,10 @@ public class StorageServiceImpl implements StorageService {
             throw new AppException(HttpStatus.SC_NOT_FOUND, "Invalid request", "Storage service returned empty response");
         }
 
+        if (response.getResponseCode() == 500) {
+            throw new AppException(RequestStatus.NO_RETRY, "Server error", String.format("Storage service error: %s", response.getBody()));
+        }
+
         Records records = null;
         try {
             records = this.objectMapper.readValue(bulkStorageData, Records.class);
@@ -125,6 +129,7 @@ public class StorageServiceImpl implements StorageService {
 
         // no retry possible, update record status as failed -- storage service cannot locate records
         if (!records.getNotFound().isEmpty()) {
+            jaxRsDpsLog.error(records.getNotFound().size() + " records were not found. Full list: " + records.getNotFound());
             this.jobStatus.addOrUpdateRecordStatus(records.getNotFound(), IndexingStatus.FAIL, RequestStatus.INVALID_RECORD, "Storage service records not found", String.format("Storage service records not found: %s", String.join(",", records.getNotFound())));
         }
 

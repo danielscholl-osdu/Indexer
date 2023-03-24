@@ -51,14 +51,13 @@ public class GeoShapeDecimationSetting {
         if (cache != null && cache.containsKey(cacheKey))
             return cache.get(cacheKey);
 
-        boolean decimationEnabled = false;
+        boolean decimationEnabled = true;
         try {
             PartitionInfo partitionInfo = getPartitionInfo(dataPartitionId);
             decimationEnabled = getDecimationSetting(partitionInfo);
         } catch (Exception e) {
-            this.logger.error(String.format("PartitionService: Error getting %s for dataPartition with Id: %s", PROPERTY_NAME, dataPartitionId), e);
+            this.logger.error(String.format("PartitionService: Error getting %s for dataPartition with Id: %s. Turn on the feature flag by default.", PROPERTY_NAME, dataPartitionId), e);
         }
-
         this.cache.put(cacheKey, decimationEnabled);
         return decimationEnabled;
     }
@@ -78,12 +77,12 @@ public class GeoShapeDecimationSetting {
 
     private boolean getDecimationSetting(PartitionInfo partitionInfo) {
         if(partitionInfo == null || partitionInfo.getProperties() == null)
-            return false;
+            return true;
 
         if(partitionInfo.getProperties().containsKey(PROPERTY_NAME)) {
             Property property = partitionInfo.getProperties().get(PROPERTY_NAME);
             return Boolean.parseBoolean((String)property.getValue());
         }
-        return false;
+        return true;
     }
 }

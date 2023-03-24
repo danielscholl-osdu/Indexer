@@ -41,7 +41,7 @@ spec:
             name: {{ .Values.conf.configmap | quote }}
         - secretRef:
             name: {{ .Values.conf.elasticSecretName | quote }}
-        {{- if .Values.conf.onPremEnabled }}
+        {{- if .Values.global.onPremEnabled }}
         - secretRef:
             name: {{ .Values.conf.keycloakSecretName | quote }}
         - secretRef:

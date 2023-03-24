@@ -8,17 +8,18 @@ by implementing Ramer–Douglas–Peucker algorithm:
 - Polygon
 - MultiPolygon  
 
-In order to reduce the risk when extended evaluation of the solution is still on going, a feature flag that is managed by 
-the Partition Service is applied to the solution.
-Here is an example to enable this feature by setting the property "indexer-decimation-enabled" in a given data partition:
+
+The feature is enabled by default for all data partitions. If client does not want the geo-shape to be decimated in their
+data partitions, they can disable geo-shape decimation through the Partition Service.  
+Here is an example to disable this feature by setting the property "indexer-decimation-enabled" in a given data partition:
 ```
 {
    "indexer-decimation-enabled": {
         "sensitive": false,
-        "value": "true"
+        "value": "false"
     }
 }
 ```
 
-If the property "indexer-decimation-enabled" is not created or the property value is set to "false" (String type) in the 
-given data partition, the geo-shape decimation will be ignored.
+If the property "indexer-decimation-enabled" is not created or the property value is set to "true" (String type) in the 
+given data partition, the geo-shape decimation will be enabled.
