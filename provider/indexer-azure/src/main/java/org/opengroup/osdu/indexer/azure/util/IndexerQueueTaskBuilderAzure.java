@@ -15,8 +15,10 @@
 package org.opengroup.osdu.indexer.azure.util;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.microsoft.azure.servicebus.Message;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
@@ -29,6 +31,7 @@ import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.indexer.azure.di.PublisherConfig;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.service.StorageService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
@@ -41,10 +44,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
 
@@ -72,6 +75,8 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
     @Inject
     private RequestInfoImpl requestInfo;
+    @Autowired
+    private PublisherConfig publisherConfig;
 
     @Override
     public void createWorkerTask(String payload, DpsHeaders headers) {
@@ -99,7 +104,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
     private void publishAllRecordsToServiceBus(String payload, DpsHeaders headers) {
         // fetch all the remaining records
         // This logic is temporary and would be updated to call the storage service async.
-        // Currently the storage client can't be called out of request scope hence making the
+        // Currently, the storage client can't be called out of request scope hence making the
         // storage calls sync here
         Gson gson = new Gson();
         RecordReindexRequest recordReindexRequest = gson.fromJson(payload, RecordReindexRequest.class);
@@ -116,17 +121,19 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
                 recordQueryResponse = this.storageService.getRecordsByKind(recordReindexRequest);
                 if (recordQueryResponse.getResults() != null && recordQueryResponse.getResults().size() != 0) {
 
-                    List<RecordInfo> records = recordQueryResponse.getResults().stream()
-                            .map(record -> RecordInfo.builder().id(record).kind(recordKind).op(OperationType.create.name()).build()).collect(Collectors.toList());
+                    List<List<String>> batch = Lists.partition(recordQueryResponse.getResults(), publisherConfig.getPubSubBatchSize());
+                    for (List<String> recordsBatch : batch) {
+                        List<RecordInfo> records = recordsBatch.stream()
+                                .map(record -> RecordInfo.builder().id(record).kind(recordKind).op(OperationType.create.name()).build()).collect(Collectors.toList());
 
-                    Map<String, String> attributes = new HashMap<>();
-                    attributes.put(DpsHeaders.ACCOUNT_ID,  headers.getPartitionIdWithFallbackToAccountId());
-                    attributes.put(DpsHeaders.DATA_PARTITION_ID,  headers.getPartitionIdWithFallbackToAccountId());
-                    attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+                        Map<String, String> attributes = new HashMap<>();
+                        attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
+                        attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
 
-                    RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(records)).attributes(attributes).build();
-                    String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-                    createTask(recordChangedMessagePayload, headers);
+                        RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(records)).attributes(attributes).build();
+                        String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
+                        createTask(recordChangedMessagePayload, headers);
+                    }
                 }
             } while (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageRecordsByKindBatchSize());
 
@@ -145,7 +152,6 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         Map<String, Object> properties = new HashMap<>();
 
         // properties
-        properties.put(DpsHeaders.ACCOUNT_ID, headers.getPartitionIdWithFallbackToAccountId());
         properties.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         headers.addCorrelationIdIfMissing();
         properties.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
@@ -157,7 +163,6 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         // add all to body {"message": {"data":[], "id":...}}
         JsonObject jo = new JsonObject();
         jo.add("data", gson.toJsonTree(recordInfos));
-        jo.addProperty(DpsHeaders.ACCOUNT_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
         JsonObject jomsg = new JsonObject();
@@ -178,8 +183,8 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
     private List<RecordInfo> parseRecordsAsJSON(String inputPayload) {
         Gson gson = new Gson();
-        Type type = new TypeToken<List<RecordInfo>>(){}.getType();
+        Type type = new TypeToken<List<RecordInfo>>() {}.getType();
         List<RecordInfo> recordInfoList = gson.fromJson(inputPayload, type);
-        return  recordInfoList;
+        return recordInfoList;
     }
 }
