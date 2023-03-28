@@ -127,6 +127,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
                                 .map(record -> RecordInfo.builder().id(record).kind(recordKind).op(OperationType.create.name()).build()).collect(Collectors.toList());
 
                         Map<String, String> attributes = new HashMap<>();
+                        attributes.put(DpsHeaders.ACCOUNT_ID,  headers.getPartitionIdWithFallbackToAccountId());
                         attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
                         attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
 
@@ -152,6 +153,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         Map<String, Object> properties = new HashMap<>();
 
         // properties
+        properties.put(DpsHeaders.ACCOUNT_ID, headers.getPartitionIdWithFallbackToAccountId());
         properties.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         headers.addCorrelationIdIfMissing();
         properties.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
@@ -163,6 +165,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         // add all to body {"message": {"data":[], "id":...}}
         JsonObject jo = new JsonObject();
         jo.add("data", gson.toJsonTree(recordInfos));
+        jo.addProperty(DpsHeaders.ACCOUNT_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
         JsonObject jomsg = new JsonObject();
