@@ -2,6 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+global:
+  domain: ""
+  onPremEnabled: false
+
 data:
   # Configmap
   entitlementsHost: "http://entitlements"
@@ -30,8 +34,6 @@ conf:
   elasticSecretName: "indexer-elastic-secret"
   keycloakSecretName: "indexer-keycloak-secret"
   rabbitmqSecretName: "rabbitmq-secret"
-  onPremEnabled: false
-  domain: ""
   indexerRedisSecretName: "indexer-redis-secret"
 
 istio:

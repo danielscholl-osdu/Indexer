@@ -142,7 +142,7 @@ public class IndexerServiceImplTest {
             validRecords.add(Records.Entity.builder().id(recordId2).kind(kind2).data(storageData).build());
             List<ConversionStatus> conversionStatus = new LinkedList<>();
             Records storageRecords = Records.builder().records(validRecords).conversionStatuses(conversionStatus).build();
-            when(this.storageService.getStorageRecords(any())).thenReturn(storageRecords);
+            when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
 
             // setup elastic, index and mapped document
             when(this.indicesService.createIndex(any(), any(), any(), any(), any())).thenReturn(true);
