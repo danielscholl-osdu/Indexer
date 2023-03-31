@@ -17,20 +17,15 @@ package org.opengroup.osdu.indexer.service;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lambdaworks.redis.RedisException;
-import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.GetFieldMappingsRequest;
-import org.elasticsearch.client.indices.GetFieldMappingsResponse;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.reindex.BulkByScrollResponse;
-import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -40,7 +35,6 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.model.Kind;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,7 +42,10 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMappingService {
@@ -57,13 +54,10 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
 
     @Inject
     private JaxRsDpsLog log;
-    @Inject
-    private ElasticClientHandler elasticClientHandler;
     @Autowired
     private PartitionSafeIndexCache indexCache;
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
-
 
 
     /**
@@ -165,15 +159,6 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     }
 
     @Override
-    public void updateIndexMappingForIndicesOfSameType(Set<String> indices, String fieldName) throws Exception {
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            if(!updateMappingToEnableKeywordIndexingForField(restClient,indices,fieldName)){
-                throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error", "Error updating index mapping.", String.format("Failed to get confirmation from elastic server mapping update for indices: %s", indices));
-            }
-        }
-    }
-
-    @Override
     public void syncIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
@@ -187,7 +172,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         }
 
         String jsonResponse = this.getIndexMapping(restClient, index);
-        Type type = new TypeToken<Map<String, Object>>() {}.getType();
+        Type type = new TypeToken<Map<String, Object>>() {
+        }.getType();
         Map<String, Object> mappings = new Gson().fromJson(jsonResponse, type);
 
         if (mappings == null || mappings.isEmpty()) return;
@@ -226,108 +212,6 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         this.createMappingWithJson(restClient, index, "_doc", mapping, true);
 
         this.indexCache.put(cacheKey, true);
-    }
-
-    private boolean updateMappingToEnableKeywordIndexingForField(RestHighLevelClient client, Set<String> indicesSet, String fieldName) throws IOException {
-        String[] indices = indicesSet.toArray(new String[indicesSet.size()]);
-        Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> indexMappingMap = getIndexFieldMap(new String[]{"data."+fieldName}, client, indices);
-        boolean failure = false;
-        for (String index : indicesSet) {
-            if (indexMappingMap.get(index)!=null && updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(client, index, indexMappingMap.get(index), fieldName)) {
-                log.info(String.format("Updated field: %s | index:  %s", fieldName, index));
-            } else {
-                failure=true;
-                log.warning(String.format("Failed to update field: %s | index  %s", fieldName, index));
-            }
-        }
-        return !failure;
-    }
-
-    private Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> getIndexFieldMap(String[] fieldNames, RestHighLevelClient client, String[] indices) throws IOException  {
-        Map<String, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>>> indexMappingMap = new HashMap<>();
-        GetFieldMappingsRequest request = new GetFieldMappingsRequest();
-        request.indices(indices);
-        request.fields(fieldNames);
-        try {
-            GetFieldMappingsResponse response = client.indices().getFieldMapping(request, RequestOptions.DEFAULT);
-            if (response != null && !response.mappings().isEmpty()) {
-                final Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> mappings = response.mappings();
-                for (String index : indices) {
-                    if (mappings != null && !mappings.isEmpty()) {
-                        indexMappingMap.put(index, mappings);
-                    }
-                }
-            }
-
-            return indexMappingMap;
-        } catch (ElasticsearchException e) {
-            log.error(String.format("Failed to get indices: %s. | Error: %s", Arrays.toString(indices), e));
-            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error", "Error getting indices.", String.format("Failed to get indices error: %s", Arrays.toString(indices)));
-        }
-    }
-
-    private boolean updateMappingForAllIndicesOfSameTypeToEnableKeywordIndexingForField(
-            RestHighLevelClient client, String index, Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetadata>> indexMapping, String fieldName) throws IOException {
-
-        PutMappingRequest request = new PutMappingRequest(index);
-        String type = indexMapping.keySet().iterator().next();
-        if(type.isEmpty()) {
-        	log.error(String.format("Could not find type of the mappings for index: %s.", index));
-            return false;
-        }
-
-        request.setTimeout(REQUEST_TIMEOUT);
-        Map<String, GetFieldMappingsResponse.FieldMappingMetadata> metaData = indexMapping.get(type);
-        if(metaData==null || metaData.get("data." + fieldName)==null) {
-            log.error(String.format("Could not find field: %s in the mapping of index: %s.", fieldName, index));
-            return false;
-        }
-
-        GetFieldMappingsResponse.FieldMappingMetadata fieldMetaData = metaData.get("data." + fieldName);
-        Map<String, Object> source = fieldMetaData.sourceAsMap();
-        if(!source.containsKey(fieldName)){
-            log.error(String.format("Could not find field: %s in the mapping of index: %s.", fieldName, index));
-            return false;
-        }
-
-        //Index the field with additional keyword type
-        Map<String, Object> keywordMap = new HashMap<>();
-        keywordMap.put(Constants.TYPE, "keyword");
-        Map<String, Object> fieldIndexTypeMap = new HashMap<>();
-        fieldIndexTypeMap.put("keyword", keywordMap);
-        Map<String, Object> dataFieldMap = (Map<String, Object>) source.get(fieldName);
-        dataFieldMap.put("fields", fieldIndexTypeMap);
-        Map<String, Object> dataProperties = new HashMap<>();
-        dataProperties.put(fieldName, dataFieldMap);
-        Map<String, Object> mapping = new HashMap<>();
-        mapping.put(Constants.PROPERTIES, dataProperties);
-        Map<String, Object> data = new HashMap<>();
-        data.put(Constants.DATA,mapping);
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(Constants.PROPERTIES, data);
-
-        request.source(new Gson().toJson(properties), XContentType.JSON);
-
-        try {
-            AcknowledgedResponse response = client.indices().putMapping(request, RequestOptions.DEFAULT);
-            boolean isIndicesUpdated = updateIndices(client, index);
-            return response.isAcknowledged() && isIndicesUpdated;
-
-        } catch (Exception e) {
-            log.error(String.format("Could not update mapping of index: %s. | Error: %s", index, e));
-            return false;
-        }
-    }
-
-    private boolean updateIndices(RestHighLevelClient client, String index) throws IOException {
-        UpdateByQueryRequest request = new UpdateByQueryRequest(index);
-        request.setConflicts("proceed");
-        BulkByScrollResponse response = client.updateByQuery(request, RequestOptions.DEFAULT);
-        if(!response.getBulkFailures().isEmpty()) {
-        	log.error(String.format("Could not update index: %s.",index));
-        	return false;
-        }
-		return true;
     }
 
     /**
