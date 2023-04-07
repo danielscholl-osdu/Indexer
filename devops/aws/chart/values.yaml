@@ -64,6 +64,8 @@ environmentVariables:
     value: "true"
   - name: PARAMETER_MOUNT_PATH
     value: "/mnt/params"
+  - name: TMP_VOLUME_PATH
+    value: "/tmp"
 
 # Resource Config
 replicaCount: 1
@@ -85,7 +87,7 @@ serviceAccountRole: arn:aws:iam::{{ .Values.global.accountID }}:role/osdu-{{ .Va
 securityContext: 
   runAsUser: 10001
   runAsNonRoot: true
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   allowPrivilegeEscalation: false
   capabilities:
     drop:
