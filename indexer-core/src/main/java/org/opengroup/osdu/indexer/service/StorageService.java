@@ -15,6 +15,7 @@
 package org.opengroup.osdu.indexer.service;
 
 import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.model.indexer.Records;
@@ -25,7 +26,7 @@ import java.util.List;
 
 public interface StorageService {
 
-    Records getStorageRecords(List<String> ids) throws AppException, URISyntaxException;
+    Records getStorageRecords(List<String> ids, List<RecordInfo> recordChangedInfos) throws AppException, URISyntaxException;
 
     RecordQueryResponse getRecordsByKind(RecordReindexRequest request) throws URISyntaxException;
 

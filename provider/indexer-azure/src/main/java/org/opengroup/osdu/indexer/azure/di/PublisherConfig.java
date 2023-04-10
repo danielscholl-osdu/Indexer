@@ -1,4 +1,4 @@
-// Copyright 2017-2019, Schlumberger
+// Copyright © Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.service;
+package org.opengroup.osdu.indexer.azure.di;
 
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 
-import org.opengroup.osdu.core.common.model.http.AppException;
+@Configuration
+@Getter
+public class PublisherConfig {
 
-import java.io.IOException;
-
-public interface IndexCopyService {
-
-    String fetchTaskStatus(String taskId) throws AppException;
-
-    String copyIndex(String kind) throws IOException;
+    @Value("${azure.publisher.batchsize:50}")
+    private Integer pubSubBatchSize;
 }
+
