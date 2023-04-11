@@ -15,15 +15,8 @@
 
 package org.opengroup.osdu.indexer.cache;
 
-import org.opengroup.osdu.core.common.cache.VmCache;
-import org.opengroup.osdu.indexer.model.Constants;
-import org.springframework.stereotype.Component;
+import org.opengroup.osdu.core.common.cache.ICache;
+import org.opengroup.osdu.indexer.model.RecordChangeInfo;
 
-import java.util.Map;
-
-@Component
-public class RelatedObjectCache extends VmCache<String, Map<String, Object>> {
-    public RelatedObjectCache() {
-        super(Constants.DATA_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
-    }
+public interface IRecordChangeInfoCache extends ICache<String, RecordChangeInfo> {
 }

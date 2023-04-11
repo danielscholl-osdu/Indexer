@@ -21,8 +21,30 @@ import org.opengroup.osdu.indexer.model.RecordChangeInfo;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RecordChangeInfoCache extends VmCache<String, RecordChangeInfo> {
-    public RecordChangeInfoCache() {
-        super(Constants.DATA_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
+public class RecordChangeInfoCacheVmImpl implements IRecordChangeInfoCache {
+    private VmCache<String, RecordChangeInfo> cache;
+
+    public RecordChangeInfoCacheVmImpl() {
+        cache = new VmCache<>(Constants.DATA_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
+    }
+
+    @Override
+    public void put(String s, RecordChangeInfo o) {
+        this.cache.put(s, o);
+    }
+
+    @Override
+    public RecordChangeInfo get(String s) {
+        return this.cache.get(s);
+    }
+
+    @Override
+    public void delete(String s) {
+        this.cache.delete(s);
+    }
+
+    @Override
+    public void clearAll() {
+        this.cache.clearAll();
     }
 }

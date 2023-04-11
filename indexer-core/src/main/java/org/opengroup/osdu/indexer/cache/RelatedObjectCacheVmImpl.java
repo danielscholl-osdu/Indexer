@@ -19,22 +19,23 @@ import org.opengroup.osdu.core.common.cache.VmCache;
 import org.opengroup.osdu.indexer.model.Constants;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
-public class KindCacheVmImpl implements IKindCache {
+public class RelatedObjectCacheVmImpl implements IRelatedObjectCache {
+    private VmCache<String, Map<String, Object>> cache;
 
-    private VmCache<String, String> cache;
-
-    public KindCacheVmImpl() {
-        cache = new VmCache<>(Constants.SPEC_CACHE_EXPIRATION, Constants.SPEC_MAX_CACHE_SIZE);
+    public RelatedObjectCacheVmImpl() {
+        cache = new VmCache<>(Constants.DATA_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
     }
 
     @Override
-    public void put(String s, String o) {
+    public void put(String s, Map<String, Object> o) {
         this.cache.put(s, o);
     }
 
     @Override
-    public String get(String s) {
+    public Map<String, Object> get(String s) {
         return this.cache.get(s);
     }
 

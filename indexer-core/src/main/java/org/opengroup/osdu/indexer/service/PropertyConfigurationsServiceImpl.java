@@ -78,9 +78,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     @Inject
     private PartitionSafeKindCache kindCache;
     @Inject
-    private RelatedObjectCache relatedObjectCache;
+    private IRelatedObjectCache relatedObjectCache;
     @Inject
-    private RecordChangeInfoCache recordChangeInfoCache;
+    private IRecordChangeInfoCache recordChangeInfoCache;
     @Inject
     private SearchService searchService;
     @Inject
