@@ -77,6 +77,8 @@ public class IndexerServiceImplTest {
     private IMappingService mappingService;
     @Mock
     private IPublisher progressPublisher;
+    @Mock
+    private PropertyConfigurationsService propertyConfigurationsService;
 
     private List<RecordInfo> recordInfos = new ArrayList<>();
 

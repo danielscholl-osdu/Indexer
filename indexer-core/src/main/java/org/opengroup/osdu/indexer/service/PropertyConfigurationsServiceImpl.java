@@ -285,8 +285,20 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             recordInfo.setOp(OperationType.create.getValue());
         } else {
             recordInfo.setOp(OperationType.update.getValue());
-            List<String> changedProperties = PropertyUtil.getChangedProperties(previousDataMap, dataMap);
-            changedInfo.setUpdatedProperties(changedProperties);
+            List<String> updatedProperties = PropertyUtil.getChangedProperties(previousDataMap, dataMap);
+
+            // Handle the case that the same record is updated more than once in a short period
+            RecordChangeInfo previousChangedInfo = recordChangeInfoCache.get(recordId);
+            if(previousChangedInfo != null) {
+                if(previousChangedInfo.getRecordInfo().getOp().equals(OperationType.create.getValue())) {
+                    recordInfo.setOp(OperationType.create.getValue());
+                }
+                else if(previousChangedInfo.getUpdatedProperties() != null) {
+                    // It is fine to have duplicate items in the list
+                    updatedProperties.addAll(previousChangedInfo.getUpdatedProperties());
+                }
+            }
+            changedInfo.setUpdatedProperties(updatedProperties);
         }
         recordChangeInfoCache.put(recordId, changedInfo);
         relatedObjectCache.put(recordId, dataMap);

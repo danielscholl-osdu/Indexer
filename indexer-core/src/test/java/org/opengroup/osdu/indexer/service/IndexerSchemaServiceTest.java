@@ -28,6 +28,8 @@ import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.indexer.cache.PartitionSafeFlattenedSchemaCache;
+import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
@@ -35,6 +37,7 @@ import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
@@ -81,9 +84,13 @@ public class IndexerSchemaServiceTest {
     @Mock
     private SchemaService schemaService;
     @Mock
-    private ISchemaCache schemaCache;
+    private PartitionSafeSchemaCache schemaCache;
+    @Mock
+    private PartitionSafeFlattenedSchemaCache flattenedSchemaCache;
     @Mock
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    @Mock
+    private PropertyConfigurationsService propertyConfigurationsService;
     @InjectMocks
     private IndexSchemaServiceImpl sut;
 
@@ -315,13 +322,12 @@ public class IndexerSchemaServiceTest {
 
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
-        when(this.schemaCache.get(kind)).thenReturn("schema");
-        when(this.schemaCache.get(kind + "_flattened")).thenReturn("flattened schema");
 
         this.sut.processSchemaMessages(schemaMessages);
 
-        verify(this.schemaCache, times(2)).get(anyString());
-        verify(this.schemaCache, times(2)).delete(anyString());
+        verify(this.schemaCache, times(1)).delete(anyString());
+        verify(this.flattenedSchemaCache, times(1)).delete(anyString());
+        verify(this.virtualPropertiesSchemaCache, times(1)).delete(anyString());
     }
 
     @Test
