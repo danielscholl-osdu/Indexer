@@ -24,8 +24,8 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RelatedObjectsSpec extends RelatedCondition {
-    private final String CHILD_TO_PARENT = "ChildToParent";
-    private final String PARENT_TO_CHILDREN = "ParentToChildren";
+    public final static String CHILD_TO_PARENT = "ChildToParent";
+    public final static String PARENT_TO_CHILDREN = "ParentToChildren";
 
     private String relatedObjectID;
 

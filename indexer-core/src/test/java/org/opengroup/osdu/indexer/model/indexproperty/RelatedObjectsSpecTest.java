@@ -31,6 +31,7 @@ public class RelatedObjectsSpecTest {
     public void hasValidCondition_return_true() {
         RelatedObjectsSpec spec = new RelatedObjectsSpec();
         spec.setRelatedObjectKind("osdu:wks:master-data--GeoPoliticalEntity:1.");
+        spec.setRelationshipDirection(RelatedObjectsSpec.CHILD_TO_PARENT);
         spec.setRelatedObjectID("data.GeoContexts[].GeoPoliticalEntityID");
         spec.setRelatedConditionProperty("data.GeoContexts[].GeoTypeID");
         List<String> matches = Arrays.asList("opendes:reference-data--GeoPoliticalEntityType:Country:");
@@ -43,6 +44,7 @@ public class RelatedObjectsSpecTest {
     public void hasValidCondition_return_true_with_multi_nested() {
         RelatedObjectsSpec spec = new RelatedObjectsSpec();
         spec.setRelatedObjectKind("osdu:wks:master-data--Organisation:1.");
+        spec.setRelationshipDirection(RelatedObjectsSpec.CHILD_TO_PARENT);
         spec.setRelatedObjectID("data.TechnicalAssurances[].Reviewers[].OrganisationID");
         spec.setRelatedConditionProperty("data.TechnicalAssurances[].Reviewers[].RoleTypeID");
         List<String> matches = Arrays.asList("opendes:reference-data--ContactRoleType:AccountOwner:");
