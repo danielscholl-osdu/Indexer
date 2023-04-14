@@ -14,40 +14,35 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.when;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.util.Map;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
+import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.SchemaInfoResponse;
 import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
 import org.powermock.api.mockito.PowerMockito;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(SpringRunner.class)
 public class SchemaProviderImplTest {
@@ -165,6 +160,76 @@ public class SchemaProviderImplTest {
         inOrder.verify(schemaService).getFromSchemaService(any());
         verify(schemaService, times(1)).getFromSchemaService(any());
         verify(schemaService, times(0)).getFromStorageService(any());
+    }
+
+    @Test
+    public void getSchemaInfos() throws URISyntaxException, UnsupportedEncodingException {
+        HttpResponse httpResponse = createSchemaInfoResponse();
+        PowerMockito.when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
+
+        SchemaInfoResponse schemaInfoResponse = sut.getSchemaInfos("osdu", "wks", "master-data--Wellbore", "1", null, null, true);
+        assertEquals(1, schemaInfoResponse.getCount());
+        assertEquals(1, schemaInfoResponse.getSchemaInfos().size());
+        assertEquals("osdu:wks:master-data--Wellbore:1.3.0", schemaInfoResponse.getSchemaInfos().get(0).getSchemaIdentity().getId());
+    }
+
+    @Test
+    public void getSchemaInfos_latestSchemaInfo_url() throws URISyntaxException, UnsupportedEncodingException {
+        String schemaHost = "http://localhost/api/schema-service/v1/schema";
+        ArgumentCaptor<FetchServiceHttpRequest> argumentCaptor = ArgumentCaptor.forClass(FetchServiceHttpRequest.class);
+        HttpResponse httpResponse = createSchemaInfoResponse();
+        PowerMockito.when(this.configurationProperties.getSchemaHost()).thenReturn(schemaHost);
+        PowerMockito.when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
+
+        sut.getSchemaInfos("osdu", "wks", "master-data--Wellbore", "1", null, null, true);
+        verify(this.urlFetchService).sendRequest(argumentCaptor.capture());
+        FetchServiceHttpRequest request = argumentCaptor.getValue();
+        String url = request.getUrl();
+        String expectedUrl = "http://localhost/api/schema-service/v1/schema?authority=osdu&source=wks&entityType=master-data--Wellbore&schemaVersionMajor=1&latestVersion=true&limit=10000";
+        assertEquals(expectedUrl, url);
+    }
+
+    @Test
+    public void getSchemaInfos_allSchemaInfo_url() throws URISyntaxException, UnsupportedEncodingException {
+        String schemaHost = "http://localhost/api/schema-service/v1/schema";
+        ArgumentCaptor<FetchServiceHttpRequest> argumentCaptor = ArgumentCaptor.forClass(FetchServiceHttpRequest.class);
+        HttpResponse httpResponse = createSchemaInfoResponse();
+        PowerMockito.when(this.configurationProperties.getSchemaHost()).thenReturn(schemaHost);
+        PowerMockito.when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
+
+        sut.getSchemaInfos("osdu", "wks", "master-data--Wellbore", "1", "2", null, false);
+        verify(this.urlFetchService).sendRequest(argumentCaptor.capture());
+        FetchServiceHttpRequest request = argumentCaptor.getValue();
+        String url = request.getUrl();
+        String expectedUrl = "http://localhost/api/schema-service/v1/schema?authority=osdu&source=wks&entityType=master-data--Wellbore&schemaVersionMajor=1&schemaVersionMinor=2&latestVersion=false&limit=10000";
+        assertEquals(expectedUrl, url);
+    }
+
+    private HttpResponse createSchemaInfoResponse() {
+        String schemaInfos = "{\n" +
+                "    \"schemaInfos\": [{\n" +
+                "            \"schemaIdentity\": {\n" +
+                "                \"authority\": \"osdu\",\n" +
+                "                \"source\": \"wks\",\n" +
+                "                \"entityType\": \"master-data--Wellbore\",\n" +
+                "                \"schemaVersionMajor\": 1,\n" +
+                "                \"schemaVersionMinor\": 3,\n" +
+                "                \"schemaVersionPatch\": 0,\n" +
+                "                \"id\": \"osdu:wks:master-data--Wellbore:1.3.0\"\n" +
+                "            },\n" +
+                "            \"createdBy\": \"ServiceAdminUser\",\n" +
+                "            \"dateCreated\": \"2023-03-27T12:49:13.822+00:00\",\n" +
+                "            \"status\": \"PUBLISHED\",\n" +
+                "            \"scope\": \"SHARED\"\n" +
+                "        }\n" +
+                "    ],\n" +
+                "    \"offset\": 0,\n" +
+                "    \"count\": 1,\n" +
+                "    \"totalCount\": 1\n" +
+                "}";
+        HttpResponse httpResponse = new HttpResponse();
+        httpResponse.setBody(schemaInfos);
+        return httpResponse;
     }
 
 }

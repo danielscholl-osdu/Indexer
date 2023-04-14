@@ -294,8 +294,10 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                     recordInfo.setOp(OperationType.create.getValue());
                 }
                 else if(previousChangedInfo.getUpdatedProperties() != null) {
-                    // It is fine to have duplicate items in the list
-                    updatedProperties.addAll(previousChangedInfo.getUpdatedProperties());
+                    previousChangedInfo.getUpdatedProperties().forEach(p -> {
+                        if(!updatedProperties.contains(p))
+                            updatedProperties.add(p);
+                    });
                 }
             }
             changedInfo.setUpdatedProperties(updatedProperties);
@@ -908,6 +910,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return searchAllRecords(searchRequest);
     }
 
+
     /*
       It is assumed that the search request in this method won't return millions of records
      */
@@ -915,20 +918,21 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         searchRequest.setLimit(MAX_SEARCH_LIMIT);
         List<SearchRecord> allRecords = new ArrayList<>();
         boolean done = false;
-        int offset = 0;
         try {
             while (!done) {
-                searchRequest.setOffset(offset);
-                SearchResponse searchResponse = searchService.query(searchRequest);
+                SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
                 List<SearchRecord> results = searchResponse.getResults();
-                if (results != null && results.size() > 0) {
+                if (results != null) {
                     allRecords.addAll(results);
                 }
-
-                if (results != null && results.size() == MAX_SEARCH_LIMIT) {
-                    offset += MAX_SEARCH_LIMIT;
-                } else {
+                if(searchResponse.getCursor() == null) {
                     done = true;
+                }
+                else if(searchRequest.getCursor() == null) {
+                    Object kind = searchRequest.getKind();
+                    searchRequest = new SearchRequest();
+                    searchRequest.setKind(kind);
+                    searchRequest.setCursor(searchResponse.getCursor());
                 }
             }
         } catch (URISyntaxException e) {
@@ -936,30 +940,6 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         }
         return allRecords;
     }
-
-    //TODO: need to find out why the queryWithCursor is unstable
-//    private List<SearchRecord> searchAllRecords(SearchRequest searchRequest) {
-//        searchRequest.setLimit(MAX_SEARCH_LIMIT);
-//        List<SearchRecord> allRecords = new ArrayList<>();
-//        boolean done = false;
-//        try {
-//            while (!done) {
-//                SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
-//                List<SearchRecord> results = searchResponse.getResults();
-//                if (results != null) {
-//                    allRecords.addAll(results);
-//                }
-//                if (searchResponse.getCursor() != null && results.size() == MAX_SEARCH_LIMIT) {
-//                    searchRequest.setCursor(searchResponse.getCursor());
-//                } else {
-//                    done = true;
-//                }
-//            }
-//        } catch (URISyntaxException e) {
-//            jaxRsDpsLog.error("Failed to call search service.", e);
-//        }
-//        return allRecords;
-//    }
 
     private SearchRecord searchFirstRecord(SearchRequest searchRequest) {
         searchRequest.setLimit(1);

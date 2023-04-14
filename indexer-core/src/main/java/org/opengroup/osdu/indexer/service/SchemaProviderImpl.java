@@ -134,14 +134,13 @@ public class SchemaProviderImpl implements SchemaService {
     }
 
     private StringBuilder addQueryParam(StringBuilder stringBuilder, String paramName, String paramValue) {
-        if (Strings.isNullOrEmpty(paramName) || Strings.isNullOrEmpty(paramValue))
-            return stringBuilder;
-
-        if (stringBuilder.length() > 0)
-            stringBuilder.append("&");
-        stringBuilder.append(paramName);
-        stringBuilder.append("=");
-        stringBuilder.append(paramValue);
+        if(!Strings.isNullOrEmpty(paramName) && !Strings.isNullOrEmpty(paramValue)) {
+            if (stringBuilder.length() > 0)
+                stringBuilder.append("&");
+            stringBuilder.append(paramName);
+            stringBuilder.append("=");
+            stringBuilder.append(paramValue);
+        }
         return stringBuilder;
     }
 }

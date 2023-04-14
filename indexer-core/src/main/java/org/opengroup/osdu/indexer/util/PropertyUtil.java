@@ -66,6 +66,13 @@ public class PropertyUtil {
         return path;
     }
 
+    public static String removeIdPostfix(String objectId) {
+        if (objectId != null && objectId.endsWith(":")) {
+            objectId = objectId.substring(0, objectId.length() - 1);
+        }
+        return objectId;
+    }
+
     public static Map<String, Object> combineObjectMap(Map<String, Object> to, Map<String, Object> from) {
         if((to == null || to.isEmpty()) && (from == null || from.isEmpty())) {
             return new HashMap<>();
@@ -79,25 +86,41 @@ public class PropertyUtil {
 
         for (Map.Entry<String, Object> entry : from.entrySet()) {
             if (to.containsKey(entry.getKey())) {
-                Set<Object> objectSet = new HashSet<>();
-
                 Object toObject = to.get(entry.getKey());
-                if (toObject instanceof List) {
-                    objectSet.addAll((List) toObject);
-                } else {
-                    objectSet.add(toObject);
-                }
-
                 Object fromObject = entry.getValue();
-                if (fromObject instanceof List) {
+                if (toObject instanceof List && fromObject instanceof List) {
+                    Set<Object> objectSet = new HashSet<>();
+                    objectSet.addAll((List) toObject);
                     objectSet.addAll((List) fromObject);
-                } else {
-                    objectSet.add(fromObject);
+                    List<Object> propertyValueList = new ArrayList<>(objectSet);
+                    Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
+                    to.put(entry.getKey(), propertyValueList);
                 }
-
-                List<Object> propertyValueList = new ArrayList<>(objectSet);
-                Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
-                to.put(entry.getKey(), propertyValueList);
+                else if(toObject instanceof Map && fromObject instanceof Map) {
+                    Object objectMap = combineObjectMap((Map<String, Object>) toObject, (Map<String, Object>) fromObject);
+                    to.put(entry.getKey(), objectMap);
+                }
+                else if(!toObject.equals(fromObject)) {
+                    if(toObject.getClass().equals(fromObject.getClass())) {
+                        List<Object> propertyValueList = new ArrayList<>();
+                        propertyValueList.add(toObject);
+                        propertyValueList.add(fromObject);
+                        Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
+                        to.put(entry.getKey(), propertyValueList);
+                    }
+                    else if(toObject instanceof List || fromObject instanceof List) {
+                        List<Object> propertyValueList = toObject instanceof List? (List)toObject : (List)fromObject;
+                        Object object = toObject instanceof List? fromObject : toObject;
+                        if(!propertyValueList.isEmpty() && propertyValueList.get(0).getClass().equals(object.getClass())) {
+                            propertyValueList.add(object);
+                            Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
+                            to.put(entry.getKey(), propertyValueList);
+                        }
+                        else if(propertyValueList.isEmpty()) {
+                            to.put(entry.getKey(), object);
+                        }
+                    }
+                }
             } else {
                 to.put(entry.getKey(), entry.getValue());
             }
@@ -106,19 +129,19 @@ public class PropertyUtil {
         return to;
     }
 
-    public static Map<String, Object> replacePropertyPaths(String propertyRootPath, String valuePath, Map<String, Object> objectMap) {
-        if(Strings.isNullOrEmpty(propertyRootPath) || Strings.isNullOrEmpty(propertyRootPath) || objectMap == null || objectMap.isEmpty()) {
+    public static Map<String, Object> replacePropertyPaths(String newPathPrefix, String valuePath, Map<String, Object> objectMap) {
+        if(Strings.isNullOrEmpty(newPathPrefix) || Strings.isNullOrEmpty(valuePath) || objectMap == null || objectMap.isEmpty()) {
             return new HashMap<>();
         }
 
-        propertyRootPath = removeDataPrefix(propertyRootPath);
+        newPathPrefix = removeDataPrefix(newPathPrefix);
         valuePath = removeDataPrefix(valuePath);
 
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, Object> entry : objectMap.entrySet()) {
             String key = entry.getKey();
             if (key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) {
-                key = key.replace(valuePath, propertyRootPath);
+                key = key.replace(valuePath, newPathPrefix);
                 values.put(key, entry.getValue());
             }
         }
@@ -130,9 +153,10 @@ public class PropertyUtil {
             return false;
         }
 
-        int index = kind.lastIndexOf(":");
-        String version = kind.substring(index + 1);
-        String[] subVersions = version.split("\\.");
+        String[] parts = kind.split(":");
+        if(parts.length != 4)
+            return false;
+        String[] subVersions = parts[3].split("\\.");
         return (subVersions.length == 3);
     }
 
@@ -140,22 +164,14 @@ public class PropertyUtil {
         if(Strings.isNullOrEmpty(kind)) {
             return kind;
         }
+        String[] parts = kind.split(":");
+        if(parts.length != 4)
+            return "";
 
         int index = kind.lastIndexOf(":");
-        String kindWithMajor = kind.substring(0, index) + ":";
-        String version = kind.substring(index + 1);
-        String[] subVersions = version.split("\\.");
-        if (subVersions.length > 0) {
-            kindWithMajor += subVersions[0] + ".";
-        }
+        String[] subVersions = parts[3].split("\\.");
+        String kindWithMajor = kind.substring(0, index) + ":" + subVersions[0] + ".";
         return kindWithMajor;
-    }
-
-    public static String removeIdPostfix(String objectId) {
-        if (objectId != null && objectId.endsWith(":")) {
-            objectId = objectId.substring(0, objectId.length() - 1);
-        }
-        return objectId;
     }
 
     public static List<String> getChangedProperties(Map<String, Object> leftMap, Map<String, Object> rightMap) {
