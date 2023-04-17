@@ -58,25 +58,37 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
         } catch (AppException appException) {
             int statusCode = appException.getError().getCode();
             if (statusCode > 199 && statusCode < 300 && statusCode != RequestStatus.INVALID_RECORD) {
-                skipMessage(oqmMessage, oqmAckReplier, appException);
+                skipMessage(oqmMessage, dpsHeaders, oqmAckReplier, appException);
             } else {
-                rescheduleMessage(oqmMessage, oqmAckReplier, getException(appException));
+                rescheduleMessage(oqmMessage, dpsHeaders, oqmAckReplier, getException(appException));
             }
         } catch (Exception exception) {
-            rescheduleMessage(oqmMessage, oqmAckReplier, exception);
+            rescheduleMessage(oqmMessage, dpsHeaders, oqmAckReplier, exception);
+        } catch (Throwable e) {
+            //Catching throwable is necessary, otherwise, errors like NoSuchMethodError will slip through silently.
+            log.error(
+                "HALT! Unrecoverable malfunction! Unexpected error was thrown during processing! Event ID: "
+                    + oqmMessage.getId() + ". Correlation ID: " + dpsHeaders.getCorrelationId(), e);
+            throw e;
         } finally {
             // Cleaning thread context after processing is finished and the thread dies out.
             ThreadScopeContextHolder.currentThreadScopeAttributes().clear();
         }
     }
 
-    private static void skipMessage(OqmMessage oqmMessage, OqmAckReplier oqmAckReplier, AppException appException) {
-        log.info("Event id : " + oqmMessage.getId() + ", was not processed, and will NOT be rescheduled.", appException);
+    private static void skipMessage(OqmMessage oqmMessage, DpsHeaders dpsHeaders,
+        OqmAckReplier oqmAckReplier, AppException appException) {
+        log.info(
+            "Event ID: " + oqmMessage.getId() + ". Correlation ID: " + dpsHeaders.getCorrelationId()
+                + ", was not processed, and will NOT be rescheduled.", appException);
         oqmAckReplier.ack();
     }
 
-    private static void rescheduleMessage(OqmMessage oqmMessage, OqmAckReplier oqmAckReplier, Exception exception) {
-        log.error("Event id : " + oqmMessage.getId() + ", was not processed, and will BE rescheduled.", exception);
+    private static void rescheduleMessage(OqmMessage oqmMessage, DpsHeaders dpsHeaders,
+        OqmAckReplier oqmAckReplier, Exception exception) {
+        log.error(
+            "Event id : " + oqmMessage.getId() + ". Correlation ID: " + dpsHeaders.getCorrelationId()
+                + ", was not processed, and will BE rescheduled.", exception);
         oqmAckReplier.nack();
     }
 
