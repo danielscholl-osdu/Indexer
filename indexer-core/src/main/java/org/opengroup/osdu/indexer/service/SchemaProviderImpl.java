@@ -42,7 +42,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class SchemaProviderImpl implements SchemaService {
     private final Gson gson = new Gson();
-    private final int MAX_NUMBER_OF_SCHEMA_INFOS = 10000;
+    private final int MAX_NUMBER_OF_SCHEMA_INFOS = 1000;
 
     @Inject
     private JaxRsDpsLog log;

@@ -185,7 +185,7 @@ public class SchemaProviderImplTest {
         verify(this.urlFetchService).sendRequest(argumentCaptor.capture());
         FetchServiceHttpRequest request = argumentCaptor.getValue();
         String url = request.getUrl();
-        String expectedUrl = "http://localhost/api/schema-service/v1/schema?authority=osdu&source=wks&entityType=master-data--Wellbore&schemaVersionMajor=1&latestVersion=true&limit=10000";
+        String expectedUrl = "http://localhost/api/schema-service/v1/schema?authority=osdu&source=wks&entityType=master-data--Wellbore&schemaVersionMajor=1&latestVersion=true&limit=1000";
         assertEquals(expectedUrl, url);
     }
 
@@ -201,7 +201,7 @@ public class SchemaProviderImplTest {
         verify(this.urlFetchService).sendRequest(argumentCaptor.capture());
         FetchServiceHttpRequest request = argumentCaptor.getValue();
         String url = request.getUrl();
-        String expectedUrl = "http://localhost/api/schema-service/v1/schema?authority=osdu&source=wks&entityType=master-data--Wellbore&schemaVersionMajor=1&schemaVersionMinor=2&latestVersion=false&limit=10000";
+        String expectedUrl = "http://localhost/api/schema-service/v1/schema?authority=osdu&source=wks&entityType=master-data--Wellbore&schemaVersionMajor=1&schemaVersionMinor=2&latestVersion=false&limit=1000";
         assertEquals(expectedUrl, url);
     }
 

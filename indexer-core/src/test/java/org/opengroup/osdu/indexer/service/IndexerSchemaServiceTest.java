@@ -14,6 +14,8 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
@@ -27,38 +29,29 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
+import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.PartitionSafeFlattenedSchemaCache;
 import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
-import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -226,6 +219,88 @@ public class IndexerSchemaServiceTest {
         verify(this.indicesService, times(0)).createIndex(any(), any(), any(), any(), any());
         verify(this.mappingService, times(1)).createMapping(any(), any(), any(), anyBoolean());
         verifyNoMoreInteractions(this.mappingService);
+    }
+
+    @Test
+    public void should_merge_schema_without_invalidateCache_when_kind_has_property_configuration() throws IOException, URISyntaxException {
+        String kind = "tenant1:avocet:completion:1.0.0";
+        String storageSchema = "{" +
+                "  \"kind\": \"tenant1:avocet:completion:1.0.0\"," +
+                "  \"schema\": [" +
+                "    {" +
+                "      \"path\": \"status\"," +
+                "      \"kind\": \"string\"" +
+                "    }," +
+                "    {" +
+                "      \"path\": \"startDate\"," +
+                "      \"kind\": \"string\"" +
+                "    }" +
+                "  ]" +
+                "}";
+        String extendedProperties = "[{\n" +
+                "        \"path\": \"ext_p1\",\n" +
+                "        \"kind\": \"string\"\n" +
+                "    }, {\n" +
+                "        \"path\": \"ext_p2\",\n" +
+                "        \"kind\": \"string\"\n" +
+                "    }\n" +
+                "]";
+        Gson gson = new Gson();
+        Type listOfSchemaItems = new TypeToken<ArrayList<SchemaItem>>() {}.getType();
+        List<SchemaItem> extendedSchemaItems = gson.fromJson(extendedProperties, listOfSchemaItems);
+
+        when(this.schemaCache.get(kind)).thenReturn(null);
+        when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
+        when(this.propertyConfigurationsService.getPropertyConfigurations(kind)).thenReturn(new PropertyConfigurations());
+        when(this.propertyConfigurationsService.getExtendedSchemaItems(any(), any(), any())).thenReturn(extendedSchemaItems);
+
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
+        assertNotNull(indexSchema);
+        assertEquals(4, indexSchema.getDataSchema().size());
+        verify(this.schemaCache, times(0)).delete(any());
+        verify(this.flattenedSchemaCache, times(0)).delete(any());
+        verify(this.virtualPropertiesSchemaCache, times(0)).delete(any());
+    }
+
+    @Test
+    public void should_merge_schema_with_invalidateCache_when_kind_has_property_configuration() throws IOException, URISyntaxException {
+        String kind = "tenant1:avocet:completion:1.0.0";
+        String storageSchema = "{" +
+                "  \"kind\": \"tenant1:avocet:completion:1.0.0\"," +
+                "  \"schema\": [" +
+                "    {" +
+                "      \"path\": \"status\"," +
+                "      \"kind\": \"string\"" +
+                "    }," +
+                "    {" +
+                "      \"path\": \"startDate\"," +
+                "      \"kind\": \"string\"" +
+                "    }" +
+                "  ]" +
+                "}";
+        String extendedProperties = "[{\n" +
+                "        \"path\": \"ext_p1\",\n" +
+                "        \"kind\": \"string\"\n" +
+                "    }, {\n" +
+                "        \"path\": \"ext_p2\",\n" +
+                "        \"kind\": \"string\"\n" +
+                "    }\n" +
+                "]";
+        Gson gson = new Gson();
+        Type listOfSchemaItems = new TypeToken<ArrayList<SchemaItem>>() {}.getType();
+        List<SchemaItem> extendedSchemaItems = gson.fromJson(extendedProperties, listOfSchemaItems);
+
+        when(this.schemaCache.get(kind)).thenReturn(null);
+        when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
+        when(this.propertyConfigurationsService.getPropertyConfigurations(kind)).thenReturn(new PropertyConfigurations());
+        when(this.propertyConfigurationsService.getExtendedSchemaItems(any(), any(), any())).thenReturn(extendedSchemaItems);
+
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, true);
+        assertNotNull(indexSchema);
+        assertEquals(4, indexSchema.getDataSchema().size());
+        verify(this.schemaCache, times(1)).delete(any());
+        verify(this.flattenedSchemaCache, times(1)).delete(any());
+        verify(this.virtualPropertiesSchemaCache, times(1)).delete(any());
     }
 
     @Test
