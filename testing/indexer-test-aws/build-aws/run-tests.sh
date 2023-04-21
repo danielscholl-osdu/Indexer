@@ -28,10 +28,31 @@ export ENTITLEMENTS_DOMAIN=example.com
 export OTHER_RELEVANT_DATA_COUNTRIES=US
 export STORAGE_HOST=$STORAGE_URL
 export HOST=$SCHEMA_URL
-export ELASTIC_HOST=$ELASTIC_HOST
-export ELASTIC_PORT=$ELASTIC_PORT
+export ELASTIC_HOST=localhost
 export ELASTIC_PASSWORD=$ELASTIC_PASSWORD
 export ELASTIC_USER_NAME=$ELASTIC_USERNAME
+
+################ Elastic search port forwarding ########
+##Check if port is available
+localPort=$ELASTIC_PORT
+while netstat -an | grep $localPort | grep -i listen ; do
+    echo "$localPort Port in use"
+    ((localPort++))
+done
+echo "Using local port: "$localPort
+
+export KUBECONFIG=/tmp/kubeconfig-int-test$(date +%s).yaml
+aws eks update-kubeconfig --name $EKS_NAME --region $AWS_REGION --role-arn $CLUSTER_MANAGEMENT_ROLE_ARN
+kubectl port-forward -n $TENANT_GROUP_NAME-tenant-$EKS_TENANT_NAME-elasticsearch svc/elasticsearch-es-http $localPort:$ELASTIC_PORT > /dev/null 2>&1 &
+
+export ELASTIC_PORT=$localPort
+pid=$!
+
+trap '{
+    echo killing "Port forward process: "$pid
+    kill $pid
+    rm $KUBECONFIG
+}' EXIT
 
 #### RUN INTEGRATION TEST #########################################################################
 
