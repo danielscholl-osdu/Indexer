@@ -42,7 +42,7 @@ done
 echo "Using local port: "$localPort
 
 export KUBECONFIG=/tmp/kubeconfig-int-test$(date +%s).yaml
-aws eks update-kubeconfig --name $EKS_NAME --region $AWS_REGION --role-arn $CLUSTER_MANAGEMENT_ROLE_ARN
+aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION --role-arn $CLUSTER_MANAGEMENT_ROLE_ARN
 kubectl port-forward -n $TENANT_GROUP_NAME-tenant-$EKS_TENANT_NAME-elasticsearch svc/elasticsearch-es-http $localPort:$ELASTIC_PORT > /dev/null 2>&1 &
 
 export ELASTIC_PORT=$localPort
