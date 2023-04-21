@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class IndexAliasServiceImpl implements IndexAliasService{
+    private static final String KIND_COMPLETE_VERSION_PATTERN = "[\\w-\\.\\*]+:[\\w-\\.\\*]+:[\\w-\\.\\*]+:(\\d+\\.\\d+\\.\\d+)$";
+
     @Inject
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Inject
@@ -149,6 +151,10 @@ public class IndexAliasServiceImpl implements IndexAliasService{
 
     private String resolveConcreteIndexName(RestHighLevelClient restClient, String kind) throws IOException {
         String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
+        if(!isCompleteVersionKind(kind)) {
+            return index;
+        }
+
         GetAliasesRequest request = new GetAliasesRequest(index);
         GetAliasesResponse response = restClient.indices().getAlias(request, RequestOptions.DEFAULT);
         if(response.status() == RestStatus.NOT_FOUND) {
@@ -182,7 +188,11 @@ public class IndexAliasServiceImpl implements IndexAliasService{
                     return actualIndex;
             }
         }
-        return null;
+        return index;
+    }
+
+    private boolean isCompleteVersionKind(String kind) {
+        return !Strings.isNullOrEmpty(kind) && kind.matches(KIND_COMPLETE_VERSION_PATTERN);
     }
 
     private List<String> getAllKinds(RestHighLevelClient client) throws IOException {
