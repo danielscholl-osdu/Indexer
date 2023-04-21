@@ -1,4 +1,4 @@
-// Copyright 2017-2019, Schlumberger
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.service;
+package org.opengroup.osdu.indexer.aws.util;
 
+import lombok.Data;
 
-import org.opengroup.osdu.core.common.model.http.AppException;
+@Data
+public class AccessToken {
+    public String access_token;
+    public String expires_in;
+    public String token_type;
 
-import java.io.IOException;
-
-public interface IndexCopyService {
-
-    String fetchTaskStatus(String taskId) throws AppException;
-
-    String copyIndex(String kind) throws IOException;
 }

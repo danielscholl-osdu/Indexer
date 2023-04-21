@@ -17,12 +17,9 @@ FROM amazoncorretto:8
 
 ARG JAR_FILE=provider/indexer-aws/target/*spring-boot.jar
 
-#Default to using self signed generated TLS cert
-ENV USE_SELF_SIGNED_SSL_CERT true
 
 WORKDIR /
 COPY ${JAR_FILE} app.jar
-COPY /provider/indexer-aws/build-aws/ssl.sh /ssl.sh
 COPY /provider/indexer-aws/build-aws/entrypoint.sh /entrypoint.sh
 EXPOSE 8080
 
