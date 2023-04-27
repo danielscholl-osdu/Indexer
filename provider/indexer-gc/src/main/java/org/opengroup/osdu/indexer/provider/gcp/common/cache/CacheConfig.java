@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2022 Google LLC
- *  Copyright 2020-2022 EPAM Systems, Inc
+ *  Copyright 2020-2023 Google LLC
+ *  Copyright 2020-2023 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@
 package org.opengroup.osdu.indexer.provider.gcp.common.cache;
 
 import lombok.RequiredArgsConstructor;
+import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.cache.RedisCache;
+import org.opengroup.osdu.core.common.cache.VmCache;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
+import org.opengroup.osdu.core.common.partition.PartitionInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCache;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 import org.opengroup.osdu.core.gcp.cache.RedisCacheBuilder;
@@ -88,5 +91,10 @@ public class CacheConfig {
                 String.class,
                 Boolean.class
         );
+    }
+
+    @Bean
+    public ICache<String, PartitionInfo> partitionInfoCache() {
+        return new VmCache<>(600, 2000);
     }
 }

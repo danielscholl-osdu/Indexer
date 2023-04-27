@@ -37,8 +37,8 @@
     <dependencies>
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
-            <artifactId>core-lib-gcp</artifactId>
-            <version>0.20.0-rc2</version>
+            <artifactId>core-lib-gc</artifactId>
+            <version>0.21.0-rc4</version>
         </dependency>
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
@@ -149,6 +149,12 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
             <version>5.3.22</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opengroup.osdu</groupId>
+            <artifactId>oqm</artifactId>
+            <version>0.21.0-rc3</version>
         </dependency>
     </dependencies>
 

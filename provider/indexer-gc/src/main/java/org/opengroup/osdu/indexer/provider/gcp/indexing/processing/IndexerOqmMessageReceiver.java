@@ -18,11 +18,8 @@
 package org.opengroup.osdu.indexer.provider.gcp.indexing.processing;
 
 import com.google.common.base.Strings;
-
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.opengroup.osdu.core.auth.TokenProvider;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
@@ -32,6 +29,9 @@ import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessageReceiver;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.scope.ThreadDpsHeaders;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.thread.ThreadScopeContextHolder;
+
+import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
