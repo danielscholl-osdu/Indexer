@@ -18,15 +18,8 @@
 package org.opengroup.osdu.indexer.provider.gcp.common.publish;
 
 import com.google.gson.Gson;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.gcp.oqm.driver.OqmDriver;
@@ -37,6 +30,14 @@ import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.IndexerMessag
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import javax.validation.constraints.NotNull;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Primary
