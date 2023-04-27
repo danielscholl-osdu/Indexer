@@ -16,8 +16,8 @@ data:
   springProfilesActive: "gcp"
   storageHost: "http://storage"
   # Deployment
-  requestsCpu: "25m"
-  requestsMemory: "500Mi"
+  requestsCpu: "35m"
+  requestsMemory: "640Mi"
   limitsCpu: "1"
   limitsMemory: "1G"
   image: ""
@@ -39,5 +39,5 @@ conf:
 istio:
   proxyCPU: "10m"
   proxyCPULimit: "200m"
-  proxyMemory: "50Mi"
+  proxyMemory: "100Mi"
   proxyMemoryLimit: "256Mi"
