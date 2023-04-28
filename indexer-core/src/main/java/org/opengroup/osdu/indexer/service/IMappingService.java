@@ -19,7 +19,6 @@ import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 public interface IMappingService {
 
@@ -30,8 +29,6 @@ public interface IMappingService {
     String createMapping(RestHighLevelClient client, IndexSchema schema, String index, boolean merge) throws IOException;
 
     Map<String, Object> getIndexMappingFromRecordSchema(IndexSchema schema);
-
-    void updateIndexMappingForIndicesOfSameType(Set<String> indices, String fieldName) throws Exception;
 
     void syncIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception;
 }

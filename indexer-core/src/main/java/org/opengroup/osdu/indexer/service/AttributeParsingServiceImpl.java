@@ -18,14 +18,6 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Array;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiFunction;
-import javax.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
@@ -36,6 +28,16 @@ import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
 import org.opengroup.osdu.indexer.util.parser.NumberParser;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
+
+import javax.inject.Inject;
+import java.lang.reflect.Array;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
 
 @Service
 @RequestScope
@@ -53,6 +55,8 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
     private GeometryConversionService geometryConversionService;
     @Inject
     private JobStatus jobStatus;
+
+    private Gson gson = new Gson();
 
     @Override
     public void tryParseValueArray(Class<?> attributeClass, String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
@@ -158,7 +162,7 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
 
         try {
             Type type = new TypeToken<Map<String, Double>>() {}.getType();
-            Map<String, Double> positionMap = new Gson().fromJson(attributeVal.toString(), type);
+            Map<String, Double> positionMap = this.gson.fromJson(attributeVal.toString(), type);
 
             if (positionMap == null || positionMap.isEmpty()) return;
 
@@ -177,8 +181,20 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
     public void tryParseGeojson(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
 
         try {
-            Type type = new TypeToken<Map<String, Object>>() {}.getType();
-            Map<String, Object> geoJsonMap = new Gson().fromJson(attributeVal.toString(), type);
+            Map<String, Object> geoJsonMap = new HashMap<>();
+            if (attributeVal instanceof Map) {
+                try {
+                    geoJsonMap = (Map<String, Object>) attributeVal;
+                } catch (ClassCastException e) {
+                    String parsingError = String.format("geo-json shape parsing error: %s attribute: %s", e.getMessage(), attributeName);
+                    jobStatus.addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, parsingError, String.format("record-id: %s | %s", recordId, parsingError));
+                }
+            }
+
+            if (geoJsonMap.isEmpty()) {
+                Type type = new TypeToken<Map<String, Object>>() {}.getType();
+                geoJsonMap = this.gson.fromJson(this.gson.toJson(attributeVal, type), type);
+            }
 
             if (geoJsonMap == null || geoJsonMap.isEmpty()) return;
 
@@ -191,19 +207,19 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
         }
     }
 
-	@Override
-	public void tryParseNested(String recordId, String name, Object value, Map<String, Object> dataMap) {
-		dataMap.put(name,value);
-	}
+    @Override
+    public void tryParseNested(String recordId, String name, Object value, Map<String, Object> dataMap) {
+        dataMap.put(name, value);
+    }
 
-	@Override
-	public void tryParseObject(String recordId, String name, Object value, Map<String, Object> dataMap) {
-		dataMap.put(name,value);
-	}
+    @Override
+    public void tryParseObject(String recordId, String name, Object value, Map<String, Object> dataMap) {
+        dataMap.put(name, value);
+    }
 
     @Override
     public void tryParseFlattened(String recordId, String name, Object value, Map<String, Object> dataMap) {
-        dataMap.put(name,value);
+        dataMap.put(name, value);
     }
 
 

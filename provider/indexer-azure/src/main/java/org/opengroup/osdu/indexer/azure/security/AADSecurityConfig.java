@@ -32,24 +32,26 @@ public class AADSecurityConfig extends WebSecurityConfigurerAdapter {
     @Inject
     private AADAppRoleStatelessAuthenticationFilter appRoleAuthFilter;
 
+    private static final String[] AUTH_ALLOWLIST = {"/", "/index.html",
+            "/index-worker", "/_dps/task-handlers", "/_dps/task-handlers/**",
+            "/reindex",
+            "/actuator/*",
+            "/v2/api-docs.yaml",
+            "/v2/api-docs/swagger-config",
+            "/v2/api-docs/**",
+            "/info",
+            "/v2/swagger",
+            "/v2/swagger-ui/**"
+    };
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/", "/index.html",
-                        "/index-worker", "/_dps/task-handlers", "/_dps/task-handlers/**",
-                        "/reindex",
-                        "/v2/api-docs",
-                        "/v3/api-docs",
-                        "/swagger-resources/**",
-                        "/configuration/security",
-                        "/swagger",
-                        "/info",
-                        "/swagger-ui/index.html",
-                        "/swagger-ui/**",
-                        "/webjars/**").permitAll()
+                .antMatchers(AUTH_ALLOWLIST).permitAll()
                 .anyRequest().authenticated()
                 .and().addFilterBefore(appRoleAuthFilter, UsernamePasswordAuthenticationFilter.class);
     }
+
 }

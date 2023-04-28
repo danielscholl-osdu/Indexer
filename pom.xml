@@ -5,7 +5,7 @@
     <groupId>org.opengroup.osdu.indexer</groupId>
     <artifactId>indexer-service</artifactId>
     <packaging>pom</packaging>
-    <version>0.20.0-SNAPSHOT</version>
+    <version>0.21.0-SNAPSHOT</version>
     <description>Indexer Service</description>
 
     <properties>
@@ -13,17 +13,17 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <spring-cloud.version>Greenwich.SR2</spring-cloud.version>
-        <os-core-common.version>0.19.0-SNAPSHOT</os-core-common.version>
-        <snakeyaml.version>1.33</snakeyaml.version>
+        <os-core-common.version>0.19.0</os-core-common.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
         <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
-        <jackson-databind.version>2.13.4.2</jackson-databind.version>
-        <jackson.version>2.13.4</jackson.version>
-        <tomcat-embed-core.version>9.0.68</tomcat-embed-core.version>
+        <jackson-databind.version>2.14.1</jackson-databind.version>
+        <jackson.version>2.14.1</jackson.version>
+        <tomcat-embed-core.version>9.0.70</tomcat-embed-core.version>
         <common-codec.version>1.14</common-codec.version>
         <elasticsearch.version>7.8.1</elasticsearch.version>
         <netty.version>4.1.51.Final</netty.version>
         <reactor-netty.version>0.8.20.RELEASE</reactor-netty.version>
-        <woodstox-core.version>6.2.3</woodstox-core.version>
+        <woodstox-core.version>6.4.0</woodstox-core.version>
         <log4j2.version>2.17.1</log4j2.version>
         <spring-boot-maven-plugin.version>2.7.6</spring-boot-maven-plugin.version>
 <!--        <spring-boot.version>2.1.18.RELEASE</spring-boot.version>-->
@@ -33,7 +33,7 @@
 <!--        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
 <!--        <failOnMissingWebXml>false</failOnMissingWebXml>-->
 <!--        <spring-cloud.version>Greenwich.SR2</spring-cloud.version>-->
-        <openapi.version>1.6.9</openapi.version>
+        <openapi.version>1.6.14</openapi.version>
     </properties>
 
     <licenses>

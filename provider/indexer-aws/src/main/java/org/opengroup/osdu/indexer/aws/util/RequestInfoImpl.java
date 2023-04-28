@@ -22,11 +22,11 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-
+import org.springframework.web.context.annotation.RequestScope;
 import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Map;
-
+import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
 
 @Primary
 @Log
@@ -36,6 +36,8 @@ public class RequestInfoImpl implements IRequestInfo {
     @Inject
     private DpsHeaders headersMap;
 
+    @Inject
+    private AwsServiceAccountAuthToken awsServiceAccountAuthToken;
 
     private static final HashSet<String> FORBIDDEN_FROM_LOGGING = new HashSet<>();
     static {
@@ -83,7 +85,9 @@ public class RequestInfoImpl implements IRequestInfo {
 
     @Override
     public DpsHeaders getHeadersWithDwdAuthZ() {
-        return getHeaders();
+        DpsHeaders ret = getHeaders();
+        ret.put(AUTHORIZATION, this.checkOrGetAuthorizationHeader());
+        return ret;
     }
 
 
@@ -104,4 +108,9 @@ public class RequestInfoImpl implements IRequestInfo {
     public boolean isTaskQueueRequest() {
         return false;
     }
+
+    private String checkOrGetAuthorizationHeader() {
+        return "Bearer " + this.awsServiceAccountAuthToken.getAuthToken();
+    }
+
 }

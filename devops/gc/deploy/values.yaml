@@ -2,10 +2,13 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+global:
+  domain: ""
+  onPremEnabled: false
+
 data:
   # Configmap
   entitlementsHost: "http://entitlements"
-  indexerQueueHost: "http://indexer-queue"
   logLevel: "ERROR"
   partitionHost: "http://partition"
   schemaHost: "http://schema"
@@ -13,8 +16,8 @@ data:
   springProfilesActive: "gcp"
   storageHost: "http://storage"
   # Deployment
-  requestsCpu: "75m"
-  requestsMemory: "640M"
+  requestsCpu: "35m"
+  requestsMemory: "640Mi"
   limitsCpu: "1"
   limitsMemory: "1G"
   image: ""
@@ -31,12 +34,10 @@ conf:
   elasticSecretName: "indexer-elastic-secret"
   keycloakSecretName: "indexer-keycloak-secret"
   rabbitmqSecretName: "rabbitmq-secret"
-  onPremEnabled: false
-  domain: ""
   indexerRedisSecretName: "indexer-redis-secret"
 
 istio:
-  proxyCPU: "25m"
+  proxyCPU: "10m"
   proxyCPULimit: "200m"
-  proxyMemory: "64Mi"
+  proxyMemory: "100Mi"
   proxyMemoryLimit: "256Mi"

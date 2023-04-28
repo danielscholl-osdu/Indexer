@@ -1,5 +1,3 @@
-<!--- Deploy -->
-
 # Deploy helm chart
 
 ## Introduction
@@ -27,12 +25,18 @@ Packages are only needed for installation from a local computer.
 Before installing deploy Helm chart you need to install [configmap Helm chart](../configmap).
 First you need to set variables in **values.yaml** file using any code editor. Some of the values are prefilled, but you need to specify some values as well. You can find more information about them below.
 
+### Global variables
+
+| Name | Description | Type | Default |Required |
+|------|-------------|------|---------|---------|
+**global.domain** | your domain for the external endpoint, ex `example.com` | string | - | yes
+**global.onPremEnabled** | whether on-prem is enabled | boolean | false | yes
+
 ### Configmap variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
 **data.entitlementsHost** | entitlements host | string | "http://entitlements" | yes
-**data.indexerQueueHost** | indexer-queue host | string | "http://indexer-queue" | yes
 **data.logLevel** | logging level | string | INFO | yes
 **data.partitionHost** | partition host | string | "http://partition" | yes
 **data.schemaHost** | schema host | string | "http://schema" | yes
@@ -46,8 +50,8 @@ First you need to set variables in **values.yaml** file using any code editor. S
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**data.requestsCpu** | amount of requested CPU | string | 0.1 | yes
-**data.requestsMemory** | amount of requested memory| string | 640M | yes
+**data.requestsCpu** | amount of requested CPU | string | 35m | yes
+**data.requestsMemory** | amount of requested memory| string | 640Mi | yes
 **data.limitsCpu** | CPU limit | string | 1 | yes
 **data.limitsMemory** | memory limit | string | 1G | yes
 **data.image** | service image | string | - | yes
@@ -64,18 +68,16 @@ First you need to set variables in **values.yaml** file using any code editor. S
 **conf.elasticSecretName** | secret for elastic | string | `indexer-elastic-secret` | yes
 **conf.keycloakSecretName** | secret for keycloak | string | `indexer-keycloak-secret` | yes
 **conf.rabbitmqSecretName** | secret for rabbitmq | string | `rabbitmq-secret` | yes
-**conf.onPremEnabled** | whether on-prem is enabled | boolean | false | yes
-**conf.domain** | your domain | string | - | yes
 **conf.indexerRedisSecretName** | indexer Redis secret that contains redis password with REDIS_PASSWORD key | string | `indexer-redis-secret` | yes
 
 ### ISTIO variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**istio.proxyCPU** | CPU request for Envoy sidecars | string | 50m | yes
-**istio.proxyCPULimit** | CPU limit for Envoy sidecars | string | 500m | yes
-**istio.proxyMemory** | memory request for Envoy sidecars | string | 64Mi | yes
-**istio.proxyMemoryLimit** | memory limit for Envoy sidecars | string | 512Mi | yes
+**istio.proxyCPU** | CPU request for Envoy sidecars | string | 10m | yes
+**istio.proxyCPULimit** | CPU limit for Envoy sidecars | string | 200m | yes
+**istio.proxyMemory** | memory request for Envoy sidecars | string | 100Mi | yes
+**istio.proxyMemoryLimit** | memory limit for Envoy sidecars | string | 256Mi | yes
 
 ### Install the helm chart
 

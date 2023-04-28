@@ -125,7 +125,7 @@ public class IndexerServiceImpl implements IndexerService {
             // get upsert records
             Map<String, Map<String, OperationType>> upsertRecordMap = RecordInfo.getUpsertRecordIds(recordInfos);
             if (upsertRecordMap != null && !upsertRecordMap.isEmpty()) {
-                List<String> upsertFailureRecordIds = processUpsertRecords(upsertRecordMap);
+                List<String> upsertFailureRecordIds = processUpsertRecords(upsertRecordMap, recordInfos);
                 retryRecordIds.addAll(upsertFailureRecordIds);
             }
 
@@ -191,7 +191,7 @@ public class IndexerServiceImpl implements IndexerService {
         }
     }
 
-    private List<String> processUpsertRecords(Map<String, Map<String, OperationType>> upsertRecordMap) throws Exception {
+    private List<String> processUpsertRecords(Map<String, Map<String, OperationType>> upsertRecordMap, List<RecordInfo> recordChangedInfos) throws Exception {
         // get schema for kind
         Map<String, IndexSchema> schemas = this.getSchema(upsertRecordMap);
 
@@ -203,7 +203,7 @@ public class IndexerServiceImpl implements IndexerService {
         if (recordIds.isEmpty()) return new LinkedList<>();
 
         // get records via storage api
-        Records storageRecords = this.storageService.getStorageRecords(recordIds);
+        Records storageRecords = this.storageService.getStorageRecords(recordIds, recordChangedInfos);
         List<String> failedOrRetryRecordIds = new LinkedList<>(storageRecords.getMissingRetryRecords());
 
         // map storage records to indexer payload
@@ -399,17 +399,10 @@ public class IndexerServiceImpl implements IndexerService {
                 jaxRsDpsLog.warning(String.format("data not found for record: %s", record));
             }
 
-            OperationType operation = record.getOperationType();
             Map<String, Object> sourceMap = getSourceMap(record);
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKind());
-
-            if (operation == OperationType.create) {
-                IndexRequest indexRequest = new IndexRequest(index).id(record.getId()).source(this.gson.toJson(sourceMap), XContentType.JSON);
-                bulkRequest.add(indexRequest);
-            } else if (operation == OperationType.update) {
-                UpdateRequest updateRequest = new UpdateRequest(index, "_doc", record.getId()).doc(this.gson.toJson(sourceMap), XContentType.JSON).docAsUpsert(true);
-                bulkRequest.add(updateRequest);
-            }
+            IndexRequest indexRequest = new IndexRequest(index).id(record.getId()).source(this.gson.toJson(sourceMap), XContentType.JSON);
+            bulkRequest.add(indexRequest);
         }
 
         return processBulkRequest(restClient, bulkRequest);
