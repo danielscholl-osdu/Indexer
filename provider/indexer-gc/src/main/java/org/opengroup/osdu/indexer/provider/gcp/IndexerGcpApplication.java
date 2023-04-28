@@ -23,8 +23,10 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.PropertySource;
 
 @SpringBootConfiguration
+@PropertySource("classpath:swagger.properties")
 public class IndexerGcpApplication {
 
     public static void main(String[] args) {

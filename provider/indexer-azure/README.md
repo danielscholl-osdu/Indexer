@@ -118,7 +118,7 @@ $ mvn spring-boot:run
 
 ### Test the application
 
-After the service has started it should be accessible via a web browser by visiting [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html). If the request does not fail, you can then run the integration tests.
+After the service has started it should be accessible via a web browser by visiting [http://localhost:8080/api/indexer/v2/swagger](http://localhost:8080/api/indexer/v2/swagger). If the request does not fail, you can then run the integration tests.
 
 > **Note**: the integration tests for `os-indexer-azure` work by validating that records submitted to `os-storage-azure` can eventually be queried by `os-search-azure`. This only works if the messages emitted by `os-storage-azure` can be consumed by `os-indexer-queue-azure`, which will submit the indexing request to `os-indexer-azure`.
 >
@@ -139,6 +139,13 @@ $ (cd testing/indexer-test-core/ && mvn clean install)
 #       above are already exported in your environment.
 $ (cd testing/indexer-test-azure/ && mvn clean test)
 ```
+
+## Open API 3.0 - Swagger
+- Swagger UI:  http://localhost:8080/api/indexer/v2/swagger (will redirect to  http://localhost:8080/api/indexer/v2/swagger-ui/index.html)
+- api-docs (JSON) :  http://localhost:8080/api/indexer/v2/api-docs
+- api-docs (YAML) :  http://localhost:8080/api/indexer/v2/api-docs.yaml
+
+All the Swagger and OpenAPI related common properties are managed here [swagger.properties](../../indexer-core/src/main/resources/swagger.properties)
 
 ## Debugging
 
