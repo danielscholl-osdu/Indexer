@@ -49,13 +49,13 @@ public class SearchServiceImplTest {
                 "  \"results\": [\n" +
                 "    {\n" +
                 "      \"data\": {\n" +
-                "        \"FacilityName\": \"GUNTONG-A4\"\n" +
+                "        \"FacilityName\": \"A123\"\n" +
                 "      },\n" +
                 "      \"kind\": \"osdu:wks:master-data--Wellbore:1.0.0\"\n" +
                 "    },\n" +
                 "    {\n" +
                 "      \"data\": {\n" +
-                "        \"FacilityName\": \"GUNTONG-A84\"\n" +
+                "        \"FacilityName\": \"B123\"\n" +
                 "      },\n" +
                 "      \"kind\": \"osdu:wks:master-data--Wellbore:1.0.0\"\n" +
                 "    }\n" +
@@ -80,13 +80,13 @@ public class SearchServiceImplTest {
                 "  \"cursor\": \"509E144E7F9B81F8148327D6CB73BB6F\",\n" +
                 "  \"results\": [\n" +
                 "    {\n" +
-                "      \"kind\": \"osdu:wks:master-data--Wellbore:1.0.1\"\n" +
+                "      \"kind\": \"osdu:wks:master-data--Wellbore:1.0.0\"\n" +
                 "    },\n" +
                 "    {\n" +
-                "      \"kind\": \"osdu:wks:master-data--Wellbore:1.0.2\"\n" +
+                "      \"kind\": \"osdu:wks:master-data--Wellbore:1.0.1\"\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"totalCount\": 1744350\n" +
+                "  \"totalCount\": 1000\n" +
                 "}";
         HttpResponse response = new HttpResponse();
         response.setResponseCode(200);
@@ -96,7 +96,7 @@ public class SearchServiceImplTest {
         SearchResponse searchResponse = sut.query(new SearchRequest());
         Assert.assertNotNull(searchResponse);
         Assert.assertNotNull(searchResponse.getCursor());
-        Assert.assertEquals(1744350,searchResponse.getTotalCount());
+        Assert.assertEquals(1000,searchResponse.getTotalCount());
         Assert.assertEquals(2,searchResponse.getResults().size());
     }
 
