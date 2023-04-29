@@ -306,9 +306,9 @@ public class IndexerSchemaServiceTest {
 
     @Test
     public void should_get_schema_of_related_object_kinds_when__kind_has_property_configuration() throws IOException, URISyntaxException {
-        String kind = "tenant1:avocet:completion:1.0.0";
+        String kind = "osdu:wks:work-product-component--WellLog:1.0.0";
         String storageSchema = "{" +
-                "  \"kind\": \"tenant1:avocet:completion:1.0.0\"," +
+                "  \"kind\": \"osdu:wks:work-product-component--WellLog:1.0.0\"," +
                 "  \"schema\": [" +
                 "    {" +
                 "      \"path\": \"status\"," +

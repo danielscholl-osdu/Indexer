@@ -37,17 +37,22 @@ public class ParentChildRelationshipSpec {
             return false;
 
         ParentChildRelationshipSpec anotherSpec = (ParentChildRelationshipSpec)another;
-        return anotherSpec.hashCode() == this.hashCode();
+        return this.toString().equals(anotherSpec.toString());
     }
 
     @Override
     public int hashCode() {
+        return this.toString().hashCode();
+    }
+
+    @Override
+    public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append((parentKind != null)? parentKind : "__");
         stringBuilder.append("<>");
         stringBuilder.append((childKind != null)? childKind : "__");
         stringBuilder.append("<>");
         stringBuilder.append((parentObjectIdPath != null)? parentObjectIdPath : "__");
-        return stringBuilder.toString().hashCode();
+        return stringBuilder.toString();
     }
 }

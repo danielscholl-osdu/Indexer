@@ -25,7 +25,6 @@ import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
@@ -188,14 +187,11 @@ public class IndexerServiceImpl implements IndexerService {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         for (Map.Entry<String, Map<String, OperationType>> entry : upsertRecordMap.entrySet()) {
             String kind = entry.getKey();
-            if(!propertyConfigurationsService.isPropertyConfigurationsEnabled(kind))
-                continue;
-
-            List<String> ids = upsertKindIds.containsKey(kind) ? upsertKindIds.get(kind) : new ArrayList<>();
-            List<String> processedIds = entry.getValue().keySet().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
-            ids.addAll(processedIds);
-            if (!ids.isEmpty()) {
-                upsertKindIds.put(kind, ids);
+            if(propertyConfigurationsService.isPropertyConfigurationsEnabled(kind)) {
+                List<String> processedIds = entry.getValue().keySet().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
+                if (!processedIds.isEmpty()) {
+                    upsertKindIds.put(kind, processedIds);
+                }
             }
         }
         return upsertKindIds;
@@ -205,14 +201,11 @@ public class IndexerServiceImpl implements IndexerService {
         Map<String, List<String>> deletedRecordKindIdsMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : deleteRecordMap.entrySet()) {
             String kind = entry.getKey();
-            if(!propertyConfigurationsService.isPropertyConfigurationsEnabled(kind))
-                continue;
-
-            List<String> ids = deletedRecordKindIdsMap.containsKey(kind) ? deletedRecordKindIdsMap.get(kind) : new ArrayList<>();
-            List<String> processedIds = entry.getValue().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
-            ids.addAll(processedIds);
-            if (!ids.isEmpty()) {
-                deletedRecordKindIdsMap.put(kind, ids);
+            if(propertyConfigurationsService.isPropertyConfigurationsEnabled(kind)) {
+                List<String> processedIds = entry.getValue().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
+                if (!processedIds.isEmpty()) {
+                    deletedRecordKindIdsMap.put(kind, processedIds);
+                }
             }
         }
         return deletedRecordKindIdsMap;

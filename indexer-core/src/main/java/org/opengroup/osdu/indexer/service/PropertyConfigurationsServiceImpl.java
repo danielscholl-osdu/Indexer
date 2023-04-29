@@ -94,9 +94,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     @Override
     public boolean isPropertyConfigurationsEnabled(String kind) {
+        kind = PropertyUtil.getKindWithMajor(kind);
         if (Strings.isNullOrEmpty(kind))
             return false;
-        kind = PropertyUtil.getKindWithMajor(kind);
 
         Boolean enabled = propertyConfigurationsEnabledCache.get(kind);
         if(enabled == null) {

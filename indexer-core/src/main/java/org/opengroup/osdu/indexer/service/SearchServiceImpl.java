@@ -20,6 +20,7 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
@@ -35,6 +36,7 @@ public class SearchServiceImpl implements SearchService {
     private static final String QUERY_PATH = "query";
     private static final String QUERY_WITH_CURSOR_PATH = "query_with_cursor";
     private final Gson gson = new Gson();
+    private static final int OK_CODE = 200;
 
     @Inject
     private IUrlFetchService urlFetchService;
@@ -42,6 +44,8 @@ public class SearchServiceImpl implements SearchService {
     private IRequestInfo requestInfo;
     @Inject
     private IndexerConfigurationProperties configurationProperties;
+    @Inject
+    private JaxRsDpsLog jaxRsDpsLog;
 
     @Override
     public SearchResponse query(SearchRequest searchRequest) throws URISyntaxException {
@@ -54,8 +58,10 @@ public class SearchServiceImpl implements SearchService {
     }
 
     private SearchResponse searchRecords(SearchRequest searchRequest, String path) throws URISyntaxException {
-        if(Strings.isNullOrEmpty(configurationProperties.getSearchHost()))
-            throw new URISyntaxException("SEARCH_HOST", "The environment variable SEARCH_HOST is not setup");
+        if(Strings.isNullOrEmpty(configurationProperties.getSearchHost())) {
+            jaxRsDpsLog.error("SEARCH_HOST", "The environment variable SEARCH_HOST is not setup");
+            return new SearchResponse();
+        }
 
         String body = this.gson.toJson(searchRequest);
         String url = String.format("%s/%s", configurationProperties.getSearchHost(), path);
@@ -66,6 +72,12 @@ public class SearchServiceImpl implements SearchService {
                 .body(body)
                 .build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
-        return gson.fromJson(response.getBody(), SearchResponse.class);
+        if(response.getResponseCode() == OK_CODE) {
+            return gson.fromJson(response.getBody(), SearchResponse.class);
+        }
+        else {
+            jaxRsDpsLog.error("SearchService", response.getException());
+            return new SearchResponse();
+        }
     }
 }

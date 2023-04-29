@@ -9,6 +9,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -22,8 +23,10 @@ import org.opengroup.osdu.core.common.model.storage.ConversionStatus;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -34,8 +37,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -79,11 +81,15 @@ public class IndexerServiceImplTest {
     private IPublisher progressPublisher;
     @Mock
     private PropertyConfigurationsService propertyConfigurationsService;
+    @Mock
+    private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
 
     private List<RecordInfo> recordInfos = new ArrayList<>();
 
     private final String pubsubMsg = "[{\"id\":\"opendes:doc:test1\",\"kind\":\"opendes:testindexer1:well:1.0.0\",\"op\":\"update\"}," +
             "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"create\"}]";
+    private final String pubsubMsgForDeletion = "[{\"id\":\"opendes:doc:test1\",\"kind\":\"opendes:testindexer1:well:1.0.0\",\"op\":\"delete\"}," +
+            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"delete\"}]";
     private final String kind1 = "opendes:testindexer1:well:1.0.0";
     private final String kind2 = "opendes:testindexer2:well:1.0.0";
     private final String recordId1 = "opendes:doc:test1";
@@ -117,48 +123,7 @@ public class IndexerServiceImplTest {
     @Test
     public void should_properlyUpdateAuditLogs_givenValidCreateAndUpdateRecords() {
         try {
-            mockStatic(Acl.class);
-
-            // setup headers
-            this.dpsHeaders = new DpsHeaders();
-            this.dpsHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
-            when(this.requestInfo.getHeaders()).thenReturn(dpsHeaders);
-            when(this.requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(dpsHeaders.getHeaders());
-
-            // setup message
-            Type listType = new TypeToken<List<RecordInfo>>() {}.getType();
-            this.recordInfos = (new Gson()).fromJson(this.pubsubMsg, listType);
-            Map<String, String> messageAttributes = new HashMap<>();
-            messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, "opendes");
-            this.recordChangedMessages = RecordChangedMessages.builder().attributes(messageAttributes).messageId("xxxx").publishTime("2000-01-02T10:10:44+0000").data("{}").build();
-
-            // setup schema
-            Map<String, Object> schema = createSchema();
-            indexSchemaServiceMock(kind2, schema);
-            indexSchemaServiceMock(kind1, null);
-
-            // setup storage records
-            Map<String, Object> storageData = new HashMap<>();
-            storageData.put("schema1", "test-value");
-            List<Records.Entity> validRecords = new ArrayList<>();
-            validRecords.add(Records.Entity.builder().id(recordId2).kind(kind2).data(storageData).build());
-            List<ConversionStatus> conversionStatus = new LinkedList<>();
-            Records storageRecords = Records.builder().records(validRecords).conversionStatuses(conversionStatus).build();
-            when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
-
-            // setup elastic, index and mapped document
-            when(this.indicesService.createIndex(any(), any(), any(), any(), any())).thenReturn(true);
-            when(this.mappingService.getIndexMappingFromRecordSchema(any())).thenReturn(new HashMap<>());
-
-            when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
-            when(this.restHighLevelClient.bulk(any(), any(RequestOptions.class))).thenReturn(this.bulkResponse);
-
-            Map<String, Object> indexerMappedPayload = new HashMap<>();
-            indexerMappedPayload.put("id", "keyword");
-            when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any())).thenReturn(indexerMappedPayload);
-
-            BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(), prepareSuccessfulResponse()};
-            when(this.bulkResponse.getItems()).thenReturn(responses);
+            prepareTestDataAndEnv(this.pubsubMsg);
 
             // test
             JobStatus jobStatus = this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
@@ -173,6 +138,126 @@ public class IndexerServiceImplTest {
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
+    }
+
+    @Test
+    public void should_updateAssociatedRecords_givenValidCreateAndUpdateRecords() {
+        try {
+            prepareTestDataAndEnv(this.pubsubMsg);
+
+            // setup property configuration
+            when(this.propertyConfigurationsService.isPropertyConfigurationsEnabled(any())).thenReturn(true);
+            ArgumentCaptor<Map<String, List<String>>> upsertArgumentCaptor = ArgumentCaptor.forClass(Map.class);
+            ArgumentCaptor<Map<String, List<String>>> deleteArgumentCaptor = ArgumentCaptor.forClass(Map.class);
+
+            // test
+            this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
+
+            // validate
+            verify(this.propertyConfigurationsService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
+            Map<String, List<String>> upsertKindIds = upsertArgumentCaptor.getValue();
+            Map<String, List<String>> deleteKindIds = deleteArgumentCaptor.getValue();
+            assertEquals(1, upsertKindIds.size());
+            assertFalse(upsertKindIds.containsKey(kind1));
+            assertEquals(1, upsertKindIds.get(kind2).size());
+            assertEquals(0, deleteKindIds.size());
+        } catch (Exception e) {
+            fail("Should not throw this exception" + e.getMessage());
+        }
+    }
+
+    @Test
+    public void should_updateAssociatedRecords_givenValidDeleteRecords() {
+        try {
+            prepareTestDataAndEnv(this.pubsubMsgForDeletion);
+
+            // setup property configuration
+            when(this.propertyConfigurationsService.isPropertyConfigurationsEnabled(any())).thenReturn(true);
+            ArgumentCaptor<Map<String, List<String>>> upsertArgumentCaptor = ArgumentCaptor.forClass(Map.class);
+            ArgumentCaptor<Map<String, List<String>>> deleteArgumentCaptor = ArgumentCaptor.forClass(Map.class);
+
+            // test
+            this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
+
+            // validate
+            verify(this.propertyConfigurationsService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
+            Map<String, List<String>> upsertKindIds = upsertArgumentCaptor.getValue();
+            Map<String, List<String>> deleteKindIds = deleteArgumentCaptor.getValue();
+            assertEquals(0, upsertKindIds.size());
+            assertEquals(2, deleteKindIds.size());
+            assertEquals(1, deleteKindIds.get(kind1).size());
+            assertEquals(1, deleteKindIds.get(kind2).size());
+        } catch (Exception e) {
+            fail("Should not throw this exception" + e.getMessage());
+        }
+    }
+
+    @Test
+    public void should_mergeExtendedProperties_givenValidCreateAndUpdateRecords_and_kindsHavingPropertyConfigurations() {
+        try {
+            prepareTestDataAndEnv(this.pubsubMsg);
+
+            // setup property configuration
+            when(this.propertyConfigurationsService.isPropertyConfigurationsEnabled(any())).thenReturn(true);
+            when(this.propertyConfigurationsService.getPropertyConfigurations(any())).thenReturn(new PropertyConfigurations());
+
+            // test
+            this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
+
+            // validate
+            verify(this.propertyConfigurationsService, times(1)).getPropertyConfigurations(any());
+            verify(this.propertyConfigurationsService, times(1)).getExtendedProperties(any(), any(), any());
+            verify(this.propertyConfigurationsService, times(1)).cacheDataRecord(any(), any(), any());
+        } catch (Exception e) {
+            fail("Should not throw this exception" + e.getMessage());
+        }
+    }
+
+    private void prepareTestDataAndEnv(String pubsubMsg) throws IOException, URISyntaxException {
+        mockStatic(Acl.class);
+
+        // setup headers
+        this.dpsHeaders = new DpsHeaders();
+        this.dpsHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
+        when(this.requestInfo.getHeaders()).thenReturn(dpsHeaders);
+        when(this.requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(dpsHeaders.getHeaders());
+
+        // setup message
+        Type listType = new TypeToken<List<RecordInfo>>() {}.getType();
+        this.recordInfos = (new Gson()).fromJson(pubsubMsg, listType);
+        Map<String, String> messageAttributes = new HashMap<>();
+        messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, "opendes");
+        this.recordChangedMessages = RecordChangedMessages.builder().attributes(messageAttributes).messageId("xxxx").publishTime("2000-01-02T10:10:44+0000").data("{}").build();
+
+        // setup schema
+        Map<String, Object> schema = createSchema();
+        indexSchemaServiceMock(kind2, schema);
+        indexSchemaServiceMock(kind1, null);
+
+        // setup storage records
+        Map<String, Object> storageData = new HashMap<>();
+        storageData.put("schema1", "test-value");
+        List<Records.Entity> validRecords = new ArrayList<>();
+        validRecords.add(Records.Entity.builder().id(recordId2).kind(kind2).data(storageData).build());
+        List<String> failedOrRetryRecordIds = new ArrayList<>();
+        failedOrRetryRecordIds.add(recordId1);
+        List<ConversionStatus> conversionStatus = new LinkedList<>();
+        Records storageRecords = Records.builder().records(validRecords).missingRetryRecords(failedOrRetryRecordIds).conversionStatuses(conversionStatus).build();
+        when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
+
+        // setup elastic, index and mapped document
+        when(this.indicesService.createIndex(any(), any(), any(), any(), any())).thenReturn(true);
+        when(this.mappingService.getIndexMappingFromRecordSchema(any())).thenReturn(new HashMap<>());
+
+        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.restHighLevelClient.bulk(any(), any(RequestOptions.class))).thenReturn(this.bulkResponse);
+
+        Map<String, Object> indexerMappedPayload = new HashMap<>();
+        indexerMappedPayload.put("id", "keyword");
+        when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any())).thenReturn(indexerMappedPayload);
+
+        BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(), prepareSuccessfulResponse()};
+        when(this.bulkResponse.getItems()).thenReturn(responses);
     }
 
     private BulkItemResponse prepareFailedResponse() {
