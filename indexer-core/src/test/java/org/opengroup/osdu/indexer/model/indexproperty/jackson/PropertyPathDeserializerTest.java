@@ -34,7 +34,7 @@ import java.io.InputStreamReader;
 public class PropertyPathDeserializerTest {
     @Test
     public void deserialize_configurations_test() throws JsonProcessingException {
-        String jsonText = getJsonFromFile("configurations.json");
+        String jsonText = getJsonFromFile("well_configuration_record.json");
         ObjectMapper objectMapper = new ObjectMapper();
         PropertyConfigurations configurations = objectMapper.readValue(jsonText, PropertyConfigurations.class);
         Assert.assertNotNull(configurations);

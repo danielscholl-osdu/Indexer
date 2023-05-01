@@ -52,7 +52,6 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private static final String PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT =
             "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ParentToChildren AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
     private static final String HAS_CONFIGURATIONS_QUERY_FORMAT =  "data.Code: \"%s\" OR nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
-    private static final String EMPTY_CODE = "__EMPTY_CODE__";
     private static final int MAX_SEARCH_LIMIT = 1000;
 
     private static final String PROPERTY_DELIMITER = ".";
@@ -62,10 +61,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     private final Gson gson = new Gson();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations() {{
-        setCode(EMPTY_CODE);
-    }};
-
+    private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations();
 
     @Inject
     private IndexerConfigurationProperties configurationProperties;
@@ -118,9 +114,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     @Override
     public PropertyConfigurations getPropertyConfigurations(String kind) {
+        kind = PropertyUtil.getKindWithMajor(kind);
         if (Strings.isNullOrEmpty(kind))
             return null;
-        kind = PropertyUtil.getKindWithMajor(kind);
 
         PropertyConfigurations configuration = propertyConfigurationCache.get(kind);
         if (configuration == null) {
@@ -134,7 +130,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             }
         }
 
-        if (configuration != null && !EMPTY_CODE.equals(configuration.getCode())) {
+        if (!isNullOrEmptyConfigurations(configuration)) {
             return configuration;
         }
 
@@ -281,13 +277,16 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         recordInfo.setKind(kind);
         RecordChangeInfo changedInfo = new RecordChangeInfo();
         changedInfo.setRecordInfo(recordInfo);
+        // Using recordChangeInfoCache is the best effort to avoid updating the associated records when unnecessary
+        // It should only store the updated records (ids) with updated properties. However, in order to
+        // handle the case that a new record is updated in a short period of time, the ids of the new records with OPT
+        // OperationType.create should be cached too.
         if (previousDataMap == null || previousDataMap.isEmpty()) {
             recordInfo.setOp(OperationType.create.getValue());
         } else {
             recordInfo.setOp(OperationType.update.getValue());
             List<String> updatedProperties = PropertyUtil.getChangedProperties(previousDataMap, dataMap);
 
-            // Handle the case that the same record is updated more than once in a short period
             RecordChangeInfo previousChangedInfo = recordChangeInfoCache.get(recordId);
             if(previousChangedInfo != null) {
                 if(previousChangedInfo.getRecordInfo().getOp().equals(OperationType.create.getValue())) {
@@ -300,7 +299,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                     });
                 }
             }
-            changedInfo.setUpdatedProperties(updatedProperties);
+
+            if(recordInfo.getOp().equals(OperationType.update.getValue()))
+                changedInfo.setUpdatedProperties(updatedProperties);
         }
         recordChangeInfoCache.put(recordId, changedInfo);
         relatedObjectCache.put(recordId, dataMap);
@@ -308,9 +309,6 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     @Override
     public void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> upsertKindIds, Map<String, List<String>> deleteKindIds) {
-        if ((upsertKindIds == null || upsertKindIds.isEmpty()) && (deleteKindIds == null || deleteKindIds.isEmpty())) {
-            return;
-        }
         if (upsertKindIds == null) {
             upsertKindIds = new HashMap<>();
         }
@@ -319,18 +317,23 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         }
 
         Map<String, String> attributes = message.getAttributes();
-        final String ancestors = attributes.containsKey(Constants.ANCESTRY_KINDS) ? attributes.get(Constants.ANCESTRY_KINDS) : "";
+        String ancestors = attributes.containsKey(Constants.ANCESTRY_KINDS) ? attributes.get(Constants.ANCESTRY_KINDS) : "";
         Map<String, List<RecordChangeInfo>> recordChangeInfoMap = createRecordChangeInfoMap(upsertKindIds, deleteKindIds);
         for (Map.Entry<String, List<RecordChangeInfo>> entry : recordChangeInfoMap.entrySet()) {
             String kind = entry.getKey();
-            String updatedAncestors = ancestors.isEmpty() ? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
+            List<RecordChangeInfo> recordChangeInfoList = entry.getValue();
+            String updatedAncestors = Strings.isNullOrEmpty(ancestors) ? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
 
-            updateAssociatedParentRecords(updatedAncestors, entry.getKey(), entry.getValue());
-            updateAssociatedChildrenRecords(updatedAncestors, entry.getValue());
+            updateAssociatedParentRecords(updatedAncestors, kind, recordChangeInfoList);
+            updateAssociatedChildrenRecords(updatedAncestors, recordChangeInfoList);
         }
     }
 
     /******************************************************** Private methods **************************************************************/
+    private boolean isNullOrEmptyConfigurations(PropertyConfigurations configuration) {
+        return configuration == null || Strings.isNullOrEmpty(configuration.getCode());
+    }
+
     private SchemaItem createAssociatedIdentitiesSchemaItem() {
         SchemaItem extendedSchemaItem = new SchemaItem();
         extendedSchemaItem.setPath(ASSOCIATED_IDENTITIES_PROPERTY);
@@ -352,9 +355,6 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     }
 
     private void createWorkerTask(String ancestors, List<RecordInfo> recordInfos) {
-        if (recordInfos == null || recordInfos.isEmpty())
-            return;
-
         Map<String, String> attributes = new HashMap<>();
         DpsHeaders headers = this.requestInfo.getHeadersWithDwdAuthZ();
         attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
@@ -384,48 +384,45 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private Map<String, List<RecordChangeInfo>> createRecordChangeInfoMap(Map<String, List<String>> upsertKindIds, Map<String, List<String>> deleteKindIds) {
         Map<String, List<RecordChangeInfo>> recordChangeInfoMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : upsertKindIds.entrySet()) {
-            String kind = entry.getKey();
-            List<RecordChangeInfo> recordChangeInfoList;
-            if (recordChangeInfoMap.containsKey(kind)) {
-                recordChangeInfoList = recordChangeInfoMap.get(kind);
-            } else {
-                recordChangeInfoList = new ArrayList<>();
-                recordChangeInfoMap.put(kind, recordChangeInfoList);
-            }
-
+            List<RecordChangeInfo> recordChangeInfoList = getOrCreateRecordChangeInfoList(entry.getKey(), recordChangeInfoMap);
             for (String id : entry.getValue()) {
                 RecordChangeInfo changeInfo = recordChangeInfoCache.get(id);
                 if (changeInfo == null) {
                     changeInfo = new RecordChangeInfo();
-                    changeInfo.setRecordInfo(new RecordInfo());
-                    changeInfo.getRecordInfo().setKind(kind);
-                    changeInfo.getRecordInfo().setId(id);
-                    changeInfo.getRecordInfo().setOp(OperationType.create.getValue());
+                    changeInfo.setRecordInfo(this.createRecordInfo(entry.getKey(), id, OperationType.create));
                 }
                 recordChangeInfoList.add(changeInfo);
             }
         }
         for (Map.Entry<String, List<String>> entry : deleteKindIds.entrySet()) {
-            String kind = entry.getKey();
-            List<RecordChangeInfo> recordChangeInfoList;
-            if (recordChangeInfoMap.containsKey(kind)) {
-                recordChangeInfoList = recordChangeInfoMap.get(kind);
-            } else {
-                recordChangeInfoList = new ArrayList<>();
-                recordChangeInfoMap.put(kind, recordChangeInfoList);
-            }
-
+            List<RecordChangeInfo> recordChangeInfoList = getOrCreateRecordChangeInfoList(entry.getKey(), recordChangeInfoMap);
             for (String id : entry.getValue()) {
                 RecordChangeInfo changeInfo = new RecordChangeInfo();
-                changeInfo.setRecordInfo(new RecordInfo());
-                changeInfo.getRecordInfo().setKind(kind);
-                changeInfo.getRecordInfo().setId(id);
-                changeInfo.getRecordInfo().setOp(OperationType.delete.getValue());
+                changeInfo.setRecordInfo(this.createRecordInfo(entry.getKey(), id, OperationType.delete));
                 recordChangeInfoList.add(changeInfo);
             }
         }
 
         return recordChangeInfoMap;
+    }
+
+    private List<RecordChangeInfo> getOrCreateRecordChangeInfoList(String kind, Map<String, List<RecordChangeInfo>> recordChangeInfoMap) {
+        List<RecordChangeInfo> recordChangeInfoList;
+        if (recordChangeInfoMap.containsKey(kind)) {
+            recordChangeInfoList = recordChangeInfoMap.get(kind);
+        } else {
+            recordChangeInfoList = new ArrayList<>();
+            recordChangeInfoMap.put(kind, recordChangeInfoList);
+        }
+        return recordChangeInfoList;
+    }
+
+    private RecordInfo createRecordInfo(String kind, String id, OperationType operationType) {
+        RecordInfo recordInfo = new RecordInfo();
+        recordInfo.setKind(kind);
+        recordInfo.setId(id);
+        recordInfo.setOp(operationType.getValue());
+        return recordInfo;
     }
 
     private List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, PropertyConfiguration configuration, PropertyPath propertyPath) {
@@ -611,50 +608,63 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return propertyValueList;
     }
 
-    private List<ParentChildRelationshipSpec> getParentChildRelatedObjectsSpecs(String childKind) {
-        final String kindWithMajor = PropertyUtil.getKindWithMajor(childKind);
+    private ParentChildRelationshipSpecs getParentChildRelatedObjectsSpecs(String childKind) {
+        final String childKindWithMajor = PropertyUtil.getKindWithMajor(childKind);
 
-        List<ParentChildRelationshipSpec> specsList = parentChildRelationshipSpecsCache.get(kindWithMajor);
-        if (specsList == null) {
-            Map<Integer, ParentChildRelationshipSpec> specs = new HashMap<>();
-            List<PropertyConfigurations> configurationsList = searchParentKindConfigurations((kindWithMajor));
+        ParentChildRelationshipSpecs specs = parentChildRelationshipSpecsCache.get(childKindWithMajor);
+        if (specs == null) {
+            List<ParentChildRelationshipSpec> specsList = new ArrayList<>();
+            specs = new ParentChildRelationshipSpecs();
+            specs.setSpecList(specsList);
+
+            List<PropertyConfigurations> configurationsList = searchParentKindConfigurations((childKindWithMajor));
             for (PropertyConfigurations configurations : configurationsList) {
                 for (PropertyConfiguration configuration : configurations.getConfigurations()) {
-                    PropertyPath propertyPath = configuration.getPaths().stream().filter(p ->
-                                    p.hasValidRelatedObjectsSpec() &&
+                    List<PropertyPath> matchedPropertyPaths = configuration.getPaths().stream().filter(p ->
+                                            p.hasValidRelatedObjectsSpec() &&
                                             p.getRelatedObjectsSpec().isParentToChildren() &&
-                                            p.getRelatedObjectsSpec().getRelatedObjectKind().contains(kindWithMajor))
-                            .findFirst().orElse(null);
-                    if (propertyPath != null) {
-                        ParentChildRelationshipSpec spec = new ParentChildRelationshipSpec();
-                        spec.setParentKind(configurations.getCode());
-                        spec.setParentObjectIdPath(propertyPath.getRelatedObjectsSpec().getRelatedObjectID());
-                        spec.setChildKind(kindWithMajor);
-                        String valuePath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
-                        if (specs.containsKey(spec.hashCode())) {
-                            List<String> childValuePaths = specs.get(spec.hashCode()).getChildValuePaths();
-                            if(!childValuePaths.contains(valuePath)) {
-                                childValuePaths.add(valuePath);
+                                            p.getRelatedObjectsSpec().getRelatedObjectKind().contains(childKindWithMajor))
+                            .collect(Collectors.toList());
+                    for(PropertyPath propertyPath: matchedPropertyPaths) {
+                        ParentChildRelationshipSpec spec = toParentChildRelationshipSpec(propertyPath, configurations.getCode(), childKindWithMajor);
+                        boolean merged = false;
+                        for(ParentChildRelationshipSpec sp: specsList) {
+                            if(sp.equals(spec)) {
+                                List<String> childValuePaths = sp.getChildValuePaths();
+                                if(!childValuePaths.contains(spec.getChildValuePaths().get(0))) {
+                                    childValuePaths.add(spec.getChildValuePaths().get(0));
+                                }
+                                merged = true;
+                                break;
                             }
-                        } else {
-                            spec.getChildValuePaths().add(valuePath);
-                            specs.put(spec.hashCode(), spec);
+                        }
+                        if(!merged) {
+                            specsList.add(spec);
                         }
                     }
                 }
             }
 
-            specsList = new ArrayList<>(specs.values());
-            parentChildRelationshipSpecsCache.put(kindWithMajor, specsList);
+            parentChildRelationshipSpecsCache.put(childKindWithMajor, specs);
         }
 
-        return specsList;
+        return specs;
+    }
+
+    private ParentChildRelationshipSpec toParentChildRelationshipSpec(PropertyPath propertyPath, String parentKind, String childKind) {
+        ParentChildRelationshipSpec spec = new ParentChildRelationshipSpec();
+        spec.setParentKind(parentKind);
+        spec.setParentObjectIdPath(propertyPath.getRelatedObjectsSpec().getRelatedObjectID());
+        spec.setChildKind(childKind);
+        String valuePath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
+        spec.getChildValuePaths().add(valuePath);
+        return spec;
     }
 
     private void updateAssociatedParentRecords(String ancestors, String childKind, List<RecordChangeInfo> childRecordChangeInfos) {
-        List<ParentChildRelationshipSpec> specList = getParentChildRelatedObjectsSpecs(childKind);
+        ParentChildRelationshipSpecs specs = getParentChildRelatedObjectsSpecs(childKind);
         Set ancestorSet = new HashSet<>(Arrays.asList(ancestors.split(ANCESTRY_KINDS_DELIMITER)));
-        for (ParentChildRelationshipSpec spec : specList) {
+        for (ParentChildRelationshipSpec spec : specs.getSpecList()) {
             List childRecordIds = getChildRecordIdsWithExtendedPropertiesChanged(spec, childRecordChangeInfos);
             if (childRecordIds.isEmpty())
                 continue;
@@ -693,7 +703,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         List<String> childRecordIds = new ArrayList<>();
         for (RecordChangeInfo recordChangeInfo : childRecordChangeInfos) {
             if (recordChangeInfo.getRecordInfo().getOp().equals(OperationType.update.getValue())) {
-                String extendedChangedProperty = recordChangeInfo.getUpdatedProperties().stream().filter(p -> {
+                String updatedExtendedProperty = recordChangeInfo.getUpdatedProperties().stream().filter(p -> {
                     for (String valuePath : spec.getChildValuePaths()) {
                         if (PropertyUtil.isPropertyPathMatched(valuePath, p) ||
                             PropertyUtil.isPropertyPathMatched(p, valuePath)) {
@@ -703,7 +713,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                     return false;
                 }).findFirst().orElse(null);
 
-                if (extendedChangedProperty != null) {
+                if (updatedExtendedProperty != null) {
                     // The parent property that is extended by the children was updated
                     childRecordIds.add(recordChangeInfo.getRecordInfo().getId());
                 }
@@ -795,14 +805,19 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         Kind kind = new Kind(kindWithMajor);
         String version = kind.getVersion();
         String[] subVersions = version.split("\\.");
-        String majorVersion = (subVersions.length >= 1) ? subVersions[0] : null;
-        String minorVersion = (subVersions.length >= 2) ? subVersions[1] : null;
-        String patchVersion = (subVersions.length >= 3) ? subVersions[2] : null;
+        String majorVersion = subVersions[0];
+        String latestKind = null;
         try {
-            SchemaInfoResponse response = schemaService.getSchemaInfos(kind.getAuthority(), kind.getSource(), kind.getType(), majorVersion, minorVersion, patchVersion, true);
-            if (response != null && response.getSchemaInfos().size() > 0) {
+            SchemaInfoResponse response = schemaService.getSchemaInfos(kind.getAuthority(), kind.getSource(), kind.getType(), majorVersion, null, null, true);
+            if (response != null && response.getSchemaInfos() != null && response.getSchemaInfos().size() > 0) {
                 SchemaInfo schemaInfo = response.getSchemaInfos().get(0);
-                return schemaInfo.getSchemaIdentity().getId();
+                SchemaIdentity schemaIdentity = schemaInfo.getSchemaIdentity();
+                latestKind = schemaIdentity.getAuthority() + ":" +
+                        schemaIdentity.getSource() + ":" +
+                        schemaIdentity.getEntityType() + ":" +
+                        schemaIdentity.getSchemaVersionMajor() + "." +
+                        schemaIdentity.getSchemaVersionMinor() + "." +
+                        schemaIdentity.getSchemaVersionPatch();
             }
         } catch (URISyntaxException e) {
             jaxRsDpsLog.error("failed to get schema info", e);
@@ -810,7 +825,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             jaxRsDpsLog.error("failed to get schema info", e);
         }
 
-        return null;
+        return latestKind;
     }
 
     /****************************** search methods that use search service to get the data **************************************/

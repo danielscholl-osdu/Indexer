@@ -15,26 +15,25 @@
 
 package org.opengroup.osdu.indexer.cache;
 
-import org.opengroup.osdu.indexer.model.indexproperty.ParentChildRelationshipSpec;
+import org.opengroup.osdu.indexer.model.indexproperty.ParentChildRelationshipSpecs;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
-import java.util.List;
 
 @Component
 @RequestScope
-public class PartitionSafeParentChildRelationshipSpecsCache extends AbstractPartitionSafeCache<String, List<ParentChildRelationshipSpec>> {
+public class PartitionSafeParentChildRelationshipSpecsCache extends AbstractPartitionSafeCache<String, ParentChildRelationshipSpecs> {
     @Inject
     private IParentChildRelationshipSpecsCache cache;
 
     @Override
-    public void put(String s, List<ParentChildRelationshipSpec> o) {
+    public void put(String s, ParentChildRelationshipSpecs o) {
         this.cache.put(cacheKey(s), o);
     }
 
     @Override
-    public List<ParentChildRelationshipSpec> get(String s) {
+    public ParentChildRelationshipSpecs get(String s) {
         return this.cache.get(cacheKey(s));
     }
 
