@@ -22,7 +22,6 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.SneakyThrows;
-import org.apache.commons.lang.NotImplementedException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +34,7 @@ import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.storage.Schema;
+import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.cache.*;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
@@ -212,14 +212,129 @@ public class PropertyConfigurationsServiceImplTest {
     }
 
     @Test
-    public void getExtendedProperties() {
-        //TODO
+    public void getExtendedProperties_from_children_objects() throws JsonProcessingException, URISyntaxException {
+        PropertyConfigurations propertyConfigurations = getConfigurations("wellbore_configuration_record.json");
+        Map<String, Object> originalDataMap = getDataMap("wellbore_data.json");
+        String jsonText = getJsonFromFile("welllog_search_records.json");
+        Type type = new TypeToken<List<SearchRecord>>() {}.getType();
+        List<SearchRecord> childrenRecords = gson.fromJson(jsonText, type);
+        SearchResponse response = new SearchResponse();
+        response.setResults(childrenRecords);
+        when(this.searchService.queryWithCursor(any())).thenReturn(response);
+
+        Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
+        Map<String, Object> expectedExtendedProperties = getDataMap("wellbore_extended_data.json");
+        verifyMap(expectedExtendedProperties, extendedProperties);
     }
 
     @Test
-    public void getExtendedSchemaItems() throws JsonProcessingException {
+    public void getExtendedProperties_from_self_and_parent_objects() throws JsonProcessingException, URISyntaxException {
+        PropertyConfigurations propertyConfigurations = getConfigurations("welllog_configuration_record.json");
+        Map<String, Object> originalDataMap = getDataMap("welllog_original_data.json");
+        Map<String, Object> relatedObjectData;
+        Map<String, Map<String, Object>> relatedObjects = new HashMap<>();
+        relatedObjectData = getDataMap("wellbore_data.json");
+        relatedObjects.put("opendes:master-data--Wellbore:nz-100000113552", relatedObjectData);
+        relatedObjectData = getDataMap("organisation_data1.json");
+        relatedObjects.put("opendes:master-data--Organisation:BigOil-Department-SeismicInterpretation", relatedObjectData);
+        relatedObjectData = getDataMap("organisation_data2.json");
+        relatedObjects.put("opendes:master-data--Organisation:BigOil-Department-SeismicProcessing", relatedObjectData);
+
+        // Setup search response for searchService.queryWithCursor(...)
+        when(this.searchService.query(any())).thenAnswer(invocation -> {
+            SearchRequest searchRequest = invocation.getArgument(0);
+            String query = searchRequest.getQuery();
+            Map<String, Object> data = null;
+            for(Map.Entry<String, Map<String, Object>> entry: relatedObjects.entrySet()) {
+                if(query.contains(entry.getKey())) {
+                    data = entry.getValue();
+                    break;
+                }
+            }
+            if(data == null)
+                throw new Exception("Unexpected search");
+            SearchResponse searchResponse = new SearchResponse();
+            SearchRecord record = new SearchRecord();
+            record.setData(data);
+            searchResponse.setResults(Arrays.asList(record));
+            return searchResponse;
+        });
+
+        Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
+        Map<String, Object> expectedExtendedProperties = getDataMap("welllog_extended_data.json");
+        verifyMap(expectedExtendedProperties, extendedProperties);
+    }
+
+    private void verifyMap(Map<String, Object> expectedExtendedProperties, Map<String, Object> extendedProperties) {
+        Assert.assertEquals(expectedExtendedProperties.size(), extendedProperties.size());
+
+        for(Map.Entry<String, Object> entry: expectedExtendedProperties.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            Assert.assertTrue(extendedProperties.containsKey(name));
+            if(value instanceof String) {
+                Assert.assertEquals(value, extendedProperties.get(name));
+            }
+            else if(value instanceof List) {
+                List<String> expectedValues = (List<String>)value;
+                List<String> values = (List<String>)extendedProperties.get(name);
+                Assert.assertEquals(expectedValues.size(), values.size());
+                for(int i = 0; i < expectedValues.size(); i++) {
+                    Assert.assertEquals(expectedValues.get(i), values.get(i));
+                }
+            }
+            else {
+                Assert.assertEquals(value, extendedProperties.get(name));
+            }
+        }
+    }
+
+    @Test
+    public void getExtendedSchemaItems_from_self_and_parent_object_kind() throws JsonProcessingException {
         PropertyConfigurations propertyConfigurations = getConfigurations("well_configuration_record.json");
-        //TODO
+        Schema originalSchema = getSchema("well_storage_schema.json");
+        Schema geoPoliticalEntitySchema = getSchema("geo_political_entity_storage_schema.json");
+        String relatedObjectKind = "osdu:wks:master-data--GeoPoliticalEntity:1.";
+        Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
+        relatedObjectKindSchemas.put(relatedObjectKind, geoPoliticalEntitySchema);
+
+        List<SchemaItem> extendedSchemaItems = this.sut.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        Assert.assertEquals(3, extendedSchemaItems.size());
+        SchemaItem countryNameItem = extendedSchemaItems.stream().filter(item -> item.getPath().equals("CountryNames")).findFirst().orElse(null);
+        Assert.assertNotNull(countryNameItem);
+        Assert.assertEquals("[]string", countryNameItem.getKind());
+
+        SchemaItem wellUWIItem = extendedSchemaItems.stream().filter(item -> item.getPath().equals("WellUWI")).findFirst().orElse(null);
+        Assert.assertNotNull(wellUWIItem);
+        Assert.assertEquals("string", wellUWIItem.getKind());
+
+        SchemaItem associatedIdentitiesItem = extendedSchemaItems.stream().filter(item -> item.getPath().equals("AssociatedIdentities")).findFirst().orElse(null);
+        Assert.assertNotNull(associatedIdentitiesItem);
+        Assert.assertEquals("[]string", associatedIdentitiesItem.getKind());
+    }
+
+    @Test
+    public void getExtendedSchemaItems_from_multiple_object_kinds() throws JsonProcessingException {
+        PropertyConfigurations propertyConfigurations = getConfigurations("welllog_configuration_record.json");
+        Schema originalSchema = getSchema("welllog_storage_schema.json");
+        Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
+        Schema wellboreSchema = getSchema("wellbore_storage_schema.json");
+        relatedObjectKindSchemas.put("osdu:wks:master-data--Wellbore:1.", wellboreSchema);
+        Schema organisationSchema = getSchema("organisation_storage_schema.json");
+        relatedObjectKindSchemas.put("osdu:wks:master-data--Organisation:1.", organisationSchema);
+
+        String jsonText = getJsonFromFile("welllog_extended_schema_items.json");
+        Type type = new TypeToken<List<SchemaItem>>() {}.getType();
+        List<SchemaItem> expectedExtendedSchemaItems = gson.fromJson(jsonText, type);
+
+        List<SchemaItem> extendedSchemaItems = this.sut.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        Assert.assertEquals(expectedExtendedSchemaItems.size(), extendedSchemaItems.size());
+        for(int i = 0; i < expectedExtendedSchemaItems.size(); i++) {
+            SchemaItem expectedExtendedSchemaItem = expectedExtendedSchemaItems.get(i);
+            SchemaItem extendedSchemaItem = extendedSchemaItems.get(i);
+            Assert.assertEquals(expectedExtendedSchemaItem.getKind(), extendedSchemaItem.getKind());
+            Assert.assertEquals(expectedExtendedSchemaItem.getPath(), extendedSchemaItem.getPath());
+        }
     }
 
     @Test
@@ -720,7 +835,7 @@ public class PropertyConfigurationsServiceImplTest {
                     searchRecord.setData(dataMap);
                     searchResponse.setResults(Arrays.asList(searchRecord));
                 } else {
-                    // search ChildToParent
+                    // Search ParentToChildren
                     // No result
                 }
             } else {
@@ -736,7 +851,8 @@ public class PropertyConfigurationsServiceImplTest {
                     searchResponse.setResults(Arrays.asList(searchRecord));
                 }
                 else {
-                    // This branch is updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
+                    // This branch is a setup for test case:
+                    // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
                     kind = "*:*:*:*,-"+ childKind + ",-" + parentKind;
                     if(!searchRequest.getKind().toString().equals(kind)) {
                         throw new Exception("Unexpected search");
@@ -799,6 +915,11 @@ public class PropertyConfigurationsServiceImplTest {
         Assert.assertTrue(propertyValues.get(valuePath) instanceof String);
         String value = (String)propertyValues.get(valuePath);
         Assert.assertEquals("100000113552", value);
+    }
+
+    private Schema getSchema(String file) {
+        String jsonText = getJsonFromFile(file);
+        return gson.fromJson(jsonText, Schema.class);
     }
 
     private PropertyConfigurations getConfigurations(String file) throws JsonProcessingException {

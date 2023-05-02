@@ -142,7 +142,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         Set<String> associatedIdentities = new HashSet<>();
         Map<String, Object> extendedDataMap = new HashMap<>();
         for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
-            if (originalDataMap.containsKey(configuration.getName()) && originalDataMap.get(configuration.getName()) != null) {
+            String extendedPropertyName = configuration.getName();
+            if (originalDataMap.containsKey(extendedPropertyName) && originalDataMap.get(extendedPropertyName) != null) {
                 // If the original record already has the property, then we should not override.
                 // For example, if the trajectory record already SpatialLocation value, then it should not be overridden by the SpatialLocation of the well bore.
                 continue;
@@ -161,9 +162,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
                         for (String relatedObjectId : relatedObjectIds) {
                             Map<String, Object> relatedObject = getRelatedObjectData(relatedObjectsSpec.getRelatedObjectKind(), relatedObjectId);
-                            Map<String, Object> propertyValues = getPropertyValues(relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
-                            propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
-
+                            Map<String, Object> propertyValues = getExtendedPropertyValues(extendedPropertyName, relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
                             if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                                 allPropertyValues = propertyValues;
                                 break;
@@ -181,8 +180,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                                 childDataMap = record.getData();
                             }
 
-                            Map<String, Object> propertyValues = getPropertyValues(childDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
-                            propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
+                            Map<String, Object> propertyValues = getExtendedPropertyValues(extendedPropertyName, childDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
                             if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                                 allPropertyValues = propertyValues;
                                 break;
@@ -192,9 +190,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                         }
                     }
                 } else {
-                    Map<String, Object> propertyValues = getPropertyValues(originalDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
-                    propertyValues = PropertyUtil.replacePropertyPaths(configuration.getName(), path.getValueExtraction().getValuePath(), propertyValues);
-
+                    Map<String, Object> propertyValues = getExtendedPropertyValues(extendedPropertyName, originalDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
                     if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                         allPropertyValues = propertyValues;
                     } else {
@@ -425,11 +421,11 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return recordInfo;
     }
 
-    private List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, PropertyConfiguration configuration, PropertyPath propertyPath) {
+    private List<SchemaItem> getExtendedSchemaItems(Schema schema, PropertyConfiguration configuration, PropertyPath propertyPath) {
         String relatedPropertyPath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
         if (relatedPropertyPath.contains(ARRAY_SYMBOL)) { // Nested
             List<SchemaItem> extendedSchemaItems = new ArrayList<>();
-            extendedSchemaItems = getExtendedSchemaItemsFromNestedSchema(Arrays.asList(originalSchema.getSchema()), configuration, relatedPropertyPath);
+            extendedSchemaItems = cloneExtendedSchemaItemsFromNestedSchema(Arrays.asList(schema.getSchema()), configuration, relatedPropertyPath);
             if (extendedSchemaItems.isEmpty()) {
                 // It is possible that the format of the source property is not defined
                 // In this case, we assume that the format of property is string in order to make its value(s) searchable
@@ -444,12 +440,12 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             }
             return extendedSchemaItems;
         } else {// Flatten
-            List<SchemaItem> schemaItems = Arrays.asList(originalSchema.getSchema());
-            return getExtendedSchemaItems(schemaItems, configuration, relatedPropertyPath);
+            List<SchemaItem> schemaItems = Arrays.asList(schema.getSchema());
+            return cloneExtendedSchemaItems(schemaItems, configuration, relatedPropertyPath);
         }
     }
 
-    private List<SchemaItem> getExtendedSchemaItems(List<SchemaItem> schemaItems, PropertyConfiguration configuration, String relatedPropertyPath) {
+    private List<SchemaItem> cloneExtendedSchemaItems(List<SchemaItem> schemaItems, PropertyConfiguration configuration, String relatedPropertyPath) {
         List<SchemaItem> extendedSchemaItems = new ArrayList<>();
         for (SchemaItem schemaItem : schemaItems) {
             if (PropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
@@ -468,7 +464,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return extendedSchemaItems;
     }
 
-    private List<SchemaItem> getExtendedSchemaItemsFromNestedSchema(List<SchemaItem> schemaItems, PropertyConfiguration configuration, String relatedPropertyPath) {
+    private List<SchemaItem> cloneExtendedSchemaItemsFromNestedSchema(List<SchemaItem> schemaItems, PropertyConfiguration configuration, String relatedPropertyPath) {
         if (relatedPropertyPath.contains(ARRAY_SYMBOL)) {
             List<SchemaItem> extendedSchemaItems = new ArrayList<>();
             int idx = relatedPropertyPath.indexOf(NESTED_OBJECT_DELIMITER);
@@ -478,14 +474,14 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 if (schemaItem.getPath().equals(prePath)) {
                     if (schemaItem.getKind().equals(SCHEMA_NESTED_KIND) && schemaItem.getProperties() != null) {
                         schemaItems = Arrays.asList(schemaItem.getProperties());
-                        extendedSchemaItems = getExtendedSchemaItemsFromNestedSchema(schemaItems, configuration, postPath);
+                        extendedSchemaItems = cloneExtendedSchemaItemsFromNestedSchema(schemaItems, configuration, postPath);
                     }
                     break;
                 }
             }
             return extendedSchemaItems;
         } else {
-            return getExtendedSchemaItems(schemaItems, configuration, relatedPropertyPath);
+            return cloneExtendedSchemaItems(schemaItems, configuration, relatedPropertyPath);
         }
     }
 
@@ -512,6 +508,11 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             }
         }
         return relatedObjectIds;
+    }
+
+    private Map<String, Object> getExtendedPropertyValues(String extendedPropertyName, Map<String, Object> dataMap, ValueExtraction valueExtraction, boolean isExtractFirstMatch) {
+        Map<String, Object> propertyValues = getPropertyValues(dataMap, valueExtraction, isExtractFirstMatch);
+        return PropertyUtil.replacePropertyPaths(extendedPropertyName, valueExtraction.getValuePath(), propertyValues);
     }
 
     /**
