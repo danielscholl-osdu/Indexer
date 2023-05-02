@@ -15,14 +15,14 @@
 package org.opengroup.osdu.indexer.api;
 
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.IndexAliasesResult;
 import org.opengroup.osdu.indexer.service.IClusterConfigurationService;
+import org.opengroup.osdu.indexer.service.IndexAliasService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
@@ -38,6 +38,8 @@ public class PartitionSetupApi {
     private static final String OPS = "users.datalake.ops";
 
     @Autowired
+    private IndexAliasService indexAliasService;
+    @Autowired
     private IClusterConfigurationService clusterConfigurationService;
     @Autowired
     private AuditLogger auditLogger;
@@ -48,5 +50,12 @@ public class PartitionSetupApi {
         this.clusterConfigurationService.updateClusterConfiguration();
         this.auditLogger.getConfigurePartition(singletonList(dataPartitionId));
         return new ResponseEntity<>(org.springframework.http.HttpStatus.OK);
+    }
+
+    @PreAuthorize("@authorizationFilter.hasPermission('" + OPS + "')")
+    @PostMapping(path = "/aliases")
+    public ResponseEntity<IndexAliasesResult> createIndexAliases()  {
+        IndexAliasesResult result = indexAliasService.createIndexAliasesForAll();
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }
