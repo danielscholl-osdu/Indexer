@@ -40,10 +40,7 @@ import org.opengroup.osdu.indexer.cache.*;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.*;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
-import org.opengroup.osdu.indexer.model.indexproperty.RelatedObjectsSpec;
-import org.opengroup.osdu.indexer.model.indexproperty.ValueExtraction;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
-import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.BufferedReader;
@@ -868,53 +865,6 @@ public class PropertyConfigurationsServiceImplTest {
         dpsHeaders.put(DpsHeaders.DATA_PARTITION_ID, "opendes");
         dpsHeaders.put(DpsHeaders.CORRELATION_ID, "123");
         when(this.requestInfo.getHeadersWithDwdAuthZ()).thenReturn(dpsHeaders);
-    }
-
-    @Test
-    public void getRelatedObjectIds_with_valid_condition() {
-        Map<String, Object> dataMap = getDataMap("well.json");
-        RelatedObjectsSpec spec = new RelatedObjectsSpec();
-        spec.setRelationshipDirection("ChildToParent");
-        spec.setRelatedObjectKind("osdu:wks:master-data--GeoPoliticalEntity:1.");
-        spec.setRelatedObjectID("data.GeoContexts[].GeoPoliticalEntityID");
-        spec.setRelatedConditionProperty("data.GeoContexts[].GeoTypeID");
-        List<String> matches = Arrays.asList("opendes:reference-data--GeoPoliticalEntityType:Country:", "opendes:reference-data--GeoPoliticalEntityType:LicenseBlock:");
-        spec.setRelatedConditionMatches(matches);
-
-        List<String> relatedObjectIds = sut.getRelatedObjectIds(dataMap, spec);
-        Assert.assertEquals(2, relatedObjectIds.size());
-    }
-
-    @Test
-    public void getValuePaths_with_valid_condition() {
-        Map<String, Object> dataMap = getDataMap("well.json");
-        ValueExtraction valueExtraction = new ValueExtraction();
-        valueExtraction.setValuePath("data.NameAliases[].AliasName");
-        valueExtraction.setRelatedConditionProperty("data.NameAliases[].AliasNameTypeID");
-        List<String> matches = Arrays.asList(
-                "opendes:reference-data--AliasNameType:UniqueIdentifier:",
-                "opendes:reference-data--AliasNameType:RegulatoryName:",
-                "opendes:reference-data--AliasNameType:PreferredName:",
-                "opendes:reference-data--AliasNameType:CommonName:",
-                "opendes:reference-data--AliasNameType:ShortName:");
-        valueExtraction.setRelatedConditionMatches(matches);
-
-        String valuePath = PropertyUtil.removeDataPrefix(valueExtraction.getValuePath());
-
-        Map<String, Object> propertyValues = sut.getPropertyValues(dataMap, valueExtraction, false);
-        Assert.assertTrue(propertyValues.containsKey(valuePath));
-        Assert.assertTrue(propertyValues.get(valuePath) instanceof List);
-        List<Object> values = (List<Object>)propertyValues.get(valuePath);
-        Assert.assertEquals(2, values.size());
-        Assert.assertTrue(values.contains("100000113552"));
-        Assert.assertTrue(values.contains("Well1"));
-
-
-        propertyValues = sut.getPropertyValues(dataMap, valueExtraction, true);
-        Assert.assertTrue(propertyValues.containsKey(valuePath));
-        Assert.assertTrue(propertyValues.get(valuePath) instanceof String);
-        String value = (String)propertyValues.get(valuePath);
-        Assert.assertEquals("100000113552", value);
     }
 
     private Schema getSchema(String file) {

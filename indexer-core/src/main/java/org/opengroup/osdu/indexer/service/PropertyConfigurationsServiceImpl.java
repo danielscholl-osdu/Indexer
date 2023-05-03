@@ -485,14 +485,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         }
     }
 
-    /**
-     * public access is for unit test
-     *
-     * @param dataMap
-     * @param relatedObjectsSpec
-     * @return
-     */
-    public List<String> getRelatedObjectIds(Map<String, Object> dataMap, RelatedObjectsSpec relatedObjectsSpec) {
+    private List<String> getRelatedObjectIds(Map<String, Object> dataMap, RelatedObjectsSpec relatedObjectsSpec) {
         if (dataMap == null || dataMap.isEmpty() || relatedObjectsSpec == null || !relatedObjectsSpec.isValid())
             return new ArrayList<>();
 
@@ -511,23 +504,10 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     }
 
     private Map<String, Object> getExtendedPropertyValues(String extendedPropertyName, Map<String, Object> dataMap, ValueExtraction valueExtraction, boolean isExtractFirstMatch) {
-        Map<String, Object> propertyValues = getPropertyValues(dataMap, valueExtraction, isExtractFirstMatch);
-        return PropertyUtil.replacePropertyPaths(extendedPropertyName, valueExtraction.getValuePath(), propertyValues);
-    }
-
-    /**
-     * public access is for unit test
-     *
-     * @param dataMap
-     * @param valueExtraction
-     * @param isExtractFirstMatch
-     * @return
-     */
-    public Map<String, Object> getPropertyValues(Map<String, Object> dataMap, ValueExtraction valueExtraction, boolean isExtractFirstMatch) {
         if (dataMap == null || dataMap.isEmpty() || valueExtraction == null || !valueExtraction.isValid())
             return new HashMap<>();
-
-        return getPropertyValues(dataMap, valueExtraction.getValuePath(), valueExtraction, valueExtraction.hasValidCondition(), isExtractFirstMatch);
+        Map<String, Object> propertyValues = getPropertyValues(dataMap, valueExtraction.getValuePath(), valueExtraction, valueExtraction.hasValidCondition(), isExtractFirstMatch);
+        return PropertyUtil.replacePropertyPaths(extendedPropertyName, valueExtraction.getValuePath(), propertyValues);
     }
 
     private Map<String, Object> getPropertyValues(Map<String, Object> dataMap, String valuePath, RelatedCondition relatedCondition, boolean hasValidCondition, boolean isExtractFirstMatch) {
