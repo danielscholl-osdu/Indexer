@@ -66,6 +66,8 @@ environmentVariables:
     value: "/mnt/params"
   - name: TMP_VOLUME_PATH
     value: "/tmp"
+  - name: SEARCH_BASE_URL
+    value: "http://os-search:8080"
 
 # Resource Config
 replicaCount: 1

@@ -125,4 +125,6 @@ spec:
           value: "api://$(aad_client_id)"
         - name: SPRING_CONFIG_NAME
           value: "common,application"
+        - name: SEARCH_HOST
+          value: http://search/api/search/v2
       terminationGracePeriodSeconds: 101

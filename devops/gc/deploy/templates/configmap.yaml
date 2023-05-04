@@ -22,3 +22,4 @@ data:
   SECURITY_HTTPS_CERTIFICATE_TRUST: {{ .Values.data.securityHttpsCertificateTrust | quote }}
   SPRING_PROFILES_ACTIVE: {{ .Values.data.springProfilesActive | quote }}
   STORAGE_HOST: {{ .Values.data.storageHost | quote }}
+  SEARCH_BASE_HOST: {{ .Values.data.searchHost | quote }}
