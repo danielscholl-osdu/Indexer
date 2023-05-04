@@ -15,6 +15,7 @@ data:
   securityHttpsCertificateTrust: "true"
   springProfilesActive: "gcp"
   storageHost: "http://storage"
+  searchHost: "http://search"
   # Deployment
   requestsCpu: "35m"
   requestsMemory: "640Mi"
