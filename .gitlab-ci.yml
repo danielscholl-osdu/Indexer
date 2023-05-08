@@ -70,6 +70,7 @@ include:
     ref: m18-pipeline-update-mm
 
   - local: "devops/gc/pipeline/override-stages.yml"
+  - local: "devops/aws/pipeline/override-stages.yml"
 
 aws-test-java:
   tags: ["aws-internal-test"]
