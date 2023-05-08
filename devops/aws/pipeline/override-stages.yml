@@ -32,3 +32,7 @@ aws-update-tf:
   only:
     variables:
       - $AWS_SKIP_DEPLOY != 'true' && $AWS == '1' && $AWS_DEPLOY_TARGET == 'TF'
+
+aws-test-java:
+  variables:
+    ELASTIC_HOST: localhost
