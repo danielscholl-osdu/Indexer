@@ -14,18 +14,18 @@ aws-update-tf:
     - localPort=$ELASTIC_PORT
     - |
       while netstat -an | grep $localPort | grep -i listen ; do
-          echo "$localPort Port in use"
-          ((localPort++))
+        echo "$localPort Port in use"
+        ((localPort++))
       done
-    - echo "Using local port: $localPort"
+    - echo $localPort
     - kubectl port-forward -n $TENANT_GROUP_NAME-tenant-$EKS_TENANT_NAME-elasticsearch svc/elasticsearch-es-http $localPort:$ELASTIC_PORT
     - export ELASTIC_PORT=$localPort
     - pid=$!
     - |
       trap '{
-          echo killing "Port forward process: "$pid
-          kill $pid
-          rm $KUBECONFIG
+        echo killing "Port forward process: "$pid
+        kill $pid
+        rm $KUBECONFIG
       }' EXIT
 
     - chmod 600 $KUBECONFIG
