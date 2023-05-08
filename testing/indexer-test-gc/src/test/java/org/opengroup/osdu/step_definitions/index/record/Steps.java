@@ -70,6 +70,16 @@ public class Steps extends SchemaServiceRecordSteps {
         super.iShouldBeAbleToSearchRecordByTagKeyAndTagValue(index, tagKey, tagValue, expectedNumber);
     }
 
+    @Then("^I clean up the index of the extended kinds \"([^\"]*)\" in the Elastic Search$")
+    public void iShouldCleanupIndicesOfExtendedKinds(String extendedKinds) throws Throwable {
+        super.iShouldCleanupIndicesOfExtendedKinds(extendedKinds);
+    }
+
+    @Then("^I should be able to search (\\d+) record with index \"([^\"]*)\" by extended data field \"([^\"]*)\" and value \"([^\"]*)\"$")
+    public void iShouldBeAbleToSearchRecordByFieldAndFieldValue(int expectedNumber, String index, String fieldKey, String fieldValue) throws Throwable {
+        super.iShouldBeAbleToSearchRecordByFieldAndFieldValue(index, fieldKey, fieldValue, expectedNumber);
+    }
+
     @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by bounding box query with points \\((-?\\d+), (-?\\d+)\\) and  \\((-?\\d+), (-?\\d+)\\) on field \"([^\"]*)\"$")
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery(
         int expectedCount, String index, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude, String field)

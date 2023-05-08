@@ -13,7 +13,39 @@ Feature: Indexing of the documents
       | tenant1:indexer:test-update-data--Integration:1.0.1 | tenant1-indexer-test-update-data--integration-1.0.1 | index_update_records_kind_v1   |
       | tenant1:indexer:test-update-data--Integration:2.0.1 | tenant1-indexer-test-update-data--integration-2.0.1 | index_update_records_kind_v2   |
       | tenant1:indexer:virtual-properties-Integration:1.0.0 | tenant1-indexer-virtual-properties-integration-1.0.0 | index_record_virtual_properties   |
-      | tenant1:indexer:decimation-Integration:1.0.0        | tenant1-indexer-decimation-integration-1.0.0        | index_record_seismic_survey   |
+      | tenant1:indexer:decimation-Integration:1.0.0        | tenant1-indexer-decimation-integration-1.0.0        | index_record_seismic_survey    |
+      | osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0 | osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0 | osdu_wks_IndexPropertyPathConfiguration_v1 |
+      | test:indexer:index-property--Wellbore:1.0.0         | test-indexer-index-property--wellbore-1.0.0         | index-property-wellbore_v1     |
+      | test:indexer:index-property--WellLog:1.0.0          | test-indexer-index-property--welllog-1.0.0          | index-property-welllog_v1      |
+
+
+  Scenario Outline: Prepare the index property configuration records and clean up index of the extended kinds in the Elastic Search
+    When I ingest records with the <recordFile> with <acl> for a given <kind>
+    Then I should get the <number> documents for the <index> in the Elastic Search
+    Then I clean up the index of the extended kinds <extendedKinds> in the Elastic Search
+
+    Examples:
+      | kind                                                            | recordFile                                   | number | index                                                           | acl                            | extendedKinds                                                                              |
+      | "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0" | "osdu_wks_IndexPropertyPathConfiguration_v1" | 2      | "osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0" | "data.default.viewers@tenant1" | "test:indexer:index-property--Wellbore:1.0.0,test:indexer:index-property--WellLog:1.0.0"  |
+
+  Scenario Outline: Ingest the records of the extended kinds, Index in the Elastic Search and Search string field
+    When I ingest records with the <recordFile> with <acl> for a given <kind>
+    Then I should be able to search <number> record with index <index> by extended data field <field> and value <value>
+
+    Examples:
+      | kind                                           | recordFile                    | number | index                                           | acl                            |  field               | value           |
+      | "test:indexer:index-property--Wellbore:1.0.0"  | "index-property-wellbore_v1"  | 1      |  "test-indexer-index-property--wellbore-1.0.0"  | "data.default.viewers@tenant1" | "data.WellUWI"       | "123454321"     |
+      | "test:indexer:index-property--WellLog:1.0.0"   | "index-property-welllog_v1"   | 1      |  "test-indexer-index-property--welllog-1.0.0"   | "data.default.viewers@tenant1" | "data.WellboreName"  | "Facility_123"  |
+
+  Scenario Outline: Ingest the records of the extended kinds, Index in the Elastic Search and Search spatial field
+    When I ingest records with the <recordFile> with <acl> for a given <kind>
+    Then I should be able search <number> documents for the <index> by bounding box query with points (<top_left_latitude>, <top_left_longitude>) and  (<bottom_right_latitude>, <bottom_right_longitude>) on field <field>
+
+    Examples:
+      | kind                                           | recordFile                    | number | index                                           | acl                            |  field                 | top_left_latitude | top_left_longitude | bottom_right_latitude | bottom_right_longitude |
+      | "test:indexer:index-property--Wellbore:1.0.0"  | "index-property-wellbore_v1"  | 1      |  "test-indexer-index-property--wellbore-1.0.0"  | "data.default.viewers@tenant1" | "data.Location"        | 30                | -96                | 29                    | -95                    |
+      | "test:indexer:index-property--WellLog:1.0.0"   | "index-property-welllog_v1"   | 1      |  "test-indexer-index-property--welllog-1.0.0"   | "data.default.viewers@tenant1" | "data.SpatialLocation" | 30                | -96                | 29                    | -95                    |
+
 
   Scenario Outline: Ingest the record and Index in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>

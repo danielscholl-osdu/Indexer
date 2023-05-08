@@ -11,14 +11,19 @@ import java.util.Map;
 
 public class SchemaServiceRecordSteps extends RecordSteps {
 
+    private static boolean runBackgroundOnce = false;
+
     public SchemaServiceRecordSteps(HTTPClient httpClient, ElasticUtils elasticUtils) {
         super(httpClient, elasticUtils);
     }
 
     public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
-        List<Setup> inputList = dataTable.asList(Setup.class);
-        inputList.forEach(this::setup);
-        super.addShutDownHook();
+        if(!runBackgroundOnce) {
+            List<Setup> inputList = dataTable.asList(Setup.class);
+            inputList.forEach(this::setup);
+            super.addShutDownHook();
+            runBackgroundOnce = true;
+        }
     }
 
     private void setup(Setup input) {
