@@ -906,7 +906,6 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return searchAllRecords(searchRequest);
     }
 
-
     /*
       It is assumed that the search request in this method won't return millions of records
      */
@@ -914,21 +913,20 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         searchRequest.setLimit(MAX_SEARCH_LIMIT);
         List<SearchRecord> allRecords = new ArrayList<>();
         boolean done = false;
+        int offset = 0;
         try {
             while (!done) {
-                SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
+                searchRequest.setOffset(offset);
+                SearchResponse searchResponse = searchService.query(searchRequest);
                 List<SearchRecord> results = searchResponse.getResults();
-                if (results != null) {
+                if (results != null && results.size() > 0) {
                     allRecords.addAll(results);
                 }
-                if(searchResponse.getCursor() == null) {
+
+                if (results != null && results.size() == MAX_SEARCH_LIMIT) {
+                    offset += MAX_SEARCH_LIMIT;
+                } else {
                     done = true;
-                }
-                else if(searchRequest.getCursor() == null) {
-                    Object kind = searchRequest.getKind();
-                    searchRequest = new SearchRequest();
-                    searchRequest.setKind(kind);
-                    searchRequest.setCursor(searchResponse.getCursor());
                 }
             }
         } catch (URISyntaxException e) {

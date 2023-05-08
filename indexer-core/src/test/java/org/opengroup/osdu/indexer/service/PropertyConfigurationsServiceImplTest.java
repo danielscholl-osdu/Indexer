@@ -182,7 +182,7 @@ public class PropertyConfigurationsServiceImplTest {
         SearchResponse searchResponse = new SearchResponse();
         searchResponse.setResults(results);
         searchResponse.setTotalCount(results.size());
-        when(this.searchService.queryWithCursor(any())).thenReturn(searchResponse);
+        when(this.searchService.query(any())).thenReturn(searchResponse);
 
         String kind = "osdu:wks:master-data--Well:1.0.0";
         String code = "osdu:wks:master-data--Well:1.";
@@ -197,7 +197,7 @@ public class PropertyConfigurationsServiceImplTest {
 
     @Test
     public void getPropertyConfigurations_without_result_from_search() throws URISyntaxException {
-        when(this.searchService.queryWithCursor(any())).thenReturn(new SearchResponse());
+        when(this.searchService.query(any())).thenReturn(new SearchResponse());
 
         String kind = "osdu:wks:master-data--Well:1.0.0";
         PropertyConfigurations configuration = sut.getPropertyConfigurations(kind);
@@ -217,7 +217,7 @@ public class PropertyConfigurationsServiceImplTest {
         List<SearchRecord> childrenRecords = gson.fromJson(jsonText, type);
         SearchResponse response = new SearchResponse();
         response.setResults(childrenRecords);
-        when(this.searchService.queryWithCursor(any())).thenReturn(response);
+        when(this.searchService.query(any())).thenReturn(response);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("wellbore_extended_data.json");
@@ -237,7 +237,7 @@ public class PropertyConfigurationsServiceImplTest {
         relatedObjectData = getDataMap("organisation_data2.json");
         relatedObjects.put("opendes:master-data--Organisation:BigOil-Department-SeismicProcessing", relatedObjectData);
 
-        // Setup search response for searchService.queryWithCursor(...)
+        // Setup search response for searchService.query(...)
         when(this.searchService.query(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             String query = searchRequest.getQuery();
@@ -656,8 +656,8 @@ public class PropertyConfigurationsServiceImplTest {
         parentKind = "osdu:wks:master-data--Wellbore:1.0.0";
         parentId = "anyParentId";
 
-        // Setup search response for searchService.queryWithCursor(...)
-        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
+        // Setup search response for searchService.query(...)
+        when(this.searchService.query(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             SearchResponse searchResponse = new SearchResponse();
             if (searchRequest.getKind().toString().equals(propertyConfigurationKind)) {
@@ -820,8 +820,8 @@ public class PropertyConfigurationsServiceImplTest {
         parentKind = "osdu:wks:master-data--GeoPoliticalEntity:1.0.0";
         parentId = "anyParentId";
 
-        // Setup search response for searchService.queryWithCursor(...)
-        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
+        // Setup search response for searchService.query(...)
+        when(this.searchService.query(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             SearchResponse searchResponse = new SearchResponse();
             if (searchRequest.getKind().toString().equals(propertyConfigurationKind)) {

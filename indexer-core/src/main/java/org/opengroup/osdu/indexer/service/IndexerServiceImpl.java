@@ -219,6 +219,7 @@ public class IndexerServiceImpl implements IndexerService {
         boolean indexExist = indicesService.isIndexExist(restClient, index);
         if (indexExist && msg.getValue() == OperationType.purge_schema) {
             indicesService.deleteIndex(restClient, index);
+            schemaService.invalidateSchemaCache(kind);
         }
     }
 

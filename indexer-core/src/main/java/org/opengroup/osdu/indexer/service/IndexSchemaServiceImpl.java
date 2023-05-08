@@ -258,6 +258,11 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         }
     }
 
+    @Override
+    public void invalidateSchemaCache(String kind) {
+        this.invalidateCache(kind);
+    }
+
     private void invalidateCache(String kind) {
         this.schemaCache.delete(kind);
         this.flattenedSchemaCache.delete(kind);
