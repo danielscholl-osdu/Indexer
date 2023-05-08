@@ -1,13 +1,19 @@
-aws-update-tf:
+aws-test-java:
   extends:
-    - .aws
-    - .aws_variables
+    - .maven
+    - .aws    
     - .aws_common_variables
-  stage: deploy
-  needs: ['aws-containerize']
+    - .aws_variables
+  stage: integration
+  needs: [{ job: 'aws-update-tf', optional: true }, { job: 'aws-update-helm', optional: true }, { job: 'aws-update-eks', optional: true }]
   retry: 1
+  before_script:
+    - !reference [.maven, before_script]
+    - !reference [.aws, before_script]
+    - !reference [.aws_variables, before_script]
   script:
     - echo os-indexer override
+    - export ELASTIC_HOST=localhost
     - export KUBECONFIG=/tmp/kubeconfig-${RANDOM}.yaml
     - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME --role-arn $EKS_CLUSTER_MGMT_ROLE
 
@@ -22,17 +28,13 @@ aws-update-tf:
         kill $pid
         rm $KUBECONFIG
       }' EXIT
-
-    - chmod 600 $KUBECONFIG
-    - export CONTAINER_IMAGE=`kubectl -n ${AWS_SERVICE_NAMESPACE}-${AWS_SERVICE_NAMESPACE_SUFFIX:-core} get deployment/${AWS_EKS_DEPLOYMENT_NAME} -o jsonpath='{.spec.template.spec.containers[0].name}'`
-
-    - kubectl -n ${AWS_SERVICE_NAMESPACE}-${AWS_SERVICE_NAMESPACE_SUFFIX:-core} set image deployment/${AWS_EKS_DEPLOYMENT_NAME} $CONTAINER_IMAGE=$AWS_IMAGE_TAG_BASE:$CI_COMMIT_SHA
-    - kubectl -n ${AWS_SERVICE_NAMESPACE}-${AWS_SERVICE_NAMESPACE_SUFFIX:-core} rollout restart deployment/${AWS_EKS_DEPLOYMENT_NAME}
-    - kubectl -n ${AWS_SERVICE_NAMESPACE}-${AWS_SERVICE_NAMESPACE_SUFFIX:-core} rollout status -w deployment/${AWS_EKS_DEPLOYMENT_NAME} --timeout=300s
+    - $MAVEN_BUILD $INTEGRATION_TEST_DIR maven-aws-integration-test-output.txt ${AWS_MAVEN_TEST_COMMAND_OVERRIDE:-test} --update-snapshots -DdisableXmlReport=true
   only:
     variables:
-      - $AWS_SKIP_DEPLOY != 'true' && $AWS == '1' && $AWS_DEPLOY_TARGET == 'TF'
-
-aws-test-java:
-  variables:
-    ELASTIC_HOST: localhost
+      #Default if not defined
+      - $AWS_SKIP_DEPLOY != 'true' && $AWS_SKIP_TESTS != 'true' && $AWS == '1' && ($AWS_INT_TEST_TYPE == 'java' || $AWS_INT_TEST_TYPE == null)
+  artifacts:
+      when: always
+      paths:
+        - $INTEGRATION_TEST_DIR
+      expire_in: 2 days
