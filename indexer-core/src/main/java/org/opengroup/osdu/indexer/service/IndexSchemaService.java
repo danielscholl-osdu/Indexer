@@ -40,4 +40,6 @@ public interface IndexSchemaService {
     void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException, URISyntaxException;
 
     boolean isStorageSchemaSyncRequired(String kind, boolean forceClean) throws IOException;
+
+    void invalidateSchemaCache(String kind);
 }
