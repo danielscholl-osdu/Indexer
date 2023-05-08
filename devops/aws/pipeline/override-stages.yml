@@ -12,13 +12,8 @@ aws-update-tf:
     - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME --role-arn $EKS_CLUSTER_MGMT_ROLE
 
     - localPort=$ELASTIC_PORT
-    - |
-      while netstat -an | grep $localPort | grep -i listen ; do
-        echo "$localPort Port in use"
-        ((localPort++))
-      done
     - echo $localPort
-    - kubectl port-forward -n $TENANT_GROUP_NAME-tenant-$EKS_TENANT_NAME-elasticsearch svc/elasticsearch-es-http $localPort:$ELASTIC_PORT
+    - kubectl port-forward -n $TENANT_GROUP_NAME-tenant-$EKS_TENANT_NAME-elasticsearch svc/elasticsearch-es-http $localPort:$ELASTIC_PORT > /dev/null 2>&1 &
     - export ELASTIC_PORT=$localPort
     - pid=$!
     - |
