@@ -7,10 +7,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @ComponentScan({"org.opengroup.osdu.core.common","org.opengroup.osdu.indexer", "org.opengroup.osdu.is"})
 @SpringBootApplication(exclude = {ElasticSearchRestHealthContributorAutoConfiguration.class, SecurityAutoConfiguration.class, ManagementWebSecurityAutoConfiguration.class})
+@PropertySource("classpath:swagger.properties")
 public class IndexerApplication {
     public static void main( String[] args )
     {
