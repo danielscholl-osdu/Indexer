@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2022 Google LLC
- *  Copyright 2020-2022 EPAM Systems, Inc
+ *  Copyright 2020-2023 Google LLC
+ *  Copyright 2020-2023 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,17 +19,12 @@ package org.opengroup.osdu.indexer.provider.gcp.indexing.processing;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.Nullable;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.gcp.oqm.driver.OqmDriver;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmDestination;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmMessageReceiver;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriber;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriberThroughput;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscription;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriptionQuery;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmTopic;
+import org.opengroup.osdu.core.gcp.oqm.model.*;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Nullable;
 
 @Service
 @Slf4j

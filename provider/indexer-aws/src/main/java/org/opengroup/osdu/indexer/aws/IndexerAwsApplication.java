@@ -21,6 +21,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.PropertySource;
 
 @SpringBootApplication(exclude = { SecurityAutoConfiguration.class, ManagementWebSecurityAutoConfiguration.class })
 @ComponentScan(
@@ -30,6 +31,7 @@ import org.springframework.context.annotation.FilterType;
                         type=FilterType.ASSIGNABLE_TYPE,
                         value=IndexerQueueTaskBuilder.class)
         })
+@PropertySource("classpath:swagger.properties")
 public class IndexerAwsApplication {
 
     public static void main(String[] args) {
