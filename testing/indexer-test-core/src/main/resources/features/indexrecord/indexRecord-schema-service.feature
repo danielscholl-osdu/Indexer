@@ -23,6 +23,7 @@ Feature: Indexing of the documents
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should get the <number> documents for the <index> in the Elastic Search
     Then I clean up the index of the extended kinds <extendedKinds> in the Elastic Search
+    Then I set starting stateful scenarios
 
     Examples:
       | kind                                                            | recordFile                                   | number | index                                                           | acl                            | extendedKinds                                                                              |
@@ -46,6 +47,8 @@ Feature: Indexing of the documents
       | "test:indexer:index-property--Wellbore:1.0.0"  | "index-property-wellbore_v1"  | 1      |  "test-indexer-index-property--wellbore-1.0.0"  | "data.default.viewers@tenant1" | "data.Location"        | 30                | -96                | 29                    | -95                    |
       | "test:indexer:index-property--WellLog:1.0.0"   | "index-property-welllog_v1"   | 1      |  "test-indexer-index-property--welllog-1.0.0"   | "data.default.viewers@tenant1" | "data.SpatialLocation" | 30                | -96                | 29                    | -95                    |
 
+  Scenario: End Stateful Scenarios
+    Then I set ending stateful scenarios
 
   Scenario Outline: Ingest the record and Index in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>

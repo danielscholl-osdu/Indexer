@@ -46,6 +46,16 @@ public class Steps extends SchemaServiceRecordSteps {
         super.the_schema_is_created_with_the_following_kind(dataTable);
     }
 
+    @Then("^I set starting stateful scenarios$")
+    public void i_set_starting_stateful_scenarios() throws Throwable {
+        super.i_set_scenarios_as_stateful(true);
+    }
+
+    @Then("^I set ending stateful scenarios$")
+    public void i_set_ending_stateful_scenarios() throws Throwable {
+        super.i_set_scenarios_as_stateful(false);
+    }
+
     @When("^I ingest records with the \"(.*?)\" with \"(.*?)\" for a given \"(.*?)\"$")
     public void i_ingest_records_with_the_for_a_given(String record, String dataGroup, String kind) {
         super.i_ingest_records_with_the_for_a_given(record, dataGroup, kind);
