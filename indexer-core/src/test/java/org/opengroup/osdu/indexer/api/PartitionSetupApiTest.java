@@ -18,9 +18,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.service.IClusterConfigurationService;
+import org.opengroup.osdu.indexer.service.IndexAliasService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -38,6 +40,10 @@ public class PartitionSetupApiTest {
     private AuditLogger auditLogger;
     @Mock
     private IClusterConfigurationService clusterConfigurationService;
+    @Mock
+    private IndexAliasService indexAliasService;
+    @Mock
+    private JaxRsDpsLog jaxRsDpsLog;
     @InjectMocks
     private PartitionSetupApi sut;
 
