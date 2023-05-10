@@ -76,7 +76,7 @@ public class SearchServiceImpl implements SearchService {
             return gson.fromJson(response.getBody(), SearchResponse.class);
         }
         else {
-            jaxRsDpsLog.error("SearchService", response.getException());
+            jaxRsDpsLog.error(String.format("Search service: failed to call the search service: %d", response.getResponseCode()));
             return new SearchResponse();
         }
     }
