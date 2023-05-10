@@ -5,7 +5,7 @@ variables:
   AWS_SERVICE: indexer
   AWS_SERVICE_GATEWAY: osdu-gateway
   AWS_ENVIRONMENT: dev
-  AWS_DEPLOY_TARGET: HELM
+  AWS_DEPLOY_TARGET: TF
   AWS_EKS_DEPLOYMENT_NAME: os-indexer
 
   GCP_BUILD_SUBDIR: provider/indexer-gcp
@@ -60,6 +60,7 @@ include:
     file: "cloud-providers/gc-global.yml"
 
   - local: "devops/gc/pipeline/override-stages.yml"
+  - local: "devops/aws/pipeline/override-stages.yml"
 
 aws-test-java:
   tags: ["aws-internal-test"]

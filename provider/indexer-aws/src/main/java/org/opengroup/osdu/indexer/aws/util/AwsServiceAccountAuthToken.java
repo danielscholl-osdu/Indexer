@@ -14,77 +14,44 @@
 
 package org.opengroup.osdu.indexer.aws.util;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement;
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementClientBuilder;
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest;
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterResult;
-import org.opengroup.osdu.core.aws.iam.IAMConfig;
-import org.opengroup.osdu.core.aws.secrets.SecretsManager;
-
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import org.apache.http.HttpStatus;
+import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.http.HttpClient;
 import org.opengroup.osdu.core.common.http.HttpRequest;
 import org.opengroup.osdu.core.common.http.HttpResponse;
 import org.opengroup.osdu.core.common.http.IHttpClient;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import javax.annotation.PostConstruct;
-
 @Component
 public class AwsServiceAccountAuthToken {
-
-    @Value("${ENVIRONMENT}")
-    private String awsEnvironment;
-
-    @Value("${AWS_REGION}")
-    private String awsRegion;
-
-    private final static String ENVIRONMENT = "ENVIRONMENT";
-    private final static String REGION = "AWS_REGION";
-
     private String client_credentials_secret;
     private String client_credentials_clientid;
     private String tokenUrl;
     private String oauthCustomScope;
     private String token= null;
     private long expirationTimeMillis;
-    private AWSSimpleSystemsManagement ssmManager;
 
     @PostConstruct
     private void init() {
-        SecretsManager sm = new SecretsManager();
-        String environment = awsEnvironment;
-        if (environment == null) {
-              environment = System.getProperty(ENVIRONMENT, System.getenv(ENVIRONMENT));
-          }
-          String amazonRegion = awsRegion;
-          if (amazonRegion == null) {
-              amazonRegion = System.getProperty(REGION, System.getenv(REGION));
-          }
-
-          String oauth_token_url = "/osdu/" + environment + "/oauth-token-uri";
-          String oauth_custom_scope = "/osdu/" + environment + "/oauth-custom-scope";
-
-          String client_credentials_client_id = "/osdu/" + environment + "/client-credentials-client-id";
-          String client_secret_key = "client_credentials_client_secret";
-          String client_secret_secretName = "/osdu/" + environment + "/client_credentials_secret";
-          AWSCredentialsProvider amazonAWSCredentials = IAMConfig.amazonAWSCredentials();
-          this.ssmManager= AWSSimpleSystemsManagementClientBuilder.standard()
-              .withCredentials(amazonAWSCredentials)
-              .withRegion(amazonRegion)
-              .build();
-
-          this.client_credentials_clientid = getSsmParameter(client_credentials_client_id);
-          this.client_credentials_secret = sm.getSecret(client_secret_secretName, amazonRegion, client_secret_key);
-          this.tokenUrl = getSsmParameter(oauth_token_url);
-          this.oauthCustomScope = getSsmParameter(oauth_custom_scope);
+        K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
+        try {
+            this.client_credentials_clientid = provider.getParameterAsString("CLIENT_CREDENTIALS_ID");
+            this.client_credentials_secret = provider.getCredentialsAsMap("CLIENT_CREDENTIALS_SECRET").get("client_credentials_client_secret");
+            this.tokenUrl = provider.getParameterAsString("OAUTH_TOKEN_URI");
+            this.oauthCustomScope = provider.getParameterAsString("OAUTH_CUSTOM_SCOPE");
+        } catch (K8sParameterNotFoundException | JsonProcessingException e) {
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "ParameterNotFoundException", e.getMessage());
+        }
       }
 
     public String getAuthToken() throws AppException {
@@ -135,11 +102,5 @@ public class AwsServiceAccountAuthToken {
         } else {
             throw new Exception("Invalid Response");
         }
-    }
-
-    private String getSsmParameter(String parameterKey) {
-        GetParameterRequest paramRequest = (new GetParameterRequest()).withName(parameterKey).withWithDecryption(true);
-        GetParameterResult paramResult = ssmManager.getParameter(paramRequest);
-        return paramResult.getParameter().getValue();
     }
 }
