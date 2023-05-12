@@ -134,4 +134,13 @@ public class SearchServiceImplTest {
         Assert.assertNotNull(searchResponse);
         Assert.assertNull(searchResponse.getResults());
     }
+
+    @Test
+    public void query_with_null_response() throws URISyntaxException {
+        when(this.configurationProperties.getSearchHost()).thenReturn(searchHost);
+        when(this.urlFetchService.sendRequest(any())).thenReturn(null);
+        SearchResponse searchResponse = sut.query(new SearchRequest());
+        Assert.assertNotNull(searchResponse);
+        Assert.assertNull(searchResponse.getResults());
+    }
 }

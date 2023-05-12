@@ -72,11 +72,15 @@ public class SearchServiceImpl implements SearchService {
                 .body(body)
                 .build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
-        if(response.getResponseCode() == OK_CODE) {
+
+        if(response != null && response.getResponseCode() == OK_CODE) {
             return gson.fromJson(response.getBody(), SearchResponse.class);
         }
         else {
-            jaxRsDpsLog.error(String.format("Search service: failed to call the search service: %d", response.getResponseCode()));
+            if(response != null)
+                jaxRsDpsLog.error(String.format("Search service: failed to call the search service: %d", response.getResponseCode()));
+            else
+                jaxRsDpsLog.error(String.format("Search service: failed to call the search service. The response is null."));
             return new SearchResponse();
         }
     }
