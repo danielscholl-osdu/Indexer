@@ -17,7 +17,6 @@ The following software have components provided under the terms of this license:
 
 - Apache Commons CLI (from https://commons.apache.org/proper/commons-cli/, https://repo1.maven.org/maven2/commons-cli/commons-cli)
 - Apache Geronimo JMS Spec 2.0 (from http://geronimo.apache.org/maven/${siteId}/${version})
-- Apache Log4j Core (from https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core)
 - Apache Log4j JUL Adapter (from https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-jul)
 - Apache Maven Invoker (from https://repo1.maven.org/maven2/org/apache/maven/shared/maven-invoker)
 - Apache Maven Reporting API (from https://repo1.maven.org/maven2/org/apache/maven/reporting/maven-reporting-api)
@@ -682,6 +681,7 @@ BSD-2-Clause
 The following software have components provided under the terms of this license:
 
 - API Common (from https://github.com/googleapis, https://github.com/googleapis/api-common-java, https://repo1.maven.org/maven2/com/google/api/api-common)
+- Apache Log4j Core (from https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core)
 - Apache Lucene (module: memory) (from https://lucene.apache.org/)
 - Apache Lucene (module: misc) (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-misc)
 - Apache Lucene (module: spatial-extras) (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-spatial-extras)
@@ -963,8 +963,6 @@ The following software have components provided under the terms of this license:
 - HK2 core module (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-core)
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
 - Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api)
-- Java Architecture for XML Binding (from http://jaxb.java.net/, https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api)
-- JavaBeans Activation Framework (from <http://java.sun.com/javase/technologies/desktop/javabeans/jaf/index.jsp>, http://java.sun.com/javase/technologies/desktop/javabeans/jaf/index.jsp, https://repo1.maven.org/maven2/com/sun/activation/javax.activation)
 - RabbitMQ Java Client (from http://www.rabbitmq.com, https://www.rabbitmq.com)
 - ServiceLocator Default Implementation (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-locator)
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
@@ -1026,7 +1024,6 @@ GPL-3.0-only
 The following software have components provided under the terms of this license:
 
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
-- Java Architecture for XML Binding (from http://jaxb.java.net/, https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api)
 
 ========================================================================
 GPL-3.0-or-later
