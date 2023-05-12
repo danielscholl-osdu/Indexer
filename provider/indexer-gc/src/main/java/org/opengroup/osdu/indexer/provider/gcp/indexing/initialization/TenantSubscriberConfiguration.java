@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2022 Google LLC
- *  Copyright 2020-2022 EPAM Systems, Inc
+ *  Copyright 2020-2023 Google LLC
+ *  Copyright 2020-2023 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.provider.gcp.indexing.processing;
+package org.opengroup.osdu.indexer.provider.gcp.indexing.initialization;
 
 import java.util.Collection;
 import javax.annotation.PostConstruct;
@@ -27,6 +27,10 @@ import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriberThroughput;
 import org.opengroup.osdu.indexer.api.RecordIndexerApi;
 import org.opengroup.osdu.indexer.api.ReindexApi;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.IndexerMessagingConfigProperties;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.RecordsChangedMessageReceiver;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.RepressorMessageReceiver;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.SchemaChangedMessageReceiver;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.scope.ThreadDpsHeaders;
 import org.springframework.stereotype.Component;
 
@@ -43,7 +47,7 @@ public class TenantSubscriberConfiguration {
     private final OqmSubscriberManager subscriberManager;
     private final ITenantFactory tenantInfoFactory;
     private final TokenProvider tokenProvider;
-        private final ThreadDpsHeaders headers;
+    private final ThreadDpsHeaders headers;
     private final RecordIndexerApi recordIndexerApi;
     private final ReindexApi reindexApi;
 

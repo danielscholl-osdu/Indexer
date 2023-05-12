@@ -21,7 +21,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>2.14.2</version>
+                <version>2.15.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -34,6 +34,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
@@ -156,10 +157,11 @@
             <version>5.3.22</version>
         </dependency>
 
+        <!--    Mappers    -->
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>oqm</artifactId>
-            <version>0.21.0-rc3</version>
+            <version>0.21.0-rc5</version>
         </dependency>
     </dependencies>
 
