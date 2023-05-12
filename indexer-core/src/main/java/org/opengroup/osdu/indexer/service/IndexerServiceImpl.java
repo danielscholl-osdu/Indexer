@@ -17,6 +17,9 @@ package org.opengroup.osdu.indexer.service;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.util.Collections;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.DocWriteRequest;
@@ -67,6 +70,8 @@ public class IndexerServiceImpl implements IndexerService {
     private static final TimeValue BULK_REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
     private static final List<RestStatus> RETRY_ELASTIC_EXCEPTION = new ArrayList<>(Arrays.asList(RestStatus.TOO_MANY_REQUESTS, RestStatus.BAD_GATEWAY, RestStatus.SERVICE_UNAVAILABLE, RestStatus.FORBIDDEN));
+
+    private static final String FAILED_TO_PARSE_EXCEPTION_MESSAGE = "Elasticsearch exception [type=mapper_parsing_exception, reason=failed to parse field [data.SpatialLocation.Wgs84Coordinates] of type [geo_shape]]";
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
@@ -363,7 +368,24 @@ public class IndexerServiceImpl implements IndexerService {
             this.cacheOrCreateElasticMapping(schemas, restClient);
 
             // process the records
-            return this.upsertRecords(recordIndexerPayload.getRecords(), restClient);
+            List<RecordIndexerPayload.Record> records = recordIndexerPayload.getRecords();
+            BulkRequestResult bulkRequestResult = this.upsertRecords(records, restClient);
+            List<String> failedRecordIds = bulkRequestResult.getFailureRecordIds();
+
+            List<String> retryUpsertRecordIds = bulkRequestResult.getRetryUpsertRecordIds();
+            if (!retryUpsertRecordIds.isEmpty()) {
+                List<RecordIndexerPayload.Record> retryUpsertRecords = records.stream()
+                    .filter(record -> retryUpsertRecordIds.contains(record.getId()))
+                    .collect(Collectors.toList());
+                retryUpsertRecords.forEach(record -> {
+                    record.setData(null);
+                    record.setTags(null);
+                });
+                bulkRequestResult = upsertRecords(retryUpsertRecords, restClient);
+                failedRecordIds.addAll(bulkRequestResult.getFailureRecordIds());
+            }
+
+            return failedRecordIds;
         }
     }
 
@@ -386,8 +408,8 @@ public class IndexerServiceImpl implements IndexerService {
         }
     }
 
-    private List<String> upsertRecords(List<RecordIndexerPayload.Record> records, RestHighLevelClient restClient) throws AppException {
-        if (records == null || records.isEmpty()) return new LinkedList<>();
+    private BulkRequestResult upsertRecords(List<RecordIndexerPayload.Record> records, RestHighLevelClient restClient) throws AppException {
+        if (records == null || records.isEmpty()) return new BulkRequestResult(Collections.emptyList(), Collections.emptyList());
 
         BulkRequest bulkRequest = new BulkRequest();
         bulkRequest.timeout(BULK_REQUEST_TIMEOUT);
@@ -423,14 +445,15 @@ public class IndexerServiceImpl implements IndexerService {
         }
 
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            return processBulkRequest(restClient, bulkRequest);
+            return processBulkRequest(restClient, bulkRequest).getFailureRecordIds();
         }
     }
 
-    private List<String> processBulkRequest(RestHighLevelClient restClient, BulkRequest bulkRequest) throws AppException {
+    private BulkRequestResult processBulkRequest(RestHighLevelClient restClient, BulkRequest bulkRequest) throws AppException {
 
+        if (bulkRequest.numberOfActions() == 0) return new BulkRequestResult(Collections.emptyList(), Collections.emptyList());
         List<String> failureRecordIds = new LinkedList<>();
-        if (bulkRequest.numberOfActions() == 0) return failureRecordIds;
+        List<String> retryUpsertRecordIds = new LinkedList<>();
         int failedRequestStatus = 500;
         Exception failedRequestCause = null;
 
@@ -449,7 +472,10 @@ public class IndexerServiceImpl implements IndexerService {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
                     bulkFailures.add(String.format("elasticsearch bulk service status: %s | id: %s | message: %s", failure.getStatus(), failure.getId(), failure.getMessage()));
                     this.jobStatus.addOrUpdateRecordStatus(bulkItemResponse.getId(), IndexingStatus.FAIL, failure.getStatus().getStatus(), bulkItemResponse.getFailureMessage());
-                    if (canIndexerRetry(bulkItemResponse)) {
+
+                    if (RestStatus.BAD_REQUEST.equals(failure.getStatus()) && failure.getCause().getMessage().equals(FAILED_TO_PARSE_EXCEPTION_MESSAGE)) {
+                        retryUpsertRecordIds.add(bulkItemResponse.getId());
+                    } else if (canIndexerRetry(bulkItemResponse)) {
                         failureRecordIds.add(bulkItemResponse.getId());
 
                         if (failedRequestCause == null) {
@@ -481,7 +507,7 @@ public class IndexerServiceImpl implements IndexerService {
             }
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error", "Error indexing records.", e);
         }
-        return failureRecordIds;
+        return new BulkRequestResult(failureRecordIds, retryUpsertRecordIds);
     }
 
     private Map<String, Object> getSourceMap(RecordIndexerPayload.Record record) {
@@ -574,5 +600,12 @@ public class IndexerServiceImpl implements IndexerService {
         if (!failedRecords.isEmpty()) {
             failedEvent.accept(failedRecords.stream().map(RecordStatus::failedAuditLogMessage).collect(Collectors.toList()));
         }
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class BulkRequestResult {
+        private List<String> failureRecordIds;
+        private List<String> retryUpsertRecordIds;
     }
 }
