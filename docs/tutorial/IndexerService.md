@@ -10,8 +10,6 @@
   - [Reindex](#reindex)
   - [Data Partition provision](#data-partition-provision)
   - [Schema change](#schema-change)
-- [Schema Service adoption](#schema-service-adoption)
-  - [R3 Schema Support](#r3-schema-support)
 - [Troubleshoot Indexing Issues](#troubleshoot-indexing-issues)  
   - [Get indexing status](#get-indexing-status)
 
@@ -128,7 +126,7 @@ curl --request POST \
 }'
 ```
 
-</details>
+</details><br>
 
 #### Prerequisite
 
@@ -165,6 +163,7 @@ curl --request DELETE \
   --header 'content-type: application/json' \
   --header 'data-partition-id: opendes' 
 ```
+</details><br>
 
 ### Data Partition provision <a name="data-partition-provision"></a>
 
@@ -185,7 +184,7 @@ curl --request PUT \
   --header 'data-partition-id: opendes''
 ```
 
-</details>
+</details><br>
 
 #### Prerequisite
 
@@ -233,52 +232,6 @@ POST /api/indexer/v2/_dps/task-handlers/schema-worker HTTP/1.1
 `data` <br />
 &emsp;&emsp;(required, String) Schema change event message json string. Only `create` and `update` events are supported.
 
-## Schema Service adoption <a name="schema-service-adoption"></a>
-
-Indexer service is in adaptation process to use schemas from the Schema service instead of Storage Service. The Indexer
-Service retrieves a schema from the Schema Service if the schema is not found on the Storage Service. Change affects
-only Azure implementation so far. Later call to the Storage Service will be deprecated and then removed (after the end
-of the deprecation period).
-
-[Back to table of contents](#TOC)
-
-### R3 Schema Support <a name="r3-schema-support"></a>
-
-Indexer service support r3 schema. These schemas are created via Schema service.
-
-Here is an example following end-to-end workflow can be exercised (please update the schema based on your environment):
-
-- Ingest r3 schema for `opendes:wks:master-data--Wellbore:1.0.0`. Schema service payload can be
-  found [here](https://community.opengroup.org/osdu/platform/system/indexer-service/-/blob/master/testing/indexer-test-core/src/main/resources/testData/r3-index_record_wks_master.schema.json)
-  .
-
-- Ingest r3 master-data Wellbore record. Storage service payload can be
-  found [here](https://community.opengroup.org/osdu/platform/system/indexer-service/-/blob/master/testing/indexer-test-core/src/main/resources/testData/r3-index_record_wks_master.json)
-
-- Records can be searched via Search service. Here is sample payload:
-
-```
-POST /api/search/v2/query HTTP/1.1
-Content-Type: application/json
-data-partition-id: opendes
-{
-    "kind": "opendes:wks:master-data--Wellbore:1.0.0",
-    "spatialFilter": {
-        "field": "data.SpatialLocation.Wgs84Coordinates",
-        "byBoundingBox": {
-            "topLeft": {
-                "longitude": -100.0,
-                "latitude": 52.0
-            },
-            "bottomRight": {
-                "longitude": 100.0,
-                "latitude": 0.0
-            }
-        }
-    }
-}
-```
-
 [Back to table of contents](#TOC)
 
 # Troubleshoot Indexing Issues <a name="troubleshoot-indexing-issues"></a>
@@ -324,28 +277,43 @@ Example:
 
 Details of the index block:
 
-1) trace: This field collects all the issues related to the indexing and concatenates using '|'. This is a String field.
-2) statusCode: This field determines the category of the error. This is integer field. It can have the following values:
-    - 200 - All OK
-    - 404 - Schema is missing in Storage
-    - 400 - Some fields were not properly mapped with the schema defined
-3) lastUpdateTime: This field captures the last time the record was updated by the indexer service. This is datetime
-   field so you can do range queries on this field.
+1. `trace`: This field collects all the issues related to the indexing and concatenates using '|'. This is a string field.
+
+2. `statusCode`: This field determines the category of the error. This is an integer field. It can have the following values:
+   - 200 - All OK
+   - 404 - Schema is missing in Schema service.
+   - 400 - Some fields were not properly mapped with the schema defined, such as the schema defined as `int` for field, but the input record had an attribute value of `text` etc.
+
+3. `lastUpdateTime`: This field captures the last time the record was updated by the Indexer service. This is datetime field, so you can do range queries on this field.
 
 You can query the index status using the following example query:
 
-```bash
-curl --request POST \
-  --url /api/search/v2/query \
-  --header 'Authorization: Token' \
-  --header 'Content-Type: application/json' \
-  --header 'data-partition-id: Data partition id' \
-  --data '{"kind": "*:*:*:*","query": "index.statusCode:404","returnedFields": ["index"]}'
-  
-NOTE: By default, the API response excludes the 'index' attribute block. The user must specify 'index' as the 'returnedFields" in order to see it in the response.
+```http
+POST /search/v2/query HTTP/1.1
+{
+  "kind": "*:*:*:*",
+  "query": "index.statusCode:404",
+  "limit": 1000,
+  "returnedFields": [ "id", "index" ]
+}
 ```
 
-The above query will return all records which had problems due to fields mismatch.
+<details><summary>**Curl**</summary>
+
+```bash
+curl --request POST \
+  --url /search/v2/query \
+  --header 'Authorization: Token' \
+  --header 'Content-Type: application/json' \
+  --header 'Data-Partition-Id: opendes' \
+  --data '{"kind": "*:*:*:*","query": "index.statusCode:404","returnedFields": ["index"]}'
+```
+
+</details><br>
+
+__Note__: By default, the API response excludes the `index` attribute block. You must specify `index` field in `returnedFields` in order to see it in the response.
+
+The above query returns all records which had problems due to fields mismatch.
 
 Please refer to the [Search service](https://community.opengroup.org/osdu/platform/system/search-service/-/blob/master/docs/api/search_openapi.yaml#L28) documentation for examples on different kinds of search
 queries.
