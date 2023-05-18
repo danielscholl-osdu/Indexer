@@ -27,6 +27,7 @@ import lombok.extern.java.Log;
 import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 import org.opengroup.osdu.util.AnthosHTTPClient;
 import org.opengroup.osdu.util.ElasticUtils;
+import org.opengroup.osdu.util.conf.AnthosConfig;
 
 @Log
 public class Steps extends SchemaServiceRecordSteps {
@@ -37,6 +38,7 @@ public class Steps extends SchemaServiceRecordSteps {
 
     @Before
     public void before(Scenario scenario) {
+        AnthosConfig.updateEntitlementsDomainVariable();
         this.scenario = scenario;
         this.httpClient = new AnthosHTTPClient();
     }
