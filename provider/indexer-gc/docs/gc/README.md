@@ -176,7 +176,7 @@ You will need to have the following environment variables defined.
 | `ELASTIC_PORT`                      | ex `9243`                                                      | Port Elasticsearch                                                                                | yes        | output of infrastructure deployment                        |
 | `GCLOUD_PROJECT`                    | ex `opendes`                                                   | Google Cloud Project Id                                                                           | no         | output of infrastructure deployment                        |
 | `INDEXER_HOST`                      | ex `https://os-indexer-dot-opendes.appspot.com/api/indexer/v2/` | Indexer API endpoint                                                                              | no         | output of infrastructure deployment                        |
-| `ENTITLEMENTS_DOMAIN`               | ex `opendes-gc.projects.com`                                   | OSDU R2 to run tests under                                                                        | no         | -                                                          |
+| `GROUP_ID`                          | ex `opendes-gc.projects.com`                                   | OSDU R2 to run tests under                                                                        | no         | -                                                          |
 | `OTHER_RELEVANT_DATA_COUNTRIES`     | ex `US`                                                        | valid legal tag with a other relevant data countries                                              | no         | -                                                          |
 | `LEGAL_TAG`                         | ex `opendes-demo-legaltag`                                     | valid legal tag with a other relevant data countries from `DEFAULT_OTHER_RELEVANT_DATA_COUNTRIES` | no         | -                                                          |
 | `DEFAULT_DATA_PARTITION_ID_TENANT1` | ex `opendes`                                                   | HTTP Header 'Data-Partition-ID'                                                                   | no         | -                                                          |
@@ -188,9 +188,9 @@ You will need to have the following environment variables defined.
 
 **Entitlements configuration for integration accounts**
 
-| INTEGRATION_TESTER                                                                                                                                                                                                | NO_DATA_ACCESS_TESTER |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
-| users<br/>users.datalake.ops<br/>service.storage.creator<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{domain}.com |
+| INTEGRATION_TESTER                                                                                                                                                                                                 | NO_DATA_ACCESS_TESTER |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
+| users<br/>users.datalake.ops<br/>service.storage.creator<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{groupId}.com |
 
 Execute following command to build code and run all the integration tests:
 

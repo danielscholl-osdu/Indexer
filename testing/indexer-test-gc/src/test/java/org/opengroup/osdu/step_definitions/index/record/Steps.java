@@ -9,6 +9,7 @@ import cucumber.api.java.en.When;
 import lombok.extern.java.Log;
 import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 import org.opengroup.osdu.util.ElasticUtils;
+import org.opengroup.osdu.util.GCConfig;
 import org.opengroup.osdu.util.GCPHTTPClient;
 
 @Log
@@ -20,6 +21,7 @@ public class Steps extends SchemaServiceRecordSteps {
 
     @Before
     public void before(Scenario scenario) {
+        GCConfig.updateEntitlementsDomainVariable();
         this.scenario = scenario;
         this.httpClient = new GCPHTTPClient();
     }

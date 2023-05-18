@@ -201,7 +201,7 @@ public class StorageIndexerPayloadMapper {
         } catch (NoSuchMethodException e) {
             this.log.warning(String.format("record-id: %s | error fetching property: %s | error: %s", recordId, propertyKey, e.getMessage()));
         } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            this.log.warning(String.format("record-id: %s | error fetching property: %s | error: %s", recordId, propertyKey, e.getMessage()), e);
+            this.log.warning(String.format("record-id: %s | error fetching property: %s | error: %s", recordId, propertyKey, e.getMessage()));
         }
         return null;
     }

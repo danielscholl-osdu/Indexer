@@ -21,6 +21,7 @@ import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.rest.RestStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -102,14 +103,17 @@ public class IndexerServiceImplTest {
     private List<RecordInfo> recordInfos = new ArrayList<>();
 
     private final String pubsubMsg = "[{\"id\":\"opendes:doc:test1\",\"kind\":\"opendes:testindexer1:well:1.0.0\",\"op\":\"update\"}," +
-            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"create\"}]";
+            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"create\"}, {\"id\":\"opendes:doc:test3\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"create\"}]";
     private final String pubsubMsgForDeletion = "[{\"id\":\"opendes:doc:test1\",\"kind\":\"opendes:testindexer1:well:1.0.0\",\"op\":\"delete\"}," +
-            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"delete\"}]";
+            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"delete\"}, {\"id\":\"opendes:doc:test3\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"delete\"}]";
+
     private final String kind1 = "opendes:testindexer1:well:1.0.0";
     private final String kind2 = "opendes:testindexer2:well:1.0.0";
     private final String recordId1 = "opendes:doc:test1";
     private final String recordId2 = "opendes:doc:test2";
+    private final String recordId3 = "opendes:doc:test3";
     private final String failureMassage = "test failure";
+    private final String badRequestMessage = "Elasticsearch exception [type=mapper_parsing_exception, reason=failed to parse field [data.SpatialLocation.Wgs84Coordinates] of type [geo_shape]]";
 
     private DpsHeaders dpsHeaders;
     private RecordChangedMessages recordChangedMessages;
@@ -144,10 +148,11 @@ public class IndexerServiceImplTest {
             JobStatus jobStatus = this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            assertEquals(2, jobStatus.getStatusesList().size());
-            assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
+            assertEquals(3, jobStatus.getStatusesList().size());
+            assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
             assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
 
+            verify(restHighLevelClient, times(2)).bulk(any(), any());
             verify(this.auditLogger).indexCreateRecordSuccess(singletonList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)"));
             verify(this.auditLogger).indexUpdateRecordFail(singletonList("RecordStatus(id=opendes:doc:test1, kind=opendes:testindexer1:well:1.0.0, operationType=update, status=FAIL, message=test failure)"));
         } catch (Exception e) {
@@ -172,9 +177,9 @@ public class IndexerServiceImplTest {
             verify(this.propertyConfigurationsService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
             Map<String, List<String>> upsertKindIds = upsertArgumentCaptor.getValue();
             Map<String, List<String>> deleteKindIds = deleteArgumentCaptor.getValue();
-            assertEquals(1, upsertKindIds.size());
-            assertFalse(upsertKindIds.containsKey(kind1));
-            assertEquals(1, upsertKindIds.get(kind2).size());
+            assertEquals(2, upsertKindIds.size());
+            assertEquals(1, upsertKindIds.get(kind1).size());
+            assertEquals(2, upsertKindIds.get(kind2).size());
             assertEquals(0, deleteKindIds.size());
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
@@ -201,7 +206,7 @@ public class IndexerServiceImplTest {
             assertEquals(0, upsertKindIds.size());
             assertEquals(2, deleteKindIds.size());
             assertEquals(1, deleteKindIds.get(kind1).size());
-            assertEquals(1, deleteKindIds.get(kind2).size());
+            assertEquals(2, deleteKindIds.get(kind2).size());
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -220,9 +225,9 @@ public class IndexerServiceImplTest {
             this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            verify(this.propertyConfigurationsService, times(1)).getPropertyConfigurations(any());
-            verify(this.propertyConfigurationsService, times(1)).getExtendedProperties(any(), any(), any());
-            verify(this.propertyConfigurationsService, times(1)).cacheDataRecord(any(), any(), any());
+            verify(this.propertyConfigurationsService, times(2)).getPropertyConfigurations(any());
+            verify(this.propertyConfigurationsService, times(2)).getExtendedProperties(any(), any(), any());
+            verify(this.propertyConfigurationsService, times(2)).cacheDataRecord(any(), any(), any());
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -254,10 +259,9 @@ public class IndexerServiceImplTest {
         storageData.put("schema1", "test-value");
         List<Records.Entity> validRecords = new ArrayList<>();
         validRecords.add(Records.Entity.builder().id(recordId2).kind(kind2).data(storageData).build());
-        List<String> failedOrRetryRecordIds = new ArrayList<>();
-        failedOrRetryRecordIds.add(recordId1);
+        validRecords.add(Records.Entity.builder().id(recordId3).kind(kind2).data(storageData).build());
         List<ConversionStatus> conversionStatus = new LinkedList<>();
-        Records storageRecords = Records.builder().records(validRecords).missingRetryRecords(failedOrRetryRecordIds).conversionStatuses(conversionStatus).build();
+        Records storageRecords = Records.builder().records(validRecords).conversionStatuses(conversionStatus).build();
         when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
 
         // setup elastic, index and mapped document
@@ -271,7 +275,7 @@ public class IndexerServiceImplTest {
         indexerMappedPayload.put("id", "keyword");
         when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any())).thenReturn(indexerMappedPayload);
 
-        BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(), prepareSuccessfulResponse()};
+        BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(), prepareSuccessfulResponse(), prepare400Response()};
         when(this.bulkResponse.getItems()).thenReturn(responses);
     }
 
@@ -281,6 +285,14 @@ public class IndexerServiceImplTest {
         when(responseFail.getFailureMessage()).thenReturn(failureMassage);
         when(responseFail.getId()).thenReturn(recordId1);
         when(responseFail.getFailure()).thenReturn(new BulkItemResponse.Failure("failure index", "failure type", "failure id", new Exception("test failure")));
+        return responseFail;
+    }
+
+    private BulkItemResponse prepare400Response() {
+        BulkItemResponse responseFail = mock(BulkItemResponse.class);
+        when(responseFail.isFailed()).thenReturn(true);
+        when(responseFail.getId()).thenReturn(recordId3);
+        when(responseFail.getFailure()).thenReturn(new BulkItemResponse.Failure("failure index", "failure type", "failure id", new Exception(badRequestMessage), RestStatus.BAD_REQUEST));
         return responseFail;
     }
 
