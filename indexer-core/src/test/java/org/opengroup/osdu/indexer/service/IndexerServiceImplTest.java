@@ -41,6 +41,7 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
+import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -99,6 +100,8 @@ public class IndexerServiceImplTest {
     private PropertyConfigurationsService propertyConfigurationsService;
     @Mock
     private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
+    @Mock
+    private AugmenterSetting augmenterSetting;
 
     private List<RecordInfo> recordInfos = new ArrayList<>();
 
@@ -120,6 +123,7 @@ public class IndexerServiceImplTest {
 
     @Before
     public void setup() throws IOException {
+        when(augmenterSetting.isEnabled()).thenReturn(true);
     }
 
     @Test

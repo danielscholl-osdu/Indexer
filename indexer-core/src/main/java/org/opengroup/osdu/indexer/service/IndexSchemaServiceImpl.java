@@ -36,6 +36,7 @@ import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
+import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
     private PropertyConfigurationsService propertyConfigurationsService;
+    @Inject
+    private AugmenterSetting augmenterSetting;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
@@ -163,10 +166,12 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             if (Strings.isNullOrEmpty(schema)) {
                 return this.getEmptySchema(kind);
             } else {
-                // Merge schema of the extended properties if needed
-                PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(kind);
-                if (propertyConfigurations != null) {
-                    schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
+                if(augmenterSetting.isEnabled()) {
+                    // Merge schema of the extended properties if needed
+                    PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(kind);
+                    if (propertyConfigurations != null) {
+                        schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
+                    }
                 }
 
                 IndexSchema flatSchemaObj = cacheAndNormalizeSchema(kind, schema);

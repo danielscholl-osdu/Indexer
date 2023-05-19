@@ -46,6 +46,7 @@ import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.model.BulkRequestResult;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
+import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
@@ -106,6 +107,8 @@ public class IndexerServiceImpl implements IndexerService {
     private JobStatus jobStatus;
     @Inject
     private PropertyConfigurationsService propertyConfigurationsService;
+    @Inject
+    private AugmenterSetting augmenterSetting;
 
     private DpsHeaders headers;
 
@@ -154,10 +157,12 @@ public class IndexerServiceImpl implements IndexerService {
                 retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
             }
 
-            Map<String, List<String>> upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
-            Map<String, List<String>> deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
-            if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
-                propertyConfigurationsService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
+            if(this.augmenterSetting.isEnabled()) {
+                Map<String, List<String>> upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
+                Map<String, List<String>> deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
+                if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
+                    propertyConfigurationsService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
+                }
             }
         } catch (IOException e) {
             errorMessage = e.getMessage();
@@ -340,14 +345,16 @@ public class IndexerServiceImpl implements IndexerService {
                     this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, message, String.format("record-id: %s | %s", storageRecord.getId(), message));
                 }
 
-                if(propertyConfigurationsService.isPropertyConfigurationsEnabled(storageRecord.getKind())) {
-                    PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(storageRecord.getKind());
-                    if (propertyConfigurations != null) {
-                        // Merge extended properties
-                        dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
+                if(this.augmenterSetting.isEnabled()) {
+                    if(propertyConfigurationsService.isPropertyConfigurationsEnabled(storageRecord.getKind())) {
+                        PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(storageRecord.getKind());
+                        if (propertyConfigurations != null) {
+                            // Merge extended properties
+                            dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
+                        }
+                        // We cache the dataMap in case the update of this object will trigger update of the related objects.
+                        propertyConfigurationsService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
                     }
-                    // We cache the dataMap in case the update of this object will trigger update of the related objects.
-                    propertyConfigurationsService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
                 }
 
                 document.setData(dataMap);

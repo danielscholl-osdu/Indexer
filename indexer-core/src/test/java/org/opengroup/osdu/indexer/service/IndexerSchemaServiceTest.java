@@ -37,6 +37,7 @@ import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
+import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -85,6 +86,8 @@ public class IndexerSchemaServiceTest {
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Mock
     private PropertyConfigurationsService propertyConfigurationsService;
+    @Mock
+    private AugmenterSetting augmenterSetting;
     @InjectMocks
     private IndexSchemaServiceImpl sut;
 
@@ -93,6 +96,7 @@ public class IndexerSchemaServiceTest {
         initMocks(this);
         RestHighLevelClient restHighLevelClient = mock(RestHighLevelClient.class);
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(augmenterSetting.isEnabled()).thenReturn(true);
     }
 
     @Test

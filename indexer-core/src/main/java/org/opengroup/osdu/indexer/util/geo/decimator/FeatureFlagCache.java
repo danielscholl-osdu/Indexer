@@ -19,8 +19,8 @@ import org.opengroup.osdu.core.common.cache.VmCache;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DecimationSettingCache extends VmCache<String, Boolean> {
-    public DecimationSettingCache() {
+public class FeatureFlagCache extends VmCache<String, Boolean> {
+    public FeatureFlagCache() {
         super(300, 1000);
     }
 
