@@ -2,6 +2,6 @@ variables:
   GC_SERVICE: indexer
   GC_VENDOR: gc
 
-gc-anthos-test:
+gc-baremetal-test:
   variables:
-    GC_VENDOR: anthos
+    GC_VENDOR: baremetal

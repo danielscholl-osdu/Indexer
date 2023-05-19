@@ -21,9 +21,9 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## Service Configuration
 
-### Anthos
+### Baremetal
 
-[Anthos service configuration](docs/anthos/README.md)
+[Baremetal service configuration](docs/baremetal/README.md)
 
 ##***REMOVED***
 
@@ -57,9 +57,9 @@ In the current version, the mappers are equipped with several drivers to the sto
 
 * GCloud SDK with java (latest version)
 
-### Anthos Service Configuration
+### Baremetal Service Configuration
 
-[Anthos service configuration](docs/anthos/README.md)
+[Baremetal service configuration](docs/baremetal/README.md)
 
 ##***REMOVED*** Service Configuration
 
@@ -161,9 +161,9 @@ $ (cd testing/indexer-test-core/ && mvn clean install)
 
 This section describes how to run cloud OSDU E2E tests.
 
-### Anthos test configuration
+### Baremetal test configuration
 
-[Anthos service configuration](docs/anthos/README.md)
+[Baremetal service configuration](docs/baremetal/README.md)
 
 ##***REMOVED*** test configuration
 

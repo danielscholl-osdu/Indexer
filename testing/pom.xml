@@ -39,7 +39,7 @@
 		<module>indexer-test-aws</module>
 		<module>indexer-test-azure</module>
 		<module>indexer-test-ibm</module>
-        <module>indexer-test-anthos</module>
+        <module>indexer-test-baremetal</module>
     </modules>
 
 	<repositories>

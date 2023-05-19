@@ -32,7 +32,7 @@ Defined in default application property file but possible to override:
 | `STORAGE_HOST`                     | ex `https://storage.com`                                                  | Storage host                                                              | no         | output of infrastructure deployment |
 | `SCHEMA_BASE_HOST`                 | ex `https://schema.com`                                                   | Schema service host                                                       | no         | output of infrastructure deployment |
 
-These variables define service behavior, and are used to switch between `anthos` or `gcp` environments, their overriding and usage in mixed mode was not tested.
+These variables define service behavior, and are used to switch between `baremetal` or `gcp` environments, their overriding and usage in mixed mode was not tested.
 Usage of spring profiles is preferred.
 
 | name                     | value                  | description                                                                                                               | sensitive? | source |
@@ -263,5 +263,5 @@ Execute following command to build code and run all the integration tests:
 ```bash
 # Note: this assumes that the environment variables for integration tests as outlined
 #       above are already exported in your environment.
-$ (cd testing/indexer-test-anthos/ && mvn clean test)
+$ (cd testing/indexer-test-baremetal/ && mvn clean test)
 ```
