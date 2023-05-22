@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 public class ServiceAccountJwtClientImplTest {
 
     private String partitionId="opendes";
-    private static String authorizationToken = "authorizationToken";
+    private static String authorizationToken = "Bearer authorizationToken";
 
     @Mock
     private ITenantFactory tenantInfoServiceProvider;

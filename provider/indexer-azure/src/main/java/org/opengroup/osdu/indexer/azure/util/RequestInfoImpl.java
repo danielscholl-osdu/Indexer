@@ -97,7 +97,7 @@ public class RequestInfoImpl implements IRequestInfo {
             }
             return authHeader;
         } else {
-            return "Bearer " + this.serviceAccountJwtClient.getIdToken(tenantInfo.getName());
+            return this.serviceAccountJwtClient.getIdToken(tenantInfo.getName());
         }
     }
 }
