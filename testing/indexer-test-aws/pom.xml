@@ -21,13 +21,13 @@
     <parent>
         <groupId>org.opengroup.osdu</groupId>
         <artifactId>indexer-test</artifactId>
-        <version>0.21.0-SNAPSHOT</version>
+        <version>0.22.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>org.opengroup.osdu.indexer</groupId>
     <artifactId>indexer-test-aws</artifactId>
-    <version>0.21.0-SNAPSHOT</version>
+    <version>0.22.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-test-core</artifactId>
-            <version>0.21.0-SNAPSHOT</version>
+            <version>0.22.0-SNAPSHOT</version>
         </dependency>
 
         <!-- AWS specific packages -->
