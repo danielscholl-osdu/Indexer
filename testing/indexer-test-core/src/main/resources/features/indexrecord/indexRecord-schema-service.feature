@@ -18,7 +18,7 @@ Feature: Indexing of the documents
       | test:indexer:index-property--Wellbore:1.0.0         | test-indexer-index-property--wellbore-1.0.0         | index-property-wellbore_v1     |
       | test:indexer:index-property--WellLog:1.0.0          | test-indexer-index-property--welllog-1.0.0          | index-property-welllog_v1      |
 
-
+  @indexer-extended
   Scenario Outline: Prepare the index property configuration records and clean up index of the extended kinds in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should get the <number> documents for the <index> in the Elastic Search
@@ -29,6 +29,7 @@ Feature: Indexing of the documents
       | kind                                                            | recordFile                                   | number | index                                                           | acl                            | extendedKinds                                                                              |
       | "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0" | "osdu_wks_IndexPropertyPathConfiguration_v1" | 2      | "osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0" | "data.default.viewers@tenant1" | "test:indexer:index-property--Wellbore:1.0.0,test:indexer:index-property--WellLog:1.0.0"  |
 
+  @indexer-extended
   Scenario Outline: Ingest the records of the extended kinds, Index in the Elastic Search and Search string field
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should be able to search <number> record with index <index> by extended data field <field> and value <value>
@@ -38,6 +39,7 @@ Feature: Indexing of the documents
       | "test:indexer:index-property--Wellbore:1.0.0"  | "index-property-wellbore_v1"  | 1      |  "test-indexer-index-property--wellbore-1.0.0"  | "data.default.viewers@tenant1" | "data.WellUWI"       | "123454321"     |
       | "test:indexer:index-property--WellLog:1.0.0"   | "index-property-welllog_v1"   | 1      |  "test-indexer-index-property--welllog-1.0.0"   | "data.default.viewers@tenant1" | "data.WellboreName"  | "Facility_123"  |
 
+  @indexer-extended
   Scenario Outline: Ingest the records of the extended kinds, Index in the Elastic Search and Search spatial field
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should be able search <number> documents for the <index> by bounding box query with points (<top_left_latitude>, <top_left_longitude>) and  (<bottom_right_latitude>, <bottom_right_longitude>) on field <field>
@@ -47,6 +49,7 @@ Feature: Indexing of the documents
       | "test:indexer:index-property--Wellbore:1.0.0"  | "index-property-wellbore_v1"  | 1      |  "test-indexer-index-property--wellbore-1.0.0"  | "data.default.viewers@tenant1" | "data.Location"        | 30                | -96                | 29                    | -95                    |
       | "test:indexer:index-property--WellLog:1.0.0"   | "index-property-welllog_v1"   | 1      |  "test-indexer-index-property--welllog-1.0.0"   | "data.default.viewers@tenant1" | "data.SpatialLocation" | 30                | -96                | 29                    | -95                    |
 
+  @indexer-extended
   Scenario: End Stateful Scenarios
     Then I set ending stateful scenarios
 
