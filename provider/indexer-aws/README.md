@@ -123,27 +123,28 @@ You should see in the logs that pop up what url and port it runs on. By default 
  export ELASTIC_PASSWORD=$ELASTIC_PASSWORD
  export ELASTIC_USER_NAME=$ELASTIC_USERNAME
  
- | name | example value | description | sensitive?
- | ---  | ---   | ---         | ---        |
+ | name | example value | description                                                                            | sensitive?
+ | ---  |----------------------------------------------------------------------------------------| ---         | ---        |
  | `AWS_ACCESS_KEY_ID` | `ASIAXXXXXXXXXXXXXX` | The AWS Access Key for a user with access to Backend Resources required by the service | yes |
  | `AWS_SECRET_ACCESS_KEY` | `super-secret-key==` | The AWS Secret Key for a user with access to Backend Resources required by the service | yes |
- | `AWS_SESSION_TOKEN` | `session-token-xxxxxxxxx` | AWS Session token needed if using an SSO user session to authenticate | yes |
- | `AWS_COGNITO_USER_POOL_ID` | `us-east-1_xxxxxxxx` | User Pool Id for the reference cognito | no |
- | `AWS_COGNITO_CLIENT_ID` | `xxxxxxxxxxxx` | Client ID for the Auth Flow integrated with the Cognito User Pool | no |
- | `AWS_COGNITO_AUTH_FLOW` | `USER_PASSWORD_AUTH` | Auth flow used by reference cognito deployment | no |
- | `DEFAULT_DATA_PARTITION_ID_TENANT1` | `opendes` | Partition used to create and index record | no |
- | `DEFAULT_DATA_PARTITION_ID_TENANT2` | `common` | Another needed partition| no |
- | `AWS_COGNITO_AUTH_PARAMS_USER` | `int-test-user@testing.com` | Int Test Username | no |
- | `AWS_COGNITO_AUTH_PARAMS_USER_NO_ACCESS` | `noaccess@testing.com` | No Access Username | no |
- | `AWS_COGNITO_AUTH_PARAMS_PASSWORD` | `some-secure-password` | Int Test User/NoAccessUser Password | yes |
- | `ENTITLEMENTS_DOMAIN` | `example.com` | Domain for user's groups | no |
- | `OTHER_RELEVANT_DATA_COUNTRIES` | `US` | Used to create demo legal tag | no |
- | `STORAGE_HOST` | `http://localhost:8080/api/storage/v2/` | The url where the storage API is hosted | no |
- | `HOST` | `http://localhost:8080` | Base url for deployment | no |
- | `ELASTIC_HOST` | `localhost` | Url for elasticsearch | no |
- | `ELASTIC_PORT` | `9300` | Port for elasticsearch | no |
- | `ELASTIC_PASSWORD` | `xxxxxxxxxxxxxxx` | Password for user to access elasticsearch | yes |
- | `ELASTIC_USER_NAME` | `xxxxxxxxxxxxxxxx` | Username for user to access elasticsearch | yes |
+ | `AWS_SESSION_TOKEN` | `session-token-xxxxxxxxx` | AWS Session token needed if using an SSO user session to authenticate                  | yes |
+ | `AWS_COGNITO_USER_POOL_ID` | `us-east-1_xxxxxxxx` | User Pool Id for the reference cognito                                                 | no |
+ | `AWS_COGNITO_CLIENT_ID` | `xxxxxxxxxxxx` | Client ID for the Auth Flow integrated with the Cognito User Pool                      | no |
+ | `AWS_COGNITO_AUTH_FLOW` | `USER_PASSWORD_AUTH` | Auth flow used by reference cognito deployment                                         | no |
+ | `DEFAULT_DATA_PARTITION_ID_TENANT1` | `opendes` | Partition used to create and index record                                              | no |
+ | `DEFAULT_DATA_PARTITION_ID_TENANT2` | `common` | Another needed partition                                                               | no |
+ | `AWS_COGNITO_AUTH_PARAMS_USER` | `int-test-user@testing.com` | Int Test Username                                                                      | no |
+ | `AWS_COGNITO_AUTH_PARAMS_USER_NO_ACCESS` | `noaccess@testing.com` | No Access Username                                                                     | no |
+ | `AWS_COGNITO_AUTH_PARAMS_PASSWORD` | `some-secure-password` | Int Test User/NoAccessUser Password                                                    | yes |
+ | `ENTITLEMENTS_DOMAIN` | `example.com` | Domain for user's groups                                                               | no |
+ | `OTHER_RELEVANT_DATA_COUNTRIES` | `US` | Used to create demo legal tag                                                          | no |
+ | `STORAGE_HOST` | `http://localhost:8080/api/storage/v2/` | The url where the storage API is hosted                                                | no |
+ | `HOST` | `http://localhost:8080` | Base url for deployment                                                                | no |
+ | `ELASTIC_HOST` | `localhost` | Url for elasticsearch                                                                  | no |
+ | `ELASTIC_PORT` | `9300` | Port for elasticsearch                                                                 | no |
+ | `ELASTIC_PASSWORD` | `xxxxxxxxxxxxxxx` | Password for user to access elasticsearch                                              | yes |
+ | `ELASTIC_USER_NAME` | `xxxxxxxxxxxxxxxx` | Username for user to access elasticsearch                                              | yes |
+ | `CUCUMBER_OPTIONS` | `--tags '~@indexer-extended'` OR `--tags '~@* and @indexer-extended'` | By default `--tags '~@* and @indexer-extended'` to enable experimental feature testing | no |
 
 
  **Creating a new user to use for integration tests**
