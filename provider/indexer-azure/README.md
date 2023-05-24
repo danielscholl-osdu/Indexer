@@ -85,6 +85,7 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | `ENTITLEMENTS_DOMAIN` | `contoso.com` | OSDU R2 service domain | no | - |
 | `LEGAL_TAG` | `opendes-public-usa-dataset-7643990` | Legal tag used for test records | no | Needs to be in DB. The referenced tag should already exist. |
 | `OTHER_RELEVANT_DATA_COUNTRIES` | `US` | ? | no | - |
+| `CUCUMBER_OPTIONS` | `--tags '~@indexer-extended'` OR `--tags '~@* and @indexer-extended'` | By default `--tags '~@* and @indexer-extended'` to enable experimental feature testing | no | - |
 
 ### Configure Maven
 
