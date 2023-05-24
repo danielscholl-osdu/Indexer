@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.auth.TokenProvider;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmAckReplier;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessageReceiver;
@@ -57,7 +56,7 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
             oqmAckReplier.ack();
         } catch (AppException appException) {
             int statusCode = appException.getError().getCode();
-            if (statusCode > 199 && statusCode < 300 && statusCode != RequestStatus.INVALID_RECORD) {
+            if (statusCode > 199 && statusCode < 300) {
                 skipMessage(oqmMessage, dpsHeaders, oqmAckReplier, appException);
             } else {
                 rescheduleMessage(oqmMessage, dpsHeaders, oqmAckReplier, getException(appException));
