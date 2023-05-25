@@ -13,18 +13,18 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.util.geo.decimator;
+package org.opengroup.osdu.indexer.model;
 
-import org.opengroup.osdu.core.common.cache.VmCache;
-import org.springframework.stereotype.Component;
+import lombok.Data;
+import lombok.ToString;
 
-@Component
-public class DecimationSettingCache extends VmCache<String, Boolean> {
-    public DecimationSettingCache() {
-        super(300, 1000);
-    }
+import java.util.List;
 
-    public boolean containsKey(final String key) {
-        return this.get(key) != null;
-    }
+@Data
+@ToString
+public class SchemaInfoResponse {
+    private List<SchemaInfo> schemaInfos;
+    private int offset;
+    private int count;
+    private int totalCount;
 }

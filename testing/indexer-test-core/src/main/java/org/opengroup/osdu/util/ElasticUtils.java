@@ -244,6 +244,24 @@ public class ElasticUtils {
         }
     }
 
+    public long fetchRecordsByFieldAndFieldValue(String index, String fieldKey, String fieldValue) throws IOException {
+        try {
+            try (RestHighLevelClient client = this.createClient(username, password, host)) {
+                SearchRequest request = new SearchRequest(index);
+                if(!Strings.isNullOrEmpty(fieldKey)) {
+                    SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+                    sourceBuilder.query(boolQuery().must(matchQuery(fieldKey, fieldValue)));
+                    request.source(sourceBuilder);
+                }
+                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
+                return searchResponse.getHits().getTotalHits().value;
+            }
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        }
+    }
+
     public List<Map<String, Object>> fetchRecordsByAttribute(String index, String attributeKey, String attributeValue) throws IOException {
         List<Map<String, Object>> out = new ArrayList<>();
         try {

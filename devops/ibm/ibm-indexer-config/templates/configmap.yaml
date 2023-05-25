@@ -53,6 +53,7 @@ data:
   STORAGE_QUERY_RECORD_FOR_CONVERSION_HOST:  "http://{{ .Release.Name }}-ibm-storage-deploy:8080/api/storage/v2/query/records:batch"
   STORAGE_RECORDS_BATCH_SIZE:  "{{ .Values.data.storageRecordsBatchSize }}"
   STORAGE_RECORDS_BY_KIND_BATCH_SIZE:  "{{ .Values.data.storageRecordsByKindBatchSize }}"
+  SEARCH_HOST:  "http://{{ .Release.Name }}-ibm-search-deploy:8080/api/service/v2"
   
 #db
 

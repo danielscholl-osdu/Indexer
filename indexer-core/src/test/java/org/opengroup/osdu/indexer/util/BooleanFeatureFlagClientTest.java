@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.util.geo.decimator;
+package org.opengroup.osdu.indexer.util;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,6 +25,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.partition.*;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
+import org.opengroup.osdu.indexer.util.geo.decimator.FeatureFlagCache;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
@@ -34,14 +35,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(SpringRunner.class)
-public class GeoShapeDecimationSettingTest {
+public class BooleanFeatureFlagClientTest {
     private static final String PROPERTY_NAME =  "indexer-decimation-enabled";
 
     @InjectMocks
-    private GeoShapeDecimationSetting sut;
+    private BooleanFeatureFlagClient sut;
 
     @Mock
-    private DecimationSettingCache cache;
+    private FeatureFlagCache cache;
 
     @Mock
     private JaxRsDpsLog logger;
@@ -74,7 +75,12 @@ public class GeoShapeDecimationSettingTest {
         property.setValue("true");
         partitionInfo.getProperties().put(PROPERTY_NAME, property);
         when(this.partitionProvider.get(anyString())).thenReturn(partitionInfo);
-        boolean enabled = sut.isDecimationEnabled();
+
+        // Default value won't take any effect
+        boolean enabled = sut.isEnabled(PROPERTY_NAME, true);
+        Assert.assertTrue(enabled);
+
+        enabled = sut.isEnabled(PROPERTY_NAME, false);
         Assert.assertTrue(enabled);
     }
 
@@ -86,25 +92,36 @@ public class GeoShapeDecimationSettingTest {
         property.setValue("false");
         partitionInfo.getProperties().put(PROPERTY_NAME, property);
         when(this.partitionProvider.get(anyString())).thenReturn(partitionInfo);
-        boolean enabled = sut.isDecimationEnabled();
+
+        // Default value won't take any effect
+        boolean enabled = sut.isEnabled(PROPERTY_NAME, true);
+        Assert.assertFalse(enabled);
+
+        enabled = sut.isEnabled(PROPERTY_NAME, false);
         Assert.assertFalse(enabled);
     }
 
     @Test
-    public void isDecimationEnabled_return_true_when_property_does_not_exist() throws PartitionException {
+    public void isDecimationEnabled_return_default_value_when_property_does_not_exist() throws PartitionException {
         // The feature flag is enabled by default
         PartitionInfo partitionInfo = new PartitionInfo();
         when(this.partitionProvider.get(anyString())).thenReturn(partitionInfo);
-        boolean enabled = sut.isDecimationEnabled();
+        boolean enabled = sut.isEnabled(PROPERTY_NAME, true);;
         Assert.assertTrue(enabled);
+
+        enabled = sut.isEnabled(PROPERTY_NAME, false);;
+        Assert.assertFalse(enabled);
     }
 
     @Test
-    public void isDecimationEnabled_return_true_when_partitionProvider_throws_exception() throws PartitionException {
+    public void isDecimationEnabled_return_default_value_when_partitionProvider_throws_exception() throws PartitionException {
         // The feature flag is enabled by default
         when(this.partitionProvider.get(anyString())).thenThrow(PartitionException.class);
-        boolean enabled = sut.isDecimationEnabled();
+        boolean enabled = sut.isEnabled(PROPERTY_NAME, true);;
         Assert.assertTrue(enabled);
+
+        enabled = sut.isEnabled(PROPERTY_NAME, false);;
+        Assert.assertFalse(enabled);
     }
 
 }

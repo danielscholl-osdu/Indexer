@@ -21,6 +21,7 @@ import org.springframework.util.CollectionUtils;
 import javax.ws.rs.HttpMethod;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +102,14 @@ public class RecordSteps extends TestsBase {
             String createTime = java.time.Instant.now().toString();
 
             for (Map<String, Object> testRecord : records) {
+                if(testRecord.containsKey("data")) {
+                    Map<String, Object> data = (Map<String, Object>)testRecord.get("data");
+                    if(data != null && data.size() > 0) {
+                        data = replaceValues(data, timeStamp);
+                        testRecord.put("data", data);
+                    }
+                }
+
                 testRecord.put("kind", actualKind);
                 testRecord.put("id", generateRecordId(testRecord));
                 testRecord.put("legal", generateLegalTag());
@@ -184,6 +193,22 @@ public class RecordSteps extends TestsBase {
         assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
+    public void iShouldCleanupIndicesOfExtendedKinds(String extendedKinds) throws Throwable {
+        String[] kinds = extendedKinds.split(",");
+        for(String kind : kinds) {
+            String actualKind = this.generateActualName(kind.trim(), timeStamp);
+            TestIndex testIndex = this.getInputIndexMap().get(actualKind);
+            testIndex.cleanupIndex(actualKind);
+        }
+    }
+
+    public void iShouldBeAbleToSearchRecordByFieldAndFieldValue(String index, String fieldKey, String fieldValue, int expectedNumber) throws Throwable {
+        TimeUnit.SECONDS.sleep(60);
+        index = generateActualName(index, timeStamp);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsByFieldAndFieldValue(index, fieldKey, fieldValue);
+        assertEquals(expectedNumber, actualNumberOfRecords);
+    }
+
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery (
             int expectedNumber, String index, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude, String field) throws Throwable {
         index = generateActualName(index, timeStamp);
@@ -231,6 +256,46 @@ public class RecordSteps extends TestsBase {
         this.getInputIndexMap().put(actualKind, testIndex);
         testIndex.addIndex();
     }
+
+    private Map<String, Object> replaceValues(Map<String, Object> data, String timeStamp) {
+        for(String key : data.keySet()) {
+            Object value = data.get(key);
+            Object replacedValue = replaceValue(value, timeStamp);
+            data.put(key, replacedValue);
+        }
+        return data;
+    }
+
+    private List<Object> replaceValues(List<Object> values, String timeStamp) {
+        List<Object> replacedValues = new ArrayList<>();
+        for(Object value : values) {
+            Object replacedValue = replaceValue(value, timeStamp);
+            replacedValues.add(replacedValue);
+        }
+
+        return replacedValues;
+    }
+
+    private Object replaceValue(Object value, String timeStamp) {
+        Object replacedValue = value;
+
+        if(value instanceof String) {
+            String rawValue = (String) value;
+            for (Map.Entry<String, String> tenant : tenantMap.entrySet()) {
+                rawValue = rawValue.replaceAll(tenant.getKey() + ":", tenant.getValue() + ":");
+            }
+            replacedValue = rawValue.replaceAll("<timestamp>", timeStamp);
+        }
+        else if(value instanceof List) {
+            replacedValue = replaceValues((List)value, timeStamp);
+        }
+        else if(value instanceof Map) {
+            replacedValue = replaceValues((Map<String, Object>) value, timeStamp);
+        }
+
+        return replacedValue;
+    }
+
 
     private long createIndex(String index) throws InterruptedException, IOException {
         long numOfIndexedDocuments = 0;
