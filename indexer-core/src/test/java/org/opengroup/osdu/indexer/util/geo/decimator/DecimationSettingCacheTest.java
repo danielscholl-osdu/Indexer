@@ -25,11 +25,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class DecimationSettingCacheTest {
     private static final String VALID_KEY = "Tenant1-indexer-decimation-enabled";
     private static final String INVALID_KEY = "Tenant2-indexer-decimation-enabled";
-    DecimationSettingCache cache;
+    FeatureFlagCache cache;
 
     @Before
     public void setup() {
-        cache = new DecimationSettingCache();
+        cache = new FeatureFlagCache();
         cache.put(VALID_KEY, true);
     }
 

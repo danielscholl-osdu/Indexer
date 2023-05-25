@@ -26,6 +26,7 @@ import org.opengroup.osdu.core.gcp.oqm.driver.OqmDriver;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmDestination;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmTopic;
+import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.IndexerMessagingConfigProperties;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
@@ -128,10 +129,16 @@ public class ReprocessingTaskPublisher extends IndexerQueueTaskBuilder {
     RecordChangedMessages recordChangedMessages = gson.fromJson(payload,
         RecordChangedMessages.class);
 
+    Map<String, String> attributes = getAttributesFromHeaders(headers);
+    // Append the ancestry kinds used to prevent circular chasing
+    if(recordChangedMessages.getAttributes().containsKey(Constants.ANCESTRY_KINDS)) {
+      attributes.put(Constants.ANCESTRY_KINDS, recordChangedMessages.getAttributes().get(Constants.ANCESTRY_KINDS));
+    }
+
     OqmMessage oqmMessage = OqmMessage.builder()
         .id(headers.getCorrelationId())
         .data(recordChangedMessages.getData())
-        .attributes(getAttributesFromHeaders(headers))
+        .attributes(attributes)
         .build();
 
     log.info("Reprocessing task: {} ,has been published.", oqmMessage);

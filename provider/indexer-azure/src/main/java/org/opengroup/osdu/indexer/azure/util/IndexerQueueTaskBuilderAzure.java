@@ -33,6 +33,7 @@ import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.azure.di.PublisherConfig;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.service.StorageService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,6 +162,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
         // data
         List<RecordInfo> recordInfos = parseRecordsAsJSON(receivedPayload.getData());
+        Map<String, String> attributes = receivedPayload.getAttributes();
 
         // add all to body {"message": {"data":[], "id":...}}
         JsonObject jo = new JsonObject();
@@ -168,6 +170,10 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         jo.addProperty(DpsHeaders.ACCOUNT_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+        // Append the ancestry kinds used to prevent circular chasing
+        if(attributes != null && attributes.containsKey(Constants.ANCESTRY_KINDS)) {
+            jo.addProperty(Constants.ANCESTRY_KINDS, attributes.get(Constants.ANCESTRY_KINDS));
+        }
         JsonObject jomsg = new JsonObject();
         jomsg.add("message", jo);
 

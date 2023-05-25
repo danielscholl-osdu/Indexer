@@ -21,6 +21,7 @@ import org.opengroup.osdu.indexer.service.mock.PartitionFactoryMock;
 import org.opengroup.osdu.indexer.service.mock.PartitionProviderMock;
 import org.opengroup.osdu.indexer.service.mock.ServiceAccountJwtClientMock;
 import org.opengroup.osdu.indexer.service.mock.VirtualPropertiesSchemaCacheMock;
+import org.opengroup.osdu.indexer.util.BooleanFeatureFlagClient;
 import org.opengroup.osdu.indexer.util.geo.decimator.*;
 import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
@@ -45,8 +46,8 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
         BooleanParser.class, DateTimeParser.class, GeoShapeParser.class, DouglasPeuckerReducer.class, GeoShapeDecimator.class,
-        GeometryDecimator.class, GeometryConversionService.class, DecimationSettingCache.class,
-        GeoShapeDecimationSetting.class, DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
+        GeometryDecimator.class, GeometryConversionService.class, FeatureFlagCache.class,
+        GeoShapeDecimationSetting.class, BooleanFeatureFlagClient.class,DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
         PartitionFactoryMock.class, PartitionProviderMock.class, ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, })
 public class StorageIndexerPayloadMapperTest {
 

@@ -10,15 +10,22 @@ import java.util.List;
 import java.util.Map;
 
 public class SchemaServiceRecordSteps extends RecordSteps {
+    private static boolean runStatefulScenario = false;
 
     public SchemaServiceRecordSteps(HTTPClient httpClient, ElasticUtils elasticUtils) {
         super(httpClient, elasticUtils);
     }
 
     public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
-        List<Setup> inputList = dataTable.asList(Setup.class);
-        inputList.forEach(this::setup);
-        super.addShutDownHook();
+        if(!SchemaServiceRecordSteps.runStatefulScenario) {
+            List<Setup> inputList = dataTable.asList(Setup.class);
+            inputList.forEach(this::setup);
+            super.addShutDownHook();
+        }
+    }
+
+    public void i_set_scenarios_as_stateful(boolean stateful) throws Throwable {
+        SchemaServiceRecordSteps.runStatefulScenario = stateful;
     }
 
     private void setup(Setup input) {

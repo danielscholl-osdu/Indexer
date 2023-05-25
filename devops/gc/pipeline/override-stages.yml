@@ -2,6 +2,11 @@ variables:
   GC_SERVICE: indexer
   GC_VENDOR: gc
 
+gc-test:
+  variables:
+    CUCUMBER_OPTIONS: "--tags '~@* and @indexer-extended'"
+
 gc-baremetal-test:
   variables:
     GC_VENDOR: baremetal
+    CUCUMBER_OPTIONS: "--tags '~@* and @indexer-extended'"

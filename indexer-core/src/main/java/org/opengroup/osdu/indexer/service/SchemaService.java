@@ -14,15 +14,18 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import org.opengroup.osdu.indexer.model.SchemaInfo;
+import org.opengroup.osdu.indexer.model.SchemaInfoResponse;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Interface to consume schemas from the Schema Service
  */
 public interface SchemaService {
     /**
-     *
      * @param kind key to retrieve schema
      * @return obtained schema
      * @throws URISyntaxException
@@ -30,4 +33,12 @@ public interface SchemaService {
      */
     String getSchema(String kind) throws URISyntaxException, UnsupportedEncodingException;
 
+    /**
+     * @param authority
+     * @param source
+     * @param entityType
+     * @param majorVersion
+     * @return The latest version of the kind
+     */
+    SchemaInfoResponse getSchemaInfos(String authority, String source, String entityType, String majorVersion, String minorVersion, String patchVersion, boolean latestVersion) throws URISyntaxException, UnsupportedEncodingException;
 }
