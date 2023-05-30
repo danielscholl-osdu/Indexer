@@ -4,6 +4,7 @@ package org.opengroup.osdu.indexer.ibm.util;
 
 import javax.inject.Inject;
 
+import com.google.common.base.Strings;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -18,6 +19,7 @@ import org.springframework.web.context.annotation.RequestScope;
 @Component
 @RequestScope
 public class ServiceAccountJwtClientImpl implements IServiceAccountJwtClient {
+    private final String BEARER = "Bearer";
 	
     @Inject
     private ITenantFactory tenantInfoServiceProvider;
@@ -65,6 +67,9 @@ public class ServiceAccountJwtClientImpl implements IServiceAccountJwtClient {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Persistence error", "Error generating token", e);
         }
 
+        if(!Strings.isNullOrEmpty(ACCESS_TOKEN) && !ACCESS_TOKEN.startsWith(BEARER)) {
+            ACCESS_TOKEN = BEARER + " " + ACCESS_TOKEN;
+        }
         return ACCESS_TOKEN;
     }
     

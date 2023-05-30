@@ -24,7 +24,7 @@ public class RequestInfoImplTest {
     private static String deploymentEnvironmentValue = "LOCAL";
     private static String deploymentEnvironmentValueCloud = "CLOUD";
     private static String tenant = "tenant1";
-    private static String bearerToken = "bearerToken";
+    private static String bearerToken = "Bearer bearerToken";
     private static String expectedToken = "Bearer bearerToken";
     private static String partitionId = "opendes";
     private static String owner = "owner";
