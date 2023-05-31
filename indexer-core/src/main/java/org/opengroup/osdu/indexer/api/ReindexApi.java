@@ -27,6 +27,7 @@ import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.ReindexRecordsRequest;
 import org.opengroup.osdu.indexer.model.ReindexRecordsResponse;
 import org.opengroup.osdu.indexer.service.IndexSchemaService;
 import org.opengroup.osdu.indexer.service.ReindexService;
@@ -77,8 +78,8 @@ public class ReindexApi {
     })
     @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
     @PostMapping(path = "/records", consumes = "application/json")
-    public ResponseEntity<?> reindexRecords(@NotNull @RequestBody List<String> recordIds) {
-        Records records = this.reIndexService.reindexRecords(recordIds);
+    public ResponseEntity<?> reindexRecords(@NotNull @RequestBody ReindexRecordsRequest reindexRecordsRequest) {
+        Records records = this.reIndexService.reindexRecords(reindexRecordsRequest.getRecordIds());
         this.auditLogger.getReindex(records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList()));
         return new ResponseEntity<>(ReindexRecordsResponse.builder().reIndexedRecords(records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList())).notFoundRecords(records.getNotFound()).build(), HttpStatus.ACCEPTED);
     }

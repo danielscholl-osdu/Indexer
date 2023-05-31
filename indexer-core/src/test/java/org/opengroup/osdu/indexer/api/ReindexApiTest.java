@@ -23,6 +23,7 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.ReindexRecordsRequest;
 import org.opengroup.osdu.indexer.model.ReindexRecordsResponse;
 import org.opengroup.osdu.indexer.service.IndexSchemaService;
 import org.opengroup.osdu.indexer.service.ReindexService;
@@ -86,7 +87,7 @@ public class ReindexApiTest {
     public void should_return200_when_valid_record_id_list_provided() {
         when(this.reIndexService.reindexRecords(recordIds)).thenReturn(Records.builder().records(new ArrayList<>()).notFound(recordIds).build());
 
-        ResponseEntity<?> response = sut.reindexRecords(recordIds);
+        ResponseEntity<?> response = sut.reindexRecords(new ReindexRecordsRequest(recordIds));
 
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
     }
@@ -95,13 +96,13 @@ public class ReindexApiTest {
     public void should_throwAppException_ifUnknownExceptionCaught_reindexRecordsTest() {
         when(this.reIndexService.reindexRecords(recordIds)).thenThrow(new AppException(500, "", ""));
 
-        sut.reindexRecords(recordIds);
+        sut.reindexRecords(new ReindexRecordsRequest(recordIds));
     }
 
     @Test(expected = NullPointerException.class)
     public void should_throwAppException_ifNullPointerExceptionCaught_ReindexRecordsTest() {
         when(this.reIndexService.reindexRecords(recordIds)).thenThrow(new NullPointerException(""));
 
-        sut.reindexRecords(recordIds);
+        sut.reindexRecords(new ReindexRecordsRequest(recordIds));
     }
 }
