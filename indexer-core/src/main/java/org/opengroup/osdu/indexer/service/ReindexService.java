@@ -16,10 +16,15 @@ package org.opengroup.osdu.indexer.service;
 
 
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
+import org.opengroup.osdu.core.common.model.indexer.Records;
+
+import java.util.List;
 
 public interface ReindexService {
 
-    String reindexRecords(RecordReindexRequest recordReindexRequest, boolean forceClean);
+    String reindexKind(RecordReindexRequest recordReindexRequest, boolean forceClean);
+
+    Records reindexRecords(List<String> recordIds);
 
     void fullReindex(boolean forceClean);
 }

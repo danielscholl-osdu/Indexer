@@ -17,27 +17,22 @@ package org.opengroup.osdu.indexer.service;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 
-import java.util.Objects;
+import java.util.*;
 
 import lombok.SneakyThrows;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.indexer.OperationType;
-import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
-import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
+import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.indexer.SwaggerDoc;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
-import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -58,7 +53,7 @@ public class ReindexServiceImpl implements ReindexService {
 
     @SneakyThrows
     @Override
-    public String reindexRecords(RecordReindexRequest recordReindexRequest, boolean forceClean) {
+    public String reindexKind(RecordReindexRequest recordReindexRequest, boolean forceClean) {
         Long initialDelayMillis = 0l;
 
 
@@ -75,20 +70,12 @@ public class ReindexServiceImpl implements ReindexService {
 
             List<RecordInfo> msgs = recordQueryResponse.getResults().stream()
                     .map(record -> RecordInfo.builder().id(record).kind(recordReindexRequest.getKind()).op(OperationType.create.name()).build()).collect(Collectors.toList());
-
-            Map<String, String> attributes = new HashMap<>();
-            attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
-            attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
-            attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
-
-            Gson gson = new Gson();
-            RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(msgs)).attributes(attributes).build();
-            String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-            this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, initialDelayMillis, headers);
+            String recordChangedMessagePayload = this.replayReindexMsg(msgs, initialDelayMillis, headers);
 
             // don't call reindex-worker endpoint if it's the last batch
             // previous storage query result size will be less then requested (limit param)
             if (!Strings.isNullOrEmpty(recordQueryResponse.getCursor()) && recordQueryResponse.getResults().size() == configurationProperties.getStorageRecordsByKindBatchSize()) {
+                Gson gson = new Gson();
                 String newPayLoad = gson.toJson(RecordReindexRequest.builder().cursor(recordQueryResponse.getCursor()).kind(recordReindexRequest.getKind()).build());
                 this.indexerQueueTaskBuilder.createReIndexTask(newPayLoad, initialDelayMillis, headers);
                 return newPayLoad;
@@ -99,6 +86,22 @@ public class ReindexServiceImpl implements ReindexService {
             jaxRsDpsLog.info(String.format("kind: %s cannot be re-indexed, storage service cannot locate valid records", recordReindexRequest.getKind()));
         }
         return null;
+    }
+
+    @SneakyThrows
+    @Override
+    public Records reindexRecords(List<String> recordIds) {
+        if (recordIds.size() > configurationProperties.getStorageRecordsBatchSize()) {
+            throw new AppException(org.springframework.http.HttpStatus.BAD_REQUEST.value(), "Exceeds limit",
+                    SwaggerDoc.REQUEST_REINDEX_RECORDS_VALIDATION_EXCEEDS_LIMIT + configurationProperties.getStorageRecordsBatchSize());
+        }
+        Records records = this.storageService.getStorageRecords(recordIds, new ArrayList<>());
+        if (records.getRecords().size() > 0) {
+            List<RecordInfo> msgs = records.getRecords().stream()
+                    .map(record -> RecordInfo.builder().id(record.getId()).kind(record.getKind()).op(OperationType.create.name()).build()).collect(Collectors.toList());
+            this.replayReindexMsg(msgs, 0L, null);
+        }
+        return records;
     }
 
     @Override
@@ -115,11 +118,26 @@ public class ReindexServiceImpl implements ReindexService {
         }
         for (String kind : allKinds) {
             try {
-                reindexRecords(new RecordReindexRequest(kind, ""), forceClean);
+                reindexKind(new RecordReindexRequest(kind, ""), forceClean);
             } catch (Exception e) {
                 jaxRsDpsLog.warning(String.format("kind: %s cannot be re-indexed", kind));
                 continue;
             }
         }
+    }
+
+    private String replayReindexMsg(List<RecordInfo> msgs, Long initialDelayMillis, DpsHeaders headers) {
+        Map<String, String> attributes = new HashMap<>();
+        if (headers == null) {
+            headers = this.requestInfo.getHeadersWithDwdAuthZ();
+        }
+        attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
+        attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
+        attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+        Gson gson = new Gson();
+        RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(msgs)).attributes(attributes).build();
+        String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
+        this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, initialDelayMillis, headers);
+        return recordChangedMessagePayload;
     }
 }

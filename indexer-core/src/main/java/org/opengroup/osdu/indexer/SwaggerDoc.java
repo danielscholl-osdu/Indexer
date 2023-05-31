@@ -145,6 +145,7 @@ public final class SwaggerDoc {
 
     // REQUEST VALIDATION
     public static final String REQUEST_VALIDATION_NOT_NULL_BODY = "Request body can not be null";
+    public static final String REQUEST_REINDEX_RECORDS_VALIDATION_EXCEEDS_LIMIT = "Maximum record ids supported in one API call is ";
 
     // Azure Schema Request
     public static final String SCHEMA_REQUEST_KIND = "Record kind for which the schema information is applied to.";

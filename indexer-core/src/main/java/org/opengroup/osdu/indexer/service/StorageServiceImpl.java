@@ -152,7 +152,10 @@ public class StorageServiceImpl implements StorageService {
         }
 
         // validate kind to avoid data duplication
-        List<String> staleRecords = getStaleRecordsUpdate(recordChangedMap, validRecordKindPatchMap, validRecords);
+        List<String> staleRecords = new ArrayList<>();
+        if (recordChangedMap.size() > 0) {
+            staleRecords = getStaleRecordsUpdate(recordChangedMap, validRecordKindPatchMap, validRecords);
+        }
         List<Records.Entity> indexableRecords = validateKind(validRecords, staleRecords);
         records.setRecords(indexableRecords);
 

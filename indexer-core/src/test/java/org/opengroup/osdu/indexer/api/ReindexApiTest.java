@@ -21,7 +21,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
+import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.ReindexRecordsResponse;
 import org.opengroup.osdu.indexer.service.IndexSchemaService;
 import org.opengroup.osdu.indexer.service.ReindexService;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -37,6 +41,7 @@ import static org.mockito.Mockito.when;
 public class ReindexApiTest {
 
     private RecordReindexRequest recordReindexRequest;
+    private List<String> recordIds;
 
     @Mock
     private ReindexService reIndexService;
@@ -50,11 +55,13 @@ public class ReindexApiTest {
     @Before
     public void setup() {
         recordReindexRequest = RecordReindexRequest.builder().kind("tenant:test:test:1.0.0").cursor("100").build();
+        recordIds = new ArrayList<>();
+        recordIds.add("id1");
     }
 
     @Test
     public void should_return200_when_valid_kind_provided() throws IOException {
-        when(this.reIndexService.reindexRecords(recordReindexRequest, false)).thenReturn("something");
+        when(this.reIndexService.reindexKind(recordReindexRequest, false)).thenReturn("something");
 
         ResponseEntity<?> response = sut.reindex(recordReindexRequest, false);
 
@@ -63,15 +70,38 @@ public class ReindexApiTest {
 
     @Test(expected = AppException.class)
     public void should_throwAppException_ifUnknownExceptionCaught_reindexTest() throws IOException {
-        when(this.reIndexService.reindexRecords(recordReindexRequest, false)).thenThrow(new AppException(500, "", ""));
+        when(this.reIndexService.reindexKind(recordReindexRequest, false)).thenThrow(new AppException(500, "", ""));
 
         sut.reindex(recordReindexRequest, false);
     }
 
     @Test(expected = NullPointerException.class)
     public void should_throwAppException_ifNullPointerExceptionCaught_ReindexTest() throws IOException {
-        when(this.reIndexService.reindexRecords(recordReindexRequest, false)).thenThrow(new NullPointerException(""));
+        when(this.reIndexService.reindexKind(recordReindexRequest, false)).thenThrow(new NullPointerException(""));
 
         sut.reindex(recordReindexRequest, false);
+    }
+
+    @Test
+    public void should_return200_when_valid_record_id_list_provided() {
+        when(this.reIndexService.reindexRecords(recordIds)).thenReturn(Records.builder().records(new ArrayList<>()).notFound(recordIds).build());
+
+        ResponseEntity<?> response = sut.reindexRecords(recordIds);
+
+        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+    }
+
+    @Test(expected = AppException.class)
+    public void should_throwAppException_ifUnknownExceptionCaught_reindexRecordsTest() {
+        when(this.reIndexService.reindexRecords(recordIds)).thenThrow(new AppException(500, "", ""));
+
+        sut.reindexRecords(recordIds);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void should_throwAppException_ifNullPointerExceptionCaught_ReindexRecordsTest() {
+        when(this.reIndexService.reindexRecords(recordIds)).thenThrow(new NullPointerException(""));
+
+        sut.reindexRecords(recordIds);
     }
 }

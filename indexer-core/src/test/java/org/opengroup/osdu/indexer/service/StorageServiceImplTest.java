@@ -43,11 +43,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
@@ -170,6 +166,20 @@ public class StorageServiceImplTest {
         Records storageRecords = this.sut.getStorageRecords(ids, recordChangeInfos);
 
         assertEquals(1, storageRecords.getRecords().size());
+    }
+
+    @Test
+    public void should_returnAllRecords_givenRecord_withoutValidation_getStorageRecordsTest() throws URISyntaxException {
+
+        String validDataFromStorage = "{\"records\":[{\"id\":\"testid\", \"version\":1, \"kind\":\"tenant:test:test:1.2.0\"},{\"id\":\"testid2\", \"version\":1, \"kind\":\"tenant:test:test:2.2.0\"}],\"notFound\":[], \"conversionStatuses\": []}";
+
+        HttpResponse httpResponse = mock(HttpResponse.class);
+        when(httpResponse.getBody()).thenReturn(validDataFromStorage);
+
+        when(this.urlFetchService.sendRequest(ArgumentMatchers.any())).thenReturn(httpResponse);
+        Records storageRecords = this.sut.getStorageRecords(ids, new ArrayList<>());
+
+        assertEquals(2, storageRecords.getRecords().size());
     }
 
     @Test
