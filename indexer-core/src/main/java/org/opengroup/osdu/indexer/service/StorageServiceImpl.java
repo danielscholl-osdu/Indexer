@@ -24,7 +24,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.StringEntity;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
+import org.opengroup.osdu.core.common.http.IHttpClientHandler;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -50,11 +54,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.opengroup.osdu.core.common.Constants.SLB_FRAME_OF_REFERENCE_VALUE;
@@ -69,6 +69,8 @@ public class StorageServiceImpl implements StorageService {
     private ObjectMapper objectMapper;
     @Inject
     private IUrlFetchService urlFetchService;
+    @Inject
+    private IHttpClientHandler httpClientHandler;
     @Inject
     private JobStatus jobStatus;
     @Inject
@@ -98,6 +100,24 @@ public class StorageServiceImpl implements StorageService {
         return Records.builder().records(valid).notFound(notFound).conversionStatuses(conversionStatuses).missingRetryRecords(missingRetryRecordIds).build();
     }
 
+    @Override
+    public Records getStorageRecords(List<String> ids) throws URISyntaxException {
+        List<Records.Entity> valid = new ArrayList<>();
+        List<String> notFound = new ArrayList<>();
+        List<ConversionStatus> conversionStatuses = new ArrayList<>();
+        List<String> missingRetryRecordIds = new ArrayList<>();
+
+        List<List<String>> batch = Lists.partition(ids, configurationProperties.getStorageRecordsBatchSize());
+        for (List<String> recordsBatch : batch) {
+            Records storageOut = this.getRecords(recordsBatch);
+            valid.addAll(storageOut.getRecords());
+            notFound.addAll(storageOut.getNotFound());
+            conversionStatuses.addAll(storageOut.getConversionStatuses());
+            missingRetryRecordIds.addAll(storageOut.getMissingRetryRecords());
+        }
+        return Records.builder().records(valid).notFound(notFound).conversionStatuses(conversionStatuses).missingRetryRecords(missingRetryRecordIds).build();
+    }
+
     protected Records getRecords(List<String> ids, Map<String, String> recordChangedMap, Map<String, String> validRecordKindPatchMap) throws URISyntaxException {
         // e.g. {"records":["test:10"]}
         String body = this.gson.toJson(RecordIds.builder().records(ids).build());
@@ -112,6 +132,25 @@ public class StorageServiceImpl implements StorageService {
                 .body(body).build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
         return this.validateStorageResponse(response, ids, recordChangedMap, validRecordKindPatchMap);
+    }
+
+    protected Records getRecords(List<String> ids) throws URISyntaxException {
+        String body = this.gson.toJson(RecordIds.builder().records(ids).build());
+        DpsHeaders headers = this.requestInfo.getHeaders();
+        headers.put(FRAME_OF_REFERENCE, SLB_FRAME_OF_REFERENCE_VALUE);
+        URIBuilder builder = new URIBuilder(configurationProperties.getStorageQueryRecordForConversionHost());
+        HttpPost request = new HttpPost(builder.build());
+        request.setEntity(new StringEntity(body, StandardCharsets.UTF_8));
+        // we do not need retry on storage based on not found record
+        HttpResponse response = httpClientHandler.sendRequest(request, headers);
+        if (response.getResponseCode() > 299) {
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Error", response.getBody());
+        }
+        try {
+            return this.objectMapper.readValue(response.getBody(), Records.class);
+        } catch (JsonProcessingException e) {
+            throw new AppException(RequestStatus.INVALID_RECORD, "Invalid request", "Successful Storage service response with wrong json", e);
+        }
     }
 
     private Records validateStorageResponse(HttpResponse response, List<String> ids, Map<String, String> recordChangedMap, Map<String, String> validRecordKindPatchMap) {
@@ -152,10 +191,7 @@ public class StorageServiceImpl implements StorageService {
         }
 
         // validate kind to avoid data duplication
-        List<String> staleRecords = new ArrayList<>();
-        if (recordChangedMap.size() > 0) {
-            staleRecords = getStaleRecordsUpdate(recordChangedMap, validRecordKindPatchMap, validRecords);
-        }
+        List<String> staleRecords = getStaleRecordsUpdate(recordChangedMap, validRecordKindPatchMap, validRecords);
         List<Records.Entity> indexableRecords = validateKind(validRecords, staleRecords);
         records.setRecords(indexableRecords);
 

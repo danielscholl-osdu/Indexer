@@ -25,7 +25,6 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.indexer.SwaggerDoc;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
@@ -91,11 +90,7 @@ public class ReindexServiceImpl implements ReindexService {
     @SneakyThrows
     @Override
     public Records reindexRecords(List<String> recordIds) {
-        if (recordIds.size() > configurationProperties.getStorageRecordsBatchSize()) {
-            throw new AppException(org.springframework.http.HttpStatus.BAD_REQUEST.value(), "Exceeds limit",
-                    SwaggerDoc.REQUEST_REINDEX_RECORDS_VALIDATION_EXCEEDS_LIMIT + configurationProperties.getStorageRecordsBatchSize());
-        }
-        Records records = this.storageService.getStorageRecords(recordIds, new ArrayList<>());
+        Records records = this.storageService.getStorageRecords(recordIds);
         if (records.getRecords().size() > 0) {
             List<RecordInfo> msgs = records.getRecords().stream()
                     .map(record -> RecordInfo.builder().id(record.getId()).kind(record.getKind()).op(OperationType.create.name()).build()).collect(Collectors.toList());

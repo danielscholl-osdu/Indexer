@@ -78,9 +78,12 @@ public class ReindexApi {
     })
     @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
     @PostMapping(path = "/records", consumes = "application/json")
-    public ResponseEntity<?> reindexRecords(@NotNull @RequestBody ReindexRecordsRequest reindexRecordsRequest) {
+    public ResponseEntity<?> reindexRecords(@NotNull @Valid @RequestBody ReindexRecordsRequest reindexRecordsRequest) {
         Records records = this.reIndexService.reindexRecords(reindexRecordsRequest.getRecordIds());
-        this.auditLogger.getReindex(records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList()));
+        List<String> reindexedRecords = records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList());
+        if (!reindexedRecords.isEmpty()) {
+            this.auditLogger.getReindex(reindexedRecords);
+        }
         return new ResponseEntity<>(ReindexRecordsResponse.builder().reIndexedRecords(records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList())).notFoundRecords(records.getNotFound()).build(), HttpStatus.ACCEPTED);
     }
 

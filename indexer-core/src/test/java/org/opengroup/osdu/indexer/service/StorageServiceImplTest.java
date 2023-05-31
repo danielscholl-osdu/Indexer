@@ -24,6 +24,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.opengroup.osdu.core.common.http.IHttpClientHandler;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -59,6 +60,8 @@ import static org.mockito.Mockito.when;
 public class StorageServiceImplTest {
     @Mock
     private IUrlFetchService urlFetchService;
+    @Mock
+    private IHttpClientHandler httpClientHandler;
     @Mock
     private JobStatus jobStatus;
     @Mock
@@ -169,20 +172,6 @@ public class StorageServiceImplTest {
     }
 
     @Test
-    public void should_returnAllRecords_givenRecord_withoutValidation_getStorageRecordsTest() throws URISyntaxException {
-
-        String validDataFromStorage = "{\"records\":[{\"id\":\"testid\", \"version\":1, \"kind\":\"tenant:test:test:1.2.0\"},{\"id\":\"testid2\", \"version\":1, \"kind\":\"tenant:test:test:2.2.0\"}],\"notFound\":[], \"conversionStatuses\": []}";
-
-        HttpResponse httpResponse = mock(HttpResponse.class);
-        when(httpResponse.getBody()).thenReturn(validDataFromStorage);
-
-        when(this.urlFetchService.sendRequest(ArgumentMatchers.any())).thenReturn(httpResponse);
-        Records storageRecords = this.sut.getStorageRecords(ids, new ArrayList<>());
-
-        assertEquals(2, storageRecords.getRecords().size());
-    }
-
-    @Test
     public void should_returnZeroRecords_givenStaleMessage_getStorageRecordsTest() throws URISyntaxException {
 
         String validDataFromStorage = "{\"records\":[{\"id\":\"testid\", \"version\":1, \"kind\":\"tenant:test:test:1.2.0\"}],\"notFound\":[], \"conversionStatuses\": []}";
@@ -196,6 +185,22 @@ public class StorageServiceImplTest {
 
         assertEquals(0, storageRecords.getRecords().size());
         verify(this.log).warning("stale records found with older kind, skipping indexing | record ids: testid");
+    }
+
+    @Test
+    public void should_returnStorageRecords_givenRecordIds_getValidStorageRecordsTest() throws URISyntaxException {
+
+        String validDataFromStorage = "{\"records\":[{\"id\":\"testid\", \"version\":1, \"kind\":\"tenant:test:test:1.0.0\"}],\"notFound\":[\"invalid1\"], \"conversionStatuses\": []}";
+
+        HttpResponse httpResponse = mock(HttpResponse.class);
+        when(httpResponse.getBody()).thenReturn(validDataFromStorage);
+
+        when(configurationProperties.getStorageQueryRecordForConversionHost()).thenReturn("storageUrl");
+        when(this.httpClientHandler.sendRequest(any(), any())).thenReturn(httpResponse);
+        Records storageRecords = this.sut.getStorageRecords(ids);
+
+        assertEquals(1, storageRecords.getRecords().size());
+        assertEquals(1, storageRecords.getNotFound().size());
     }
 
     @Test

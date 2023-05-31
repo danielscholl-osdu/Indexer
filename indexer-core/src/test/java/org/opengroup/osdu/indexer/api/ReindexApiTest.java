@@ -33,10 +33,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
 public class ReindexApiTest {
@@ -85,11 +87,22 @@ public class ReindexApiTest {
 
     @Test
     public void should_return200_when_valid_record_id_list_provided() {
-        when(this.reIndexService.reindexRecords(recordIds)).thenReturn(Records.builder().records(new ArrayList<>()).notFound(recordIds).build());
+        when(this.reIndexService.reindexRecords(recordIds)).thenReturn(Records.builder().records(new ArrayList<>()).records(Collections.singletonList(Records.Entity.builder().id("id1").build())).notFound(recordIds).build());
 
         ResponseEntity<?> response = sut.reindexRecords(new ReindexRecordsRequest(recordIds));
 
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+        verify(auditLogger).getReindex(any());
+    }
+
+    @Test
+    public void should_notWriteAuditLog_when_no_valid_record_id_list_provided() {
+        when(this.reIndexService.reindexRecords(recordIds)).thenReturn(Records.builder().records(new ArrayList<>()).records(Collections.emptyList()).notFound(recordIds).build());
+
+        ResponseEntity<?> response = sut.reindexRecords(new ReindexRecordsRequest(recordIds));
+
+        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+        verify(auditLogger, never()).getReindex(any());
     }
 
     @Test(expected = AppException.class)

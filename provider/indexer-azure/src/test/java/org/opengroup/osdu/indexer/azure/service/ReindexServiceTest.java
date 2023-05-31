@@ -23,7 +23,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
@@ -157,20 +156,13 @@ public class ReindexServiceTest {
         }
     }
 
-    @Test(expected = AppException.class)
-    public void should_throwException_givenRecordIdsExceedsTheLimit_reIndexRecordsTest() {
-        when(configurationProperties.getStorageRecordsBatchSize()).thenReturn(2);
-        List<String> recordIds = Arrays.asList("id1", "id2", "id3");
-        sut.reindexRecords(recordIds);
-    }
-
     @Test
     public void should_createReindexTaskForValidRecords_givenValidRecordIds_reIndexRecordsTest() throws URISyntaxException {
         DpsHeaders headers = new DpsHeaders();
         when(requestInfo.getHeadersWithDwdAuthZ()).thenReturn(headers);
         when(configurationProperties.getStorageRecordsBatchSize()).thenReturn(2);
         List<String> recordIds = Arrays.asList("id1", "id2");
-        when(storageService.getStorageRecords(recordIds, new ArrayList<>())).thenReturn(
+        when(storageService.getStorageRecords(recordIds)).thenReturn(
                 Records.builder().records(Collections.singletonList(Records.Entity.builder().id("id1").kind("kind1").build())).notFound(Collections.singletonList("id2")).build()
         );
         Records records = sut.reindexRecords(recordIds);

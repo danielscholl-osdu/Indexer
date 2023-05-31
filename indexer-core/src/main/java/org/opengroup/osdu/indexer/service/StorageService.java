@@ -28,6 +28,8 @@ public interface StorageService {
 
     Records getStorageRecords(List<String> ids, List<RecordInfo> recordChangedInfos) throws AppException, URISyntaxException;
 
+    Records getStorageRecords(List<String> ids) throws URISyntaxException;
+
     RecordQueryResponse getRecordsByKind(RecordReindexRequest request) throws URISyntaxException;
 
     String getStorageSchema(String kind) throws URISyntaxException, UnsupportedEncodingException;
