@@ -21,7 +21,6 @@ import org.opengroup.osdu.indexer.service.mock.PartitionFactoryMock;
 import org.opengroup.osdu.indexer.service.mock.PartitionProviderMock;
 import org.opengroup.osdu.indexer.service.mock.ServiceAccountJwtClientMock;
 import org.opengroup.osdu.indexer.service.mock.VirtualPropertiesSchemaCacheMock;
-import org.opengroup.osdu.indexer.util.BooleanFeatureFlagClient;
 import org.opengroup.osdu.indexer.util.geo.decimator.*;
 import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
@@ -32,7 +31,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -47,7 +45,7 @@ import static org.junit.Assert.*;
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
         BooleanParser.class, DateTimeParser.class, GeoShapeParser.class, DouglasPeuckerReducer.class, GeoShapeDecimator.class,
         GeometryDecimator.class, GeometryConversionService.class, FeatureFlagCache.class,
-        GeoShapeDecimationSetting.class, BooleanFeatureFlagClient.class,DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
+        DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
         PartitionFactoryMock.class, PartitionProviderMock.class, ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, })
 public class StorageIndexerPayloadMapperTest {
 
@@ -77,9 +75,6 @@ public class StorageIndexerPayloadMapperTest {
 
     @Autowired
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
-
-    @Inject
-    private GeoShapeDecimationSetting decimationSetting;
 
     @BeforeClass
     public static void setUp() {
@@ -204,11 +199,6 @@ public class StorageIndexerPayloadMapperTest {
         assertFalse(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
         assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultName"));
         assertNull(dataCollectorMap.get("VirtualProperties.DefaultName"));
-    }
-
-    @Test
-    public void geoshape_decimation_is_enabled_by_default() {
-        assertTrue(decimationSetting.isDecimationEnabled());
     }
 
     @Test
