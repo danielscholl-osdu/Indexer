@@ -13,16 +13,17 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.util.geo.decimator;
+package org.opengroup.osdu.indexer.cache;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opengroup.osdu.indexer.cache.FeatureFlagCache;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-public class DecimationSettingCacheTest {
+public class FeatureFlagCacheTest {
     private static final String VALID_KEY = "Tenant1-indexer-decimation-enabled";
     private static final String INVALID_KEY = "Tenant2-indexer-decimation-enabled";
     FeatureFlagCache cache;

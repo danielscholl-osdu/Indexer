@@ -25,7 +25,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.partition.*;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
-import org.opengroup.osdu.indexer.util.geo.decimator.FeatureFlagCache;
+import org.opengroup.osdu.indexer.cache.FeatureFlagCache;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
