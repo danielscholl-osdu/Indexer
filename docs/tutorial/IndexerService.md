@@ -4,6 +4,8 @@
 
 - [Indexer service](#indexer-service)
 - [Introduction](#introduction)
+- [Features](#features)
+  - [Geoshape Decimation](#geoshape-decimation)
 - [Indexer API access](#indexer-api-access)
 - [API Reference](#api-reference)
   - [Version info endpoint](#version-info-endpoint)
@@ -22,6 +24,20 @@ of documents.
 The indexer is indexes attributes defined in the schema. Schema can be created at the time of record ingestion in OSDU Data Platform
 via Schema Service. The Indexer service also adds number of OSDU Data Platform meta attributes such as id, kind,
 parent, acl, namespace, type, version, legaltags, index to each record at the time of indexing.
+
+## Features <a name="features"></a>
+
+### Geoshape Decimation <a name="geoshape-decimation"></a>
+
+In order to improve indexing and search performance for documents with large geometry, the geo-shape of the following
+GeoJSON types in the original shape attribute and virtual shape attribute if exists are decimated
+by implementing Ramer–Douglas–Peucker algorithm:
+- LineString
+- MultiLineString
+- Polygon
+- MultiPolygon
+
+The feature is enabled for all data partitions since M19.
 
 ## Indexer API access <a name="indexer-api-access"></a>
 
