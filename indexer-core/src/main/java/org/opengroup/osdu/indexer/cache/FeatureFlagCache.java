@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.util.geo.decimator;
+package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.VmCache;
 import org.springframework.stereotype.Component;
