@@ -64,7 +64,7 @@ public class ReindexApi {
     @Inject
     private AuditLogger auditLogger;
 
-    @Operation(summary = "${reindexApi.reindex.summary}", description = "${reindexApi.reindex.description}",
+    @Operation(summary = "${reindexApi.reindexRecords.summary}", description = "${reindexApi.reindexRecords.description}",
             security = {@SecurityRequirement(name = "Authorization")}, tags = { "reindex-api" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Accepted"),
