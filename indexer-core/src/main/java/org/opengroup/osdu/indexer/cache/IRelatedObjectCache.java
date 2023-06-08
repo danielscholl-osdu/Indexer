@@ -16,8 +16,9 @@
 package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.ICache;
+import org.opengroup.osdu.core.common.model.storage.RecordData;
 
 import java.util.Map;
 
-public interface IRelatedObjectCache extends ICache<String, Map<String, Object>> {
+public interface IRelatedObjectCache extends ICache<String, RecordData> {
 }

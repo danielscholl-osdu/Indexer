@@ -33,6 +33,7 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
@@ -75,6 +76,8 @@ public class PropertyConfigurationsServiceImplTest {
     private PartitionSafePropertyConfigurationsEnabledCache propertyConfigurationsEnabledCache;
     @Mock
     private PartitionSafeParentChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
+    @Mock
+    private PartitionSafeChildrenKindsCache childrenKindsCache;
     @Mock
     private PartitionSafeKindCache kindCache;
     @Mock
@@ -182,7 +185,7 @@ public class PropertyConfigurationsServiceImplTest {
         SearchResponse searchResponse = new SearchResponse();
         searchResponse.setResults(results);
         searchResponse.setTotalCount(results.size());
-        when(this.searchService.query(any())).thenReturn(searchResponse);
+        when(this.searchService.queryWithCursor(any())).thenReturn(searchResponse);
 
         String kind = "osdu:wks:master-data--Well:1.0.0";
         String code = "osdu:wks:master-data--Well:1.";
@@ -197,7 +200,7 @@ public class PropertyConfigurationsServiceImplTest {
 
     @Test
     public void getPropertyConfigurations_without_result_from_search() throws URISyntaxException {
-        when(this.searchService.query(any())).thenReturn(new SearchResponse());
+        when(this.searchService.queryWithCursor(any())).thenReturn(new SearchResponse());
 
         String kind = "osdu:wks:master-data--Well:1.0.0";
         PropertyConfigurations configuration = sut.getPropertyConfigurations(kind);
@@ -217,7 +220,7 @@ public class PropertyConfigurationsServiceImplTest {
         List<SearchRecord> childrenRecords = gson.fromJson(jsonText, type);
         SearchResponse response = new SearchResponse();
         response.setResults(childrenRecords);
-        when(this.searchService.query(any())).thenReturn(response);
+        when(this.searchService.queryWithCursor(any())).thenReturn(response);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("wellbore_extended_data.json");
@@ -237,7 +240,7 @@ public class PropertyConfigurationsServiceImplTest {
         relatedObjectData = getDataMap("organisation_data2.json");
         relatedObjects.put("opendes:master-data--Organisation:BigOil-Department-SeismicProcessing", relatedObjectData);
 
-        // Setup search response for searchService.query(...)
+        // Setup search response for searchService.queryWithCursor(...)
         when(this.searchService.query(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             String query = searchRequest.getQuery();
@@ -397,7 +400,7 @@ public class PropertyConfigurationsServiceImplTest {
     @Test
     public void cacheDataRecord_create_record() throws URISyntaxException {
         ArgumentCaptor<RecordChangeInfo> recordInfoArgumentCaptor = ArgumentCaptor.forClass(RecordChangeInfo.class);
-        ArgumentCaptor<Map<String, Object>> dataMapArgumentCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<RecordData> dataMapArgumentCaptor = ArgumentCaptor.forClass(RecordData.class);
         String recordId = "anyId";
         String kind = "anyKind";
         Map<String, Object> dataMap = new HashMap<>();
@@ -411,13 +414,13 @@ public class PropertyConfigurationsServiceImplTest {
         verify(this.relatedObjectCache, times(1)).put(any(), dataMapArgumentCaptor.capture());
 
         Assert.assertEquals(OperationType.create.getValue(), recordInfoArgumentCaptor.getValue().getRecordInfo().getOp());
-        Assert.assertEquals(1, dataMapArgumentCaptor.getValue().size());
+        Assert.assertEquals(1, dataMapArgumentCaptor.getValue().getData().size());
     }
 
     @Test
     public void cacheDataRecord_update_record() throws URISyntaxException {
         ArgumentCaptor<RecordChangeInfo> recordInfoArgumentCaptor = ArgumentCaptor.forClass(RecordChangeInfo.class);
-        ArgumentCaptor<Map<String, Object>> dataMapArgumentCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<RecordData> dataMapArgumentCaptor = ArgumentCaptor.forClass(RecordData.class);
         String recordId = "anyId";
         String kind = "anyKind";
         Map<String, Object> dataMap = new HashMap<>();
@@ -445,14 +448,14 @@ public class PropertyConfigurationsServiceImplTest {
         Assert.assertEquals(2, changedInfo.getUpdatedProperties().size());
         Assert.assertTrue(changedInfo.getUpdatedProperties().contains("p1"));
         Assert.assertTrue(changedInfo.getUpdatedProperties().contains("p2"));
-        Assert.assertEquals(1, dataMapArgumentCaptor.getValue().size());
-        Assert.assertEquals("v1", dataMapArgumentCaptor.getValue().get("p1"));
+        Assert.assertEquals(1, dataMapArgumentCaptor.getValue().getData().size());
+        Assert.assertEquals("v1", dataMapArgumentCaptor.getValue().getData().get("p1"));
     }
 
     @Test
     public void cacheDataRecord_update_record_merge_previous_UpdateChangedInfo() throws URISyntaxException {
         ArgumentCaptor<RecordChangeInfo> recordInfoArgumentCaptor = ArgumentCaptor.forClass(RecordChangeInfo.class);
-        ArgumentCaptor<Map<String, Object>> dataMapArgumentCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<RecordData> dataMapArgumentCaptor = ArgumentCaptor.forClass(RecordData.class);
         String recordId = "anyId";
         String kind = "anyKind";
         Map<String, Object> dataMap = new HashMap<>();
@@ -490,14 +493,14 @@ public class PropertyConfigurationsServiceImplTest {
         Assert.assertEquals(2, changedInfo.getUpdatedProperties().size());
         Assert.assertTrue(changedInfo.getUpdatedProperties().contains("p1"));
         Assert.assertTrue(changedInfo.getUpdatedProperties().contains("p2"));
-        Assert.assertEquals(1, dataMapArgumentCaptor.getValue().size());
-        Assert.assertEquals("v1", dataMapArgumentCaptor.getValue().get("p1"));
+        Assert.assertEquals(1, dataMapArgumentCaptor.getValue().getData().size());
+        Assert.assertEquals("v1", dataMapArgumentCaptor.getValue().getData().get("p1"));
     }
 
     @Test
     public void cacheDataRecord_update_record_merge_previous_CreateChangedInfo() throws URISyntaxException {
         ArgumentCaptor<RecordChangeInfo> recordInfoArgumentCaptor = ArgumentCaptor.forClass(RecordChangeInfo.class);
-        ArgumentCaptor<Map<String, Object>> dataMapArgumentCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<RecordData> dataMapArgumentCaptor = ArgumentCaptor.forClass(RecordData.class);
         String recordId = "anyId";
         String kind = "anyKind";
         Map<String, Object> dataMap = new HashMap<>();
@@ -532,8 +535,8 @@ public class PropertyConfigurationsServiceImplTest {
         RecordChangeInfo changedInfo = recordInfoArgumentCaptor.getValue();
         Assert.assertEquals(OperationType.create.getValue(), changedInfo.getRecordInfo().getOp());
         Assert.assertNull(changedInfo.getUpdatedProperties());
-        Assert.assertEquals(1, dataMapArgumentCaptor.getValue().size());
-        Assert.assertEquals("v1", dataMapArgumentCaptor.getValue().get("p1"));
+        Assert.assertEquals(1, dataMapArgumentCaptor.getValue().getData().size());
+        Assert.assertEquals("v1", dataMapArgumentCaptor.getValue().getData().get("p1"));
     }
 
     @Test
@@ -656,12 +659,12 @@ public class PropertyConfigurationsServiceImplTest {
         parentKind = "osdu:wks:master-data--Wellbore:1.0.0";
         parentId = "anyParentId";
 
-        // Setup search response for searchService.query(...)
-        when(this.searchService.query(any())).thenAnswer(invocation -> {
+        // Setup search response for searchService.queryWithCursor(...)
+        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             SearchResponse searchResponse = new SearchResponse();
             if (searchRequest.getKind().toString().equals(propertyConfigurationKind)) {
-                if (searchRequest.getQuery().contains("nested")) {
+                if (searchRequest.getQuery().contains("ParentToChildren")) {
                     // Return of getParentChildRelatedObjectsSpecs(...)
                     Map<String, Object> dataMap = getDataMap("wellbore_configuration_record.json");
                     SearchRecord searchRecord = new SearchRecord();
@@ -820,13 +823,14 @@ public class PropertyConfigurationsServiceImplTest {
         parentKind = "osdu:wks:master-data--GeoPoliticalEntity:1.0.0";
         parentId = "anyParentId";
 
-        // Setup search response for searchService.query(...)
-        when(this.searchService.query(any())).thenAnswer(invocation -> {
+        // Setup search response for searchService.queryWithCursor(...)
+        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             SearchResponse searchResponse = new SearchResponse();
             if (searchRequest.getKind().toString().equals(propertyConfigurationKind)) {
-                if (!searchRequest.getQuery().contains("nested")) {
-                    // Return of getParentChildRelatedObjectsSpecs(...)
+                if (searchRequest.getQuery().contains("ChildToParent") || searchRequest.getQuery().contains("data.Code:")) {
+                    // Return of getParentChildRelatedObjectsSpecs(...) or
+                    // getPropertyConfigurations(...)
                     Map<String, Object> dataMap = getDataMap("well_configuration_record.json");
                     SearchRecord searchRecord = new SearchRecord();
                     searchRecord.setData(dataMap);
@@ -836,8 +840,7 @@ public class PropertyConfigurationsServiceImplTest {
                     // No result
                 }
             } else {
-                String kind = "*:*:*:*,-"+parentKind;
-                if(searchRequest.getKind().toString().equals(kind)) {
+                if(searchRequest.getKind().toString().equals("osdu:wks:master-data--Well:1.*")) {
                     // Return of searchUniqueParentIds(...)
                     SearchRecord searchRecord = new SearchRecord();
                     Map<String, Object> childDataMap = new HashMap<>();
@@ -850,10 +853,7 @@ public class PropertyConfigurationsServiceImplTest {
                 else {
                     // This branch is a setup for test case:
                     // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
-                    kind = "*:*:*:*,-"+ childKind + ",-" + parentKind;
-                    if(!searchRequest.getKind().toString().equals(kind)) {
-                        throw new Exception("Unexpected search");
-                    }
+                    throw new Exception("Unexpected search");
                 }
             }
             return searchResponse;
