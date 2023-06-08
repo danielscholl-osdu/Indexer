@@ -775,17 +775,13 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             return;
         }
 
-        StringBuilder kindBuilder = new StringBuilder();
+        List<String> multiKinds = new ArrayList<>();
         for(String kind: childrenKinds) {
-            if(kindBuilder.length() > 0) {
-                kindBuilder.append(",");
-            }
-            kindBuilder.append(kind + "*");
+            String kindWithMajor = PropertyUtil.getKindWithMajor(kind) + "*.*";
+            multiKinds.add(kindWithMajor);
         }
-
-        final int limit = configurationProperties.getStorageRecordsByKindBatchSize();
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(kindBuilder.toString());
+        searchRequest.setKind(multiKinds);
         searchRequest.setQuery(query);
         searchRequest.setReturnedFields(Arrays.asList("kind", "id", "data." + ASSOCIATED_IDENTITIES_PROPERTY));
         List<RecordInfo> recordInfos = new ArrayList<>();
@@ -804,7 +800,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 recordInfo.setOp(OperationType.update.getValue());
                 recordInfos.add(recordInfo);
 
-                if (recordInfos.size() >= limit) {
+                if (recordInfos.size() >= configurationProperties.getStorageRecordsByKindBatchSize()) {
                     createWorkerTask(ancestors, recordInfos);
                     recordInfos = new ArrayList<>();
                 }
@@ -879,6 +875,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             try {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
                 PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
+                String kind = PropertyUtil.getKindWithMajor(configurations.getCode());
+                propertyConfigurationCache.put(kind, configurations);
                 configurationsList.add(configurations);
             } catch (JsonProcessingException e) {
                 jaxRsDpsLog.error("failed to deserialize PropertyConfigurations object", e);

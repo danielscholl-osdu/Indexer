@@ -55,8 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -186,13 +185,13 @@ public class PropertyConfigurationsServiceImplTest {
         searchResponse.setResults(results);
         searchResponse.setTotalCount(results.size());
         when(this.searchService.queryWithCursor(any())).thenReturn(searchResponse);
-
         String kind = "osdu:wks:master-data--Well:1.0.0";
         String code = "osdu:wks:master-data--Well:1.";
         PropertyConfigurations configuration = sut.getPropertyConfigurations(kind);
 
         ArgumentCaptor<PropertyConfigurations> argumentCaptor = ArgumentCaptor.forClass(PropertyConfigurations.class);
-        verify(this.propertyConfigurationCache, times(1)).put(any(), argumentCaptor.capture());
+        // If we mock the implementation of propertyConfigurationCache, it should be called once
+        verify(this.propertyConfigurationCache, times(2)).put(any(), argumentCaptor.capture());
         Assert.assertNotNull(configuration);
         Assert.assertEquals(code, configuration.getCode());
         Assert.assertEquals(code, argumentCaptor.getValue().getCode());
@@ -840,7 +839,7 @@ public class PropertyConfigurationsServiceImplTest {
                     // No result
                 }
             } else {
-                if(searchRequest.getKind().toString().equals("osdu:wks:master-data--Well:1.*")) {
+                if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
                     // Return of searchUniqueParentIds(...)
                     SearchRecord searchRecord = new SearchRecord();
                     Map<String, Object> childDataMap = new HashMap<>();
