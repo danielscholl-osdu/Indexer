@@ -63,6 +63,9 @@ public class AuditEvents {
     private static final String INDEX_DELETE_SUCCESS = "Successfully deleted index";
     private static final String INDEX_DELETE_FAILURE = "Failed deleting index";
 
+    private static final String REINDEX_RECORDS_ACTION_ID = "IN0014";
+    private static final String REINDEX_RECORDS_OPERATION = "Reindex records";
+
     private final String user;
 
     public AuditEvents(String user) {
@@ -199,6 +202,17 @@ public class AuditEvents {
                 .status(AuditStatus.SUCCESS)
                 .actionId(REINDEX_KIND_ACTION_ID)
                 .message(REINDEX_KIND_OPERATION)
+                .resources(resources)
+                .user(this.user)
+                .build();
+    }
+
+    public AuditPayload getReindexRecordsEvent(List<String> resources) {
+        return AuditPayload.builder()
+                .action(AuditAction.CREATE)
+                .status(AuditStatus.SUCCESS)
+                .actionId(REINDEX_RECORDS_ACTION_ID)
+                .message(REINDEX_RECORDS_OPERATION)
                 .resources(resources)
                 .user(this.user)
                 .build();

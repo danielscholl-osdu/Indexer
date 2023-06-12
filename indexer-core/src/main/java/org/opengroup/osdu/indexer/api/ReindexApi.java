@@ -82,7 +82,7 @@ public class ReindexApi {
         Records records = this.reIndexService.reindexRecords(reindexRecordsRequest.getRecordIds());
         List<String> reindexedRecords = records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList());
         if (!reindexedRecords.isEmpty()) {
-            this.auditLogger.getReindex(reindexedRecords);
+            this.auditLogger.getReindexRecords(reindexedRecords);
         }
         return new ResponseEntity<>(ReindexRecordsResponse.builder().reIndexedRecords(records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList())).notFoundRecords(records.getNotFound()).build(), HttpStatus.ACCEPTED);
     }

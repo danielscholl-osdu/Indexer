@@ -137,8 +137,7 @@ public class StorageServiceImpl implements StorageService {
     protected Records getRecords(List<String> ids) throws URISyntaxException {
         String body = this.gson.toJson(RecordIds.builder().records(ids).build());
         DpsHeaders headers = this.requestInfo.getHeaders();
-        headers.put(FRAME_OF_REFERENCE, SLB_FRAME_OF_REFERENCE_VALUE);
-        URIBuilder builder = new URIBuilder(configurationProperties.getStorageQueryRecordForConversionHost());
+        URIBuilder builder = new URIBuilder(configurationProperties.getStorageQueryRecordHost());
         HttpPost request = new HttpPost(builder.build());
         request.setEntity(new StringEntity(body, StandardCharsets.UTF_8));
         // we do not need retry on storage based on not found record
