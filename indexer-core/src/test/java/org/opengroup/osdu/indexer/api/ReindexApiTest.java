@@ -92,7 +92,7 @@ public class ReindexApiTest {
         ResponseEntity<?> response = sut.reindexRecords(new ReindexRecordsRequest(recordIds));
 
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
-        verify(auditLogger).getReindex(any());
+        verify(auditLogger).getReindexRecords(any());
     }
 
     @Test
