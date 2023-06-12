@@ -943,9 +943,6 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return searchAllRecords(searchRequest);
     }
 
-    /*
-      It is assumed that the search request in this method won't return millions of records
-     */
     private List<SearchRecord> searchAllRecords(SearchRequest searchRequest) {
         searchRequest.setLimit(MAX_SEARCH_LIMIT);
         List<SearchRecord> allRecords = new ArrayList<>();
