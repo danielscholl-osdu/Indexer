@@ -24,6 +24,7 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
@@ -46,11 +47,12 @@ import java.util.stream.Collectors;
 public class PropertyConfigurationsServiceImpl implements PropertyConfigurationsService {
     private static final String ASSOCIATED_IDENTITIES_PROPERTY = "AssociatedIdentities";
     private static final String ASSOCIATED_IDENTITIES_PROPERTY_STORAGE_FORMAT_TYPE = "[]string";
-    private static final String WILD_CARD_KIND = "*:*:*:*";
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
     private static final String ANCESTRY_KINDS_DELIMITER = ",";
     private static final String PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT =
             "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ParentToChildren AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
+    private static final String CHILDREN_PARENT_CONFIGURATION_QUERY_FORMAT =
+            "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ChildToParent AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
     private static final String HAS_CONFIGURATIONS_QUERY_FORMAT =  "data.Code: \"%s\" OR nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
     private static final int MAX_SEARCH_LIMIT = 1000;
 
@@ -71,6 +73,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private PartitionSafePropertyConfigurationsEnabledCache propertyConfigurationsEnabledCache;
     @Inject
     private PartitionSafeParentChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
+    @Inject
+    private PartitionSafeChildrenKindsCache childrenKindsCache;
     @Inject
     private PartitionSafeKindCache kindCache;
     @Inject
@@ -175,11 +179,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                         for (SearchRecord record : childrenRecords) {
                             // If the child record is in the cache, that means the record was updated very recently.
                             // In this case, use the cache's record instead of the record from search result
-                            Map<String, Object> childDataMap = this.relatedObjectCache.get(record.getId());
-                            if(childDataMap == null) {
-                                childDataMap = record.getData();
-                            }
-
+                            RecordData cachedRecordData = this.relatedObjectCache.get(record.getId());
+                            Map<String, Object> childDataMap = (cachedRecordData != null)? cachedRecordData.getData() : record.getData();
                             Map<String, Object> propertyValues = getExtendedPropertyValues(extendedPropertyName, childDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
                             if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                                 allPropertyValues = propertyValues;
@@ -300,7 +301,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 changedInfo.setUpdatedProperties(updatedProperties);
         }
         recordChangeInfoCache.put(recordId, changedInfo);
-        relatedObjectCache.put(recordId, dataMap);
+        RecordData recordData = new RecordData();
+        recordData.setData(dataMap);
+        relatedObjectCache.put(recordId, recordData);
     }
 
     @Override
@@ -321,7 +324,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             String updatedAncestors = Strings.isNullOrEmpty(ancestors) ? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
 
             updateAssociatedParentRecords(updatedAncestors, kind, recordChangeInfoList);
-            updateAssociatedChildrenRecords(updatedAncestors, recordChangeInfoList);
+            updateAssociatedChildrenRecords(updatedAncestors, kind, recordChangeInfoList);
         }
     }
 
@@ -365,12 +368,16 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     private Map<String, Object> getRelatedObjectData(String relatedObjectKind, String relatedObjectId) {
         String key = PropertyUtil.removeIdPostfix(relatedObjectId);
-        Map<String, Object> relatedObject = relatedObjectCache.get(key);
+        RecordData recordData = relatedObjectCache.get(key);
+        Map<String, Object> relatedObject = (recordData != null)? recordData.getData() : null;
         if (relatedObject == null) {
             SearchRecord searchRecord = searchRelatedRecord(relatedObjectKind, relatedObjectId);
             if (searchRecord != null) {
                 relatedObject = searchRecord.getData();
-                relatedObjectCache.put(key, relatedObject);
+
+                recordData = new RecordData();
+                recordData.setData(relatedObject);
+                relatedObjectCache.put(key, recordData);
             }
         }
 
@@ -589,6 +596,22 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return propertyValueList;
     }
 
+    private List<String> getChildrenKinds(String parentKind) {
+        final String parentKindWithMajor = PropertyUtil.getKindWithMajor(parentKind);
+        ChildrenKinds childrenKinds = childrenKindsCache.get(parentKindWithMajor);
+        if(childrenKinds == null) {
+            childrenKinds = new ChildrenKinds();
+            Set<String> kinds = new HashSet<>();
+            for (PropertyConfigurations propertyConfigurations: searchChildrenKindConfigurations(parentKindWithMajor)) {
+                kinds.add(propertyConfigurations.getCode());
+            }
+            childrenKinds.setKinds(new ArrayList<>(kinds));
+            childrenKindsCache.put(parentKindWithMajor, childrenKinds);
+        }
+
+        return childrenKinds.getKinds();
+    }
+
     private ParentChildRelationshipSpecs getParentChildRelatedObjectsSpecs(String childKind) {
         final String childKindWithMajor = PropertyUtil.getKindWithMajor(childKind);
 
@@ -739,20 +762,26 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return false;
     }
 
-    private void updateAssociatedChildrenRecords(String ancestors, List<RecordChangeInfo> recordChangeInfos) {
+    private void updateAssociatedChildrenRecords(String ancestors, String parentKind, List<RecordChangeInfo> recordChangeInfos) {
         List<String> processedIds = recordChangeInfos.stream().map(recordChangeInfo -> recordChangeInfo.getRecordInfo().getId()).collect(Collectors.toList());
         String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, createIdsFilter(processedIds));
-        String kind = WILD_CARD_KIND;
+
+        List<String> childrenKinds = getChildrenKinds(parentKind);
         for (String ancestryKind : ancestors.split(ANCESTRY_KINDS_DELIMITER)) {
-            if (!ancestryKind.trim().isEmpty()) {
-                // Exclude the kinds in the ancestryKinds to prevent circular chasing
-                kind += ",-" + ancestryKind.trim();
-            }
+            // Exclude the kinds in the ancestryKinds to prevent circular chasing
+            childrenKinds.removeIf(k -> ancestryKind.contains(k));
+        }
+        if(childrenKinds.isEmpty()) {
+            return;
         }
 
-        final int limit = configurationProperties.getStorageRecordsByKindBatchSize();
+        List<String> multiKinds = new ArrayList<>();
+        for(String kind: childrenKinds) {
+            String kindWithMajor = PropertyUtil.getKindWithMajor(kind) + "*.*";
+            multiKinds.add(kindWithMajor);
+        }
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(kind);
+        searchRequest.setKind(multiKinds);
         searchRequest.setQuery(query);
         searchRequest.setReturnedFields(Arrays.asList("kind", "id", "data." + ASSOCIATED_IDENTITIES_PROPERTY));
         List<RecordInfo> recordInfos = new ArrayList<>();
@@ -771,7 +800,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 recordInfo.setOp(OperationType.update.getValue());
                 recordInfos.add(recordInfo);
 
-                if (recordInfos.size() >= limit) {
+                if (recordInfos.size() >= configurationProperties.getStorageRecordsByKindBatchSize()) {
                     createWorkerTask(ancestors, recordInfos);
                     recordInfos = new ArrayList<>();
                 }
@@ -810,36 +839,44 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     }
 
     /****************************** search methods that use search service to get the data **************************************/
+    private SearchRequest createSearchRequest(String kind, String query) {
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setKind(kind);
+        searchRequest.setQuery(query);
+        return searchRequest;
+    }
 
     private PropertyConfigurations searchConfigurations(String kind) {
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
         String query = String.format("data.Code: \"%s\"", kind);
-        searchRequest.setQuery(query);
-        for (SearchRecord searchRecord : searchAllRecords(searchRequest)) {
-            try {
-                String data = objectMapper.writeValueAsString(searchRecord.getData());
-                PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
-                if (kind.equals(configurations.getCode())) {
-                    return configurations;
-                }
-            } catch (JsonProcessingException e) {
-                jaxRsDpsLog.error("failed to deserialize PropertyConfigurations object", e);
+        SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
+        for(PropertyConfigurations configurations : searchConfigurations(searchRequest)) {
+            if (kind.equals(configurations.getCode())) {
+                return configurations;
             }
         }
         return null;
     }
 
     private List<PropertyConfigurations> searchParentKindConfigurations(String childKind) {
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
         String query = String.format(PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT, childKind);
-        searchRequest.setQuery(query);
+        SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
+        return searchConfigurations(searchRequest);
+    }
+
+    private List<PropertyConfigurations> searchChildrenKindConfigurations(String parentKind) {
+        String query = String.format(CHILDREN_PARENT_CONFIGURATION_QUERY_FORMAT, parentKind);
+        SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
+        return searchConfigurations(searchRequest);
+    }
+
+    private List<PropertyConfigurations> searchConfigurations(SearchRequest searchRequest) {
         List<PropertyConfigurations> configurationsList = new ArrayList<>();
         for (SearchRecord searchRecord : searchAllRecords(searchRequest)) {
             try {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
                 PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
+                String kind = PropertyUtil.getKindWithMajor(configurations.getCode());
+                propertyConfigurationCache.put(kind, configurations);
                 configurationsList.add(configurations);
             } catch (JsonProcessingException e) {
                 jaxRsDpsLog.error("failed to deserialize PropertyConfigurations object", e);
@@ -906,25 +943,20 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return searchAllRecords(searchRequest);
     }
 
-    /*
-      It is assumed that the search request in this method won't return millions of records
-     */
     private List<SearchRecord> searchAllRecords(SearchRequest searchRequest) {
         searchRequest.setLimit(MAX_SEARCH_LIMIT);
         List<SearchRecord> allRecords = new ArrayList<>();
         boolean done = false;
-        int offset = 0;
         try {
             while (!done) {
-                searchRequest.setOffset(offset);
-                SearchResponse searchResponse = searchService.query(searchRequest);
+                SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
                 List<SearchRecord> results = searchResponse.getResults();
                 if (results != null && results.size() > 0) {
                     allRecords.addAll(results);
                 }
 
-                if (results != null && results.size() == MAX_SEARCH_LIMIT) {
-                    offset += MAX_SEARCH_LIMIT;
+                if (!Strings.isNullOrEmpty(searchResponse.getCursor())) {
+                    searchRequest.setCursor(searchResponse.getCursor());
                 } else {
                     done = true;
                 }

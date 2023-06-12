@@ -16,27 +16,25 @@
 package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.VmCache;
-import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.indexer.model.Constants;
+import org.opengroup.osdu.indexer.model.indexproperty.ChildrenKinds;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 @Component
-public class RelatedObjectCacheVmImpl implements IRelatedObjectCache {
-    private VmCache<String, RecordData> cache;
+public class ChildrenKindsCacheVmImpl implements IChildrenKindsCache{
+    private VmCache<String, ChildrenKinds> cache;
 
-    public RelatedObjectCacheVmImpl() {
-        cache = new VmCache<>(Constants.DATA_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
+    public ChildrenKindsCacheVmImpl() {
+        cache = new VmCache<>(Constants.SPEC_CACHE_EXPIRATION, Constants.SPEC_MAX_CACHE_SIZE);
     }
 
     @Override
-    public void put(String s, RecordData o) {
+    public void put(String s, ChildrenKinds o) {
         this.cache.put(s, o);
     }
 
     @Override
-    public RecordData get(String s) {
+    public ChildrenKinds get(String s) {
         return this.cache.get(s);
     }
 

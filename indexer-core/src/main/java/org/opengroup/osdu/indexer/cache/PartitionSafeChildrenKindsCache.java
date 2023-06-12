@@ -15,34 +15,32 @@
 
 package org.opengroup.osdu.indexer.cache;
 
-import org.opengroup.osdu.core.common.cache.VmCache;
-import org.opengroup.osdu.core.common.model.storage.RecordData;
-import org.opengroup.osdu.indexer.model.Constants;
+import org.opengroup.osdu.indexer.model.indexproperty.ChildrenKinds;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 
-import java.util.Map;
+import javax.inject.Inject;
+
 
 @Component
-public class RelatedObjectCacheVmImpl implements IRelatedObjectCache {
-    private VmCache<String, RecordData> cache;
+@RequestScope
+public class PartitionSafeChildrenKindsCache extends AbstractPartitionSafeCache<String, ChildrenKinds>{
+    @Inject
+    private IChildrenKindsCache cache;
 
-    public RelatedObjectCacheVmImpl() {
-        cache = new VmCache<>(Constants.DATA_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
+    @Override
+    public void put(String s, ChildrenKinds o) {
+        this.cache.put(cacheKey(s), o);
     }
 
     @Override
-    public void put(String s, RecordData o) {
-        this.cache.put(s, o);
-    }
-
-    @Override
-    public RecordData get(String s) {
-        return this.cache.get(s);
+    public ChildrenKinds get(String s) {
+        return this.cache.get(cacheKey(s));
     }
 
     @Override
     public void delete(String s) {
-        this.cache.delete(s);
+        this.cache.delete(cacheKey(s));
     }
 
     @Override

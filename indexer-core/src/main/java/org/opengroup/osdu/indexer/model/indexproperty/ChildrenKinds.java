@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.model.indexproperty;
 
-import org.opengroup.osdu.core.common.cache.ICache;
-import org.opengroup.osdu.core.common.model.storage.RecordData;
+import lombok.Data;
 
-import java.util.Map;
+import java.util.List;
 
-public interface IRelatedObjectCache extends ICache<String, RecordData> {
+@Data
+public class ChildrenKinds {
+    private List<String> kinds;
 }
