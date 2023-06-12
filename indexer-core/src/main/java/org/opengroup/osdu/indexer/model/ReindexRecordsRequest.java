@@ -1,4 +1,4 @@
-// Copyright 2017-2019, Schlumberger
+// Copyright 2023, SLB
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.service;
+package org.opengroup.osdu.indexer.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
-import org.opengroup.osdu.core.common.model.indexer.Records;
-
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.util.List;
 
-public interface ReindexService {
-
-    String reindexKind(RecordReindexRequest recordReindexRequest, boolean forceClean);
-
-    Records reindexRecords(List<String> recordIds);
-
-    void fullReindex(boolean forceClean);
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ReindexRecordsRequest {
+    @NotNull
+    @Size(min = 1, max = 1000)
+    private List<@NotBlank String> recordIds;
 }

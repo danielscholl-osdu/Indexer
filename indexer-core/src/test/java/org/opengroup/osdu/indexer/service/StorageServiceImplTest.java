@@ -24,6 +24,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.opengroup.osdu.core.common.http.IHttpClientHandler;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -43,11 +44,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
@@ -63,6 +60,8 @@ import static org.mockito.Mockito.when;
 public class StorageServiceImplTest {
     @Mock
     private IUrlFetchService urlFetchService;
+    @Mock
+    private IHttpClientHandler httpClientHandler;
     @Mock
     private JobStatus jobStatus;
     @Mock
@@ -186,6 +185,24 @@ public class StorageServiceImplTest {
 
         assertEquals(0, storageRecords.getRecords().size());
         verify(this.log).warning("stale records found with older kind, skipping indexing | record ids: testid");
+    }
+
+    @Test
+    public void should_returnStorageRecords_givenRecordIds_getValidStorageRecordsTest() throws URISyntaxException {
+
+        String validDataFromStorage = "{\"records\":[{\"id\":\"tenant1:doc:1dbf528e0e0549cab7a08f29fbfc8465\", \"version\":1, \"kind\":\"tenant:test:test:1.0.0\"}]}";
+
+        HttpResponse httpResponse = mock(HttpResponse.class);
+        when(httpResponse.getBody()).thenReturn(validDataFromStorage);
+
+        when(configurationProperties.getStorageQueryRecordHost()).thenReturn("storageUrl");
+        when(this.httpClientHandler.sendRequest(any(), any())).thenReturn(httpResponse);
+        List<String> idsCopy = new ArrayList<>();
+        idsCopy.addAll(ids);
+        Records storageRecords = this.sut.getStorageRecords(idsCopy);
+
+        assertEquals(1, storageRecords.getRecords().size());
+        assertEquals(1, storageRecords.getNotFound().size());
     }
 
     @Test

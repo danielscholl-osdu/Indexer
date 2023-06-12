@@ -27,6 +27,7 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.service.ReindexServiceImpl;
 import org.opengroup.osdu.indexer.service.StorageService;
@@ -36,9 +37,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.net.URISyntaxException;
 import java.util.*;
 
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -95,7 +98,7 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(null);
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String response = sut.reindexRecords(recordReindexRequest, false);
+            String response = sut.reindexKind(recordReindexRequest, false);
 
             Assert.assertNull(response);
         } catch (Exception e) {
@@ -109,7 +112,7 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(new ArrayList<>());
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String response = sut.reindexRecords(recordReindexRequest, false);
+            String response = sut.reindexKind(recordReindexRequest, false);
 
             Assert.assertNull(response);
         } catch (Exception e) {
@@ -129,7 +132,7 @@ public class ReindexServiceTest {
 
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String taskQueuePayload = sut.reindexRecords(recordReindexRequest, false);
+            String taskQueuePayload = sut.reindexKind(recordReindexRequest, false);
 
             Assert.assertEquals("{\"kind\":\"tenant:test:test:1.0.0\",\"cursor\":\"100\"}", taskQueuePayload);
         } catch (Exception e) {
@@ -145,11 +148,26 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(results);
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String taskQueuePayload = sut.reindexRecords(recordReindexRequest, false);
+            String taskQueuePayload = sut.reindexKind(recordReindexRequest, false);
 
             Assert.assertEquals(String.format("{\"data\":\"[{\\\"id\\\":\\\"test1\\\",\\\"kind\\\":\\\"tenant:test:test:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"slb-correlation-id\":\"%s\"}}", correlationId), taskQueuePayload);
         } catch (Exception e) {
             fail("Should not throw exception" + e.getMessage());
         }
+    }
+
+    @Test
+    public void should_createReindexTaskForValidRecords_givenValidRecordIds_reIndexRecordsTest() throws URISyntaxException {
+        DpsHeaders headers = new DpsHeaders();
+        when(requestInfo.getHeadersWithDwdAuthZ()).thenReturn(headers);
+        when(configurationProperties.getStorageRecordsBatchSize()).thenReturn(2);
+        List<String> recordIds = Arrays.asList("id1", "id2");
+        when(storageService.getStorageRecords(recordIds)).thenReturn(
+                Records.builder().records(Collections.singletonList(Records.Entity.builder().id("id1").kind("kind1").build())).notFound(Collections.singletonList("id2")).build()
+        );
+        Records records = sut.reindexRecords(recordIds);
+        Assert.assertEquals(1, records.getRecords().size());
+        Assert.assertEquals(1, records.getNotFound().size());
+        verify(indexerQueueTaskBuilder).createWorkerTask("{\"data\":\"[{\\\"id\\\":\\\"id1\\\",\\\"kind\\\":\\\"kind1\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{}}", 0L, headers);
     }
 }
