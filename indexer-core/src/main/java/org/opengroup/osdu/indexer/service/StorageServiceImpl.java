@@ -146,7 +146,10 @@ public class StorageServiceImpl implements StorageService {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Error", response.getBody());
         }
         try {
-            return this.objectMapper.readValue(response.getBody(), Records.class);
+            Records records = this.objectMapper.readValue(response.getBody(), Records.class);
+            ids.removeAll(records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList()));
+            records.setNotFound(ids);
+            return records;
         } catch (JsonProcessingException e) {
             throw new AppException(RequestStatus.INVALID_RECORD, "Invalid request", "Successful Storage service response with wrong json", e);
         }
