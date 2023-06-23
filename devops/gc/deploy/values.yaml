@@ -5,6 +5,7 @@
 global:
   domain: ""
   onPremEnabled: false
+  limitsEnabled: true
 
 data:
   # Configmap
