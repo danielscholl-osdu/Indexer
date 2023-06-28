@@ -7,12 +7,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.net.URISyntaxException;
@@ -142,5 +145,12 @@ public class SearchServiceImplTest {
         SearchResponse searchResponse = sut.query(new SearchRequest());
         Assert.assertNotNull(searchResponse);
         Assert.assertNull(searchResponse.getResults());
+    }
+
+    @Test
+    public void query_with_exception() throws URISyntaxException {
+        when(this.configurationProperties.getSearchHost()).thenReturn(searchHost);
+        when(this.urlFetchService.sendRequest(any())).thenThrow(new AppException(415, "upstream server responded with unsupported media type: text/plain", "Unsupported media type" ));
+        assertThrows(URISyntaxException.class, () -> sut.query(new SearchRequest()));
     }
 }
