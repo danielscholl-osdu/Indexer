@@ -38,6 +38,9 @@ public class RedisConfig {
     @Value("${redis.schema.ttl:3600}")
     public int schemaTtl;
 
+    @Value("${redis.records.ttl:120}")
+    public int recordsTtl;
+
     @Bean
     @Named("REDIS_PORT")
     public int getRedisPort() {
@@ -60,6 +63,12 @@ public class RedisConfig {
     @Named("SCHEMA_REDIS_TTL")
     public int getSchemaRedisTtl() {
         return schemaTtl;
+    }
+
+    @Bean
+    @Named("RECORDS_REDIS_TTL")
+    public int getRecordsRedisTtl() {
+        return recordsTtl;
     }
 
     @Bean
