@@ -21,8 +21,8 @@ import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.IUrlFetchService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
@@ -63,25 +63,33 @@ public class SearchServiceImpl implements SearchService {
             return new SearchResponse();
         }
 
-        String body = this.gson.toJson(searchRequest);
-        String url = String.format("%s/%s", configurationProperties.getSearchHost(), path);
-        FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
-                .httpMethod(HttpMethods.POST)
-                .url(url)
-                .headers(this.requestInfo.getHeaders())
-                .body(body)
-                .build();
-        HttpResponse response = this.urlFetchService.sendRequest(request);
+        try {
+            String body = this.gson.toJson(searchRequest);
+            String url = String.format("%s/%s", configurationProperties.getSearchHost(), path);
+            FetchServiceHttpRequest request = FetchServiceHttpRequest.builder()
+                    .httpMethod(HttpMethods.POST)
+                    .url(url)
+                    .headers(this.requestInfo.getHeaders())
+                    .body(body)
+                    .build();
+            HttpResponse response = this.urlFetchService.sendRequest(request);
 
-        if(response != null && response.getResponseCode() == OK_CODE) {
-            return gson.fromJson(response.getBody(), SearchResponse.class);
+            if (response != null && response.getResponseCode() == OK_CODE) {
+                return gson.fromJson(response.getBody(), SearchResponse.class);
+            } else {
+                if (response != null)
+                    jaxRsDpsLog.error(String.format("Search service: failed to call the search service: %d", response.getResponseCode()));
+                else
+                    jaxRsDpsLog.error(String.format("Search service: failed to call the search service. The response is null."));
+                return new SearchResponse();
+            }
         }
-        else {
-            if(response != null)
-                jaxRsDpsLog.error(String.format("Search service: failed to call the search service: %d", response.getResponseCode()));
-            else
-                jaxRsDpsLog.error(String.format("Search service: failed to call the search service. The response is null."));
-            return new SearchResponse();
+        catch(URISyntaxException ex) {
+            throw ex;
+        }
+        catch(Exception ex) {
+            jaxRsDpsLog.error(String.format("Search service: failed to call the search service", ex));
+            throw new URISyntaxException(ex.getMessage(), "Unexpected exception type: " + ex.getClass().getName());
         }
     }
 }
