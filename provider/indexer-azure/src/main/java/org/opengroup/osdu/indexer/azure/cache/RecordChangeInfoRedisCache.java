@@ -30,7 +30,7 @@ public class RecordChangeInfoRedisCache extends RedisCache<String, RecordChangeI
     public RecordChangeInfoRedisCache(final @Named("REDIS_HOST") String host,
                                    final @Named("REDIS_PORT") int port,
                                    final @Named("REDIS_PASSWORD") String password,
-                                   final @Named("RECORDS_REDIS_TTL") int timeout,
+                                   final @Named("RECORD_CHANGE_INFO_REDIS_TTL") int timeout,
                                    @Value("${redis.database}")  final int database) {
         super(host, port, password, timeout, database, String.class, RecordChangeInfo.class);
     }

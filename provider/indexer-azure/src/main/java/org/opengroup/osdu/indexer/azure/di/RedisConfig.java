@@ -41,6 +41,9 @@ public class RedisConfig {
     @Value("${redis.records.ttl:120}")
     public int recordsTtl;
 
+    @Value("${redis.record.change.info.ttl:3600}")
+    public int recordChangeInfoTtl;
+
     @Bean
     @Named("REDIS_PORT")
     public int getRedisPort() {
@@ -69,6 +72,12 @@ public class RedisConfig {
     @Named("RECORDS_REDIS_TTL")
     public int getRecordsRedisTtl() {
         return recordsTtl;
+    }
+
+    @Bean
+    @Named("RECORD_CHANGE_INFO_REDIS_TTL")
+    public int getRecordChangeInfoRedisTtl() {
+        return recordChangeInfoTtl;
     }
 
     @Bean

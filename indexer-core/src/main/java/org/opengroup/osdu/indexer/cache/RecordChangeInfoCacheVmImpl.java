@@ -25,7 +25,7 @@ public class RecordChangeInfoCacheVmImpl implements IRecordChangeInfoCache {
     private VmCache<String, RecordChangeInfo> cache;
 
     public RecordChangeInfoCacheVmImpl() {
-        cache = new VmCache<>(Constants.DATA_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
+        cache = new VmCache<>(Constants.DATA_CHANGE_INFO_CACHE_EXPIRATION, Constants.DATA_MAX_CACHE_SIZE);
     }
 
     @Override
