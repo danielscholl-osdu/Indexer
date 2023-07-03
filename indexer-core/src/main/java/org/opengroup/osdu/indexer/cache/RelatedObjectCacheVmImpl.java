@@ -20,8 +20,6 @@ import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.indexer.model.Constants;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 @Component
 public class RelatedObjectCacheVmImpl implements IRelatedObjectCache {
     private VmCache<String, RecordData> cache;
