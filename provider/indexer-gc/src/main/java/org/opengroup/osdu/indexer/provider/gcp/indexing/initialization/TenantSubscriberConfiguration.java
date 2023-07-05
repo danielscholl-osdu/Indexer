@@ -17,7 +17,6 @@
 
 package org.opengroup.osdu.indexer.provider.gcp.indexing.initialization;
 
-import java.util.Collection;
 import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +26,10 @@ import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriberThroughput;
 import org.opengroup.osdu.indexer.api.RecordIndexerApi;
 import org.opengroup.osdu.indexer.api.ReindexApi;
-import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.IndexerMessagingConfigProperties;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.config.MessagingConfigProperties;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.RecordsChangedMessageReceiver;
-import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.RepressorMessageReceiver;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.ReindexMessageReceiver;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.ReprocessorMessageReceiver;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.SchemaChangedMessageReceiver;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.scope.ThreadDpsHeaders;
 import org.springframework.stereotype.Component;
@@ -42,55 +42,63 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TenantSubscriberConfiguration {
 
-    private static final String SUBSCRIPTION_PREFIX = "indexer-";
-    private final IndexerMessagingConfigProperties properties;
-    private final OqmSubscriberManager subscriberManager;
-    private final ITenantFactory tenantInfoFactory;
-    private final TokenProvider tokenProvider;
-    private final ThreadDpsHeaders headers;
-    private final RecordIndexerApi recordIndexerApi;
-    private final ReindexApi reindexApi;
+  private static final String SUBSCRIPTION_PREFIX = "indexer-";
+  private final MessagingConfigProperties properties;
+  private final OqmSubscriberManager subscriberManager;
+  private final ITenantFactory tenantInfoFactory;
+  private final TokenProvider tokenProvider;
+  private final ThreadDpsHeaders headers;
+  private final RecordIndexerApi recordIndexerApi;
+  private final ReindexApi reindexApi;
 
-    /**
-     * Tenant configurations provided by the Partition service will be used to configure subscribers. If tenants use the same message broker(The same RabbitMQ
-     * instance, or the same GCP project Pub/Sub) then only one subscriber in this broker will be used.
-     */
-    @PostConstruct
-    void postConstruct() {
-        log.info("OqmSubscriberManager provisioning STARTED");
-        String recordsChangedTopicName = properties.getRecordsChangedTopicName();
-        String reprocessTopicName = properties.getReprocessTopicName();
-        String schemaChangedTopicName = properties.getSchemaChangedTopicName();
+  /**
+   * Tenant configurations provided by the Partition service will be used to configure subscribers. If tenants use the
+   * same message broker(The same RabbitMQ instance, or the same GCP project Pub/Sub) then only one subscriber in this
+   * broker will be used.
+   */
+  @PostConstruct
+  void postConstruct() {
+    log.info("OqmSubscriberManager provisioning STARTED");
+    String recordsChangedTopicName = properties.getRecordsChangedTopicName();
+    String schemaChangedTopicName = properties.getSchemaChangedTopicName();
+    String reprocessTopicName = properties.getReprocessTopicName();
+    String reindexTopicName = properties.getReindexTopicName();
 
-        Collection<TenantInfo> tenantInfos = tenantInfoFactory.listTenantInfo();
-
-        for (TenantInfo tenantInfo : tenantInfos) {
-          subscriberManager.registerSubscriber(
-              tenantInfo,
-              recordsChangedTopicName,
-              getSubscriptionName(recordsChangedTopicName),
-              new RecordsChangedMessageReceiver(headers, tokenProvider, recordIndexerApi),
-              OqmSubscriberThroughput.MAX
-          );
-          subscriberManager.registerSubscriber(
-              tenantInfo,
-              reprocessTopicName,
-              getSubscriptionName(reprocessTopicName),
-              new RepressorMessageReceiver(headers, tokenProvider, reindexApi),
-              OqmSubscriberThroughput.MIN
-          );
-          subscriberManager.registerSubscriber(
-              tenantInfo,
-              schemaChangedTopicName,
-              getSubscriptionName(schemaChangedTopicName),
-              new SchemaChangedMessageReceiver(headers, tokenProvider, recordIndexerApi),
-              OqmSubscriberThroughput.MIN
-          );
-        }
-        log.info("OqmSubscriberManager provisioning COMPLETED");
+    for (TenantInfo tenantInfo : tenantInfoFactory.listTenantInfo()) {
+      String dataPartitionId = tenantInfo.getDataPartitionId();
+      subscriberManager.registerSubscriber(
+          dataPartitionId,
+          recordsChangedTopicName,
+          getSubscriptionName(recordsChangedTopicName),
+          new RecordsChangedMessageReceiver(headers, tokenProvider, recordIndexerApi),
+          OqmSubscriberThroughput.MAX
+      );
+      subscriberManager.registerSubscriber(
+          dataPartitionId,
+          schemaChangedTopicName,
+          getSubscriptionName(schemaChangedTopicName),
+          new SchemaChangedMessageReceiver(headers, tokenProvider, recordIndexerApi),
+          OqmSubscriberThroughput.MIN
+      );
+      subscriberManager.registerSubscriber(
+          dataPartitionId,
+          reprocessTopicName,
+          getSubscriptionName(reprocessTopicName),
+          new ReprocessorMessageReceiver(headers, tokenProvider, reindexApi),
+          OqmSubscriberThroughput.MIN
+      );
+      subscriberManager.registerSubscriber(
+          dataPartitionId,
+          reindexTopicName,
+          getSubscriptionName(reindexTopicName),
+          new ReindexMessageReceiver(headers, tokenProvider, recordIndexerApi),
+          OqmSubscriberThroughput.MAX
+      );
     }
+    log.info("OqmSubscriberManager provisioning COMPLETED");
+  }
 
-    private String getSubscriptionName(String topicName) {
-        return SUBSCRIPTION_PREFIX + topicName;
-    }
+  private String getSubscriptionName(String topicName) {
+    return SUBSCRIPTION_PREFIX + topicName;
+  }
 }

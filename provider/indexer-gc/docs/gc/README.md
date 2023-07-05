@@ -42,17 +42,21 @@ Usage of spring profiles is preferred.
 
 ## Pubsub configuration
 
+![Screenshot](../anthos/pics/indexer.png)
+
 Pubsub should have topics and subscribers with names and configs:
 
-| TOPIC NAME                  | Subscription name          | Subscription config                                                                                                                                                                                                                |
-|-----------------------------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| indexing-progress           | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
-| records-changed             | indexer-records-changed    | `Maximum delivery attempts: 10`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 0 seconds`<br/>`Maximum backoff duration: 30 seconds`<br/>`Grant forwarding permissions for dead letter`  |
-| records-changed-dead-letter | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
-| reprocess                   | indexer-reprocess          | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
-| reprocess-dead-letter       | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
-| schema-changed              | indexer-schema-changed     | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
-| schema-changed-dead-letter  | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+| TOPIC NAME                       | Subscription name          | Subscription config                                                                                                                                                                                                                |
+|----------------------------------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| indexing-progress                | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+| records-changed                  | indexer-records-changed    | `Maximum delivery attempts: 10`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 0 seconds`<br/>`Maximum backoff duration: 30 seconds`<br/>`Grant forwarding permissions for dead letter`  |
+| records-changed-dead-lettering   | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+| reprocess                        | indexer-reprocess          | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
+| indexer-reprocess-dead-lettering | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+| schema-changed                   | indexer-schema-changed     | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
+| schema-changed-dead-lettering    | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
+| reindex                          | indexer-reindex            | `Maximum delivery attempts: 5`<br/>`Retry policy: Retry after exponential backoff delay`<br/>`Minimum backoff duration: 10 seconds`<br/>`Maximum backoff duration: 600 seconds`<br/>`Grant forwarding permissions for dead letter` |
+| reindex-dead-lettering           | (Consumer not implemented) | (Consumer not implemented)                                                                                                                                                                                                         |
 
 ### Additional throughput configuration for PubSub subscription consumer via Partition service
 
