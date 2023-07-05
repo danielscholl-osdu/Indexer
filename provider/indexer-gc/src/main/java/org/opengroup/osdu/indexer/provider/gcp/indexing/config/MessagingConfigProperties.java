@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2022 Google LLC
- *  Copyright 2020-2022 EPAM Systems, Inc
+ *  Copyright 2020-2023 Google LLC
+ *  Copyright 2020-2023 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.provider.gcp.indexing.processing;
+package org.opengroup.osdu.indexer.provider.gcp.indexing.config;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -26,12 +26,12 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @ConfigurationProperties
 @Configuration
-public class IndexerMessagingConfigProperties {
-
+public class MessagingConfigProperties {
+    @Deprecated
+    private String defaultRelativeIndexerWorkerUrl;
     private String recordsChangedTopicName;
     private String schemaChangedTopicName;
-    private String defaultRelativeIndexerWorkerUrl;
-    private String reprocessTopicName;
     private String statusChangedTopicName;
-
+    private String reprocessTopicName;
+    private String reindexTopicName;
 }
