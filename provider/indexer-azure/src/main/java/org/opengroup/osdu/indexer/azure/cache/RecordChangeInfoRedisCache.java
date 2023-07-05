@@ -20,11 +20,13 @@ import org.opengroup.osdu.indexer.cache.IRecordChangeInfoCache;
 import org.opengroup.osdu.indexer.model.RecordChangeInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Named;
 
 @Component
+@Primary
 @ConditionalOnProperty(value = "runtime.env.local", havingValue = "false", matchIfMissing = true)
 public class RecordChangeInfoRedisCache extends RedisCache<String, RecordChangeInfo> implements IRecordChangeInfoCache {
     public RecordChangeInfoRedisCache(final @Named("REDIS_HOST") String host,

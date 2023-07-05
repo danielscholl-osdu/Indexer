@@ -20,11 +20,13 @@ import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.indexer.cache.IRelatedObjectCache;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Named;
 
 @Component
+@Primary
 @ConditionalOnProperty(value = "runtime.env.local", havingValue = "false", matchIfMissing = true)
 public class RelatedObjectRedisCache  extends RedisCache<String, RecordData> implements IRelatedObjectCache {
     public RelatedObjectRedisCache(final @Named("REDIS_HOST") String host,
