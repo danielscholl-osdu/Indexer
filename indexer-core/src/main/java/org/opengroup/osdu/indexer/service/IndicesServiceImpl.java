@@ -50,6 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -64,6 +65,8 @@ public class IndicesServiceImpl implements IndicesService {
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Autowired
     private PartitionSafeIndexCache indexCache;
+    @Inject
+    private IndexAliasService indexAliasService;
     @Autowired
     private JaxRsDpsLog log;
 
@@ -106,7 +109,8 @@ public class IndicesServiceImpl implements IndicesService {
                 this.indexCache.put(index, true);
                 this.log.info(String.format("Time taken to successfully create new index %s : %d milliseconds", request.index(), stopTime-startTime));
 
-                createIndexAlias(client, index);
+                // Create alias for index
+                indexAliasService.createIndexAlias(client, elasticIndexNameResolver.getKindFromIndexName(index));
             }
 
             return indexStatus;
@@ -302,49 +306,5 @@ public class IndicesServiceImpl implements IndicesService {
             }
             throw exception;
         }
-    }
-
-    private void createIndexAlias(RestHighLevelClient client, String index) {
-        String kind = this.elasticIndexNameResolver.getKindFromIndexName(index);
-        if(!elasticIndexNameResolver.isIndexAliasSupported(kind))
-            return;
-
-        try {
-            List<String> kinds = new ArrayList<>();
-            kinds.add(kind);
-            String kindWithMajorVersion = getKindWithMajorVersion(kind);
-            if(elasticIndexNameResolver.isIndexAliasSupported(kindWithMajorVersion)) {
-                kinds.add(kindWithMajorVersion);
-            }
-            for (String kd : kinds) {
-                index = elasticIndexNameResolver.getIndexNameFromKind(kd);
-                String alias = elasticIndexNameResolver.getIndexAliasFromKind(kd);
-                IndicesAliasesRequest addRequest = new IndicesAliasesRequest();
-                IndicesAliasesRequest.AliasActions aliasActions = new IndicesAliasesRequest.AliasActions(IndicesAliasesRequest.AliasActions.Type.ADD)
-                        .index(index)
-                        .alias(alias);
-                addRequest.addAliasAction(aliasActions);
-                AcknowledgedResponse response = client.indices().updateAliases(addRequest, RequestOptions.DEFAULT);
-                if (response.isAcknowledged()) {
-                    this.log.info(String.format("Alias %s was created for index %s", alias, index));
-                }
-            }
-        }
-        catch(Exception ex) {
-            // Failed to create alias is not the end. It should not affect the status of index creation
-            this.log.error(String.format("Fail to create aliases for index %s", index), ex);
-        }
-    }
-
-    private String getKindWithMajorVersion(String kind) {
-        // If kind is common:welldb:wellbore:1.2.0, then kind with major version is common:welldb:wellbore:1.*.*
-        int idx = kind.lastIndexOf(":");
-        String version = kind.substring(idx+1);
-        if(version.indexOf(".") > 0) {
-            String kindWithoutVersion = kind.substring(0, idx);
-            String majorVersion = version.substring(0, version.indexOf("."));
-            return String.format("%s:%s.*.*", kindWithoutVersion, majorVersion);
-        }
-        return null;
     }
 }

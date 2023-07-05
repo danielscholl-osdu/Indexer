@@ -12,13 +12,12 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.indexer.cache.FeatureFlagCache;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
-import org.opengroup.osdu.indexer.service.mock.PartitionFactoryMock;
-import org.opengroup.osdu.indexer.service.mock.PartitionProviderMock;
 import org.opengroup.osdu.indexer.service.mock.ServiceAccountJwtClientMock;
 import org.opengroup.osdu.indexer.service.mock.VirtualPropertiesSchemaCacheMock;
 import org.opengroup.osdu.indexer.util.geo.decimator.*;
@@ -31,7 +30,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -45,9 +43,9 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
         BooleanParser.class, DateTimeParser.class, GeoShapeParser.class, DouglasPeuckerReducer.class, GeoShapeDecimator.class,
-        GeometryDecimator.class, GeometryConversionService.class, DecimationSettingCache.class,
-        GeoShapeDecimationSetting.class, DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
-        PartitionFactoryMock.class, PartitionProviderMock.class, ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, })
+        GeometryDecimator.class, GeometryConversionService.class, FeatureFlagCache.class,
+        DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
+        ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, })
 public class StorageIndexerPayloadMapperTest {
 
     public static final String FIRST_OBJECT_INNER_PROPERTY = "FirstObjectInnerProperty";
@@ -76,9 +74,6 @@ public class StorageIndexerPayloadMapperTest {
 
     @Autowired
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
-
-    @Inject
-    private GeoShapeDecimationSetting decimationSetting;
 
     @BeforeClass
     public static void setUp() {
@@ -203,11 +198,6 @@ public class StorageIndexerPayloadMapperTest {
         assertFalse(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
         assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultName"));
         assertNull(dataCollectorMap.get("VirtualProperties.DefaultName"));
-    }
-
-    @Test
-    public void geoshape_decimation_is_enabled_by_default() {
-        assertTrue(decimationSetting.isDecimationEnabled());
     }
 
     @Test

@@ -23,6 +23,7 @@ import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -134,6 +135,7 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
             retryCount = 1;
             retryDelay = INITIAL_RETRY_DELAY_SECONDS;
         }
+
         System.out.println("Re-queuing for retry attempt #: " + retryCount);
         System.out.println("Delay (in seconds) before next retry: " + retryDelay);
 
@@ -142,6 +144,12 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
                 .withDataType("String")
                 .withStringValue(String.valueOf(retryCount))
         );
+        // Append the ancestry kinds used to prevent circular chasing
+        if(message.getAttributes().containsKey(Constants.ANCESTRY_KINDS)) {
+            messageAttributes.put(Constants.ANCESTRY_KINDS, new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(message.getAttributes().get(Constants.ANCESTRY_KINDS)));
+        }
 
         // Send a message with an attribute and a delay
         final SendMessageRequest sendMessageRequest ;

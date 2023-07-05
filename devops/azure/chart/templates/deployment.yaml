@@ -102,7 +102,7 @@ spec:
         - name: servicebus_topic_name
           value: indexing-progress
         - name: reindex_topic_name
-          value: recordstopic
+          value: reindextopic
         - name: entitlements_service_endpoint
           value: http://entitlements/api/entitlements/v2
         - name: entitlements_service_api_key
@@ -125,4 +125,6 @@ spec:
           value: "api://$(aad_client_id)"
         - name: SPRING_CONFIG_NAME
           value: "common,application"
+        - name: search_service_url
+          value: http://search/api/search/v2
       terminationGracePeriodSeconds: 101

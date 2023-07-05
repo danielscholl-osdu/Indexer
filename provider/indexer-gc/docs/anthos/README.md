@@ -32,7 +32,7 @@ Defined in default application property file but possible to override:
 | `STORAGE_HOST`                     | ex `https://storage.com`                                                  | Storage host                                                              | no         | output of infrastructure deployment |
 | `SCHEMA_BASE_HOST`                 | ex `https://schema.com`                                                   | Schema service host                                                       | no         | output of infrastructure deployment |
 
-These variables define service behavior, and are used to switch between `anthos` or `gcp` environments, their overriding and usage in mixed mode was not tested.
+These variables define service behavior, and are used to switch between `baremetal` or `gcp` environments, their overriding and usage in mixed mode was not tested.
 Usage of spring profiles is preferred.
 
 | name                     | value                  | description                                                                                                               | sensitive? | source |
@@ -201,17 +201,21 @@ curl -L -X PATCH 'https://dev.osdu.club/api/partition/v1/partitions/opendes' -H 
 
 #### Exchanges and queues configuration
 
+![Screenshot](./pics/indexer.png)
+
 RabbitMq should have exchanges and queues with names and configs:
 
-| EXCHANGE NAME                    | EXCHANGE CONFIG                                                             | Target queue name         | Target queue config                                                  |
-|----------------------------------|-----------------------------------------------------------------------------|---------------------------|----------------------------------------------------------------------|
+| EXCHANGE NAME                    | EXCHANGE CONFIG                                                             | Target queue name          | Target queue config                                                  |
+|----------------------------------|-----------------------------------------------------------------------------|----------------------------|----------------------------------------------------------------------|
 | indexing-progress                | `Type 	fanout` <br/>`durable:	true`                                         | (Consumer not implemented) | (Consumer not implemented)                                           |
-| records-changed                  | `Type 	fanout` <br/>`durable:	true`                                         | indexer-records-changed   | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
-| indexer-records-changed-exchange | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-records-changed   | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
-| reprocess                        | `Type 	fanout` <br/>`durable:	true`                                         | indexer-reprocess         | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
-| indexer-reprocess-exchange       | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-reprocess         | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
-| schema-changed                   | `Type 	fanout` <br/>`durable:	true`                                         | indexer-schema-changed    | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
-| indexer-schema-changed-exchange  | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-schema-changed    | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| records-changed                  | `Type 	fanout` <br/>`durable:	true`                                         | indexer-records-changed    | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| indexer-records-changed-exchange | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-records-changed    | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| reprocess                        | `Type 	fanout` <br/>`durable:	true`                                         | indexer-reprocess          | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| indexer-reprocess-exchange       | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-reprocess          | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| schema-changed                   | `Type 	fanout` <br/>`durable:	true`                                         | indexer-schema-changed     | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| indexer-schema-changed-exchange  | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-schema-changed     | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| reindex                          | `Type 	fanout` <br/>`durable:	true`                                         | indexer-reindex            | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| indexer-reindex-exchange         | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-reindex            | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
 
 ## Keycloak configuration
 
@@ -233,35 +237,36 @@ Give `client-id` and `client-secret` to services, which should be authorized wit
 
 You will need to have the following environment variables defined.
 
-| name                                 | value                                                           | description                                                                                       | sensitive?                              | source                              |
-|--------------------------------------|-----------------------------------------------------------------|---------------------------------------------------------------------------------------------------|-----------------------------------------|-------------------------------------|
-| `ELASTIC_PASSWORD`                   | `********`                                                      | Password for Elasticsearch                                                                        | yes                                     | output of infrastructure deployment |
-| `ELASTIC_USER_NAME`                  | `********`                                                      | User name for Elasticsearch                                                                       | yes                                     | output of infrastructure deployment |
-| `ELASTIC_HOST`                       | ex `elastic.domain.com`                                         | Host Elasticsearch                                                                                | yes                                     | output of infrastructure deployment |
-| `ELASTIC_PORT`                       | ex `9243`                                                       | Port Elasticsearch                                                                                | yes                                     | output of infrastructure deployment |
-| `INDEXER_HOST`                       | ex `https://os-indexer-dot-opendes.appspot.com/api/indexer/v2/` | Indexer API endpoint                                                                              | no                                      | output of infrastructure deployment |
-| `ENTITLEMENTS_DOMAIN`                | ex `opendes-gcp.projects.com`                                   | OSDU R2 to run tests under                                                                        | no                                      | -                                   |
-| `OTHER_RELEVANT_DATA_COUNTRIES`      | ex `US`                                                         | valid legal tag with a other relevant data countries                                              | no                                      | -                                   |
-| `LEGAL_TAG`                          | ex `opendes-demo-legaltag`                                      | valid legal tag with a other relevant data countries from `DEFAULT_OTHER_RELEVANT_DATA_COUNTRIES` | no                                      | -                                   |
-| `DEFAULT_DATA_PARTITION_ID_TENANT1`  | ex `opendes`                                                    | HTTP Header 'Data-Partition-ID'                                                                   | no                                      | -                                   |
-| `DEFAULT_DATA_PARTITION_ID_TENANT2`  | ex `opendes`                                                    | HTTP Header 'Data-Partition-ID'                                                                   | no                                      | -                                   |
-| `SEARCH_HOST`                        | ex `http://localhost:8080/api/search/v2/`                       | Endpoint of search service                                                                        | no                                      | -                                   |
-| `STORAGE_HOST`                       | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/`  | Storage API endpoint                                                                              | no                                      | output of infrastructure deployment |
-| `SECURITY_HTTPS_CERTIFICATE_TRUST`   | ex `false`                                                      | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true'                         | false                                   | output of infrastructure deployment |
-| `TEST_OPENID_PROVIDER_CLIENT_ID`     | `********`                                                      | Client Id for `$INTEGRATION_TESTER`                                                               | yes                                     | --                                  |
-| `TEST_OPENID_PROVIDER_CLIENT_SECRET` | `********`                                                      |                                                                                                   | Client secret for `$INTEGRATION_TESTER` | --                                  |
-| `TEST_OPENID_PROVIDER_URL`           | `https://keycloak.com/auth/realms/osdu`                         | OpenID provider url                                                                               | yes                                     | --                                  |
+| name                                 | value                                                                 | description                                                                                       | sensitive?                              | source                              |
+|--------------------------------------|-----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|-----------------------------------------|-------------------------------------|
+| `ELASTIC_PASSWORD`                   | `********`                                                            | Password for Elasticsearch                                                                        | yes                                     | output of infrastructure deployment |
+| `ELASTIC_USER_NAME`                  | `********`                                                            | User name for Elasticsearch                                                                       | yes                                     | output of infrastructure deployment |
+| `ELASTIC_HOST`                       | ex `elastic.domain.com`                                               | Host Elasticsearch                                                                                | yes                                     | output of infrastructure deployment |
+| `ELASTIC_PORT`                       | ex `9243`                                                             | Port Elasticsearch                                                                                | yes                                     | output of infrastructure deployment |
+| `INDEXER_HOST`                       | ex `https://os-indexer-dot-opendes.appspot.com/api/indexer/v2/`       | Indexer API endpoint                                                                              | no                                      | output of infrastructure deployment |
+| `GROUP_ID`                           | ex `opendes-gcp.projects.com`                                         | OSDU R2 to run tests under                                                                        | no                                      | -                                   |
+| `OTHER_RELEVANT_DATA_COUNTRIES`      | ex `US`                                                               | valid legal tag with a other relevant data countries                                              | no                                      | -                                   |
+| `LEGAL_TAG`                          | ex `opendes-demo-legaltag`                                            | valid legal tag with a other relevant data countries from `DEFAULT_OTHER_RELEVANT_DATA_COUNTRIES` | no                                      | -                                   |
+| `DEFAULT_DATA_PARTITION_ID_TENANT1`  | ex `opendes`                                                          | HTTP Header 'Data-Partition-ID'                                                                   | no                                      | -                                   |
+| `DEFAULT_DATA_PARTITION_ID_TENANT2`  | ex `opendes`                                                          | HTTP Header 'Data-Partition-ID'                                                                   | no                                      | -                                   |
+| `SEARCH_HOST`                        | ex `http://localhost:8080/api/search/v2/`                             | Endpoint of search service                                                                        | no                                      | -                                   |
+| `STORAGE_HOST`                       | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/`        | Storage API endpoint                                                                              | no                                      | output of infrastructure deployment |
+| `SECURITY_HTTPS_CERTIFICATE_TRUST`   | ex `false`                                                            | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true'                         | false                                   | output of infrastructure deployment |
+| `TEST_OPENID_PROVIDER_CLIENT_ID`     | `********`                                                            | Client Id for `$INTEGRATION_TESTER`                                                               | yes                                     | --                                  |
+| `TEST_OPENID_PROVIDER_CLIENT_SECRET` | `********`                                                            |                                                                                                   | Client secret for `$INTEGRATION_TESTER` | --                                  |
+| `TEST_OPENID_PROVIDER_URL`           | `https://keycloak.com/auth/realms/osdu`                               | OpenID provider url                                                                               | yes                                     | --                                  |
+| `CUCUMBER_OPTIONS`                   | `--tags '~@indexer-extended'` OR `--tags '~@* and @indexer-extended'` | By default `--tags '~@indexer-extended'` to disable experimental feature testing                  | no                                      | --                                  |
 
 **Entitlements configuration for integration accounts**
 
-| INTEGRATION_TESTER                                                                                                                                                                                                | NO_DATA_ACCESS_TESTER | 
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
-| users<br/>users.datalake.ops<br/>service.storage.creator<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{domain}.com |                       |
+| INTEGRATION_TESTER                                                                                                                                                                                                 | NO_DATA_ACCESS_TESTER | 
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
+| users<br/>users.datalake.ops<br/>service.storage.creator<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{groupId}.com |                       |
 
 Execute following command to build code and run all the integration tests:
 
 ```bash
 # Note: this assumes that the environment variables for integration tests as outlined
 #       above are already exported in your environment.
-$ (cd testing/indexer-test-anthos/ && mvn clean test)
+$ (cd testing/indexer-test-baremetal/ && mvn clean test)
 ```

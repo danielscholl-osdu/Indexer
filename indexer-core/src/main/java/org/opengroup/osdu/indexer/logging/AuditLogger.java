@@ -89,6 +89,10 @@ public class AuditLogger {
         this.writeLog(this.getAuditEvents().getReindexEvent(resources));
     }
 
+    public void getReindexRecords(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getReindexRecordsEvent(resources));
+    }
+
     public void copyIndex(List<String> resources) {
         this.writeLog(this.getAuditEvents().getCopyIndexEvent(resources));
     }

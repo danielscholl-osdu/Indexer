@@ -103,7 +103,7 @@ public class RecordIndexerApi {
     public ResponseEntity<?> reindex(
             @RequestBody @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
             @Valid RecordReindexRequest recordReindexRequest) {
-        return new ResponseEntity<>(reIndexService.reindexRecords(recordReindexRequest, false), HttpStatus.OK);
+        return new ResponseEntity<>(reIndexService.reindexKind(recordReindexRequest, false), HttpStatus.OK);
     }
 
     // THIS IS AN INTERNAL USE API ONLY

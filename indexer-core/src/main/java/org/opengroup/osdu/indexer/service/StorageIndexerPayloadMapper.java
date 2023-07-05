@@ -30,10 +30,9 @@ import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualProperties
 import org.opengroup.osdu.indexer.schema.converter.tags.Priority;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
-import org.opengroup.osdu.indexer.util.VirtualPropertyUtil;
+import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
-import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimationSetting;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -58,8 +57,6 @@ public class StorageIndexerPayloadMapper {
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
     private GeoShapeDecimator decimator;
-    @Inject
-    private GeoShapeDecimationSetting decimationSetting;
 
     public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {
@@ -201,7 +198,7 @@ public class StorageIndexerPayloadMapper {
         } catch (NoSuchMethodException e) {
             this.log.warning(String.format("record-id: %s | error fetching property: %s | error: %s", recordId, propertyKey, e.getMessage()));
         } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            this.log.warning(String.format("record-id: %s | error fetching property: %s | error: %s", recordId, propertyKey, e.getMessage()), e);
+            this.log.warning(String.format("record-id: %s | error fetching property: %s | error: %s", recordId, propertyKey, e.getMessage()));
         }
         return null;
     }
@@ -223,21 +220,21 @@ public class StorageIndexerPayloadMapper {
                     continue;
                 }
                 Priority priority = chooseOriginalProperty(entry.getKey(), entry.getValue().getPriorities(), dataCollectorMap);
-                String virtualPropertyPath = VirtualPropertyUtil.removeDataPrefix(entry.getKey());
-                String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
+                String virtualPropertyPath = PropertyUtil.removeDataPrefix(entry.getKey());
+                String originalPropertyPath = PropertyUtil.removeDataPrefix(priority.getPath());
 
                 // Populate the virtual property values from the chosen original property
                 List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
-                        .filter(originalPropertyName -> VirtualPropertyUtil.isPropertyPathMatched(originalPropertyName, originalPropertyPath))
+                        .filter(originalPropertyName -> PropertyUtil.isPropertyPathMatched(originalPropertyName, originalPropertyPath))
                         .collect(Collectors.toList());
                 originalPropertyNames.forEach(originalPropertyName -> {
                     String virtualPropertyName = virtualPropertyPath + originalPropertyName.substring(originalPropertyPath.length());
                     dataCollectorMap.put(virtualPropertyName, dataCollectorMap.get(originalPropertyName));
                 });
 
-                if(virtualPropertyPath.equals(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
-                        dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
-                    originalGeoShapeProperty = originalPropertyPath + VirtualPropertyUtil.FIELD_WGS84_COORDINATES;
+                if(virtualPropertyPath.equals(PropertyUtil.VIRTUAL_DEFAULT_LOCATION) &&
+                        dataCollectorMap.containsKey(PropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+                    originalGeoShapeProperty = originalPropertyPath + PropertyUtil.FIELD_WGS84_COORDINATES;
                 }
             }
         }
@@ -245,7 +242,7 @@ public class StorageIndexerPayloadMapper {
         // No VirtualProperties.DefaultLocation.Wgs84Coordinates defined, use the default geo-shape property
         if (originalGeoShapeProperty == null)
             originalGeoShapeProperty = getDefaultGeoShapeProperty(dataCollectorMap);
-        if(originalGeoShapeProperty != null && decimationSetting.isDecimationEnabled()) {
+        if(originalGeoShapeProperty != null) {
             try {
                 decimateGeoShape(originalGeoShapeProperty, dataCollectorMap);
             } catch (JsonProcessingException ex) {
@@ -273,30 +270,30 @@ public class StorageIndexerPayloadMapper {
         DecimatedResult result = decimator.decimateShapeObj(shapeObj);
         if(result.isDecimated()) {
             dataCollectorMap.put(originalGeoShapeProperty, result.getDecimatedShapeObj());
-            if(dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
-                dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH, result.getDecimatedShapeObj());
+            if(dataCollectorMap.containsKey(PropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+                dataCollectorMap.put(PropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH, result.getDecimatedShapeObj());
             }
         }
-        if(dataCollectorMap.containsKey(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
-            dataCollectorMap.put(VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH, result.isDecimated());
+        if(dataCollectorMap.containsKey(PropertyUtil.VIRTUAL_DEFAULT_LOCATION_WGS84_PATH)) {
+            dataCollectorMap.put(PropertyUtil.VIRTUAL_DEFAULT_LOCATION_IS_DECIMATED_PATH, result.isDecimated());
         }
     }
 
     private Priority chooseOriginalProperty(String virtualPropertyPath, List<Priority> priorities, Map<String, Object> dataCollectorMap) {
-        if (VirtualPropertyUtil.VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath) || VirtualPropertyUtil.DATA_VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath)) {
+        if (PropertyUtil.VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath) || PropertyUtil.DATA_VIRTUAL_DEFAULT_LOCATION.equals(virtualPropertyPath)) {
             // Specially handle "data.VirtualProperties.DefaultLocation" -- check the value of the field "wgs84Coordinates"
             for (Priority priority : priorities) {
-                String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
-                String wgs84PropertyField = originalPropertyPath + VirtualPropertyUtil.FIELD_WGS84_COORDINATES;
+                String originalPropertyPath = PropertyUtil.removeDataPrefix(priority.getPath());
+                String wgs84PropertyField = originalPropertyPath + PropertyUtil.FIELD_WGS84_COORDINATES;
                 if (dataCollectorMap.containsKey(wgs84PropertyField) && dataCollectorMap.get(wgs84PropertyField) != null)
                     return priority;
             }
         }
 
         for (Priority priority : priorities) {
-            String originalPropertyPath = VirtualPropertyUtil.removeDataPrefix(priority.getPath());
+            String originalPropertyPath = PropertyUtil.removeDataPrefix(priority.getPath());
             List<String> originalPropertyNames = dataCollectorMap.keySet().stream()
-                    .filter(name -> VirtualPropertyUtil.isPropertyPathMatched(name, originalPropertyPath))
+                    .filter(name -> PropertyUtil.isPropertyPathMatched(name, originalPropertyPath))
                     .collect(Collectors.toList());
             for (String originalPropertyName : originalPropertyNames) {
                 if (dataCollectorMap.containsKey(originalPropertyName) && dataCollectorMap.get(originalPropertyName) != null)

@@ -30,10 +30,13 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.indexer.cache.PartitionSafeFlattenedSchemaCache;
+import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
 import org.opengroup.osdu.indexer.model.Kind;
-import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
+import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
@@ -42,14 +45,10 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
-
-    private static final String FLATTENED_SCHEMA = "_flattened";
 
     private final Gson gson = new Gson();
 
@@ -66,9 +65,15 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private IndicesService indicesService;
     @Inject
-    private ISchemaCache schemaCache;
+    private PartitionSafeSchemaCache schemaCache;
+    @Inject
+    private PartitionSafeFlattenedSchemaCache flattenedSchemaCache;
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    @Inject
+    private PropertyConfigurationsService propertyConfigurationsService;
+    @Inject
+    private AugmenterSetting augmenterSetting;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
@@ -154,30 +159,83 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             this.invalidateCache(kind);
         }
 
-        String schema = (String) this.schemaCache.get(kind);
+        String schema = this.schemaCache.get(kind);
         if (Strings.isNullOrEmpty(schema)) {
             // get from storage
             schema = this.schemaProvider.getSchema(kind);
             if (Strings.isNullOrEmpty(schema)) {
                 return this.getEmptySchema(kind);
             } else {
-                // cache the schema
-                this.schemaCache.put(kind, schema);
-                // get flatten schema and cache it
-                IndexSchema flatSchemaObj = normalizeSchema(schema);
-                if (flatSchemaObj != null) {
-                    this.schemaCache.put(kind + FLATTENED_SCHEMA, gson.toJson(flatSchemaObj));
+                if(augmenterSetting.isEnabled()) {
+                    // Merge schema of the extended properties if needed
+                    PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(kind);
+                    if (propertyConfigurations != null) {
+                        schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
+                    }
                 }
+
+                IndexSchema flatSchemaObj = cacheAndNormalizeSchema(kind, schema);
                 return flatSchemaObj;
             }
         } else {
             // search flattened schema in memcache
-            String flattenedSchema = (String) this.schemaCache.get(kind + FLATTENED_SCHEMA);
+            String flattenedSchema = this.flattenedSchemaCache.get(kind);
             if (Strings.isNullOrEmpty(flattenedSchema)) {
                 return this.getEmptySchema(kind);
             }
             return this.gson.fromJson(flattenedSchema, IndexSchema.class);
         }
+    }
+
+    private IndexSchema cacheAndNormalizeSchema(String kind, String schema) {
+        // cache the schema
+        this.schemaCache.put(kind, schema);
+        // get flatten schema and cache it
+        IndexSchema flatSchemaObj = normalizeSchema(schema);
+        if (flatSchemaObj != null) {
+            this.flattenedSchemaCache.put(kind, gson.toJson(flatSchemaObj));
+        }
+        return flatSchemaObj;
+    }
+
+    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
+        Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
+        Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
+        List<SchemaItem> extendedSchemaItems = propertyConfigurationsService.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        if (!extendedSchemaItems.isEmpty()) {
+            List<SchemaItem> originalSchemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
+            originalSchemaItems.addAll(extendedSchemaItems);
+            originalSchema.setSchema(originalSchemaItems.toArray(new SchemaItem[0]));
+            return gson.toJson(originalSchema);
+        } else {
+            return originalSchemaStr;
+        }
+    }
+
+    private Map<String, Schema> getSchemaOfRelatedObjectKinds(PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
+        List<String> relatedObjectKinds = propertyConfigurations.getUniqueRelatedObjectKinds();
+        Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
+        for (String relatedObjectKind : relatedObjectKinds) {
+            // The relatedObjectKind defined in property configuration can be kind having major version only
+            // e.g. "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1."
+            String concreteRelatedObjectKind = propertyConfigurationsService.resolveConcreteKind(relatedObjectKind);
+            if (Strings.isNullOrEmpty(concreteRelatedObjectKind))
+                continue;
+
+            String relatedObjectKindSchema = this.schemaCache.get(concreteRelatedObjectKind);
+            if (Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                relatedObjectKindSchema = this.schemaProvider.getSchema(concreteRelatedObjectKind);
+                if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                    cacheAndNormalizeSchema(concreteRelatedObjectKind, relatedObjectKindSchema);
+                }
+            }
+
+            if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
+                Schema schema = gson.fromJson(relatedObjectKindSchema, Schema.class);
+                relatedObjectKindSchemas.put(relatedObjectKind, schema);
+            }
+        }
+        return relatedObjectKindSchemas;
     }
 
     private IndexSchema getEmptySchema(String kind) {
@@ -205,14 +263,15 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         }
     }
 
+    @Override
+    public void invalidateSchemaCache(String kind) {
+        this.invalidateCache(kind);
+    }
+
     private void invalidateCache(String kind) {
-        String schema = (String) this.schemaCache.get(kind);
-        if (!Strings.isNullOrEmpty(schema)) this.schemaCache.delete(kind);
-
-        String flattenSchema = (String) this.schemaCache.get(kind + FLATTENED_SCHEMA);
-        if (!Strings.isNullOrEmpty(flattenSchema)) this.schemaCache.delete(kind + FLATTENED_SCHEMA);
-
-        virtualPropertiesSchemaCache.delete(kind);
+        this.schemaCache.delete(kind);
+        this.flattenedSchemaCache.delete(kind);
+        this.virtualPropertiesSchemaCache.delete(kind);
     }
 
     private IndexSchema normalizeSchema(String schemaStr) throws AppException {

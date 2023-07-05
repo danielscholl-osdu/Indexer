@@ -9,6 +9,7 @@ import cucumber.api.java.en.When;
 import lombok.extern.java.Log;
 import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 import org.opengroup.osdu.util.ElasticUtils;
+import org.opengroup.osdu.util.GCConfig;
 import org.opengroup.osdu.util.GCPHTTPClient;
 
 @Log
@@ -20,6 +21,7 @@ public class Steps extends SchemaServiceRecordSteps {
 
     @Before
     public void before(Scenario scenario) {
+        GCConfig.updateEntitlementsDomainVariable();
         this.scenario = scenario;
         this.httpClient = new GCPHTTPClient();
     }
@@ -27,6 +29,16 @@ public class Steps extends SchemaServiceRecordSteps {
     @Given("^the schema is created with the following kind$")
     public void the_schema_is_created_with_the_following_kind(DataTable dataTable) {
         super.the_schema_is_created_with_the_following_kind(dataTable);
+    }
+
+    @Then("^I set starting stateful scenarios$")
+    public void i_set_starting_stateful_scenarios() throws Throwable {
+        super.i_set_scenarios_as_stateful(true);
+    }
+
+    @Then("^I set ending stateful scenarios$")
+    public void i_set_ending_stateful_scenarios() throws Throwable {
+        super.i_set_scenarios_as_stateful(false);
     }
 
     @When("^I ingest records with the \"(.*?)\" with \"(.*?)\" for a given \"(.*?)\"$")
@@ -68,6 +80,16 @@ public class Steps extends SchemaServiceRecordSteps {
     @Then("^I should be able to search (\\d+) record with index \"([^\"]*)\" by tag \"([^\"]*)\" and value \"([^\"]*)\"$")
     public void iShouldBeAbleToSearchRecordByTagKeyAndTagValue(int expectedNumber, String index, String tagKey, String tagValue) throws Throwable {
         super.iShouldBeAbleToSearchRecordByTagKeyAndTagValue(index, tagKey, tagValue, expectedNumber);
+    }
+
+    @Then("^I clean up the index of the extended kinds \"([^\"]*)\" in the Elastic Search$")
+    public void iShouldCleanupIndicesOfExtendedKinds(String extendedKinds) throws Throwable {
+        super.iShouldCleanupIndicesOfExtendedKinds(extendedKinds);
+    }
+
+    @Then("^I should be able to search (\\d+) record with index \"([^\"]*)\" by extended data field \"([^\"]*)\" and value \"([^\"]*)\"$")
+    public void iShouldBeAbleToSearchRecordByFieldAndFieldValue(int expectedNumber, String index, String fieldKey, String fieldValue) throws Throwable {
+        super.iShouldBeAbleToSearchRecordByFieldAndFieldValue(index, fieldKey, fieldValue, expectedNumber);
     }
 
     @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by bounding box query with points \\((-?\\d+), (-?\\d+)\\) and  \\((-?\\d+), (-?\\d+)\\) on field \"([^\"]*)\"$")

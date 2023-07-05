@@ -31,7 +31,7 @@ import org.opengroup.osdu.core.gcp.oqm.driver.OqmDriver;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmDestination;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmTopic;
-import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.IndexerMessagingConfigProperties;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.config.MessagingConfigProperties;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 public class StatusPublisherImpl implements IPublisher {
 
     private final OqmDriver driver;
-    private final IndexerMessagingConfigProperties properties;
+    private final MessagingConfigProperties properties;
     private final JsonSerializer<JobStatus> statusJsonSerializer;
     private OqmTopic oqmTopic;
     private Gson gson;

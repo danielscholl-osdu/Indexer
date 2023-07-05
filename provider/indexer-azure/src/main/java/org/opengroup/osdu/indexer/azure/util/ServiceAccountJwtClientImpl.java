@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.azure.util;
 
+import com.google.common.base.Strings;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.azure.util.AzureServicePrincipleTokenService;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -31,6 +32,7 @@ import javax.inject.Inject;
 @Component
 @RequestScope
 public class ServiceAccountJwtClientImpl implements IServiceAccountJwtClient {
+    private final String BEARER = "Bearer";
 
     @Inject
     private ITenantFactory tenantInfoServiceProvider;
@@ -55,6 +57,10 @@ public class ServiceAccountJwtClientImpl implements IServiceAccountJwtClient {
 
         this.dpsHeaders.put(DpsHeaders.USER_EMAIL, tenant.getServiceAccount());
 
-        return this.tokenService.getAuthorizationToken();
+        String token = this.tokenService.getAuthorizationToken();
+        if(!Strings.isNullOrEmpty(token) && !token.startsWith(BEARER)) {
+            token = BEARER + " " + token;
+        }
+        return token;
     }
 }
