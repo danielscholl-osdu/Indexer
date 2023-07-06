@@ -17,96 +17,100 @@
 
 package org.opengroup.osdu.indexer.provider.gcp.indexing.initialization;
 
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.gcp.oqm.driver.OqmDriver;
-import org.opengroup.osdu.core.gcp.oqm.model.*;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmDestination;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmMessageReceiver;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriber;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriberThroughput;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscription;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmSubscriptionQuery;
+import org.opengroup.osdu.core.gcp.oqm.model.OqmTopic;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Nullable;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class OqmSubscriberManager {
 
-    private final OqmDriver driver;
+  private final OqmDriver driver;
 
-    private OqmSubscription getSubscriptionForTenant(TenantInfo tenantInfo, String topicName, String subscriptionName) {
-        String dataPartitionId = tenantInfo.getDataPartitionId();
-        log.info("OQM: provisioning tenant {}:", dataPartitionId);
-        log.info("OQM: check for topic {} existence:", topicName);
-        OqmTopic topic = driver.getTopic(topicName, getDestination(tenantInfo)).orElse(null);
+  public void registerSubscriber(String dataPartitionId, String topicName, String subscriptionName,
+      OqmMessageReceiver messageReceiver, OqmSubscriberThroughput throughput) {
+    OqmSubscription subscriptionForTenant = getSubscriptionForTenant(dataPartitionId, topicName, subscriptionName);
+    log.info("OQM: registering Subscriber for subscription {}", subscriptionName);
 
-        if (topic == null) {
-            log.error("OQM: check for topic: {}, tenant: {} existence: ABSENT.", topicName,
-                dataPartitionId);
-            throw new AppException(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Required topic not exists.",
-                String.format(
-                    "Required topic not exists. Create topic: %s for tenant: %s and restart service.",
-                    topicName, dataPartitionId
-                )
-            );
-        }
+    OqmDestination destination = getDestination(dataPartitionId);
+    OqmSubscriber subscriber = OqmSubscriber.builder()
+        .subscription(subscriptionForTenant)
+        .messageReceiver(messageReceiver)
+        .throughput(throughput)
+        .build();
 
-        log.info("OQM: check for topic {} existence: PRESENT", topicName);
-        OqmSubscription subscription = getSubscription(tenantInfo, topic, subscriptionName);
+    driver.subscribe(subscriber, destination);
+    log.info("OQM: provisioning subscription {}: Subscriber REGISTERED.", subscriptionName);
+  }
 
-        if (subscription == null) {
-            log.error(
-                "OQM: check for subscription {}, tenant: {} existence: ABSENT.",
-                subscriptionName,
-                dataPartitionId
-            );
-            throw new AppException(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Required subscription not exists.",
-                String.format(
-                    "Required subscription not exists. Create subscription: %s for tenant: %s and restart service.",
-                    subscriptionName,
-                    dataPartitionId
-                )
-            );
-        }
-        log.info("OQM: provisioning tenant {}: COMPLETED.", dataPartitionId);
-        return subscription;
+  private OqmSubscription getSubscriptionForTenant(String dataPartitionId, String topicName, String subscriptionName) {
+    log.info("OQM: provisioning tenant {}:", dataPartitionId);
+    log.info("OQM: check for topic {} existence:", topicName);
+    OqmTopic topic = driver.getTopic(topicName, getDestination(dataPartitionId)).orElse(null);
+
+    if (topic == null) {
+      log.error("OQM: check for topic: {}, tenant: {} existence: ABSENT.", topicName, dataPartitionId);
+      throw new AppException(
+          HttpStatus.INTERNAL_SERVER_ERROR.value(),
+          "Required topic not exists.",
+          String.format(
+              "Required topic not exists. Create topic: %s for tenant: %s and restart service.",
+              topicName, dataPartitionId
+          )
+      );
     }
 
-    @Nullable
-    private OqmSubscription getSubscription(TenantInfo tenantInfo, OqmTopic topic, String subscriptionName) {
-        log.info("OQM: check for subscription {} existence:", subscriptionName);
-        OqmSubscriptionQuery query = OqmSubscriptionQuery.builder()
-            .namePrefix(subscriptionName)
-            .subscriberable(true)
-            .build();
-        return driver
-            .listSubscriptions(topic, query, getDestination(tenantInfo)).stream()
-            .findAny()
-            .orElse(null);
-    }
+    log.info("OQM: check for topic {} existence: PRESENT", topicName);
+    OqmSubscription subscription = getSubscription(dataPartitionId, topic, subscriptionName);
 
-    public void registerSubscriber(TenantInfo tenantInfo, String topicName, String subscriptionName, OqmMessageReceiver messageReceiver, OqmSubscriberThroughput throughput) {
-        OqmSubscription subscriptionForTenant = getSubscriptionForTenant(tenantInfo, topicName, subscriptionName);
-        log.info("OQM: registering Subscriber for subscription {}", subscriptionName);
-        OqmDestination destination = getDestination(tenantInfo);
-
-        OqmSubscriber subscriber = OqmSubscriber.builder()
-            .subscription(subscriptionForTenant)
-            .messageReceiver(messageReceiver)
-            .throughput(throughput)
-            .build();
-        driver.subscribe(subscriber, destination);
-        log.info("OQM: provisioning subscription {}: Subscriber REGISTERED.", subscriptionName);
+    if (subscription == null) {
+      log.error(
+          "OQM: check for subscription {}, tenant: {} existence: ABSENT.",
+          subscriptionName,
+          dataPartitionId
+      );
+      throw new AppException(
+          HttpStatus.INTERNAL_SERVER_ERROR.value(),
+          "Required subscription not exists.",
+          String.format(
+              "Required subscription not exists. Create subscription: %s for tenant: %s and restart service.",
+              subscriptionName,
+              dataPartitionId
+          )
+      );
     }
+    log.info("OQM: provisioning tenant {}: COMPLETED.", dataPartitionId);
+    return subscription;
+  }
 
-    private OqmDestination getDestination(TenantInfo tenantInfo) {
-        return OqmDestination.builder()
-            .partitionId(tenantInfo.getDataPartitionId())
-            .build();
-    }
+  @Nullable
+  private OqmSubscription getSubscription(String dataPartitionId, OqmTopic topic, String subscriptionName) {
+    log.info("OQM: check for subscription {} existence:", subscriptionName);
+    OqmSubscriptionQuery query = OqmSubscriptionQuery.builder()
+        .namePrefix(subscriptionName)
+        .subscriberable(true)
+        .build();
+    return driver
+        .listSubscriptions(topic, query, getDestination(dataPartitionId)).stream()
+        .findAny()
+        .orElse(null);
+  }
+
+  private OqmDestination getDestination(String dataPartitionId) {
+    return OqmDestination.builder()
+        .partitionId(dataPartitionId)
+        .build();
+  }
 }

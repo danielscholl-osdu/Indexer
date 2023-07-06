@@ -27,7 +27,7 @@ import org.opengroup.osdu.core.gcp.oqm.model.OqmDestination;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
 import org.opengroup.osdu.core.gcp.oqm.model.OqmTopic;
 import org.opengroup.osdu.indexer.model.Constants;
-import org.opengroup.osdu.indexer.provider.gcp.indexing.processing.IndexerMessagingConfigProperties;
+import org.opengroup.osdu.indexer.provider.gcp.indexing.config.MessagingConfigProperties;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -52,16 +52,16 @@ public class ReprocessingTaskPublisher extends IndexerQueueTaskBuilder {
 
   private final OqmDriver driver;
 
-  private final IndexerMessagingConfigProperties properties;
+  private final MessagingConfigProperties properties;
 
   private OqmTopic reprocessOqmTopic;
 
-  private OqmTopic recordsChangedTopic;
+  private OqmTopic reindexTopic;
 
   @PostConstruct
   public void setUp() {
     reprocessOqmTopic = OqmTopic.builder().name(properties.getReprocessTopicName()).build();
-    recordsChangedTopic = OqmTopic.builder().name(properties.getRecordsChangedTopicName()).build();
+    reindexTopic = OqmTopic.builder().name(properties.getReindexTopicName()).build();
   }
 
   public void createWorkerTask(String payload, DpsHeaders headers) {
@@ -112,15 +112,6 @@ public class ReprocessingTaskPublisher extends IndexerQueueTaskBuilder {
     );
   }
 
-  private void publishReindexTask(String payload, DpsHeaders headers) {
-    OqmDestination oqmDestination = OqmDestination.builder().partitionId(headers.getPartitionId())
-        .build();
-    Map<String, String> attributes = getAttributesFromHeaders(headers);
-    OqmMessage oqmMessage = OqmMessage.builder().data(payload).attributes(attributes).build();
-    log.info("Reprocessing task: {} ,has been published.", oqmMessage);
-    driver.publish(oqmMessage, reprocessOqmTopic, oqmDestination);
-  }
-
   private void publishRecordsChangedTask(String payload, DpsHeaders headers) {
     OqmDestination oqmDestination = OqmDestination.builder()
         .partitionId(headers.getPartitionId())
@@ -141,8 +132,17 @@ public class ReprocessingTaskPublisher extends IndexerQueueTaskBuilder {
         .attributes(attributes)
         .build();
 
+    log.info("Reindex task: {} ,has been published.", oqmMessage);
+    driver.publish(oqmMessage, reindexTopic, oqmDestination);
+  }
+
+  private void publishReindexTask(String payload, DpsHeaders headers) {
+    OqmDestination oqmDestination = OqmDestination.builder().partitionId(headers.getPartitionId())
+        .build();
+    Map<String, String> attributes = getAttributesFromHeaders(headers);
+    OqmMessage oqmMessage = OqmMessage.builder().data(payload).attributes(attributes).build();
     log.info("Reprocessing task: {} ,has been published.", oqmMessage);
-    driver.publish(oqmMessage, recordsChangedTopic, oqmDestination);
+    driver.publish(oqmMessage, reprocessOqmTopic, oqmDestination);
   }
 
   @NotNull

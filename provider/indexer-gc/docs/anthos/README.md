@@ -201,6 +201,8 @@ curl -L -X PATCH 'https://dev.osdu.club/api/partition/v1/partitions/opendes' -H 
 
 #### Exchanges and queues configuration
 
+![Screenshot](./pics/indexer.png)
+
 RabbitMq should have exchanges and queues with names and configs:
 
 | EXCHANGE NAME                    | EXCHANGE CONFIG                                                             | Target queue name          | Target queue config                                                  |
@@ -212,6 +214,8 @@ RabbitMq should have exchanges and queues with names and configs:
 | indexer-reprocess-exchange       | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-reprocess          | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
 | schema-changed                   | `Type 	fanout` <br/>`durable:	true`                                         | indexer-schema-changed     | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
 | indexer-schema-changed-exchange  | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-schema-changed     | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| reindex                          | `Type 	fanout` <br/>`durable:	true`                                         | indexer-reindex            | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
+| indexer-reindex-exchange         | `Type 	x-delayed-message` <br/>`durable:	true`<br/>`x-delayed-type:	fanout` | indexer-reindex            | `x-delivery-limit:	5`<br/>`x-queue-type: quorum`<br/>`durable: true` |
 
 ## Keycloak configuration
 

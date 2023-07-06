@@ -35,7 +35,7 @@ import org.opengroup.osdu.indexer.api.ReindexApi;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.scope.ThreadDpsHeaders;
 
 @RunWith(Theories.class)
-public class RepressorMessageReceiverTest {
+public class ReprocessorMessageReceiverTest {
 
   protected ThreadDpsHeaders dpsHeaders = Mockito.mock(ThreadDpsHeaders.class);
 
@@ -45,11 +45,11 @@ public class RepressorMessageReceiverTest {
 
   private ReindexApi reindexApi = Mockito.mock(ReindexApi.class);
 
-  private RepressorMessageReceiver receiver;
+  private ReprocessorMessageReceiver receiver;
 
   @Before
   public void setUp() {
-    receiver = new RepressorMessageReceiver(dpsHeaders, tokenProvider, reindexApi);
+    receiver = new ReprocessorMessageReceiver(dpsHeaders, tokenProvider, reindexApi);
   }
 
   @DataPoints("VALID_EVENTS")
