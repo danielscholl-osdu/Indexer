@@ -21,9 +21,10 @@ public class Constants {
 
     // Specifications using kind as key is not partition safe if the specifications are per data partition
     public static final int SPEC_CACHE_EXPIRATION = 600;
-    public static final int SPEC_MAX_CACHE_SIZE = 2000;
+    public static final int SPEC_MAX_CACHE_SIZE = 20000;
 
     // Data id itself is partition safe
     public static final int DATA_CACHE_EXPIRATION = 120;
-    public static final int DATA_MAX_CACHE_SIZE = 2000;
+    public static final int DATA_CHANGE_INFO_CACHE_EXPIRATION = 3600;
+    public static final int DATA_MAX_CACHE_SIZE = 20000;
 }
