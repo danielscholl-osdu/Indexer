@@ -175,7 +175,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                         }
                     }
                     catch(Exception ex) {
-                        log.warning(String.format("Augmenter: Failed to merge schema of the extended properties for kind: '%s'", kind), ex);
+                        log.error(String.format("Augmenter: Failed to merge schema of the extended properties for kind: '%s'", kind), ex);
                     }
                 }
 

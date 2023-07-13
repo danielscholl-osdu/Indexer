@@ -166,7 +166,7 @@ public class IndexerServiceImpl implements IndexerService {
                     }
                 }
                 catch(Exception ex) {
-                    jaxRsDpsLog.warning("Augmenter: Failed to update associated records", ex);
+                    jaxRsDpsLog.error("Augmenter: Failed to update associated records", ex);
                 }
             }
         } catch (IOException e) {
@@ -363,7 +363,7 @@ public class IndexerServiceImpl implements IndexerService {
                         }
                     }
                     catch(Exception ex) {
-                        jaxRsDpsLog.warning(String.format("Augmenter: Failed to merge extended properties of the record with id: '%s' and kind: '%s'", storageRecord.getId(), storageRecord.getKind()), ex);
+                        jaxRsDpsLog.error(String.format("Augmenter: Failed to merge extended properties of the record with id: '%s' and kind: '%s'", storageRecord.getId(), storageRecord.getKind()), ex);
                     }
                 }
 

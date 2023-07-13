@@ -130,7 +130,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                     // Log for debug
                     if(configuration.hasInvalidConfigurations()) {
                         String msg = String.format("PropertyConfigurations: it has invalid PropertyConfiguration for configurations with name '%s':", configuration.getName());
-                        this.jaxRsDpsLog.debug(msg);
+                        this.jaxRsDpsLog.warning(msg);
                     }
                 }
                 else {
@@ -145,7 +145,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                         msgBuilder.append(System.lineSeparator());
                         msgBuilder.append("It does not have any valid PropertyConfiguration");
                     }
-                    this.jaxRsDpsLog.debug(msgBuilder.toString());
+                    this.jaxRsDpsLog.warning(msgBuilder.toString());
 
                     configuration = EMPTY_CONFIGURATIONS; // reset
                 }
