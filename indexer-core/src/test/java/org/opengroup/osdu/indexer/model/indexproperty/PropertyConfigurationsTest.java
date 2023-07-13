@@ -45,6 +45,7 @@ public class PropertyConfigurationsTest {
     public void isValid() {
         Assert.assertTrue(configurations.hasValidCode());
         Assert.assertTrue(configurations.hasValidConfigurations());
+        Assert.assertFalse(configurations.hasInvalidConfigurations());
         Assert.assertTrue(configurations.isValid());
     }
 
@@ -75,15 +76,18 @@ public class PropertyConfigurationsTest {
 
         configurations.setConfigurations(new ArrayList<>());
         Assert.assertFalse(configurations.hasValidConfigurations());
+        Assert.assertFalse(configurations.hasInvalidConfigurations());
         Assert.assertFalse(configurations.isValid());
 
         configurations.setConfigurations(null);
         Assert.assertFalse(configurations.hasValidConfigurations());
+        Assert.assertFalse(configurations.hasInvalidConfigurations());
         Assert.assertFalse(configurations.isValid());
 
         propertyConfigurations.forEach(p -> p.setPolicy(""));
         configurations.setConfigurations(propertyConfigurations);
         Assert.assertFalse(configurations.hasValidConfigurations());
+        Assert.assertTrue(configurations.hasInvalidConfigurations());
         Assert.assertFalse(configurations.isValid());
     }
 
