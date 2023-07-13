@@ -167,10 +167,15 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 return this.getEmptySchema(kind);
             } else {
                 if(augmenterSetting.isEnabled()) {
-                    // Merge schema of the extended properties if needed
-                    PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(kind);
-                    if (propertyConfigurations != null) {
-                        schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
+                    try {
+                        // Merge schema of the extended properties if needed
+                        PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(kind);
+                        if (propertyConfigurations != null) {
+                            schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
+                        }
+                    }
+                    catch(Exception ex) {
+                        log.warning(String.format("Augmenter: Failed to merge schema of the extended properties for kind: '%s'", kind), ex);
                     }
                 }
 

@@ -157,11 +157,16 @@ public class IndexerServiceImpl implements IndexerService {
                 retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
             }
 
-            if(this.augmenterSetting.isEnabled()) {
-                Map<String, List<String>> upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
-                Map<String, List<String>> deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
-                if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
-                    propertyConfigurationsService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
+            if (this.augmenterSetting.isEnabled()) {
+                try {
+                    Map<String, List<String>> upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
+                    Map<String, List<String>> deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
+                    if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
+                        propertyConfigurationsService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
+                    }
+                }
+                catch(Exception ex) {
+                    jaxRsDpsLog.warning("Augmenter: Failed to update associated records", ex);
                 }
             }
         } catch (IOException e) {
@@ -346,14 +351,19 @@ public class IndexerServiceImpl implements IndexerService {
                 }
 
                 if(this.augmenterSetting.isEnabled()) {
-                    if(propertyConfigurationsService.isPropertyConfigurationsEnabled(storageRecord.getKind())) {
-                        PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(storageRecord.getKind());
-                        if (propertyConfigurations != null) {
-                            // Merge extended properties
-                            dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
+                    try {
+                        if (propertyConfigurationsService.isPropertyConfigurationsEnabled(storageRecord.getKind())) {
+                            PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(storageRecord.getKind());
+                            if (propertyConfigurations != null) {
+                                // Merge extended properties
+                                dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
+                            }
+                            // We cache the dataMap in case the update of this object will trigger update of the related objects.
+                            propertyConfigurationsService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
                         }
-                        // We cache the dataMap in case the update of this object will trigger update of the related objects.
-                        propertyConfigurationsService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
+                    }
+                    catch(Exception ex) {
+                        jaxRsDpsLog.warning(String.format("Augmenter: Failed to merge extended properties of the record with id: '%s' and kind: '%s'", storageRecord.getId(), storageRecord.getKind()), ex);
                     }
                 }
 

@@ -60,4 +60,40 @@ public class PropertyConfigurations {
         }
         return new ArrayList<>(relatedObjectKinds);
     }
+
+    public boolean hasValidCode() {
+        // It is just basic test to detect mistake
+        if(Strings.isNullOrEmpty(this.code)) {
+            return false;
+        }
+
+        String[] parts = this.code.split(":");
+        if(parts.length != 4) {
+            return false;
+        }
+        // Version must be ended with dot and major version only
+        // e.g. "Code": "osdu:wks:master-data--Well:1."
+        String version = parts[3];
+        return (version.length() > 1 && version.indexOf(".") == version.length() - 1);
+    }
+
+    public boolean hasValidConfigurations() {
+        if(configurations == null || configurations.isEmpty()) {
+            return false;
+        }
+
+        return (configurations.stream().filter(config -> config.isValid()).count() > 0);
+    }
+
+    public boolean hasInvalidConfigurations() {
+        if(configurations == null || configurations.isEmpty()) {
+            return false;
+        }
+
+        return (configurations.stream().filter(config -> !config.isValid()).count() > 0);
+    }
+
+    public boolean isValid() {
+        return hasValidCode() && hasValidConfigurations();
+    }
 }
