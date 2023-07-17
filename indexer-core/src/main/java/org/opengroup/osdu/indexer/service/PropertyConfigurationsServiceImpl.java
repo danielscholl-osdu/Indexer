@@ -126,6 +126,30 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         if (configuration == null) {
             configuration = searchConfigurations(kind);
             if (configuration != null) {
+                if(configuration.isValid()) {
+                    // Log for debug
+                    if(configuration.hasInvalidConfigurations()) {
+                        String msg = String.format("PropertyConfigurations: it has invalid PropertyConfiguration for configurations with name '%s':", configuration.getName());
+                        this.jaxRsDpsLog.warning(msg);
+                    }
+                }
+                else {
+                    // Log for debug
+                    StringBuilder msgBuilder = new StringBuilder();
+                    msgBuilder.append(String.format("PropertyConfigurations: it is invalid for configurations with name '%s':", configuration.getName()));
+                    if(!configuration.hasValidCode()) {
+                        msgBuilder.append(System.lineSeparator());
+                        msgBuilder.append(String.format("The code '%s' is invalid. It should be a valid kind with major version ended with '.'", configuration.getCode()));
+                    }
+                    if(!configuration.hasValidConfigurations()) {
+                        msgBuilder.append(System.lineSeparator());
+                        msgBuilder.append("It does not have any valid PropertyConfiguration");
+                    }
+                    this.jaxRsDpsLog.warning(msgBuilder.toString());
+
+                    configuration = EMPTY_CONFIGURATIONS; // reset
+                }
+
                 propertyConfigurationCache.put(kind, configuration);
             } else {
                 // It is common that a kind does not have extended property. So we need to cache an empty configuration
