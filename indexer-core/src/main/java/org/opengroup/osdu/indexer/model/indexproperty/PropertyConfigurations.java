@@ -82,7 +82,7 @@ public class PropertyConfigurations {
             return false;
         }
 
-        return (configurations.stream().filter(config -> config.isValid()).count() > 0);
+        return configurations.stream().anyMatch(config -> config.isValid());
     }
 
     public boolean hasInvalidConfigurations() {
@@ -90,7 +90,7 @@ public class PropertyConfigurations {
             return false;
         }
 
-        return (configurations.stream().filter(config -> !config.isValid()).count() > 0);
+        return configurations.stream().anyMatch(config -> !config.isValid());
     }
 
     public boolean isValid() {
