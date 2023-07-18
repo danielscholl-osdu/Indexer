@@ -129,7 +129,7 @@ public class IndexerServiceImpl implements IndexerService {
 
         try {
             auditLogger.indexStarted(recordInfos.stream()
-                    .map(RecordInfo::getKind)
+                    .map(entry -> String.format("id=%s kind=%s operationType=%s", entry.getId(), entry.getKind(), entry.getOp()))
                     .collect(Collectors.toList()));
 
             // get upsert records
