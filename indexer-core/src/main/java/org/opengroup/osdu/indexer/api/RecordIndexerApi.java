@@ -83,7 +83,7 @@ public class RecordIndexerApi {
                         String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
         }
         try {
-           Type listType = new TypeToken<List<RecordInfo>>() {}.getType();
+            Type listType = new TypeToken<List<RecordInfo>>() {}.getType();
             List<RecordInfo> recordInfos = new Gson().fromJson(recordChangedMessages.getData(), listType);
 
             if (recordInfos.size() == 0) {
