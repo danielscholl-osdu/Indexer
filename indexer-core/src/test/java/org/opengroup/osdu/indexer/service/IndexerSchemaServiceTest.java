@@ -39,7 +39,6 @@ import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingExce
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
@@ -55,11 +54,8 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(SpringRunner.class)
-@PrepareForTest({RestHighLevelClient.class})
 public class IndexerSchemaServiceTest {
 
     private final String kind = "tenant:test:test:1.0.0";

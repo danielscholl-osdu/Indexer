@@ -43,8 +43,6 @@ import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -60,7 +58,6 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
-@PrepareForTest({RestHighLevelClient.class, IndicesClient.class, ClusterClient.class, EntityUtils.class})
 public class IndicesServiceTest {
     @Mock
     private ElasticClientHandler elasticClientHandler;
@@ -89,9 +86,9 @@ public class IndicesServiceTest {
     @Before
     public void setup() {
         initMocks(this);
-        indicesClient = PowerMockito.mock(IndicesClient.class);
-        clusterClient = PowerMockito.mock(ClusterClient.class);
-        restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
+        indicesClient = mock(IndicesClient.class);
+        clusterClient = mock(ClusterClient.class);
+        restHighLevelClient = mock(RestHighLevelClient.class);
     }
 
     @Test
@@ -140,7 +137,7 @@ public class IndicesServiceTest {
     @Test
     public void delete_existingElasticIndex() throws Exception {
         AcknowledgedResponse indexResponse = new AcknowledgedResponse(true);
-        GetIndexResponse getIndexResponse = PowerMockito.mock(GetIndexResponse.class);
+        GetIndexResponse getIndexResponse = mock(GetIndexResponse.class);
         String[] indices = {"anyIndex"};
 
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
@@ -155,7 +152,7 @@ public class IndicesServiceTest {
     @Test
     public void delete_existingElasticIndex_usingSameClient() throws Exception {
         AcknowledgedResponse indexResponse = new AcknowledgedResponse(true);
-        GetIndexResponse getIndexResponse = PowerMockito.mock(GetIndexResponse.class);
+        GetIndexResponse getIndexResponse = mock(GetIndexResponse.class);
         String[] indices = {"anyIndex"};
 
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
@@ -170,7 +167,7 @@ public class IndicesServiceTest {
     @Test
     public void should_throw_internalServerException_delete_isNotAcknowledged() throws Exception {
         AcknowledgedResponse indexResponse = new AcknowledgedResponse(false);
-        GetIndexResponse getIndexResponse = PowerMockito.mock(GetIndexResponse.class);
+        GetIndexResponse getIndexResponse = mock(GetIndexResponse.class);
         String[] indices = {"anyIndex"};
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
@@ -194,7 +191,7 @@ public class IndicesServiceTest {
     public void should_throwAppException_when_delete_existingElasticIndex_and_backupIsRunning() throws Exception {
         ElasticsearchStatusException exception = new ElasticsearchStatusException(
                 "Cannot delete indices that are being snapshotted: [[anyIndex/8IXuPeFnTJGEu_LjjXrHwA]]. Try again after snapshot finishes or cancel the currently running snapshot.", RestStatus.BAD_REQUEST);
-        GetIndexResponse getIndexResponse = PowerMockito.mock(GetIndexResponse.class);
+        GetIndexResponse getIndexResponse = mock(GetIndexResponse.class);
         String[] indices = {"anyIndex"};
         when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();

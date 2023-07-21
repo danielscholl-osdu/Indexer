@@ -15,6 +15,7 @@
 package org.opengroup.osdu.indexer.azure.service;
 
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -23,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
@@ -33,23 +35,22 @@ import org.opengroup.osdu.indexer.service.ReindexServiceImpl;
 import org.opengroup.osdu.indexer.service.StorageService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.modules.junit4.PowerMockRunnerDelegate;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.URISyntaxException;
 import java.util.*;
 
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 @Ignore
-@RunWith(PowerMockRunner.class)
-@PowerMockRunnerDelegate(SpringRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class ReindexServiceTest {
+
+    private static MockedStatic<UUID> mockedUUIDs;
 
     private final String cursor = "100";
 
@@ -79,7 +80,7 @@ public class ReindexServiceTest {
     public void setup() {
         initMocks(this);
 
-        mockStatic(UUID.class);
+        mockedUUIDs = mockStatic(UUID.class);
 
         recordReindexRequest = RecordReindexRequest.builder().kind("tenant:test:test:1.0.0").cursor(cursor).build();
         recordQueryResponse = new RecordQueryResponse();
@@ -90,6 +91,11 @@ public class ReindexServiceTest {
         DpsHeaders standardHeaders = DpsHeaders.createFromMap(httpHeaders);
         when(requestInfo.getHeaders()).thenReturn(standardHeaders);
         when(requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(httpHeaders);
+    }
+
+    @After
+    public void close() {
+        mockedUUIDs.close();
     }
 
     @Test

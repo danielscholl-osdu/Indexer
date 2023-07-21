@@ -1,5 +1,19 @@
 ## Service Configuration for Anthos
 
+## Run args
+
+In order to run Indexer with Java 17 additional run args must be provided:
+
+```bash
+--add-opens java.base/java.lang=ALL-UNNAMED --add-opens  java.base/java.lang.reflect=ALL-UNNAMED
+```
+
+Full command:
+
+```bash
+java -jar indexer.jar --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+```
+
 ## Environment variables:
 
 Define the following environment variables.

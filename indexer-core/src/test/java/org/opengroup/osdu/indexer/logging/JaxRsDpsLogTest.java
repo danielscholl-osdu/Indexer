@@ -25,7 +25,6 @@ import org.opengroup.osdu.core.common.model.http.Request;
 import org.opengroup.osdu.core.common.logging.ILogger;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.logging.audit.AuditPayload;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.*;
@@ -38,7 +37,6 @@ import static org.mockito.Mockito.*;
 
 @Ignore
 @RunWith(SpringRunner.class)
-@PrepareForTest({ILogger.class})
 public class JaxRsDpsLogTest {
 
     @Mock
