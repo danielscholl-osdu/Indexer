@@ -69,19 +69,11 @@ public class RecordIndexerApi {
     public ResponseEntity<JobStatus> indexWorker(
              @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
              @Valid @RequestBody RecordChangedMessages recordChangedMessages) throws Exception {
-        if (recordChangedMessages == null) {
-            log.info("record change messages is null");
-            return new ResponseEntity(HttpStatus.OK);
-        }
 
-        if (recordChangedMessages.hasCorrelationId()) {
-            this.requestInfo.getHeaders().put(DpsHeaders.CORRELATION_ID, recordChangedMessages.getCorrelationId());
-        }
+        populateCorrelationIdIfExist(recordChangedMessages);
 
-        if (recordChangedMessages.missingAccountId()) {
-            throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Invalid tenant",
-                        String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
-        }
+        verifyDataPartitionId(recordChangedMessages);
+
         try {
             Type listType = new TypeToken<List<RecordInfo>>() {}.getType();
             List<RecordInfo> recordInfos = new Gson().fromJson(recordChangedMessages.getData(), listType);
@@ -98,6 +90,19 @@ public class RecordIndexerApi {
             throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Request payload parsing error", "Unable to parse request payload.", e);
         } catch (Exception e) {
             throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Unknown error", "An unknown error has occurred.", e);
+        }
+    }
+
+    private void verifyDataPartitionId(RecordChangedMessages recordChangedMessages) {
+        if (recordChangedMessages.missingAccountId()) {
+            throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Invalid tenant",
+                        String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
+        }
+    }
+
+    private void populateCorrelationIdIfExist(RecordChangedMessages recordChangedMessages) {
+        if (recordChangedMessages.hasCorrelationId()) {
+            this.requestInfo.getHeaders().put(DpsHeaders.CORRELATION_ID, recordChangedMessages.getCorrelationId());
         }
     }
 
