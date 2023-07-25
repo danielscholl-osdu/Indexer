@@ -17,22 +17,23 @@ package org.opengroup.osdu.indexer.api;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.MockitoAnnotations.initMocks;
-
+import static org.mockito.Mockito.when;
 import com.google.gson.Gson;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.http.HeadersUtil;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.SchemaChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.service.SchemaEventsProcessor;
-import org.opengroup.osdu.indexer.service.SchemaService;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -59,7 +60,7 @@ public class RecordIndexerApiTest {
     @Mock
     private IndexerService indexService;
     @Mock
-    private SchemaService schemaService;
+    private IRequestInfo requestInfo;
     @Mock
     private SchemaEventsProcessor eventsProcessingService;
 
@@ -72,6 +73,7 @@ public class RecordIndexerApiTest {
 
         dpsHeaders.put(DpsHeaders.ACCOUNT_ID, this.ACCOUNT_ID);
         dpsHeaders.put(DpsHeaders.DATA_PARTITION_ID, this.DATA_PARTITION_ID);
+        when(this.requestInfo.getHeaders()).thenReturn(dpsHeaders);
     }
 
     @Test
@@ -87,6 +89,12 @@ public class RecordIndexerApiTest {
     @Test
     public void should_return400_given_emptyMessage_indexWorkerTest() {
         should_return400_indexerWorkerTest(messageEmpty, String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
+    }
+
+    @Test
+    public void should_addCorrelationIdToHeader_IfExists_indexWorkerTest() throws Exception {
+        this.sut.indexWorker(createRecordChangedMessage(recordMessageValid));
+        Mockito.verify(this.requestInfo.getHeaders()).put("correlation-id", "b5a281bd-f59d-4db2-9939-b2d85036fc7e");
     }
 
     @Test

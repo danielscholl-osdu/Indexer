@@ -55,7 +55,11 @@ public class BooleanFeatureFlagClient {
             PartitionInfo partitionInfo = partitionProvider.get(dataPartitionId);
             return partitionInfo;
         } catch (PartitionException e) {
-            logger.error(String.format("Error getting partition info for data-partition: %s", dataPartitionId), e);
+            if (e.getResponse() != null) {
+                logger.error(String.format("Error getting partition info for data-partition: %s. Message: %s. ResponseCode: %s.", dataPartitionId, e.getResponse().getBody(), e.getResponse().getResponseCode()), e);
+            } else {
+                logger.error(String.format("Error getting partition info for data-partition: %s.", dataPartitionId), e);
+            }
             throw e;
         }
     }
