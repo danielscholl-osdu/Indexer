@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.http.HeadersUtil;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -88,6 +89,12 @@ public class RecordIndexerApiTest {
     @Test
     public void should_return400_given_emptyMessage_indexWorkerTest() {
         should_return400_indexerWorkerTest(messageEmpty, String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
+    }
+
+    @Test
+    public void should_addCorrelationIdToHeader_IfExists_indexWorkerTest() throws Exception {
+        this.sut.indexWorker(createRecordChangedMessage(recordMessageValid));
+        Mockito.verify(this.requestInfo.getHeaders()).put("correlation-id", "b5a281bd-f59d-4db2-9939-b2d85036fc7e");
     }
 
     @Test
