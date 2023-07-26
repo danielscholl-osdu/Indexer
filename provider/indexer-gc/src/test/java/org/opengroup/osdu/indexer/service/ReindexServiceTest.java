@@ -80,8 +80,6 @@ public class ReindexServiceTest {
         httpHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
         httpHeaders.put(DpsHeaders.CORRELATION_ID, correlationId);
         DpsHeaders standardHeaders = DpsHeaders.createFromMap(httpHeaders);
-        when(requestInfo.getHeaders()).thenReturn(standardHeaders);
-        when(requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(httpHeaders);
         when(requestInfo.getHeadersWithDwdAuthZ()).thenReturn(standardHeaders);
     }
 

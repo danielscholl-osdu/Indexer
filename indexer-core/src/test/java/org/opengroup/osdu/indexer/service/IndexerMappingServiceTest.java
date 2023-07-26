@@ -159,7 +159,6 @@ public class IndexerMappingServiceTest {
             doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
 
             IndexerMappingServiceImpl indexerMappingServiceLocal = spy(new IndexerMappingServiceImpl());
-            doReturn(false).when(indexerMappingServiceLocal).isTypeExist(any(), any(), any());
             String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
             assertEquals(this.validMapping, mapping);
         } catch (Exception e) {

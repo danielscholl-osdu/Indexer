@@ -59,6 +59,7 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -82,8 +83,7 @@ public class IndexerServiceImplTest {
     @Mock
     private StorageIndexerPayloadMapper storageIndexerPayloadMapper;
     @InjectMocks
-    @Spy
-    private JobStatus jobStatus = new JobStatus();
+    private JobStatus jobStatus;
     @Mock
     private AuditLogger auditLogger;
     @Mock
@@ -127,6 +127,9 @@ public class IndexerServiceImplTest {
 
     @Before
     public void setup() throws IOException {
+        jobStatus = spy(new JobStatus());
+        mockedAcls = mockStatic(Acl.class);
+        initMocks(this);
         when(augmenterSetting.isEnabled()).thenReturn(true);
     }
 
@@ -247,13 +250,10 @@ public class IndexerServiceImplTest {
     }
 
     private void prepareTestDataAndEnv(String pubsubMsg) throws IOException, URISyntaxException {
-        mockedAcls = mockStatic(Acl.class);
 
         // setup headers
         this.dpsHeaders = new DpsHeaders();
         this.dpsHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
-        when(this.requestInfo.getHeaders()).thenReturn(dpsHeaders);
-        when(this.requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(dpsHeaders.getHeaders());
 
         // setup message
         Type listType = new TypeToken<List<RecordInfo>>() {}.getType();

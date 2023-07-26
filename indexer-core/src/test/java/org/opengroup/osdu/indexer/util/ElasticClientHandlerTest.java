@@ -77,10 +77,8 @@ public class ElasticClientHandlerTest {
     @Test
     public void createRestClient_when_deployment_env_is_saas() {
         ClusterSettings clusterSettings = new ClusterSettings("H", 1, "U:P");
-        when(configurationProperties.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
         when(elasticSettingService.getElasticClusterInformation()).thenReturn(clusterSettings);
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenAnswer(invocation -> builder);
-        when(builder.setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000).setSocketTimeout(60000))).thenReturn(builder);
         when(builder.build()).thenReturn(restClient);
 
         RestHighLevelClient returned = this.elasticClientHandler.createRestClient();
@@ -91,7 +89,6 @@ public class ElasticClientHandlerTest {
     @Test(expected = AppException.class)
     public void failed_createRestClientForSaaS_when_restclient_is_null() {
         ClusterSettings clusterSettings = new ClusterSettings("H", 1, "U:P");
-        when(configurationProperties.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
         when(elasticSettingService.getElasticClusterInformation()).thenReturn(clusterSettings);
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenAnswer(invocation -> builder);
         when(builder.build()).thenReturn(null);
@@ -101,7 +98,6 @@ public class ElasticClientHandlerTest {
 
     @Test(expected = AppException.class)
     public void failed_createRestClientForSaaS_when_getcluster_info_throws_exception() {
-        when(configurationProperties.getDeploymentEnvironment()).thenReturn(DeploymentEnvironment.CLOUD);
         when(elasticSettingService.getElasticClusterInformation()).thenThrow(new AppException(1, "", ""));
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenAnswer(invocation -> builder);
 
