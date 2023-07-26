@@ -23,8 +23,8 @@ public class PublisherImplTest {
 
     private static String serviceBusTopicField = "serviceBusTopic";
     private static String serviceBusTopicValue = "recordChangeTopic";
-    private static String publishToIndexingProgressTopicField = "publishToIndexingProgressTopic";
-    private static Boolean publishToIndexingProgressTopicValue = true;
+    private static String shouldPublishToServiceBusTopicField = "shouldPublishToServiceBusTopic";
+    private static Boolean shouldPublishToServiceBusTopicValue = true;
     private static String partitionId = "opendes";
 
     @Mock
@@ -45,7 +45,7 @@ public class PublisherImplTest {
     @Test
     public void should_invoke_getPartitionIdOfdpsHeaders_when_publishStatusChangedTagsToTopic_isCalled() throws Exception {
         ReflectionTestUtils.setField(sut,serviceBusTopicField,serviceBusTopicValue);
-        ReflectionTestUtils.setField(sut,publishToIndexingProgressTopicField,publishToIndexingProgressTopicValue);
+        ReflectionTestUtils.setField(sut,shouldPublishToServiceBusTopicField,shouldPublishToServiceBusTopicValue);
         when(dpsHeaders.getPartitionId()).thenReturn(partitionId);
 
         sut.publishStatusChangedTagsToTopic(dpsHeaders, jobStatus);
@@ -56,7 +56,7 @@ public class PublisherImplTest {
     @Test
     public void should_invoke_getAccountIdOfDpsHeaders_when_publishStatusChangedTagsToTopic_isCalledWithGetPartitionIdReturningEmptyString() throws Exception {
         ReflectionTestUtils.setField(sut,serviceBusTopicField,serviceBusTopicValue);
-        ReflectionTestUtils.setField(sut,publishToIndexingProgressTopicField,publishToIndexingProgressTopicValue);
+        ReflectionTestUtils.setField(sut,shouldPublishToServiceBusTopicField,shouldPublishToServiceBusTopicValue);
         when(dpsHeaders.getPartitionId()).thenReturn("");
 
         sut.publishStatusChangedTagsToTopic(dpsHeaders, jobStatus);
@@ -67,7 +67,7 @@ public class PublisherImplTest {
     @Test
     public void should_invoke_getClientOftopicClientFactory_when_publishStatusChangedTagsToTopic_isCalled() throws Exception {
         ReflectionTestUtils.setField(sut,serviceBusTopicField,serviceBusTopicValue);
-        ReflectionTestUtils.setField(sut,publishToIndexingProgressTopicField,publishToIndexingProgressTopicValue);
+        ReflectionTestUtils.setField(sut,shouldPublishToServiceBusTopicField,shouldPublishToServiceBusTopicValue);
         when(dpsHeaders.getPartitionId()).thenReturn(partitionId);
 
         sut.publishStatusChangedTagsToTopic(dpsHeaders, jobStatus);

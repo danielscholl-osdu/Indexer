@@ -16,7 +16,6 @@ package org.opengroup.osdu.indexer.api;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-
 import com.google.gson.JsonParseException;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.java.Log;
@@ -28,14 +27,17 @@ import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.model.indexer.SchemaChangedMessages;
 import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.SwaggerDoc;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.service.ReindexService;
 import org.opengroup.osdu.indexer.service.SchemaEventsProcessor;
-import org.opengroup.osdu.indexer.service.SchemaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
@@ -52,11 +54,11 @@ import java.util.List;
 public class RecordIndexerApi {
 
     @Inject
+    private IRequestInfo requestInfo;
+    @Inject
     private IndexerService indexerService;
     @Inject
     private ReindexService reIndexService;
-    @Inject
-    private SchemaService schemaService;
     @Inject
     private SchemaEventsProcessor eventsProcessingService;
 
@@ -64,21 +66,16 @@ public class RecordIndexerApi {
     // THAT MEANS WE DON'T DOCUMENT IT IN SWAGGER, ACCESS IS LIMITED TO CLOUD TASK QUEUE CALLS ONLY
     @PostMapping(path = "/index-worker", consumes = "application/json")
     @Operation(hidden = true, summary = "", description = "")
-    public ResponseEntity<JobStatus> indexWorker (
+    public ResponseEntity<JobStatus> indexWorker(
              @NotNull(message = SwaggerDoc.REQUEST_VALIDATION_NOT_NULL_BODY)
              @Valid @RequestBody RecordChangedMessages recordChangedMessages) throws Exception {
 
-        if (recordChangedMessages.missingAccountId()) {
-            throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Invalid tenant",
-                        String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
-        }
-        try {
-            if (recordChangedMessages == null) {
-                log.info("record change messages is null");
-            }
+        populateCorrelationIdIfExist(recordChangedMessages);
 
-            Type listType = new TypeToken<List<RecordInfo>>() {
-            }.getType();
+        verifyDataPartitionId(recordChangedMessages);
+
+        try {
+            Type listType = new TypeToken<List<RecordInfo>>() {}.getType();
             List<RecordInfo> recordInfos = new Gson().fromJson(recordChangedMessages.getData(), listType);
 
             if (recordInfos.size() == 0) {
@@ -93,6 +90,19 @@ public class RecordIndexerApi {
             throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Request payload parsing error", "Unable to parse request payload.", e);
         } catch (Exception e) {
             throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Unknown error", "An unknown error has occurred.", e);
+        }
+    }
+
+    private void verifyDataPartitionId(RecordChangedMessages recordChangedMessages) {
+        if (recordChangedMessages.missingAccountId()) {
+            throw new AppException(org.apache.http.HttpStatus.SC_BAD_REQUEST, "Invalid tenant",
+                        String.format("Required header: '%s' not found", DpsHeaders.DATA_PARTITION_ID));
+        }
+    }
+
+    private void populateCorrelationIdIfExist(RecordChangedMessages recordChangedMessages) {
+        if (recordChangedMessages.hasCorrelationId()) {
+            this.requestInfo.getHeaders().put(DpsHeaders.CORRELATION_ID, recordChangedMessages.getCorrelationId());
         }
     }
 
