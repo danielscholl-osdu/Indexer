@@ -56,7 +56,17 @@ trap '{
 
 #### RUN INTEGRATION TEST #########################################################################
 
-mvn -ntp test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml"
+CUCUMBER_PROPERTY="$SCRIPT_SOURCE_DIR/../src/test/resources/cucumber.properties"
+
+while IFS='=' read -r key value
+do
+    key=$(echo $key | tr '.' '_')
+    eval ${key}=\${value}
+done < "$CUCUMBER_PROPERTY"
+
+echo "Cucumber option cucumber.options =         " ${cucumber_options}
+
+mvn -ntp test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml $cucumber_options"
 # mvn -Dmaven.surefire.debug test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml"
 TEST_EXIT_CODE=$?
 
