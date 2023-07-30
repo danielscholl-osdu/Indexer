@@ -17,6 +17,7 @@ package org.opengroup.osdu.indexer.model;
 
 import lombok.Data;
 import lombok.ToString;
+import org.opengroup.osdu.core.common.model.search.SortQuery;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -31,5 +32,6 @@ public class SearchRequest {
     private int offset;
     private String cursor;
     private List<String> returnedFields;
+    private SortQuery sort;
     private boolean trackTotalCount = true;
 }

@@ -24,6 +24,8 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
+import org.opengroup.osdu.core.common.model.search.SortOrder;
+import org.opengroup.osdu.core.common.model.search.SortQuery;
 import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
@@ -46,6 +48,7 @@ import java.util.stream.Collectors;
 @Component
 public class PropertyConfigurationsServiceImpl implements PropertyConfigurationsService {
     private static final String ASSOCIATED_IDENTITIES_PROPERTY = "AssociatedIdentities";
+    private static final String VERSION_PROPERTY = "version";
     private static final String ASSOCIATED_IDENTITIES_PROPERTY_STORAGE_FORMAT_TYPE = "[]string";
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
     private static final String ANCESTRY_KINDS_DELIMITER = ",";
@@ -873,10 +876,19 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private PropertyConfigurations searchConfigurations(String kind) {
         String query = String.format("data.Code: \"%s\"", kind);
         SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
-        for(PropertyConfigurations configurations : searchConfigurations(searchRequest)) {
-            if (kind.equals(configurations.getCode())) {
-                return configurations;
+        // If there is more than PropertyConfigurations, pick the one that was last modified.
+        // Given the property "modifyTime" is not set for new created record, we use property "version"
+        // to sort the search result in descending order
+        SortQuery sort = new SortQuery();
+        sort.setField(Arrays.asList(VERSION_PROPERTY));
+        sort.setOrder(Arrays.asList(SortOrder.DESC));
+        searchRequest.setSort(sort);
+        List<PropertyConfigurations> propertyConfigurationsList = searchConfigurations(searchRequest);
+        if(!propertyConfigurationsList.isEmpty()) {
+            if(propertyConfigurationsList.size() > 1) {
+                jaxRsDpsLog.warning(String.format("There is more than one PropertyConfigurations for kind: %s", kind));
             }
+            return propertyConfigurationsList.get(0);
         }
         return null;
     }
