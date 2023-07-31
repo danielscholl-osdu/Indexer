@@ -30,7 +30,6 @@ import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.model.SchemaInfoResponse;
 import org.opengroup.osdu.indexer.schema.converter.SchemaToStorageFormatImpl;
-import org.powermock.api.mockito.PowerMockito;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -42,7 +41,6 @@ import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(SpringRunner.class)
 public class SchemaProviderImplTest {
@@ -113,7 +111,7 @@ public class SchemaProviderImplTest {
         httpResponse.setResponseCode(org.springframework.http.HttpStatus.OK.value());
         httpResponse.setBody(validSchemaFromSchemaService);
 
-        PowerMockito.when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
+        when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
 
         String recordSchemaResponse = this.sut.getSchema(kind);
 
@@ -135,7 +133,7 @@ public class SchemaProviderImplTest {
         HttpResponse httpResponse = new HttpResponse();
         httpResponse.setResponseCode(org.springframework.http.HttpStatus.NOT_FOUND.value());
 
-        PowerMockito.when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
+        when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
 
         String recordSchemaResponse = this.sut.getSchema(kind);
 
@@ -165,7 +163,7 @@ public class SchemaProviderImplTest {
     @Test
     public void getSchemaInfos() throws URISyntaxException, UnsupportedEncodingException {
         HttpResponse httpResponse = createSchemaInfoResponse();
-        PowerMockito.when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
+        when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
 
         SchemaInfoResponse schemaInfoResponse = sut.getSchemaInfos("osdu", "wks", "master-data--Wellbore", "1", null, null, true);
         assertEquals(1, schemaInfoResponse.getCount());
@@ -178,8 +176,8 @@ public class SchemaProviderImplTest {
         String schemaHost = "http://localhost/api/schema-service/v1/schema";
         ArgumentCaptor<FetchServiceHttpRequest> argumentCaptor = ArgumentCaptor.forClass(FetchServiceHttpRequest.class);
         HttpResponse httpResponse = createSchemaInfoResponse();
-        PowerMockito.when(this.configurationProperties.getSchemaHost()).thenReturn(schemaHost);
-        PowerMockito.when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
+        when(this.configurationProperties.getSchemaHost()).thenReturn(schemaHost);
+        when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
 
         sut.getSchemaInfos("osdu", "wks", "master-data--Wellbore", "1", null, null, true);
         verify(this.urlFetchService).sendRequest(argumentCaptor.capture());
@@ -194,8 +192,8 @@ public class SchemaProviderImplTest {
         String schemaHost = "http://localhost/api/schema-service/v1/schema";
         ArgumentCaptor<FetchServiceHttpRequest> argumentCaptor = ArgumentCaptor.forClass(FetchServiceHttpRequest.class);
         HttpResponse httpResponse = createSchemaInfoResponse();
-        PowerMockito.when(this.configurationProperties.getSchemaHost()).thenReturn(schemaHost);
-        PowerMockito.when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
+        when(this.configurationProperties.getSchemaHost()).thenReturn(schemaHost);
+        when(this.urlFetchService.sendRequest(any())).thenReturn(httpResponse);
 
         sut.getSchemaInfos("osdu", "wks", "master-data--Wellbore", "1", "2", null, false);
         verify(this.urlFetchService).sendRequest(argumentCaptor.capture());

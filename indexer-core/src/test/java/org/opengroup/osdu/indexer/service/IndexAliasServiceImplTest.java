@@ -40,7 +40,6 @@ import org.opengroup.osdu.indexer.model.IndexAliasesResult;
 import org.opengroup.osdu.indexer.service.mock.BucketMock;
 import org.opengroup.osdu.indexer.service.mock.TermMock;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.powermock.api.mockito.PowerMockito;
 import org.springframework.context.annotation.Lazy;
 
 import java.io.IOException;
@@ -48,6 +47,7 @@ import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -75,10 +75,10 @@ public class IndexAliasServiceImplTest {
     @Before
     public void setup() {
         initMocks(this);
-        indicesClient = PowerMockito.mock(IndicesClient.class);
-        restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
-        getAliasesResponse = PowerMockito.mock(GetAliasesResponse.class);
-        getAliasesNotFoundResponse = PowerMockito.mock(GetAliasesResponse.class);
+        indicesClient = mock(IndicesClient.class);
+        restHighLevelClient = mock(RestHighLevelClient.class);
+        getAliasesResponse = mock(GetAliasesResponse.class);
+        getAliasesNotFoundResponse = mock(GetAliasesResponse.class);
 
     }
 
@@ -152,11 +152,11 @@ public class IndexAliasServiceImplTest {
         String unsupportedKind = "common:welldb:wellbore:1";
         String unsupportedIndex = unsupportedKind.replace(":", "-");
 
-        SearchResponse searchResponse = PowerMockito.mock(SearchResponse.class);
-        Aggregations aggregations = PowerMockito.mock(Aggregations.class);
-        TermMock terms = PowerMockito.mock(TermMock.class);
-        BucketMock bucket = PowerMockito.mock(BucketMock.class);
-        BucketMock bucket2 = PowerMockito.mock(BucketMock.class);
+        SearchResponse searchResponse = mock(SearchResponse.class);
+        Aggregations aggregations = mock(Aggregations.class);
+        TermMock terms = mock(TermMock.class);
+        BucketMock bucket = mock(BucketMock.class);
+        BucketMock bucket2 = mock(BucketMock.class);
         List<BucketMock> bucketList = Arrays.asList(bucket, bucket, bucket2);
         AcknowledgedResponse updateAliasesResponse = new AcknowledgedResponse(true);
         when(elasticIndexNameResolver.getIndexNameFromKind(any()))

@@ -56,6 +56,8 @@ trap '{
 
 #### RUN INTEGRATION TEST #########################################################################
 
+JAVA_HOME=$JAVA17_HOME
+
 mvn -ntp test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml"
 # mvn -Dmaven.surefire.debug test -f "$SCRIPT_SOURCE_DIR"/../pom.xml -Dcucumber.options="--plugin junit:target/junit-report.xml"
 TEST_EXIT_CODE=$?

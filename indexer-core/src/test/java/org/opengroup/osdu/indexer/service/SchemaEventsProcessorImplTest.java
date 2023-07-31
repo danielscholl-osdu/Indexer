@@ -23,9 +23,10 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -44,7 +45,6 @@ import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
 import org.opengroup.osdu.indexer.config.SchemaEventsListenerConfiguration;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.powermock.api.mockito.PowerMockito;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -72,7 +72,7 @@ public class SchemaEventsProcessorImplTest {
     @Test
     public void should_process_validSchemaCreateEvent() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "create");
-        this.restClient = PowerMockito.mock(RestHighLevelClient.class);
+        this.restClient = mock(RestHighLevelClient.class);
         when(elasticClientHandler.createRestClient()).thenReturn(restClient);
 
         this.sut.processSchemaMessages(singletonList(event1));
@@ -84,7 +84,7 @@ public class SchemaEventsProcessorImplTest {
     @Test
     public void should_process_validSchemaUpdateEvent() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "update");
-        this.restClient = PowerMockito.mock(RestHighLevelClient.class);
+        this.restClient = mock(RestHighLevelClient.class);
         when(elasticClientHandler.createRestClient()).thenReturn(restClient);
 
         this.sut.processSchemaMessages(singletonList(event1));
@@ -111,7 +111,7 @@ public class SchemaEventsProcessorImplTest {
     @Test
     public void should_throwError_given_schemaUpsertFails() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "update");
-        this.restClient = PowerMockito.mock(RestHighLevelClient.class);
+        this.restClient = mock(RestHighLevelClient.class);
         when(elasticClientHandler.createRestClient()).thenReturn(restClient);
         doThrow(new ElasticsearchStatusException("unknown error", RestStatus.INTERNAL_SERVER_ERROR)).when(this.indexSchemaService)
             .processSchemaUpsertEvent(any(RestHighLevelClient.class), anyString());

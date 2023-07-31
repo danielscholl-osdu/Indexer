@@ -22,12 +22,14 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.rest.RestStatus;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Spy;
 import org.opengroup.osdu.core.common.http.HeadersUtil;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -44,8 +46,7 @@ import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -56,14 +57,18 @@ import java.util.*;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.*;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({RestHighLevelClient.class, BulkResponse.class, Acl.class, HeadersUtil.class})
+@RunWith(MockitoJUnitRunner.class)
 public class IndexerServiceImplTest {
+
+    private static MockedStatic<Acl> mockedAcls;
 
     @InjectMocks
     private IndexerServiceImpl sut;
@@ -78,8 +83,7 @@ public class IndexerServiceImplTest {
     @Mock
     private StorageIndexerPayloadMapper storageIndexerPayloadMapper;
     @InjectMocks
-    @Spy
-    private JobStatus jobStatus = new JobStatus();
+    private JobStatus jobStatus;
     @Mock
     private AuditLogger auditLogger;
     @Mock
@@ -123,7 +127,15 @@ public class IndexerServiceImplTest {
 
     @Before
     public void setup() throws IOException {
+        jobStatus = spy(new JobStatus());
+        mockedAcls = mockStatic(Acl.class);
+        initMocks(this);
         when(augmenterSetting.isEnabled()).thenReturn(true);
+    }
+
+    @After
+    public void close() {
+        mockedAcls.close();
     }
 
     @Test
@@ -238,13 +250,10 @@ public class IndexerServiceImplTest {
     }
 
     private void prepareTestDataAndEnv(String pubsubMsg) throws IOException, URISyntaxException {
-        mockStatic(Acl.class);
 
         // setup headers
         this.dpsHeaders = new DpsHeaders();
         this.dpsHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
-        when(this.requestInfo.getHeaders()).thenReturn(dpsHeaders);
-        when(this.requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(dpsHeaders.getHeaders());
 
         // setup message
         Type listType = new TypeToken<List<RecordInfo>>() {}.getType();

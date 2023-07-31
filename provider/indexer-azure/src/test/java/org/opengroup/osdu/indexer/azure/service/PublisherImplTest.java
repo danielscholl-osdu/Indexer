@@ -8,10 +8,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.indexer.azure.publish.PublisherImpl;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.inject.Inject;
-import javax.inject.Named;
+import org.mockito.junit.MockitoJUnitRunner;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +16,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 
-@RunWith(PowerMockRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class PublisherImplTest {
     @InjectMocks
     private PublisherImpl publisher = new PublisherImpl();

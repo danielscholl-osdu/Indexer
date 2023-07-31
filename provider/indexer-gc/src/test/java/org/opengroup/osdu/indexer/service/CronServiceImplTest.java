@@ -27,7 +27,6 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
@@ -38,7 +37,6 @@ import static org.mockito.Mockito.*;
 
 
 @RunWith(SpringRunner.class)
-@PrepareForTest({RestHighLevelClient.class})
 public class CronServiceImplTest {
 
     @Mock
