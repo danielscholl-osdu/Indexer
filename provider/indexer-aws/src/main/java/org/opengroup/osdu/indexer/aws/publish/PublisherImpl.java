@@ -45,7 +45,7 @@ public class PublisherImpl implements IPublisher {
         AmazonSNSConfig snsConfig = new AmazonSNSConfig(amazonSNSRegion);
         snsClient = snsConfig.AmazonSNS();
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
-        amazonSNSTopic = provider.getParameterAsString("indexer-sns-topic-arn");
+        amazonSNSTopic = provider.getParameterAsString("INDEXER_SNS_TOPIC_ARN");
     }
 
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception

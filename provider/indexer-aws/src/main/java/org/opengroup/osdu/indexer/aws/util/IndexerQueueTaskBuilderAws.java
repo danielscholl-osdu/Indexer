@@ -57,8 +57,8 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
         sqsClient = config.AmazonSQS();
         gson =new Gson();
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
-        storageQueue = provider.getParameterAsString("storage-sqs-url");
-        dlq =  provider.getParameterAsString("indexer-deadletter-queue-sqs-url");
+        storageQueue = provider.getParameterAsString("STORAGE_SQS_URL");
+        dlq =  provider.getParameterAsString("INDEXER_DEADLETTER_QUEUE_SQS_URL");
     }
 
     @Override

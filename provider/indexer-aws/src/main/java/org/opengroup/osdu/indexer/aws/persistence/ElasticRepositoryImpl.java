@@ -53,9 +53,9 @@ public class ElasticRepositoryImpl implements IElasticRepository {
     @PostConstruct
     private void postConstruct() throws K8sParameterNotFoundException, JsonProcessingException {
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
-        host = provider.getParameterAsStringOrDefault("elasticsearch_host", host);
-        port = Integer.parseInt(provider.getParameterAsStringOrDefault("elasticsearch_port", String.valueOf(port)));
-        Map<String, String> val = provider.getCredentialsAsMap("elasticsearch_credentials");
+        host = provider.getParameterAsStringOrDefault("ELASTICSEARCH_HOST", host);
+        port = Integer.parseInt(provider.getParameterAsStringOrDefault("ELASTICSEARCH_PORT", String.valueOf(port)));
+        Map<String, String> val = provider.getCredentialsAsMap("ELASTICSEARCH_CREDENTIALS");
         if (val != null){
             username = val.get("username");
             password = val.get("password");
