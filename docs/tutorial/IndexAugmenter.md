@@ -324,11 +324,15 @@ the records from the `OSDU search` results, any one of the following mistakes ca
 
 * The feature flag `index-augmenter-enabled` for `Index Augmenter` is not enabled in the given data partition. Please check 
   with the service provider.
+
 * If the extended properties are created in the data records but those extended properties are not searchable, the option `force_clean` for re-index
   is not set to `True`.
+
 * Any one of the mandatory properties is missing, such as `data.Code`, `data.Configurations[].Name`, `data.Configurations[].Policy` 
   or `data.Configurations[].Paths[].ValueExtraction.ValuePath` and etc. 
+
 * The value of `data.Code` in the record is not a major schema version kind which is ended with version major and dot.
+
 * Multiple IndexPropertyPathConfiguration records to a major schema version kind may exist. Using kind 
   `osdu:wks:work-product-component--WellLog:1.` as example to run OSDU query:
 ```
@@ -337,6 +341,7 @@ the records from the `OSDU search` results, any one of the following mistakes ca
      "query": "data.Code: "\osdu:wks:work-product-component--WellLog:1."\"
   }
 ```
+
 * If not all extended properties are missing, the `Configurations[]` of the missing extended properties could be invalid. 
   The `Index Augmenter` engine can do basic syntax check on each configuration and only ignore the invalid ones. 
 
