@@ -338,7 +338,7 @@ the records from the `OSDU search` results, any one of the following mistakes ca
 ```
   { 
      "kind": "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0",
-     "query": "data.Code: "\osdu:wks:work-product-component--WellLog:1."\"
+     "query": "data.Code: \"osdu:wks:work-product-component--WellLog:1.\""
   }
 ```
 
