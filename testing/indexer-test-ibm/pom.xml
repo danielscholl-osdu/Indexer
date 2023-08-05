@@ -16,10 +16,17 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
         <cucumber.version>1.2.5</cucumber.version>
         <os-core-lib-ibm.version>0.13.0</os-core-lib-ibm.version>
+        <argLine>
+            --add-opens java.base/java.lang=ALL-UNNAMED
+            --add-opens=java.base/java.util=ALL-UNNAMED
+            --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+            --add-opens java.base/java.text=ALL-UNNAMED
+            --add-opens java.desktop/java.awt.font=ALL-UNNAMED
+        </argLine>
     </properties>
 
     <dependencies>
@@ -57,7 +64,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -100,7 +107,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.2</version>
+            <version>1.18.28</version>
             <scope>provided</scope>
         </dependency>
 

@@ -20,8 +20,6 @@ import org.mockito.Mock;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.indexer.service.IndexerMappingServiceImpl;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
@@ -31,11 +29,12 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 @Ignore
 @RunWith(SpringRunner.class)
-@PrepareForTest({RestHighLevelClient.class, IndicesClient.class})
 public class IndexerMappingServiceTest {
 
     private final String kind = "tenant:test:test:1.0.0";
@@ -73,8 +72,8 @@ public class IndexerMappingServiceTest {
         this.indexSchema = IndexSchema.builder().kind(kind).type(type).dataSchema(dataMapping).metaSchema(metaMapping)
                 .build();
 
-        this.indicesClient = PowerMockito.mock(IndicesClient.class);
-        this.restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
+        this.indicesClient = mock(IndicesClient.class);
+        this.restHighLevelClient = mock(RestHighLevelClient.class);
 
         when(this.restHighLevelClient.getLowLevelClient()).thenReturn(restClient);
         when(this.restClient.performRequest(ArgumentMatchers.any())).thenReturn(response);
@@ -109,7 +108,7 @@ public class IndexerMappingServiceTest {
         try {
             doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
             doReturn(mappingResponse).when(this.indicesClient).putMapping(ArgumentMatchers.any(PutMappingRequest.class), ArgumentMatchers.any(RequestOptions.class));
-            IndexerMappingServiceImpl indexerMappingServiceLocal = PowerMockito.spy(new IndexerMappingServiceImpl());
+            IndexerMappingServiceImpl indexerMappingServiceLocal = spy(new IndexerMappingServiceImpl());
             doReturn(false).when(indexerMappingServiceLocal).isTypeExist(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
             String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
             assertEquals(this.mappingValid, mapping);
@@ -118,4 +117,3 @@ public class IndexerMappingServiceTest {
         }
     }
 }
-

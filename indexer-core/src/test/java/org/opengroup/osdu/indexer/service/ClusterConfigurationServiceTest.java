@@ -25,9 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 
@@ -38,8 +36,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(SpringRunner.class)
-@PrepareForTest({RestHighLevelClient.class, ClusterClient.class})
+@RunWith(MockitoJUnitRunner.class)
 public class ClusterConfigurationServiceTest {
 
     @Mock
@@ -53,8 +50,8 @@ public class ClusterConfigurationServiceTest {
     @Before
     public void setup() {
         initMocks(this);
-        clusterClient = PowerMockito.mock(ClusterClient.class);
-        restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
+        clusterClient = mock(ClusterClient.class);
+        restHighLevelClient = mock(RestHighLevelClient.class);
     }
 
     @Test

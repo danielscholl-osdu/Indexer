@@ -18,12 +18,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 import com.google.gson.Gson;
 import java.io.IOException;
@@ -52,12 +53,9 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({RestHighLevelClient.class, IndicesClient.class})
+@RunWith(MockitoJUnitRunner.class)
 public class IndexerMappingServiceTest {
 
     private final String kind = "tenant:test:test:1.0.0";
@@ -97,8 +95,8 @@ public class IndexerMappingServiceTest {
 
         this.indexSchema = IndexSchema.builder().kind(kind).type(type).dataSchema(getDataAttributeMapping()).metaSchema(getMetaAttributeMapping()).build();
 
-        this.indicesClient = PowerMockito.mock(IndicesClient.class);
-        this.restHighLevelClient = PowerMockito.mock(RestHighLevelClient.class);
+        this.indicesClient = mock(IndicesClient.class);
+        this.restHighLevelClient = mock(RestHighLevelClient.class);
 
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(index);
         when(this.restHighLevelClient.getLowLevelClient()).thenReturn(restClient);
@@ -161,7 +159,6 @@ public class IndexerMappingServiceTest {
             doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
 
             IndexerMappingServiceImpl indexerMappingServiceLocal = spy(new IndexerMappingServiceImpl());
-            doReturn(false).when(indexerMappingServiceLocal).isTypeExist(any(), any(), any());
             String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
             assertEquals(this.validMapping, mapping);
         } catch (Exception e) {

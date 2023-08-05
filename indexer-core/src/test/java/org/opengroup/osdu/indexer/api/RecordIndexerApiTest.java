@@ -34,14 +34,13 @@ import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.service.SchemaEventsProcessor;
+import org.opengroup.osdu.indexer.service.SchemaService;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({HeadersUtil.class, IndexerQueueTaskBuilder.class, DpsHeaders.class})
+@RunWith(MockitoJUnitRunner.class)
 public class RecordIndexerApiTest {
 
     private final String recordMessageValid = "{\"data\":\"[{\\\"id\\\":\\\"opendes:welldb:wellbore-d9033ae1-fb15-496c-9ba0-880fd1d2b2cf\\\",\\\"kind\\\":\\\"tenant1:welldb:wellbore:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"account-id\":\"opendes\",\"correlation-id\":\"b5a281bd-f59d-4db2-9939-b2d85036fc7e\"},\"messageId\":\"75328163778221\",\"publishTime\":\"2018-05-08T21:48:56.131Z\"}";

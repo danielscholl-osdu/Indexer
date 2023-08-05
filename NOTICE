@@ -538,7 +538,6 @@ The following software have components provided under the terms of this license:
 - Plexus Common Utilities (from http://plexus.codehaus.org/plexus-utils, https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils)
 - Plexus I18N Component (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-i18n)
 - Plexus Velocity Component (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-velocity)
-- PowerMock (from http://www.powermock.org, https://repo1.maven.org/maven2/org/powermock/powermock-api-mockito)
 - Prometheus Java Simpleclient (from <https://repo1.maven.org/maven2/io/prometheus/simpleclient>, https://repo1.maven.org/maven2/io/prometheus/simpleclient)
 - Prometheus Java Simpleclient Common (from <https://repo1.maven.org/maven2/io/prometheus/simpleclient_common>, https://repo1.maven.org/maven2/io/prometheus/simpleclient_common)
 - Prometheus Java Span Context Supplier - Common (from <https://repo1.maven.org/maven2/io/prometheus/simpleclient_tracer_common>, https://repo1.maven.org/maven2/io/prometheus/simpleclient_tracer_common)
