@@ -31,7 +31,12 @@ import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION
 @RunWith(MockitoJUnitRunner.class)
 public class IndexerQueueTaskBuilderAzureTest {
 
-    private String payload = "{payload : value }";
+    private String payload = "{\n" +
+            "    \"data\": \"[{\\\"id\\\":\\\"opendes:work-product-component--WellLog:566edebc-1a9f-4f4d-9a30-ed458e959ac7\\\",\\\"kind\\\":\\\"osdu:wks:work-product-component--WellLog:1.2.0\\\",\\\"op\\\":\\\"create\\\"},{\\\"id\\\":\\\"opendes:work-product-component--WellLog:84958febe54e4908a1703778e1918dae\\\",\\\"kind\\\":\\\"osdu:wks:work-product-component--WellLog:1.2.0\\\",\\\"op\\\":\\\"create\\\"}]\",\n" +
+            "    \"attributes\": {\n" +
+            "        \"data-partition-id\": \"opendes\"\n" +
+            "    }\n" +
+            "}";
     private static String partitionId = "opendes";
     private static String correlationId = "correlationId";
     private static String serviceBusReindexTopicNameField = "serviceBusReindexTopicName";
@@ -78,7 +83,7 @@ public class IndexerQueueTaskBuilderAzureTest {
 
         verify(dpsHeaders, times(4)).getPartitionIdWithFallbackToAccountId();
         verify(dpsHeaders, times(2)).getCorrelationId();
-        verify(dpsHeaders, times(1)).addCorrelationIdIfMissing();
+        verify(dpsHeaders, times(2)).addCorrelationIdIfMissing();
         verify(topicClientFactory, times(1)).getClient(partitionId, serviceBusReindexTopicNameValue);
     }
 

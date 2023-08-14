@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.microsoft.azure.servicebus.Message;
 import lombok.extern.java.Log;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.azure.servicebus.ITopicClientFactory;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -105,13 +106,18 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         RecordChangedMessages receivedPayload = gson.fromJson(payload, RecordChangedMessages.class);
 
         List<RecordInfo> recordInfos = parseRecordsAsJSON(receivedPayload.getData());
-        Map<String, String> attributes = receivedPayload.getAttributes();
+        if(!CollectionUtils.isEmpty(recordInfos)) {
+            Map<String, String> attributes = receivedPayload.getAttributes();
+            if (attributes == null) {
+                attributes = new HashMap<>();
+            }
 
-        List<List<RecordInfo>> batch = Lists.partition(recordInfos, publisherConfig.getPubSubBatchSize());
-        for (List<RecordInfo> recordsBatch : batch) {
-            RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(recordsBatch)).attributes(attributes).build();
-            String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-            createTask(recordChangedMessagePayload, headers);
+            List<List<RecordInfo>> batch = Lists.partition(recordInfos, publisherConfig.getPubSubBatchSize());
+            for (List<RecordInfo> recordsBatch : batch) {
+                RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(recordsBatch)).attributes(attributes).build();
+                String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
+                createTask(recordChangedMessagePayload, headers);
+            }
         }
     }
 
