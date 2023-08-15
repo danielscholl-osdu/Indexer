@@ -58,7 +58,7 @@ import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION
 @RequestScope
 @Primary
 public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
-    Gson gson = new Gson();
+    private Gson gson = new Gson();
 
     @Autowired
     private ITopicClientFactory topicClientFactory;
