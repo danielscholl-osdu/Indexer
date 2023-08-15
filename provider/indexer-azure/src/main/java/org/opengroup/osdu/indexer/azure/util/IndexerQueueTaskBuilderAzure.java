@@ -105,7 +105,10 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         RecordChangedMessages receivedPayload = gson.fromJson(payload, RecordChangedMessages.class);
         List<RecordInfo> recordInfos = parseRecordsAsJSON(receivedPayload.getData());
         if(!CollectionUtils.isEmpty(recordInfos)) {
-            createTasks(recordInfos, receivedPayload.getAttributes(), headers);
+            Map<String, String> attributes = (receivedPayload.getAttributes() != null)
+                    ? receivedPayload.getAttributes()
+                    : new HashMap<>();
+            createTasks(recordInfos, attributes, headers);
         }
     }
 
@@ -166,7 +169,7 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         jo.addProperty(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
         // Append the ancestry kinds used to prevent circular chasing
-        if(attributes != null && attributes.containsKey(Constants.ANCESTRY_KINDS)) {
+        if(attributes.containsKey(Constants.ANCESTRY_KINDS)) {
             jo.addProperty(Constants.ANCESTRY_KINDS, attributes.get(Constants.ANCESTRY_KINDS));
         }
         JsonObject jomsg = new JsonObject();
