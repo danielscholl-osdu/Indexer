@@ -37,7 +37,9 @@ import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.cache.*;
+import org.opengroup.osdu.indexer.cache.interfaces.IRecordChangeInfoCache;
+import org.opengroup.osdu.indexer.cache.interfaces.IRelatedObjectCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.*;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.*;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
@@ -70,15 +72,15 @@ public class PropertyConfigurationsServiceImplTest {
     @Mock
     private IndexerConfigurationProperties configurationProperties;
     @Mock
-    private PartitionSafePropertyConfigurationsCache propertyConfigurationCache;
+    private PropertyConfigurationsCache propertyConfigurationCache;
     @Mock
-    private PartitionSafePropertyConfigurationsEnabledCache propertyConfigurationsEnabledCache;
+    private ConfigurationsEnabledCache propertyConfigurationsEnabledCache;
     @Mock
-    private PartitionSafeParentChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
+    private ChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
     @Mock
-    private PartitionSafeChildrenKindsCache childrenKindsCache;
+    private ChildrenKindsCache childrenKindsCache;
     @Mock
-    private PartitionSafeKindCache kindCache;
+    private KindCache kindCache;
     @Mock
     private IRelatedObjectCache relatedObjectCache;
     @Mock

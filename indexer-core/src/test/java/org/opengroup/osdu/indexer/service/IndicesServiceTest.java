@@ -20,7 +20,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -41,7 +40,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -64,7 +63,7 @@ public class IndicesServiceTest {
     @Mock
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Mock
-    private PartitionSafeIndexCache indicesExistCache;
+    private IndexCache indicesExistCache;
     @Mock
     @Lazy
     private JaxRsDpsLog log;

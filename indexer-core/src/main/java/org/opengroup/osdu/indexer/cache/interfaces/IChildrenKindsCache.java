@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.interfaces;
 
 import org.opengroup.osdu.core.common.cache.ICache;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.ChildrenKinds;
 
-public interface IPropertyConfigurationsCache extends ICache<String, PropertyConfigurations> {
+public interface IChildrenKindsCache extends ICache<String, ChildrenKinds> {
 }

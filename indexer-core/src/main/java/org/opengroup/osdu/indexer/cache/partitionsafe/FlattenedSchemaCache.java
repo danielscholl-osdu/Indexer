@@ -13,36 +13,35 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
+import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
 
 @Component
-@RequestScope
-public class PartitionSafeKindCache extends AbstractPartitionSafeCache<String, String> {
+public class FlattenedSchemaCache extends AbstractPartitionSafeCache<String, String> {
     @Inject
-    private IKindCache cache;
+    private ISchemaCache schemaCache;
 
     @Override
     public void put(String s, String o) {
-        this.cache.put(cacheKey(s), o);
+        this.schemaCache.put(cacheKey(s), o);
     }
 
     @Override
     public String get(String s) {
-        return this.cache.get(cacheKey(s));
+        return (String)this.schemaCache.get(cacheKey(s));
     }
 
     @Override
     public void delete(String s) {
-        this.cache.delete(cacheKey(s));
+        this.schemaCache.delete(cacheKey(s));
     }
 
     @Override
     public void clearAll() {
-        this.cache.clearAll();
+        this.schemaCache.clearAll();
     }
 }

@@ -32,8 +32,8 @@ import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.indexer.cache.PartitionSafeFlattenedSchemaCache;
-import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
@@ -75,9 +75,9 @@ public class IndexerSchemaServiceTest {
     @Mock
     private SchemaService schemaService;
     @Mock
-    private PartitionSafeSchemaCache schemaCache;
+    private SchemaCache schemaCache;
     @Mock
-    private PartitionSafeFlattenedSchemaCache flattenedSchemaCache;
+    private FlattenedSchemaCache flattenedSchemaCache;
     @Mock
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Mock

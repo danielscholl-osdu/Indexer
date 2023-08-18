@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,19 +20,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
-public class PartitionSafeIndexCacheTest {
+public class IndexCacheTest {
 
     @Mock
     private IIndexCache cache;
     @Mock
     private IRequestInfo requestInfo;
     @InjectMocks
-    private PartitionSafeIndexCache sut;
+    private IndexCache sut;
 
     @Test
     public void should_addopendesNamToKey_when_addingToCache() {
@@ -40,7 +41,7 @@ public class PartitionSafeIndexCacheTest {
 
         this.sut.put("key", true);
 
-        verify(this.cache, times(1)).put("opendes-key", true);
+        verify(this.cache, times(1)).put("opendes-indexcache-key", true);
     }
 
     @Test
@@ -49,7 +50,7 @@ public class PartitionSafeIndexCacheTest {
 
         this.sut.delete("key");
 
-        verify(this.cache, times(1)).delete("opendes-key");
+        verify(this.cache, times(1)).delete("opendes-indexcache-key");
     }
 
     @Test
@@ -58,7 +59,7 @@ public class PartitionSafeIndexCacheTest {
 
         this.sut.get("key");
 
-        verify(this.cache, times(1)).get("opendes-key");
+        verify(this.cache, times(1)).get("opendes-indexcache-key");
     }
 
     @Test

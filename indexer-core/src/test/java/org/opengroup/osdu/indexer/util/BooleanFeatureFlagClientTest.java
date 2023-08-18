@@ -21,17 +21,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.partition.*;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
-import org.opengroup.osdu.indexer.cache.FeatureFlagCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.FeatureFlagCache;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -56,6 +58,7 @@ public class BooleanFeatureFlagClientTest {
     @Mock
     private IServiceAccountJwtClient tokenService;
 
+
     @Mock
     IPartitionProvider partitionProvider;
 
@@ -75,6 +78,7 @@ public class BooleanFeatureFlagClientTest {
         property.setValue("true");
         partitionInfo.getProperties().put(PROPERTY_NAME, property);
         when(this.partitionProvider.get(anyString())).thenReturn(partitionInfo);
+        when(this.cache.get(anyString())).thenReturn(null);
 
         // Default value won't take any effect
         boolean enabled = sut.isEnabled(PROPERTY_NAME, true);
@@ -92,6 +96,7 @@ public class BooleanFeatureFlagClientTest {
         property.setValue("false");
         partitionInfo.getProperties().put(PROPERTY_NAME, property);
         when(this.partitionProvider.get(anyString())).thenReturn(partitionInfo);
+        when(this.cache.get(anyString())).thenReturn(null);
 
         // Default value won't take any effect
         boolean enabled = sut.isEnabled(PROPERTY_NAME, true);
@@ -106,6 +111,7 @@ public class BooleanFeatureFlagClientTest {
         // The feature flag is enabled by default
         PartitionInfo partitionInfo = new PartitionInfo();
         when(this.partitionProvider.get(anyString())).thenReturn(partitionInfo);
+        when(this.cache.get(anyString())).thenReturn(null);
         boolean enabled = sut.isEnabled(PROPERTY_NAME, true);;
         Assert.assertTrue(enabled);
 
@@ -117,11 +123,30 @@ public class BooleanFeatureFlagClientTest {
     public void isDecimationEnabled_return_default_value_when_partitionProvider_throws_exception() throws PartitionException {
         // The feature flag is enabled by default
         when(this.partitionProvider.get(anyString())).thenThrow(PartitionException.class);
+        when(this.cache.get(anyString())).thenReturn(null);
         boolean enabled = sut.isEnabled(PROPERTY_NAME, true);;
         Assert.assertTrue(enabled);
 
         enabled = sut.isEnabled(PROPERTY_NAME, false);;
         Assert.assertFalse(enabled);
+    }
+
+    @Test
+    public void isDecimationEnabled_return_true_from_cache() throws PartitionException {
+        when(this.cache.get(anyString())).thenReturn(true);
+        boolean enabled = sut.isEnabled(PROPERTY_NAME, false);;
+        Assert.assertTrue(enabled);
+        verify(headers, Mockito.times(0)).getHeaders();
+        verify(factory, Mockito.times(0)).create(any());
+    }
+
+    @Test
+    public void isDecimationEnabled_return_false_from_cache() throws PartitionException {
+        when(this.cache.get(anyString())).thenReturn(false);
+        boolean enabled = sut.isEnabled(PROPERTY_NAME, false);;
+        Assert.assertFalse(enabled);
+        verify(headers, Mockito.times(0)).getHeaders();
+        verify(factory, Mockito.times(0)).create(any());
     }
 
 }
