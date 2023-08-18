@@ -73,7 +73,8 @@ phases:
       - if [ "$GIT_SECRETS_SCAN_RESULT" = "FAILED" ]; then echo "Secrets detected!" && exit 1; fi
 
       - echo "Building primary service assemblies..."
-      - mvn -ntp -B test install sonar:sonar -pl .,indexer-core,provider/indexer-aws -Ddeployment.environment=prod -Dsonar.login=${SONAR_USERNAME} -Dsonar.password=${SONAR_PASSWORD} -Dsonar.branch.name=${BRANCH_NAME} 
+      - mvn -ntp -B test install -pl .,indexer-core,provider/indexer-aws -Ddeployment.environment=prod  
+      - mvn sonar:sonar -pl .,provider/indexer-aws -Dsonar.login=${SONAR_USERNAME} -Dsonar.password=${SONAR_PASSWORD} -Dsonar.branch.name=${BRANCH_NAME}
 
       - echo "Building integration testing assemblies and gathering artifacts..."
       - ./testing/indexer-test-aws/build-aws/prepare-dist.sh
