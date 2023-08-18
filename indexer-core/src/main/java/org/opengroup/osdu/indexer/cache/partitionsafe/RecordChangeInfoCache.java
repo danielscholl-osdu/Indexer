@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 
 @Component
-public class RecordChangeCache extends AbstractPartitionSafeCache<String, RecordChangeInfo> {
+public class RecordChangeInfoCache extends AbstractPartitionSafeCache<String, RecordChangeInfo> {
     @Inject
     private IRecordChangeInfoCache cache;
 

@@ -37,8 +37,6 @@ import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.cache.interfaces.IRecordChangeInfoCache;
-import org.opengroup.osdu.indexer.cache.interfaces.IRelatedObjectCache;
 import org.opengroup.osdu.indexer.cache.partitionsafe.*;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.*;
@@ -52,15 +50,11 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
 public class PropertyConfigurationsServiceImplTest {
@@ -82,9 +76,9 @@ public class PropertyConfigurationsServiceImplTest {
     @Mock
     private KindCache kindCache;
     @Mock
-    private IRelatedObjectCache relatedObjectCache;
+    private RelatedObjectCache relatedObjectCache;
     @Mock
-    private IRecordChangeInfoCache recordChangeInfoCache;
+    private RecordChangeInfoCache recordChangeInfoCache;
     @Mock
     private SearchService searchService;
     @Mock
@@ -186,7 +180,7 @@ public class PropertyConfigurationsServiceImplTest {
         SearchResponse searchResponse = new SearchResponse();
         searchResponse.setResults(results);
         searchResponse.setTotalCount(results.size());
-        when(this.searchService.queryWithCursor(any())).thenReturn(searchResponse);
+        when(this.searchService.query(any())).thenReturn(searchResponse);
         String kind = "osdu:wks:master-data--Well:1.0.0";
         String code = "osdu:wks:master-data--Well:1.";
         PropertyConfigurations configuration = sut.getPropertyConfigurations(kind);
@@ -201,7 +195,7 @@ public class PropertyConfigurationsServiceImplTest {
 
     @Test
     public void getPropertyConfigurations_without_result_from_search() throws URISyntaxException {
-        when(this.searchService.queryWithCursor(any())).thenReturn(new SearchResponse());
+        when(this.searchService.query(any())).thenReturn(new SearchResponse());
 
         String kind = "osdu:wks:master-data--Well:1.0.0";
         PropertyConfigurations configuration = sut.getPropertyConfigurations(kind);
@@ -232,34 +226,30 @@ public class PropertyConfigurationsServiceImplTest {
     public void getExtendedProperties_from_self_and_parent_objects() throws JsonProcessingException, URISyntaxException {
         PropertyConfigurations propertyConfigurations = getConfigurations("welllog_configuration_record.json");
         Map<String, Object> originalDataMap = getDataMap("welllog_original_data.json");
-        Map<String, Object> relatedObjectData;
-        Map<String, Map<String, Object>> relatedObjects = new HashMap<>();
-        relatedObjectData = getDataMap("wellbore_data.json");
-        relatedObjects.put("opendes:master-data--Wellbore:nz-100000113552", relatedObjectData);
-        relatedObjectData = getDataMap("organisation_data1.json");
-        relatedObjects.put("opendes:master-data--Organisation:BigOil-Department-SeismicInterpretation", relatedObjectData);
-        relatedObjectData = getDataMap("organisation_data2.json");
-        relatedObjects.put("opendes:master-data--Organisation:BigOil-Department-SeismicProcessing", relatedObjectData);
 
-        // Setup search response for searchService.queryWithCursor(...)
-        when(this.searchService.query(any())).thenAnswer(invocation -> {
-            SearchRequest searchRequest = invocation.getArgument(0);
-            String query = searchRequest.getQuery();
-            Map<String, Object> data = null;
-            for(Map.Entry<String, Map<String, Object>> entry: relatedObjects.entrySet()) {
-                if(query.contains(entry.getKey())) {
-                    data = entry.getValue();
-                    break;
-                }
-            }
-            if(data == null)
-                throw new Exception("Unexpected search");
-            SearchResponse searchResponse = new SearchResponse();
-            SearchRecord record = new SearchRecord();
-            record.setData(data);
-            searchResponse.setResults(Arrays.asList(record));
-            return searchResponse;
-        });
+        SearchResponse searchResponse = new SearchResponse();
+        List<SearchRecord> records = new ArrayList<>();
+        searchResponse.setResults(records);
+
+        Map<String, Object> relatedObjectData = getDataMap("wellbore_data.json");
+        SearchRecord record = new SearchRecord();
+        record.setId("opendes:master-data--Wellbore:nz-100000113552");
+        record.setData(relatedObjectData);
+        records.add(record);
+
+        relatedObjectData = getDataMap("organisation_data1.json");
+        record = new SearchRecord();
+        record.setId("opendes:master-data--Organisation:BigOil-Department-SeismicInterpretation");
+        record.setData(relatedObjectData);
+        records.add(record);
+
+        relatedObjectData = getDataMap("organisation_data2.json");
+        record = new SearchRecord();
+        record.setId("opendes:master-data--Organisation:BigOil-Department-SeismicProcessing");
+        record.setData(relatedObjectData);
+        records.add(record);
+
+        when(this.searchService.query(any())).thenReturn(searchResponse);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("welllog_extended_data.json");
@@ -660,8 +650,8 @@ public class PropertyConfigurationsServiceImplTest {
         parentKind = "osdu:wks:master-data--Wellbore:1.0.0";
         parentId = "anyParentId";
 
-        // Setup search response for searchService.queryWithCursor(...)
-        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
+        // Setup search response for searchService.query(...)
+        when(this.searchService.query(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             SearchResponse searchResponse = new SearchResponse();
             if (searchRequest.getKind().toString().equals(propertyConfigurationKind)) {
@@ -824,8 +814,8 @@ public class PropertyConfigurationsServiceImplTest {
         parentKind = "osdu:wks:master-data--GeoPoliticalEntity:1.0.0";
         parentId = "anyParentId";
 
-        // Setup search response for searchService.queryWithCursor(...)
-        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
+        // Setup search response for searchService.query(...)
+        when(this.searchService.query(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             SearchResponse searchResponse = new SearchResponse();
             if (searchRequest.getKind().toString().equals(propertyConfigurationKind)) {
@@ -840,22 +830,27 @@ public class PropertyConfigurationsServiceImplTest {
                     // Search ParentToChildren
                     // No result
                 }
-            } else {
-                if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
-                    // Return of searchUniqueParentIds(...)
-                    SearchRecord searchRecord = new SearchRecord();
-                    Map<String, Object> childDataMap = new HashMap<>();
-                    childDataMap.put("AssociatedIdentities", Arrays.asList(parentId));
-                    searchRecord.setKind(childKind);
-                    searchRecord.setId(childId);
-                    searchRecord.setData(childDataMap);
-                    searchResponse.setResults(Arrays.asList(searchRecord));
-                }
-                else {
-                    // This branch is a setup for test case:
-                    // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
-                    throw new Exception("Unexpected search");
-                }
+            }
+            return searchResponse;
+        });
+
+        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
+            SearchRequest searchRequest = invocation.getArgument(0);
+            SearchResponse searchResponse = new SearchResponse();
+            if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
+                // Return of searchUniqueParentIds(...)
+                SearchRecord searchRecord = new SearchRecord();
+                Map<String, Object> childDataMap = new HashMap<>();
+                childDataMap.put("AssociatedIdentities", Arrays.asList(parentId));
+                searchRecord.setKind(childKind);
+                searchRecord.setId(childId);
+                searchRecord.setData(childDataMap);
+                searchResponse.setResults(Arrays.asList(searchRecord));
+            }
+            else {
+                // This branch is a setup for test case:
+                // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
+                throw new Exception("Unexpected search");
             }
             return searchResponse;
         });
