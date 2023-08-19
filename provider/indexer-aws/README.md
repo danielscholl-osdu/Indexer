@@ -13,28 +13,44 @@ Pre-requisites
 * Lombok 1.28 or later
 * OSDU Instance deployed on AWS
 
-### Service Configuration
-In order to run the service locally or remotely, you will need to have the following environment variables defined.
+### Run Locally
+In order to run the service locally, you will need to have the following environment variables defined.
+To run the service remotely, please refer to the Helm Charts defined in the `indexer.tf` file of the `aws-terraform-deployment` repository.
 
-| name | example value | required | description | sensitive? |
-| ---  | ---   | ---         | ---        | ---    |
-| `LOCAL_MODE` | `true` | yes | Set to 'true' to use env vars in place of the k8s variable resolver | no |
-| `APPLICATION_PORT` | `8080` | yes | The port the service will be hosted on. | no |
-| `AWS_REGION` | `us-east-1` | yes | The region where resources needed by the service are deployed | no |
-| `AWS_ACCESS_KEY_ID` | `ASIAXXXXXXXXXXXXXX` | yes | The AWS Access Key for a user with access to Backend Resources required by the service | yes |
-| `AWS_SECRET_ACCESS_KEY` | `super-secret-key==` | yes | The AWS Secret Key for a user with access to Backend Resources required by the service | yes |
-| `AWS_SESSION_TOKEN` | `session-token-xxxxxxxxxx` | no | AWS Session token needed if using an SSO user session to authenticate | yes |
-| `ENVIRONMENT` | `osdu-prefix` | yes | The Resource Prefix defined during deployment | no |
-| `LOG_LEVEL` | `DEBUG` | yes | The Log Level severity to use (https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm) | no |
-| `SSM_ENABLED` | `true` | yes | Set to 'true' to use SSM to resolve config properties, otherwise use env vars | no |
-| `SSL_ENABLED` | `false` | no | Set to 'false' to disable SSL for local development | no |
-| `ENTITLEMENTS_BASE_URL` | `http://localhost:8081` or `https://some-hosted-url` | yes | Specify the base url for an entitlements service instance. Can be run locally or remote | no |
-| `PARTITION_BASE_URL` | `http://localhost:8082` or `https://some-hosted-url` | yes | Specify the base url for a partition service instance. Can be run locally or remote | no | 
-| `STORAGE_BASE_URL` | `http://localhost:8082` or `https://some-hosted-url` | yes | Specify the base url for a partition service instance. Can be run locally or remote | no | 
-| `SCHEMA_BASE_URL` | `http://localhost:8082` or `https://some-hosted-url` | yes | Specify the base url for a partition service instance. Can be run locally or remote | no |
-| `STORAGE_RECORDS_BATCH_SIZE` | 20 | Batch size for storage API `POST {endpoint}/query/records:batch` | no | - |
-| `STORAGE_RECORDS_BY_KIND_BATCH_SIZE` | - | Batch size for storage API `GET {endpoint}/query/records`. If this is not present, defaults to value of `STORAGE_RECORDS_BATCH_SIZE` | no | - | 
+| name                                 | example value                                                                  | required | description                                                                                                                           | sensitive? |
+|--------------------------------------|--------------------------------------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|------------|
+| `LOCAL_MODE`                         | `true`                                                                         | yes      | Set to 'true' to use env vars in place of the k8s variable resolver                                                                   | no         |
+| `APPLICATION_PORT`                   | `8080`                                                                         | yes      | The port the service will be hosted on.                                                                                               | no         |
+| `AWS_REGION`                         | `us-east-1`                                                                    | yes      | The region where resources needed by the service are deployed                                                                         | no         |
+| `LOG_LEVEL`                          | `DEBUG`                                                                        | yes      | The Log Level severity to use (https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm)                                         | no         |
+| `SSM_ENABLED`                        | `true`                                                                         | yes      | Set to 'true' to use SSM to resolve config properties, otherwise use env vars                                                         | no         |
+| `SSL_ENABLED`                        | `false`                                                                        | yes      | Set to 'false' to disable SSL for local development                                                                                   | no         |
+| `DISABLE_USER_AGENT`                 | `false`                                                                        | yes      |                                                                                                                                       |            |
+| `OSDU_VERSION`                       | `0.0.0`                                                                        | yes      |                                                                                                                                       |            |
+| `ENTITLEMENTS_BASE_URL`              | `http://localhost:8081` or `https://your.osdu.instance.cluster.com`            | yes      | Specify the base url for an entitlements service instance. Can be run locally or remote. Don't include the API path, only the domain. | no         |
+| `PARTITION_BASE_URL`                 | `http://localhost:8082` or `https://your.osdu.instance.cluster.com`            | yes      | Specify the base url for a partition service instance. Can be run locally or remote. Don't include the API path, only the domain.     | no         | 
+| `STORAGE_BASE_URL`                   | `http://localhost:8082` or `https://your.osdu.instance.cluster.com`            | yes      | Specify the base url for a partition service instance. Can be run locally or remote. Don't include the API path, only the domain.     | no         | 
+| `SCHEMA_BASE_URL`                    | `http://localhost:8082` or `https://your.osdu.instance.cluster.com`            | yes      | Specify the base url for a partition service instance. Can be run locally or remote. Don't include the API path, only the domain.     | no         |
+| `CLIENT_CREDENTIALS_ID`              | `<CLIENT_ID>`                                                                  | yes      | Usually found inside SSM under `client-credentials/id` suffix.                                                                        |            |
+| `CLIENT_CREDENTIALS_SECRET`          | `'{"client_credentials_client_secret": "<SECRET>"}'`                           | yes      | Usually found inside Secret Manager under the `client-credentials-secret` suffix. Include the full JSON dict, not just the value      |            |
+| `OAUTH_TOKEN_URI`                    | `https://osdu-1234567890.auth.us-east-1.amazoncognito.com/oauth2/token`        | yes      | Usually found inside SSM under `oauth/token-uri` suffix                                                                               |            |
+| `OAUTH_CUSTOM_SCOPE`                 | `osduOnAws/osduOnAWSService`                                                   | yes      | Usually found inside SSM under  `oauth/custom-scope` suffix                                                                           |            |
+| `STORAGE_SQS_URL`                    | `https://sqs.us-east-1.amazonaws.com/1234567890/main-storage-queue`            | yes      | Can be found inside SSM, under `sqs/storage-queue/url` suffix                                                                         | yes        |
+| `INDEXER_DEADLETTER_QUEUE_SQS_URL`   | `https://sqs.us-east-1.amazonaws.com/1234567890/main-indexer-deadletter-queue` | yes      | Can be found inside SSM, under `indexer-queue/indexer-deadletter-queue/url` suffix                                                    | yes        |
+| `INDEXER_SNS_TOPIC_ARN`              | `arn:aws:sns:us-east-1:1234567890:osdu-tenant-group-indexer-messages`          | yes      | Can be found in SSM under `core/indexer/sns/arn` suffix                                                                               | yes        |
+| `ELASTICSEARCH_HOST`                 | `localhost`                                                                    | yes      | See note below this table.                                                                                                            |            |
+| `ELASTICSEARCH_PORT`                 | `9200`                                                                         | yes      | See note below this table.                                                                                                            |            |
+| `ELASTICSEARCH_CREDENTIALS`          | `{"username":"<USERNAME>", "password": "<PASSWORD>"}`                          | yes      | If using ES instance deployed in cluster, can be usually found in Secret Manager under `elasticsearch/credentials` suffix.            |            |
+| `STORAGE_RECORDS_BATCH_SIZE`         | 20                                                                             | no       | Batch size for storage API `POST {endpoint}/query/records:batch`                                                                      | no         | 
+| `STORAGE_RECORDS_BY_KIND_BATCH_SIZE` | -                                                                              | no       | Batch size for storage API `GET {endpoint}/query/records`. If this is not present, defaults to value of `STORAGE_RECORDS_BATCH_SIZE`  | no         |  
 
+
+For ElasticSearch, if you already have an OSDU environment deployed, you can use your existing ES instance by using port forwarding:
+```bash
+kubectl port-forward -n osdu-tenant-TENANT_NAME-elasticsearch svc/elasticsearch-es-http 9200:9200
+```
+And then just use `localhost` and `9200` for host and port.
+If you want to run ES locally, there are explanations below on this Readme on how to install it.
 
 ### Run Locally
 Check that maven is installed:
@@ -123,28 +139,27 @@ You should see in the logs that pop up what url and port it runs on. By default 
  export ELASTIC_PASSWORD=$ELASTIC_PASSWORD
  export ELASTIC_USER_NAME=$ELASTIC_USERNAME
  
- | name | example value | description                                                                            | sensitive?
- | ---  |----------------------------------------------------------------------------------------| ---         | ---        |
- | `AWS_ACCESS_KEY_ID` | `ASIAXXXXXXXXXXXXXX` | The AWS Access Key for a user with access to Backend Resources required by the service | yes |
- | `AWS_SECRET_ACCESS_KEY` | `super-secret-key==` | The AWS Secret Key for a user with access to Backend Resources required by the service | yes |
- | `AWS_SESSION_TOKEN` | `session-token-xxxxxxxxx` | AWS Session token needed if using an SSO user session to authenticate                  | yes |
- | `AWS_COGNITO_USER_POOL_ID` | `us-east-1_xxxxxxxx` | User Pool Id for the reference cognito                                                 | no |
- | `AWS_COGNITO_CLIENT_ID` | `xxxxxxxxxxxx` | Client ID for the Auth Flow integrated with the Cognito User Pool                      | no |
- | `AWS_COGNITO_AUTH_FLOW` | `USER_PASSWORD_AUTH` | Auth flow used by reference cognito deployment                                         | no |
- | `DEFAULT_DATA_PARTITION_ID_TENANT1` | `opendes` | Partition used to create and index record                                              | no |
- | `DEFAULT_DATA_PARTITION_ID_TENANT2` | `common` | Another needed partition                                                               | no |
- | `AWS_COGNITO_AUTH_PARAMS_USER` | `int-test-user@testing.com` | Int Test Username                                                                      | no |
- | `AWS_COGNITO_AUTH_PARAMS_USER_NO_ACCESS` | `noaccess@testing.com` | No Access Username                                                                     | no |
- | `AWS_COGNITO_AUTH_PARAMS_PASSWORD` | `some-secure-password` | Int Test User/NoAccessUser Password                                                    | yes |
- | `ENTITLEMENTS_DOMAIN` | `example.com` | Domain for user's groups                                                               | no |
- | `OTHER_RELEVANT_DATA_COUNTRIES` | `US` | Used to create demo legal tag                                                          | no |
- | `STORAGE_HOST` | `http://localhost:8080/api/storage/v2/` | The url where the storage API is hosted                                                | no |
- | `HOST` | `http://localhost:8080` | Base url for deployment                                                                | no |
- | `ELASTIC_HOST` | `localhost` | Url for elasticsearch                                                                  | no |
- | `ELASTIC_PORT` | `9300` | Port for elasticsearch                                                                 | no |
- | `ELASTIC_PASSWORD` | `xxxxxxxxxxxxxxx` | Password for user to access elasticsearch                                              | yes |
- | `ELASTIC_USER_NAME` | `xxxxxxxxxxxxxxxx` | Username for user to access elasticsearch                                              | yes |
- | `CUCUMBER_OPTIONS` | `--tags '~@indexer-extended'` OR `--tags '~@* and @indexer-extended'` | By default `--tags '~@* and @indexer-extended'` to enable experimental feature testing | no |
+ | name                                     | example value                                                         | description                                                                            | sensitive?|
+ |------------------------------------------|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------| --- |
+ | `AWS_ACCESS_KEY_ID`                      | `ASIAXXXXXXXXXXXXXX`                                                  | The AWS Access Key for a user with access to Backend Resources required by the service | yes |
+ | `AWS_SECRET_ACCESS_KEY`                  | `super-secret-key==`                                                  | The AWS Secret Key for a user with access to Backend Resources required by the service | yes |
+ | `AWS_SESSION_TOKEN`                      | `session-token-xxxxxxxxx`                                             | AWS Session token needed if using an SSO user session to authenticate                  | yes |
+ | `AWS_COGNITO_USER_POOL_ID`               | `us-east-1_xxxxxxxx`                                                  | User Pool Id for the reference cognito                                                 | no |
+ | `AWS_COGNITO_CLIENT_ID`                  | `xxxxxxxxxxxx`                                                        | Client ID for the Auth Flow integrated with the Cognito User Pool                      | no |
+ | `AWS_COGNITO_AUTH_FLOW`                  | `USER_PASSWORD_AUTH`                                                  | Auth flow used by reference cognito deployment                                         | no |
+ | `DEFAULT_DATA_PARTITION_ID_TENANT1`      | `opendes`                                                             | Partition used to create and index record                                              | no |
+ | `DEFAULT_DATA_PARTITION_ID_TENANT2`      | `common`                                                              | Another needed partition                                                               | no |
+ | `AWS_COGNITO_AUTH_PARAMS_USER`           | `int-test-user@testing.com`                                           | Int Test Username                                                                      | no |
+ | `AWS_COGNITO_AUTH_PARAMS_USER_NO_ACCESS` | `noaccess@testing.com`                                                | No Access Username                                                                     | no |
+ | `AWS_COGNITO_AUTH_PARAMS_PASSWORD`       | `some-secure-password`                                                | Int Test User/NoAccessUser Password                                                    | yes |
+ | `ENTITLEMENTS_DOMAIN`                    | `example.com`                                                         | Domain for user's groups                                                               | no |
+ | `OTHER_RELEVANT_DATA_COUNTRIES`          | `US`                                                                  | Used to create demo legal tag                                                          | no |
+ | `STORAGE_HOST`                           | `http://localhost:8080/api/storage/v2/`                               | The url where the storage API is hosted                                                | no |
+ | `HOST`                                   | `http://localhost:8080`                                               | Base url for deployment                                                                | no |
+ | `ELASTIC_HOST`                           | `localhost`                                                           | Url for elasticsearch                                                                  | no |
+ | `ELASTIC_PORT`                           | `9300`                                                                | Port for elasticsearch                                                                 | no |
+ | `ELASTICSEARCH_CREDENTIALS`              | `{"username":"<USERNAME>", "password": "<PASSWORD>"}`                 | Login/password for user to access elasticsearch                                        | yes |
+ | `CUCUMBER_OPTIONS`                       | `--tags '~@indexer-extended'` OR `--tags '~@* and @indexer-extended'` | By default `--tags '~@* and @indexer-extended'` to enable experimental feature testing | no |
 
 
  **Creating a new user to use for integration tests**
