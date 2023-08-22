@@ -25,7 +25,6 @@ public abstract class AbstractPartitionSafeCache<K, V> implements ICache<K, V> {
     private IRequestInfo requestInfo;
 
     protected String cacheKey(String s) {
-        String key = this.requestInfo.getPartitionId() + "-" + this.getClass().getSimpleName() + "-" + s;
-        return key.toLowerCase();
+        return this.requestInfo.getPartitionId() + "-" + this.getClass().getSimpleName().toLowerCase() + "-" + s;
     }
 }
