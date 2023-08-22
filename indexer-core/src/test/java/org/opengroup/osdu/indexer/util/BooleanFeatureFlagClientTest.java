@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 public class BooleanFeatureFlagClientTest {
-    private static final String PROPERTY_NAME =  "indexer-decimation-enabled";
+    private static final String PROPERTY_NAME =  "any-feature-enabled";
 
     @InjectMocks
     private BooleanFeatureFlagClient sut;
@@ -71,7 +71,7 @@ public class BooleanFeatureFlagClientTest {
     }
 
     @Test
-    public void isDecimationEnabled_return_true() throws PartitionException {
+    public void isEnabled_return_true() throws PartitionException {
         PartitionInfo partitionInfo = new PartitionInfo();
         Property property = new Property();
         property.setSensitive(false);
@@ -89,7 +89,7 @@ public class BooleanFeatureFlagClientTest {
     }
 
     @Test
-    public void isDecimationEnabled_return_false_when_property_set_to_false() throws PartitionException {
+    public void isEnabled_return_false_when_property_set_to_false() throws PartitionException {
         PartitionInfo partitionInfo = new PartitionInfo();
         Property property = new Property();
         property.setSensitive(false);
@@ -107,7 +107,7 @@ public class BooleanFeatureFlagClientTest {
     }
 
     @Test
-    public void isDecimationEnabled_return_default_value_when_property_does_not_exist() throws PartitionException {
+    public void isEnabled_return_default_value_when_property_does_not_exist() throws PartitionException {
         // The feature flag is enabled by default
         PartitionInfo partitionInfo = new PartitionInfo();
         when(this.partitionProvider.get(anyString())).thenReturn(partitionInfo);
@@ -120,7 +120,7 @@ public class BooleanFeatureFlagClientTest {
     }
 
     @Test
-    public void isDecimationEnabled_return_default_value_when_partitionProvider_throws_exception() throws PartitionException {
+    public void isEnabled_return_default_value_when_partitionProvider_throws_exception() throws PartitionException {
         // The feature flag is enabled by default
         when(this.partitionProvider.get(anyString())).thenThrow(PartitionException.class);
         when(this.cache.get(anyString())).thenReturn(null);
@@ -132,7 +132,7 @@ public class BooleanFeatureFlagClientTest {
     }
 
     @Test
-    public void isDecimationEnabled_return_true_from_cache() throws PartitionException {
+    public void isEnabled_return_true_from_cache() throws PartitionException {
         when(this.cache.get(anyString())).thenReturn(true);
         boolean enabled = sut.isEnabled(PROPERTY_NAME, false);;
         Assert.assertTrue(enabled);
@@ -141,7 +141,7 @@ public class BooleanFeatureFlagClientTest {
     }
 
     @Test
-    public void isDecimationEnabled_return_false_from_cache() throws PartitionException {
+    public void isEnabled_return_false_from_cache() throws PartitionException {
         when(this.cache.get(anyString())).thenReturn(false);
         boolean enabled = sut.isEnabled(PROPERTY_NAME, false);;
         Assert.assertFalse(enabled);
