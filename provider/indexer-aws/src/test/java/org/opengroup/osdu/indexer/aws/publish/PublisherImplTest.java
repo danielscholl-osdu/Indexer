@@ -18,13 +18,17 @@ import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
 import org.opengroup.osdu.core.aws.sns.PublishRequestBuilder;
+import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import org.opengroup.osdu.indexer.aws.IndexerAwsApplication;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,11 +37,15 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest(classes = {IndexerAwsApplication.class})
 public class PublisherImplTest {
+
+    private final String indexer_sns_topic_arn = "indexer_sns_topic_arn";
 
     @InjectMocks
     private PublisherImpl publisher = new PublisherImpl();
@@ -76,4 +84,50 @@ public class PublisherImplTest {
         // Assert
         Mockito.verify(snsClient, Mockito.times(1)).publish(Mockito.eq(publishRequest));
     }
+
+
+    @Test
+    public void go_through_init_DLQ() throws Exception  {
+
+        try (MockedConstruction<K8sLocalParameterProvider> provider = Mockito.mockConstruction(K8sLocalParameterProvider.class, (mock, context) -> {
+                                                                                                                when(mock.getParameterAsString(eq("INDEXER_SNS_TOPIC_ARN"))).thenReturn(indexer_sns_topic_arn);
+                                                                                                            })) {
+
+            try (MockedConstruction<AmazonSNSConfig> sns = Mockito.mockConstruction(AmazonSNSConfig.class, (mock1, context) -> {
+                                                                                                                when(mock1.AmazonSNS()).thenReturn(snsClient);
+                                                                                                            })) {
+
+                publisher.init();
+
+                // Arrange
+                DpsHeaders headers = new DpsHeaders();
+                JobStatus jobStatus = new JobStatus();
+                Mockito.when(snsClient.publish(Mockito.any(PublishRequest.class)))
+                        .thenReturn(Mockito.any(PublishResult.class));
+
+                Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
+                messageAttributes.put(DpsHeaders.ACCOUNT_ID, new MessageAttributeValue()
+                        .withDataType("String")
+                        .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
+                messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, new MessageAttributeValue()
+                        .withDataType("String")
+                        .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
+                headers.addCorrelationIdIfMissing();
+                messageAttributes.put(DpsHeaders.CORRELATION_ID, new MessageAttributeValue()
+                        .withDataType("String")
+                        .withStringValue(headers.getCorrelationId()));
+
+                PublishRequest publishRequest = new PublishRequestBuilder().generatePublishRequest("data", jobStatus.getStatusesList(), messageAttributes, indexer_sns_topic_arn);
+                // Act
+                publisher.publishStatusChangedTagsToTopic(headers, jobStatus);
+
+                // Assert
+                Mockito.verify(snsClient, Mockito.times(1)).publish(Mockito.eq(publishRequest));
+
+            }
+
+        }
+
+    }
+
 }
