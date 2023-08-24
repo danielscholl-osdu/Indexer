@@ -195,7 +195,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
                         for (String relatedObjectId : relatedObjectIds) {
                             String id = PropertyUtil.removeIdPostfix(relatedObjectId);
-                            Map<String, Object> relatedObject = idObjectDataMap.containsKey(id)? idObjectDataMap.get(id) : null;
+                            Map<String, Object> relatedObject = idObjectDataMap.getOrDefault(id, new HashMap<>());
                             Map<String, Object> propertyValues = getExtendedPropertyValues(extendedPropertyName, relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
                             if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                                 allPropertyValues = propertyValues;
