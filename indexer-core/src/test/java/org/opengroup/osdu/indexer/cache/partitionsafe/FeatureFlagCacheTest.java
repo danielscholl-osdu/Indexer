@@ -13,34 +13,47 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opengroup.osdu.indexer.cache.FeatureFlagCache;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.cache.partitionsafe.FeatureFlagCache;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.inject.Inject;
+
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 public class FeatureFlagCacheTest {
     private static final String VALID_KEY = "Tenant1-indexer-decimation-enabled";
     private static final String INVALID_KEY = "Tenant2-indexer-decimation-enabled";
+
+    @InjectMocks
     FeatureFlagCache cache;
+
+    @Mock
+    private IRequestInfo requestInfo;
 
     @Before
     public void setup() {
-        cache = new FeatureFlagCache();
+        when(requestInfo.getPartitionId()).thenReturn("data-partition-id");
         cache.put(VALID_KEY, true);
     }
 
     @Test
     public void getValidKey() {
-        Assert.assertTrue(cache.containsKey(VALID_KEY));
+        Assert.assertNotNull(cache.get(VALID_KEY));
+        Assert.assertTrue(cache.get(VALID_KEY));
     }
 
     @Test
     public void getInvalidKey() {
-        Assert.assertFalse(cache.containsKey(INVALID_KEY));
+        Assert.assertNull(cache.get(INVALID_KEY));;
     }
 }

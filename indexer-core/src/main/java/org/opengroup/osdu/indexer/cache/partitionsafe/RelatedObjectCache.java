@@ -13,34 +13,32 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
-import org.opengroup.osdu.core.common.cache.VmCache;
-import org.opengroup.osdu.indexer.cache.interfaces.IPropertyConfigurationsEnabledCache;
-import org.opengroup.osdu.indexer.model.Constants;
+import org.opengroup.osdu.core.common.model.storage.RecordData;
+import org.opengroup.osdu.indexer.cache.interfaces.IRelatedObjectCache;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
+
 @Component
-public class PropertyConfigurationsEnabledCacheVmImpl implements IPropertyConfigurationsEnabledCache {
-    private VmCache<String, Boolean> cache;
+public class RelatedObjectCache extends AbstractPartitionSafeCache<String, RecordData> {
+    @Inject
+    private IRelatedObjectCache cache;
 
-    public PropertyConfigurationsEnabledCacheVmImpl() {
-        cache = new VmCache<>(Constants.SPEC_CACHE_EXPIRATION, Constants.SPEC_MAX_CACHE_SIZE);
+    @Override
+    public void put(String s, RecordData o) {
+        this.cache.put(cacheKey(s), o);
     }
 
     @Override
-    public void put(String s, Boolean o) {
-        this.cache.put(s,o);
-    }
-
-    @Override
-    public Boolean get(String s) {
-        return this.cache.get(s);
+    public RecordData get(String s) {
+        return this.cache.get(cacheKey(s));
     }
 
     @Override
     public void delete(String s) {
-        this.cache.delete(s);
+        this.cache.delete(cacheKey(s));
     }
 
     @Override

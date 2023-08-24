@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.interfaces;
 
 import org.opengroup.osdu.core.common.cache.ICache;
+import org.opengroup.osdu.core.common.model.storage.RecordData;
 
-public interface IPropertyConfigurationsEnabledCache extends ICache<String, Boolean> {
+public interface IRelatedObjectCache extends ICache<String, RecordData> {
 }

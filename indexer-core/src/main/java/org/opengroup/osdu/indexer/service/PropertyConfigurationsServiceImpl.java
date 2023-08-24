@@ -30,7 +30,7 @@ import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.cache.*;
+import org.opengroup.osdu.indexer.cache.partitionsafe.*;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.*;
 import org.opengroup.osdu.indexer.model.indexproperty.*;
@@ -71,19 +71,19 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     @Inject
     private IndexerConfigurationProperties configurationProperties;
     @Inject
-    private PartitionSafePropertyConfigurationsCache propertyConfigurationCache;
+    private PropertyConfigurationsCache propertyConfigurationCache;
     @Inject
-    private PartitionSafePropertyConfigurationsEnabledCache propertyConfigurationsEnabledCache;
+    private ConfigurationsEnabledCache propertyConfigurationsEnabledCache;
     @Inject
-    private PartitionSafeParentChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
+    private ChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
     @Inject
-    private PartitionSafeChildrenKindsCache childrenKindsCache;
+    private ChildrenKindsCache childrenKindsCache;
     @Inject
-    private PartitionSafeKindCache kindCache;
+    private KindCache kindCache;
     @Inject
-    private IRelatedObjectCache relatedObjectCache;
+    private RelatedObjectCache relatedObjectCache;
     @Inject
-    private IRecordChangeInfoCache recordChangeInfoCache;
+    private RecordChangeInfoCache recordChangeInfoCache;
     @Inject
     private SearchService searchService;
     @Inject
@@ -172,6 +172,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     public Map<String, Object> getExtendedProperties(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
         Set<String> associatedIdentities = new HashSet<>();
         Map<String, Object> extendedDataMap = new HashMap<>();
+
+        Map<String, Map<String, Object>> idObjectDataMap = getRelatedObjectsData(originalDataMap, propertyConfigurations);
         for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
             String extendedPropertyName = configuration.getName();
             if (originalDataMap.containsKey(extendedPropertyName) && originalDataMap.get(extendedPropertyName) != null) {
@@ -192,7 +194,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                         }
 
                         for (String relatedObjectId : relatedObjectIds) {
-                            Map<String, Object> relatedObject = getRelatedObjectData(relatedObjectsSpec.getRelatedObjectKind(), relatedObjectId);
+                            String id = PropertyUtil.removeIdPostfix(relatedObjectId);
+                            Map<String, Object> relatedObject = idObjectDataMap.getOrDefault(id, new HashMap<>());
                             Map<String, Object> propertyValues = getExtendedPropertyValues(extendedPropertyName, relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
                             if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                                 allPropertyValues = propertyValues;
@@ -295,7 +298,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     @Override
     public void cacheDataRecord(String recordId, String kind, Map<String, Object> dataMap) {
-        Map<String, Object> previousDataMap = this.getRelatedObjectData(kind, recordId);
+        Map<String, Object> previousDataMap = this.getObjectData(kind, recordId);
         RecordInfo recordInfo = new RecordInfo();
         recordInfo.setId(recordId);
         recordInfo.setKind(kind);
@@ -393,22 +396,73 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
     }
 
-    private Map<String, Object> getRelatedObjectData(String relatedObjectKind, String relatedObjectId) {
-        String key = PropertyUtil.removeIdPostfix(relatedObjectId);
-        RecordData recordData = relatedObjectCache.get(key);
-        Map<String, Object> relatedObject = (recordData != null)? recordData.getData() : null;
-        if (relatedObject == null) {
-            SearchRecord searchRecord = searchRelatedRecord(relatedObjectKind, relatedObjectId);
-            if (searchRecord != null) {
-                relatedObject = searchRecord.getData();
+    private Map<String, Object> getObjectData(String kind, String id) {
+        RecordData recordData = relatedObjectCache.get(id);
+        Map<String, Object> data = (recordData != null)? recordData.getData() : null;
+        if (data == null) {
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.setKind(kind);
+            String query = String.format("id: \"%s\"", id);
+            searchRequest.setQuery(query);
+            SearchRecord searchRecord = searchFirstRecord(searchRequest);
 
+            if (searchRecord != null) {
+                data = searchRecord.getData();
                 recordData = new RecordData();
-                recordData.setData(relatedObject);
-                relatedObjectCache.put(key, recordData);
+                recordData.setData(data);
+                relatedObjectCache.put(id, recordData);
             }
         }
 
-        return relatedObject;
+        return data;
+    }
+
+    private Map<String, Map<String, Object>> getRelatedObjectsData(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
+        Map<String, Map<String, Object>> idData = new HashMap<>();
+        Map<String, Set<String>> kindIds = new HashMap<>();
+        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
+            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
+                if (path.hasValidRelatedObjectsSpec()) {
+                    RelatedObjectsSpec relatedObjectsSpec = path.getRelatedObjectsSpec();
+                    List<String> relatedObjectIds = getRelatedObjectIds(originalDataMap, relatedObjectsSpec);
+                    String relatedObjectKind = relatedObjectsSpec.getRelatedObjectKind();
+                    if(!kindIds.containsKey(relatedObjectKind)) {
+                        kindIds.put(relatedObjectKind, new HashSet<>());
+                    }
+                    kindIds.get(relatedObjectKind).addAll(relatedObjectIds);
+                }
+            }
+        }
+
+        if(!kindIds.isEmpty()) {
+            List<String> kindsToSearch = new ArrayList<>();
+            List<String> idsToSearch = new ArrayList<>();
+            for (Map.Entry<String, Set<String>> entry : kindIds.entrySet()) {
+                for (String recordId : entry.getValue()) {
+                    String id = PropertyUtil.removeIdPostfix(recordId);
+                    RecordData recordData = relatedObjectCache.get(id);
+                    Map<String, Object> data = (recordData != null)? recordData.getData() : null;;
+                    if (data != null) {
+                        idData.put(id, data);
+                    } else {
+                        kindsToSearch.add(entry.getKey());
+                        idsToSearch.add(recordId);
+                    }
+                }
+            }
+            if (kindsToSearch.size() > 0) {
+                List<SearchRecord> records = searchRelatedRecords(kindsToSearch, idsToSearch);
+                for (SearchRecord searchRecord : records) {
+                    Map<String, Object> data = searchRecord.getData();
+                    String id = searchRecord.getId();
+                    RecordData recordData = new RecordData();
+                    recordData.setData(data);
+                    relatedObjectCache.put(id, recordData);
+                    idData.put(id, data);
+                }
+            }
+        }
+        return idData;
     }
 
     private Map<String, List<RecordChangeInfo>> createRecordChangeInfoMap(Map<String, List<String>> upsertKindIds, Map<String, List<String>> deleteKindIds) {
@@ -567,7 +621,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         } else { // Flatten
             for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
                 String key = entry.getKey();
-                if (key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) {
+                if ((key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) && entry.getValue() != null) {
                     if (isExtractFirstMatch) {
                         propertyValues.put(key, entry.getValue());
                     } else {
@@ -812,7 +866,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         searchRequest.setQuery(query);
         searchRequest.setReturnedFields(Arrays.asList("kind", "id", "data." + ASSOCIATED_IDENTITIES_PROPERTY));
         List<RecordInfo> recordInfos = new ArrayList<>();
-        for (SearchRecord record : searchAllRecords(searchRequest)) {
+        for (SearchRecord record : searchRecordsWithCursor(searchRequest)) {
             Map<String, Object> data = record.getData();
             if (!data.containsKey(ASSOCIATED_IDENTITIES_PROPERTY) || data.get(ASSOCIATED_IDENTITIES_PROPERTY) == null)
                 continue;
@@ -907,7 +961,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     private List<PropertyConfigurations> searchConfigurations(SearchRequest searchRequest) {
         List<PropertyConfigurations> configurationsList = new ArrayList<>();
-        for (SearchRecord searchRecord : searchAllRecords(searchRequest)) {
+        for (SearchRecord searchRecord : searchRecords(searchRequest)) {
             try {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
                 PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
@@ -921,14 +975,18 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return configurationsList;
     }
 
-    private SearchRecord searchRelatedRecord(String relatedObjectKind, String relatedObjectId) {
-        String kind = PropertyUtil.isConcreteKind(relatedObjectKind) ? relatedObjectKind : relatedObjectKind + "*";
-        String id = PropertyUtil.removeIdPostfix(relatedObjectId);
+    private List<SearchRecord> searchRelatedRecords(List<String> relatedObjectKinds, List<String> relatedObjectIds) {
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(kind);
-        String query = String.format("id: \"%s\"", id);
+        List<String> kinds = new ArrayList<>();
+        for(String kind : relatedObjectKinds) {
+            if(!PropertyUtil.isConcreteKind(kind))
+                kind += "*";
+            kinds.add(kind);
+        }
+        searchRequest.setKind(kinds);
+        String query = String.format("id: (%s)", createIdsFilter(relatedObjectIds));
         searchRequest.setQuery(query);
-        return searchFirstRecord(searchRequest);
+        return searchRecords(searchRequest);
     }
 
     private Map<String, List<String>> searchKindIds(String majorKind, List<String> ids) {
@@ -939,7 +997,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         String query = String.format("id: (%s)", createIdsFilter(ids));
         searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
         searchRequest.setQuery(query);
-        for (SearchRecord record : searchAllRecords(searchRequest)) {
+        for (SearchRecord record : searchRecords(searchRequest)) {
             if (kindIds.containsKey(record.getKind())) {
                 kindIds.get(record.getKind()).add(record.getId());
             } else {
@@ -959,7 +1017,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         searchRequest.setReturnedFields(Arrays.asList(parentObjectIdPath));
         searchRequest.setQuery(query);
         parentObjectIdPath = PropertyUtil.removeDataPrefix(parentObjectIdPath);
-        for (SearchRecord record : searchAllRecords(searchRequest)) {
+        for (SearchRecord record : searchRecords(searchRequest)) {
             if (record.getData().containsKey(parentObjectIdPath)) {
                 Object id = record.getData().get(parentObjectIdPath);
                 if (id != null && !parentIds.contains(id)) {
@@ -976,27 +1034,46 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         searchRequest.setKind(kind);
         String query = String.format("%s: \"%s\"", childrenObjectField, parentId);
         searchRequest.setQuery(query);
-        return searchAllRecords(searchRequest);
+        return searchRecordsWithCursor(searchRequest);
     }
 
-    private List<SearchRecord> searchAllRecords(SearchRequest searchRequest) {
+    private List<SearchRecord> searchRecordsWithCursor(SearchRequest searchRequest) {
         searchRequest.setLimit(MAX_SEARCH_LIMIT);
         List<SearchRecord> allRecords = new ArrayList<>();
-        boolean done = false;
         try {
-            while (!done) {
+            List<SearchRecord> results = null;
+            do {
                 SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
-                List<SearchRecord> results = searchResponse.getResults();
+                results = searchResponse.getResults();
                 if (results != null && results.size() > 0) {
                     allRecords.addAll(results);
+                    if (!Strings.isNullOrEmpty(searchResponse.getCursor()) && results.size() == MAX_SEARCH_LIMIT) {
+                        searchRequest.setCursor(searchResponse.getCursor());
+                    }
                 }
+            } while(results != null && results.size() == MAX_SEARCH_LIMIT);
+        } catch (URISyntaxException e) {
+            jaxRsDpsLog.error("Failed to call search service.", e);
+        }
+        return allRecords;
+    }
 
-                if (!Strings.isNullOrEmpty(searchResponse.getCursor())) {
-                    searchRequest.setCursor(searchResponse.getCursor());
-                } else {
-                    done = true;
+    // The search without cursor can return max. 10,000 records
+    private List<SearchRecord> searchRecords(SearchRequest searchRequest) {
+        searchRequest.setLimit(MAX_SEARCH_LIMIT);
+        int offset = 0;
+        List<SearchRecord> allRecords = new ArrayList<>();
+        try {
+            List<SearchRecord> results = null;
+            do {
+                SearchResponse searchResponse = searchService.query(searchRequest);
+                results = searchResponse.getResults();
+                if (results != null && results.size() > 0) {
+                    allRecords.addAll(results);
+                    offset += results.size();
+                    searchRequest.setOffset(offset);
                 }
-            }
+            } while(results != null && results.size() == MAX_SEARCH_LIMIT);
         } catch (URISyntaxException e) {
             jaxRsDpsLog.error("Failed to call search service.", e);
         }

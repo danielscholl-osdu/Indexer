@@ -16,6 +16,7 @@
 package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.VmCache;
+import org.opengroup.osdu.indexer.cache.interfaces.IRecordChangeInfoCache;
 import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.model.RecordChangeInfo;
 import org.springframework.stereotype.Component;

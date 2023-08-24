@@ -13,17 +13,16 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
+import org.opengroup.osdu.indexer.cache.interfaces.IParentChildRelationshipSpecsCache;
 import org.opengroup.osdu.indexer.model.indexproperty.ParentChildRelationshipSpecs;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
 
 @Component
-@RequestScope
-public class PartitionSafeParentChildRelationshipSpecsCache extends AbstractPartitionSafeCache<String, ParentChildRelationshipSpecs> {
+public class ChildRelationshipSpecsCache extends AbstractPartitionSafeCache<String, ParentChildRelationshipSpecs> {
     @Inject
     private IParentChildRelationshipSpecsCache cache;
 

@@ -1,18 +1,31 @@
+/*
+ * Copyright © Schlumberger
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0 *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.opengroup.osdu.indexer.util;
 
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.partition.*;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
-import org.opengroup.osdu.indexer.cache.FeatureFlagCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.FeatureFlagCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
 public class BooleanFeatureFlagClient {
-    private static final String TOKEN_PREFIX = "Bearer ";
-
     @Lazy
     @Autowired
     private FeatureFlagCache cache;
@@ -31,9 +44,8 @@ public class BooleanFeatureFlagClient {
 
     public boolean isEnabled(String featureName, boolean defaultValue) {
         String dataPartitionId = headers.getPartitionId();
-        String cacheKey = String.format("%s-%s", dataPartitionId, featureName);
-        if (cache != null && cache.containsKey(cacheKey))
-            return cache.get(cacheKey);
+        if (cache != null && cache.get(featureName) != null)
+            return cache.get(featureName);
 
         boolean isEnabled = defaultValue;
         try {
@@ -42,7 +54,7 @@ public class BooleanFeatureFlagClient {
         } catch (Exception e) {
             this.logger.error(String.format("PartitionService: Error getting %s for dataPartition with Id: %s. Turn on the feature flag by default.", featureName, dataPartitionId), e);
         }
-        this.cache.put(cacheKey, isEnabled);
+        this.cache.put(featureName, isEnabled);
         return isEnabled;
     }
 

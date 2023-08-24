@@ -13,42 +13,36 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
-import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
+import org.opengroup.osdu.indexer.cache.interfaces.IPropertyConfigurationsCache;
+import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
 
 @Component
-@RequestScope
-public class PartitionSafeFlattenedSchemaCache extends AbstractPartitionSafeCache<String, String> {
-    private static final String FLATTENED_SCHEMA = "_flattened";
+public class PropertyConfigurationsCache extends AbstractPartitionSafeCache<String,PropertyConfigurations> {
     @Inject
-    private ISchemaCache schemaCache;
+    private IPropertyConfigurationsCache cache;
 
     @Override
-    public void put(String s, String o) {
-        this.schemaCache.put(getKey(s), o);
+    public void put(String s, PropertyConfigurations o) {
+        this.cache.put(cacheKey(s), o);
     }
 
     @Override
-    public String get(String s) {
-        return (String)this.schemaCache.get(getKey(s));
+    public PropertyConfigurations get(String s) {
+        return this.cache.get(cacheKey(s));
     }
 
     @Override
     public void delete(String s) {
-        this.schemaCache.delete(getKey(s));
+        this.cache.delete(cacheKey(s));
     }
 
     @Override
     public void clearAll() {
-        this.schemaCache.clearAll();
-    }
-
-    private String getKey(String s) {
-        return cacheKey(s) + FLATTENED_SCHEMA;
+        this.cache.clearAll();
     }
 }

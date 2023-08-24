@@ -16,12 +16,13 @@
 package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.VmCache;
+import org.opengroup.osdu.indexer.cache.interfaces.IChildrenKindsCache;
 import org.opengroup.osdu.indexer.model.Constants;
 import org.opengroup.osdu.indexer.model.indexproperty.ChildrenKinds;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ChildrenKindsCacheVmImpl implements IChildrenKindsCache{
+public class ChildrenKindsCacheVmImpl implements IChildrenKindsCache {
     private VmCache<String, ChildrenKinds> cache;
 
     public ChildrenKindsCacheVmImpl() {

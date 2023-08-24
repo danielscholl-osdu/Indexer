@@ -13,26 +13,26 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
+import org.opengroup.osdu.indexer.cache.interfaces.IRecordChangeInfoCache;
+import org.opengroup.osdu.indexer.model.RecordChangeInfo;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
 
 @Component
-@RequestScope
-public class PartitionSafePropertyConfigurationsEnabledCache extends AbstractPartitionSafeCache<String,Boolean> {
+public class RecordChangeInfoCache extends AbstractPartitionSafeCache<String, RecordChangeInfo> {
     @Inject
-    private IPropertyConfigurationsEnabledCache cache;
+    private IRecordChangeInfoCache cache;
 
     @Override
-    public void put(String s, Boolean  o) {
+    public void put(String s, RecordChangeInfo o) {
         this.cache.put(cacheKey(s), o);
     }
 
     @Override
-    public Boolean  get(String s) {
+    public RecordChangeInfo get(String s) {
         return this.cache.get(cacheKey(s));
     }
 

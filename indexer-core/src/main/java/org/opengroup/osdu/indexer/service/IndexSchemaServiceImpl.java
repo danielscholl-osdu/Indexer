@@ -30,8 +30,8 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.indexer.cache.PartitionSafeFlattenedSchemaCache;
-import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
 import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
@@ -65,9 +65,9 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private IndicesService indicesService;
     @Inject
-    private PartitionSafeSchemaCache schemaCache;
+    private SchemaCache schemaCache;
     @Inject
-    private PartitionSafeFlattenedSchemaCache flattenedSchemaCache;
+    private FlattenedSchemaCache flattenedSchemaCache;
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject

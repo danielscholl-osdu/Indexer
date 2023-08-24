@@ -12,22 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
-import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 @Component
-@RequestScope
-public class PartitionSafeIndexCache {
+public class IndexCache extends AbstractPartitionSafeCache<String, Boolean> {
 
     @Autowired
     private IIndexCache indexCache;
-    @Autowired
-    private IRequestInfo requestInfo;
 
     public void put(String s, Boolean o) {
         this.indexCache.put(cacheKey(s), o);
@@ -43,9 +38,5 @@ public class PartitionSafeIndexCache {
 
     public void clearAll() {
         this.indexCache.clearAll();
-    }
-
-    private String cacheKey(String s) {
-        return this.requestInfo.getPartitionId() + "-" + s;
     }
 }

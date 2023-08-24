@@ -13,10 +13,18 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
 import org.opengroup.osdu.core.common.cache.ICache;
-import org.opengroup.osdu.indexer.model.RecordChangeInfo;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 
-public interface IRecordChangeInfoCache extends ICache<String, RecordChangeInfo> {
+import javax.inject.Inject;
+
+public abstract class AbstractPartitionSafeCache<K, V> implements ICache<K, V> {
+    @Inject
+    private IRequestInfo requestInfo;
+
+    protected String cacheKey(String s) {
+        return this.requestInfo.getPartitionId() + "-" + this.getClass().getSimpleName().toLowerCase() + "-" + s;
+    }
 }

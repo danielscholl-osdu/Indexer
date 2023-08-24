@@ -13,27 +13,25 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache;
+package org.opengroup.osdu.indexer.cache.partitionsafe;
 
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.cache.interfaces.IPropertyConfigurationsEnabledCache;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Inject;
 
 @Component
-@RequestScope
-public class PartitionSafePropertyConfigurationsCache extends AbstractPartitionSafeCache<String,PropertyConfigurations> {
+public class ConfigurationsEnabledCache extends AbstractPartitionSafeCache<String,Boolean> {
     @Inject
-    private IPropertyConfigurationsCache cache;
+    private IPropertyConfigurationsEnabledCache cache;
 
     @Override
-    public void put(String s, PropertyConfigurations o) {
+    public void put(String s, Boolean  o) {
         this.cache.put(cacheKey(s), o);
     }
 
     @Override
-    public PropertyConfigurations get(String s) {
+    public Boolean  get(String s) {
         return this.cache.get(cacheKey(s));
     }
 
