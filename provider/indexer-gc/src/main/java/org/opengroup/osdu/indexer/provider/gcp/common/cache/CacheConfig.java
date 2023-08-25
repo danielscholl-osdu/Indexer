@@ -45,7 +45,7 @@ public class CacheConfig {
     }
 
     @Bean
-    public RedisCache<String, String> schemaCache(GcpConfigurationProperties appProperties) {
+    public RedisCache<String, String> schemaGCCache(GcpConfigurationProperties appProperties) {
         return schemaCacheBuilder.buildRedisCache(
                 appProperties.getRedisSearchHost(),
                 Integer.parseInt(appProperties.getRedisSearchPort()),
