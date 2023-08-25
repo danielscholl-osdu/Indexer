@@ -43,7 +43,8 @@ public class IndexCacheImpl implements IIndexCache<String, Boolean>, AutoCloseab
     public IndexCacheImpl() throws K8sParameterNotFoundException, JsonProcessingException {
         int expTimeSeconds = 60 * 60;
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
-        if (provider.getLocalMode()){
+        local = provider.getLocalMode();
+        if (local){
             if (Boolean.parseBoolean(System.getenv("DISABLE_CACHE"))){
                 cache = new DummyCache<>();
             }else{
@@ -61,7 +62,6 @@ public class IndexCacheImpl implements IIndexCache<String, Boolean>, AutoCloseab
             }
             cache = new RedisCache<String, Boolean>(host, port, password, expTimeSeconds, String.class,Boolean.class);
         }
-        local = cache instanceof AutoCloseable;
     }
 
     @Override

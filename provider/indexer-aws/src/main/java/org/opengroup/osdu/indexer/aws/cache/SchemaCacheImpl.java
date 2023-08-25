@@ -42,7 +42,8 @@ public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoClosea
     public SchemaCacheImpl() throws K8sParameterNotFoundException, JsonProcessingException {
         int expTimeSeconds = 60 * 60;
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
-        if (provider.getLocalMode()){
+        local = provider.getLocalMode();
+        if (local){
             if (Boolean.parseBoolean(System.getenv("DISABLE_CACHE"))){
                 cache = new DummyCache<>();
             }else{
@@ -60,13 +61,12 @@ public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoClosea
             }
             cache = new RedisCache<>(host, port, password, expTimeSeconds, String.class, String.class);
         }
-        local = cache instanceof AutoCloseable;
     }
 
     @Override
     public void close() throws Exception {
         if (this.local){
-            // do nothing, this is using local dummy cache
+            // do nothing, this is using local dummy cache or vm cache
         }else {
             // cast to redis cache so it can be closed
             ((AutoCloseable)this.cache).close();
