@@ -104,7 +104,7 @@ public class ReindexApi {
     public ResponseEntity<?> reindex(@NotNull @Valid @RequestBody RecordReindexRequest recordReindexRequest,
                                      @Parameter(description = "Force Clean")
             @RequestParam(value = "force_clean", defaultValue = "false") boolean forceClean) throws IOException {
-        this.reIndexService.reindexKind(recordReindexRequest, this.indexSchemaService.isStorageSchemaSyncRequired(recordReindexRequest.getKind(), forceClean));
+        this.reIndexService.reindexKind(recordReindexRequest, this.indexSchemaService.isStorageSchemaSyncRequired(recordReindexRequest.getKind(), forceClean), true);
         this.auditLogger.getReindex(singletonList(recordReindexRequest.getKind()));
         return new ResponseEntity<>(org.springframework.http.HttpStatus.OK);
     }

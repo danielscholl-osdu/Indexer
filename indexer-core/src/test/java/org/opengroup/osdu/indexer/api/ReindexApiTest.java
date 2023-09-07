@@ -64,7 +64,7 @@ public class ReindexApiTest {
 
     @Test
     public void should_return200_when_valid_kind_provided() throws IOException {
-        when(this.reIndexService.reindexKind(recordReindexRequest, false)).thenReturn("something");
+        when(this.reIndexService.reindexKind(recordReindexRequest, false, false)).thenReturn("something");
 
         ResponseEntity<?> response = sut.reindex(recordReindexRequest, false);
 
@@ -73,14 +73,14 @@ public class ReindexApiTest {
 
     @Test(expected = AppException.class)
     public void should_throwAppException_ifUnknownExceptionCaught_reindexTest() throws IOException {
-        when(this.reIndexService.reindexKind(recordReindexRequest, false)).thenThrow(new AppException(500, "", ""));
+        when(this.reIndexService.reindexKind(recordReindexRequest, false, true)).thenThrow(new AppException(500, "", ""));
 
         sut.reindex(recordReindexRequest, false);
     }
 
     @Test(expected = NullPointerException.class)
     public void should_throwAppException_ifNullPointerExceptionCaught_ReindexTest() throws IOException {
-        when(this.reIndexService.reindexKind(recordReindexRequest, false)).thenThrow(new NullPointerException(""));
+        when(this.reIndexService.reindexKind(recordReindexRequest, false, true)).thenThrow(new NullPointerException(""));
 
         sut.reindex(recordReindexRequest, false);
     }
