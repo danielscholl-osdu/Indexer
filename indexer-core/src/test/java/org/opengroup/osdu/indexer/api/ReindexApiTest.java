@@ -64,7 +64,7 @@ public class ReindexApiTest {
 
     @Test
     public void should_return200_when_valid_kind_provided() throws IOException {
-        when(this.reIndexService.reindexKind(recordReindexRequest, false, false)).thenReturn("something");
+        when(this.reIndexService.reindexKind(recordReindexRequest, false, true)).thenReturn("something");
 
         ResponseEntity<?> response = sut.reindex(recordReindexRequest, false);
 
