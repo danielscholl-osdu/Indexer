@@ -48,6 +48,7 @@
         <mockito.version>3.11.2</mockito.version>
         <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
         <spring-security-oauth2.version>2.3.6.RELEASE</spring-security-oauth2.version>
+        <netty.version>4.1.96.Final</netty.version>
         <reactor-netty.version>1.0.7</reactor-netty.version>
         <reactor-core.version>3.4.24</reactor-core.version>
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
@@ -55,10 +56,20 @@
         <azure-core.version>1.31.0</azure-core.version>
         <azure-security-keyvault-keys.version>4.4.6</azure-security-keyvault-keys.version>
         <azure-security-keyvault-secrets.version>4.4.6</azure-security-keyvault-secrets.version>
+        <guava.version>32.1.2-jre</guava.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- netty-bom dependency to be declared before spring-boot-dependencies,
+            to pull all netty-transitive dependencies with same version -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!-- Override version defined in parent's POM -->
             <!-- Inherit managed dependencies from core-lib-azure -->
             <dependency>
@@ -235,7 +246,11 @@
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-cbor</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
         <!-- Resilience4j Dependencies-->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
