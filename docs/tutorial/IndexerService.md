@@ -153,8 +153,7 @@ Users must be a member of `users.datalake.admins` or `users.datalake.ops` group.
 #### Query parameters
 
 `force_clean` <br />
-&emsp;&emsp;(optional, Boolean) If a kind has been previously indexed with a schema and if you wish to apply latest schema changes before re-indexing, than use this query parameter. It will drop the current Index schema, apply latest schema changes & re-index records. If `false`, reindex API
-will use the same schema and overwrite records with the same ids. Default value is `false`.
+&emsp;&emsp;(optional, Boolean) If there is any inconsistency between the storage records and the index records, you can use this query parameter to synchronize them. If `true`, it will drop the current index data, apply latest schema changes & re-index records. If `false`, reindex API will apply the latest schema and overwrite records with the same ids. Default value is `false`.
 
 #### Request body
 
