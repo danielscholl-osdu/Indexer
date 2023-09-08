@@ -325,9 +325,6 @@ the records from the `OSDU search` results, any one of the following mistakes ca
 * The feature flag `index-augmenter-enabled` for `Index Augmenter` is not enabled in the given data partition. Please check 
   with the service provider.
 
-* If the extended properties are created in the data records but those extended properties are not searchable, the option `force_clean` for re-index
-  is not set to `True`.
-
 * Any one of the mandatory properties is missing, such as `data.Code`, `data.Configurations[].Name`, `data.Configurations[].Policy` 
   or `data.Configurations[].Paths[].ValueExtraction.ValuePath` and etc. 
 
