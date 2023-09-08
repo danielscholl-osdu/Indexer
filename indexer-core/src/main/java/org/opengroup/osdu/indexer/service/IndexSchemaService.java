@@ -35,6 +35,8 @@ public interface IndexSchemaService {
 
     void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException;
 
+    void processSchemaUpsert(String kind) throws AppException;
+
     void processSchemaUpsertEvent(RestHighLevelClient restClient, String kind) throws IOException, ElasticsearchStatusException, URISyntaxException;
 
     void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException, URISyntaxException;

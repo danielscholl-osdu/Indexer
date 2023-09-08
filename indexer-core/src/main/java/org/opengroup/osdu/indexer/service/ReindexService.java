@@ -22,7 +22,7 @@ import java.util.List;
 
 public interface ReindexService {
 
-    String reindexKind(RecordReindexRequest recordReindexRequest, boolean forceClean);
+    String reindexKind(RecordReindexRequest recordReindexRequest, boolean forceClean, boolean updateSchemaMapping);
 
     Records reindexRecords(List<String> recordIds);
 

@@ -52,7 +52,7 @@ public class ReindexServiceImpl implements ReindexService {
 
     @SneakyThrows
     @Override
-    public String reindexKind(RecordReindexRequest recordReindexRequest, boolean forceClean) {
+    public String reindexKind(RecordReindexRequest recordReindexRequest, boolean forceClean, boolean updateSchemaMapping) {
         Long initialDelayMillis = 0l;
 
 
@@ -61,6 +61,10 @@ public class ReindexServiceImpl implements ReindexService {
         if (forceClean) {
             this.indexSchemaService.syncIndexMappingWithStorageSchema(recordReindexRequest.getKind());
             initialDelayMillis = 30000l;
+        }
+        else if(updateSchemaMapping){
+            this.indexSchemaService.processSchemaUpsert(recordReindexRequest.getKind());
+            initialDelayMillis = 15000l;
         }
 
         RecordQueryResponse recordQueryResponse = this.storageService.getRecordsByKind(recordReindexRequest);
@@ -113,7 +117,7 @@ public class ReindexServiceImpl implements ReindexService {
         }
         for (String kind : allKinds) {
             try {
-                reindexKind(new RecordReindexRequest(kind, ""), forceClean);
+                reindexKind(new RecordReindexRequest(kind, ""), forceClean, true);
             } catch (Exception e) {
                 jaxRsDpsLog.warning(String.format("kind: %s cannot be re-indexed", kind));
                 continue;

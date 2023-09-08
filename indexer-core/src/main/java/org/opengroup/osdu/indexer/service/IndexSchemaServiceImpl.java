@@ -107,6 +107,15 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     }
 
     @Override
+    public void processSchemaUpsert(String kind) throws AppException {
+        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+            processSchemaUpsertEvent(restClient, kind);
+        } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
+        }
+    }
+
+    @Override
     public void processSchemaUpsertEvent(RestHighLevelClient restClient, String kind) throws IOException, ElasticsearchStatusException, URISyntaxException {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
         boolean indexExist = this.indicesService.isIndexExist(restClient, index);
