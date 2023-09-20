@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SchemaCache implements ISchemaCache<String, String> {
+public class SchemaCacheImpl implements ISchemaCache<String, String> {
     private VmCache<String, String> cache;
 
-    public SchemaCache(@Value("${SCHEMA_CACHE_EXPIRATION}") final String SCHEMA_CACHE_EXPIRATION,
+    public SchemaCacheImpl(@Value("${SCHEMA_CACHE_EXPIRATION}") final String SCHEMA_CACHE_EXPIRATION,
                        @Value("${MAX_CACHE_VALUE_SIZE}") final String MAX_CACHE_VALUE_SIZE) {
         cache = new VmCache<>(Integer.parseInt(SCHEMA_CACHE_EXPIRATION) * 60,
                 Integer.parseInt(MAX_CACHE_VALUE_SIZE));

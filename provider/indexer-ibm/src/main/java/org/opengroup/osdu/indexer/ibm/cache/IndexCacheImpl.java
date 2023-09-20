@@ -8,10 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class IndexCache implements IIndexCache<String, Boolean> {
+public class IndexCacheImpl implements IIndexCache<String, Boolean> {
     private VmCache<String, Boolean> cache;
 
-    public IndexCache(@Value("${INDEX_CACHE_EXPIRATION}") final String INDEX_CACHE_EXPIRATION,
+    public IndexCacheImpl(@Value("${INDEX_CACHE_EXPIRATION}") final String INDEX_CACHE_EXPIRATION,
                       @Value("${MAX_CACHE_VALUE_SIZE}") final String MAX_CACHE_VALUE_SIZE) {
         cache = new VmCache<>(Integer.parseInt(INDEX_CACHE_EXPIRATION) * 60,
                 Integer.parseInt(MAX_CACHE_VALUE_SIZE));
