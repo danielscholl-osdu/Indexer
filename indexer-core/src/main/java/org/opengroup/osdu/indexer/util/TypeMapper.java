@@ -16,11 +16,13 @@ package org.opengroup.osdu.indexer.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.model.entitlements.AclRole;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -112,15 +114,15 @@ public class TypeMapper {
         return Records.Type.builder().type(metaAttributeIndexerType.get(key).toString()).build();
     }
 
-    public static Object getDataAttributeIndexerMapping(Object indexerType) {
+    public static Object getDataAttributeIndexerMapping(Object indexerType, Boolean keywordLowerEnabled) {
         if (ElasticType.TEXT.getValue().equalsIgnoreCase(indexerType.toString())) {
-            return getTextIndexerMapping();
+            return getTextIndexerMapping(keywordLowerEnabled);
         }
 
         if (isArray(indexerType.toString())) {
             String memberType = getArrayMemberType(indexerType.toString());
             if (ElasticType.TEXT.getValue().equalsIgnoreCase(memberType)) {
-                return getTextIndexerMapping();
+                return getTextIndexerMapping(keywordLowerEnabled);
             }
             return Records.Type.builder().type(memberType).build();
         }
@@ -130,9 +132,9 @@ public class TypeMapper {
             Map<String, Object> propertiesMap = (Map<String, Object>) type.get(Constants.PROPERTIES);
             for (Map.Entry<String, Object> entry : propertiesMap.entrySet()) {
                 if (isMap(entry.getValue())) {
-                    entry.setValue(getDataAttributeIndexerMapping(entry.getValue()));
+                    entry.setValue(getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled));
                 } else if (ElasticType.TEXT.getValue().equalsIgnoreCase(String.valueOf(entry.getValue()))) {
-                    entry.setValue(getTextIndexerMapping());
+                    entry.setValue(getTextIndexerMapping(keywordLowerEnabled));
                 } else if (isArray(String.valueOf(entry.getValue()))) {
                     entry.setValue(Records.Type.builder().type(getArrayMemberType(String.valueOf(entry.getValue()))).build());
                 } else {
@@ -209,8 +211,14 @@ public class TypeMapper {
         return indexStatusProperties;
     }
 
-    private static Object getTextIndexerMapping() {
-        Map<String, Object> fieldIndexTypeMap = getKeywordMap();
+    private static Object getTextIndexerMapping(Boolean keywordLowerEnabled) {
+        Map<String, Object> keywordMap = getKeywordMap();
+        Map<String, Object> keywordLowerMap = getKeywordLowerMap();
+        Map<String, Object> fieldIndexTypeMap = new HashMap<>();
+        if (keywordLowerEnabled) {
+            fieldIndexTypeMap.put("keywordLower", keywordLowerMap);
+        }
+        fieldIndexTypeMap.put("keyword", keywordMap);
         Map<String, Object> textMap = new HashMap<>();
         textMap.put("type", "text");
         textMap.put("fields", fieldIndexTypeMap);
@@ -222,10 +230,17 @@ public class TypeMapper {
         keywordMap.put("type", "keyword");
         keywordMap.put("ignore_above", 256);
         keywordMap.put("null_value", "null");
-        Map<String, Object> fieldIndexTypeMap = new HashMap<>();
-        fieldIndexTypeMap.put("keyword", keywordMap);
-        return fieldIndexTypeMap;
+        return keywordMap;
     }
+
+    private static Map<String, Object> getKeywordLowerMap() {
+        Map<String, Object> keywordLowerMap = new HashMap<>();
+        keywordLowerMap.put("type", "keyword");
+        keywordLowerMap.put("ignore_above", 256);
+        keywordLowerMap.put("null_value", "null");
+        keywordLowerMap.put("normalizer", "lowercase");
+        return keywordLowerMap;
+    } 
 
     private static Map<String, Object> getConstantKeywordMap() {
         Map<String, Object> map = new HashMap<>();

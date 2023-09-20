@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class IndexerConfigurationProperties {
+	public static final String KEYWORD_LOWER_FEATURE_NAME = "featureFlag.keywordLower.enabled";
 
 	//Search query properties
 	private Integer queryDefaultLimit = 10;
