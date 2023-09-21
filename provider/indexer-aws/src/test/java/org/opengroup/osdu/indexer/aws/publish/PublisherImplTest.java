@@ -28,18 +28,20 @@ import org.mockito.Mockito;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
 import org.opengroup.osdu.core.aws.sns.PublishRequestBuilder;
+import org.opengroup.osdu.core.common.model.indexer.RecordStatus;
 import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import org.opengroup.osdu.indexer.aws.IndexerAwsApplication;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest(classes = {IndexerAwsApplication.class})
@@ -65,19 +67,10 @@ public class PublisherImplTest {
         Mockito.when(snsClient.publish(Mockito.any(PublishRequest.class)))
                 .thenReturn(Mockito.any(PublishResult.class));
 
-        Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
-        messageAttributes.put(DpsHeaders.ACCOUNT_ID, new MessageAttributeValue()
-                .withDataType("String")
-                .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
-        messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, new MessageAttributeValue()
-                .withDataType("String")
-                .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
-        headers.addCorrelationIdIfMissing();
-        messageAttributes.put(DpsHeaders.CORRELATION_ID, new MessageAttributeValue()
-                .withDataType("String")
-                .withStringValue(headers.getCorrelationId()));
+        PublishRequestBuilder<RecordStatus> publishRequestBuilder = new PublishRequestBuilder<>();
+        publishRequestBuilder.setGeneralParametersFromHeaders(headers);
 
-        PublishRequest publishRequest = new PublishRequestBuilder().generatePublishRequest("data", jobStatus.getStatusesList(), messageAttributes,null);
+        PublishRequest publishRequest = publishRequestBuilder.generatePublishRequest(null, null, jobStatus.getStatusesList());
         // Act
         publisher.publishStatusChangedTagsToTopic(headers, jobStatus);
 
@@ -98,26 +91,15 @@ public class PublisherImplTest {
                                                                                                             })) {
 
                 publisher.init();
+                JobStatus jobStatus = new JobStatus();
 
                 // Arrange
                 DpsHeaders headers = new DpsHeaders();
-                JobStatus jobStatus = new JobStatus();
-                Mockito.when(snsClient.publish(Mockito.any(PublishRequest.class)))
-                        .thenReturn(Mockito.any(PublishResult.class));
 
-                Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
-                messageAttributes.put(DpsHeaders.ACCOUNT_ID, new MessageAttributeValue()
-                        .withDataType("String")
-                        .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
-                messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, new MessageAttributeValue()
-                        .withDataType("String")
-                        .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
-                headers.addCorrelationIdIfMissing();
-                messageAttributes.put(DpsHeaders.CORRELATION_ID, new MessageAttributeValue()
-                        .withDataType("String")
-                        .withStringValue(headers.getCorrelationId()));
+                PublishRequestBuilder<RecordStatus> publishRequestBuilder = new PublishRequestBuilder<>();
+                publishRequestBuilder.setGeneralParametersFromHeaders(headers);
 
-                PublishRequest publishRequest = new PublishRequestBuilder().generatePublishRequest("data", jobStatus.getStatusesList(), messageAttributes, indexer_sns_topic_arn);
+                PublishRequest publishRequest = publishRequestBuilder.generatePublishRequest(null, indexer_sns_topic_arn, jobStatus.getStatusesList());
                 // Act
                 publisher.publishStatusChangedTagsToTopic(headers, jobStatus);
 
