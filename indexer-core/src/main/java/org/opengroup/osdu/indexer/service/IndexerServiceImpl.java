@@ -394,8 +394,7 @@ public class IndexerServiceImpl implements IndexerService {
             document.setAcl(storageRecord.getAcl());
             document.setLegal(storageRecord.getLegal());
             if (storageRecord.getTags() == null) {
-                Map<String, String> constantTags = new HashMap<>();
-                storageRecord.setTags(constantTags);
+                storageRecord.setTags(new HashMap<>());
             }
             storageRecord.getTags().put(IndexerServiceImpl.NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME, String.format("%s:%s:%s:%s", authority, source, type, versionParts[0]));
             document.setTags(storageRecord.getTags());
