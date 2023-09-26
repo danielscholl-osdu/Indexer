@@ -245,7 +245,7 @@ RelationshipDirection `ParentToChildren`, i.e., related objects referring the in
 
 -Use Case 5: Entity Names on the Document
 
-_When a document is ingested, it can associate with one or more than parent entities. As a user I want to discover
+_When a document is ingested, it can associate with one or more parent entities. As a user I want to discover
 all the related instances, including the documents, by the entity's name value._
 
 This configuration demonstrates how to extend properties from parent entities into document record when the kind(s) of
@@ -265,10 +265,10 @@ the parent entities are not well-defined in the document schema.
           {
             "RelatedObjectsSpec": {
               "RelationshipDirection": "ChildToParent",
-              "RelatedObjectID": "data.ExtensionProperties.Relationships[].TargetID",
+              "RelatedObjectID": "data.LineageAssertions[].ID",
               "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
               "RelatedConditionMatches": [ "^[\\w\\-\\.]+:master-data\\-\\-Wellbore:[\\w\\-\\.\\:\\%]+$" ],
-              "RelatedConditionProperty": "data.ExtensionProperties.Relationships[].TargetID"
+              "RelatedConditionProperty": "data.LineageAssertions[].ID"
             },
             "ValueExtraction": {
               "ValuePath": "data.FacilityName"
@@ -277,10 +277,10 @@ the parent entities are not well-defined in the document schema.
           {
             "RelatedObjectsSpec": {
               "RelationshipDirection": "ChildToParent",
-              "RelatedObjectID": "data.ExtensionProperties.Relationships[].TargetID",
+              "RelatedObjectID": "data.LineageAssertions[].ID",
               "RelatedObjectKind": "osdu:wks:master-data--SeismicAcquisitionSurvey:1.",
               "RelatedConditionMatches": [ "^[\\w\\-\\.]+:master-data\\-\\-SeismicAcquisitionSurvey:[\\w\\-\\.\\:\\%]+$" ],
-              "RelatedConditionProperty": "data.ExtensionProperties.Relationships[].TargetID"
+              "RelatedConditionProperty": "data.LineageAssertions[].ID"
             },
             "ValueExtraction": {
               "ValuePath": "data.ProjectName"
