@@ -21,8 +21,6 @@ import com.google.common.collect.Maps;
 import org.opengroup.osdu.indexer.model.Kind;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PropertyUtil {
     public static final String DATA_VIRTUAL_DEFAULT_LOCATION = "data.VirtualProperties.DefaultLocation";
