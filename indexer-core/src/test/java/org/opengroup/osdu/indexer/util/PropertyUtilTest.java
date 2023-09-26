@@ -307,20 +307,6 @@ public class PropertyUtilTest {
         changedProperties.forEach(p -> Assert.assertTrue(expectedChangedWellLogProperties.contains(p)));
     }
 
-    @Test
-    public void isMatch_for_String() {
-        Assert.assertTrue(PropertyUtil.isMatch("opendes:reference-data--AliasNameType:UniqueIdentifier:", "opendes:reference-data--AliasNameType:UniqueIdentifier:"));
-        Assert.assertFalse(PropertyUtil.isMatch("OPENDES:reference-data--AliasNameType:UniqueIdentifier:", "opendes:reference-data--AliasNameType:UniqueIdentifier:"));
-    }
-
-    @Test
-    public void isMatch_for_Regex() {
-        Assert.assertTrue(PropertyUtil.isMatch("opendes:master-data--Wellbore:F03B95515F91--2B886EAF-83A9-4811-9068", "^[\\w\\-\\.]+:master-data\\-\\-Wellbore:[\\w\\-\\.\\:\\%]+$"));
-        Assert.assertTrue(PropertyUtil.isMatch("opendes:work-product-component--WellLog:8CAFB37C-A674-42F8-ABCD-34BA8E6C1480", "^[\\w\\-\\.]+:work-product-component\\-\\-WellLog:[\\w\\-\\.\\:\\%]+$"));
-        Assert.assertTrue(PropertyUtil.isMatch("opendes:work-product-component--Document:wks-0f2546ca6b45960fa32db", "^[\\w\\-\\.]+:work-product-component\\-\\-Document:[\\w\\-\\.\\:\\%]+$"));
-    }
-
-
     private Map<String, Object> getDataMap(String file) {
         String jsonText = getJsonFromFile(file);
         Type type = new TypeToken<Map<String, Object>>() {}.getType();

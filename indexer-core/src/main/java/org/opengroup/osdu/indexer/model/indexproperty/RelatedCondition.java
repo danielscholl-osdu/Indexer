@@ -22,6 +22,9 @@ import lombok.ToString;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 @Data
 @ToString
@@ -33,12 +36,32 @@ public class RelatedCondition {
 
     protected List<String> relatedConditionMatches;
 
+    public boolean isMatch(String propertyValue) {
+        if(relatedConditionMatches == null || relatedConditionMatches.isEmpty() || Strings.isNullOrEmpty(propertyValue)) {
+            return false;
+        }
+
+        for(String condition : relatedConditionMatches) {
+            try {
+                Pattern pattern = Pattern.compile(condition);
+                Matcher matcher = pattern.matcher(propertyValue);
+                if(matcher.find())
+                    return true;
+            }
+            catch(PatternSyntaxException ex) {
+                if(propertyValue.equals(condition))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     protected boolean hasCondition() {
         return !Strings.isNullOrEmpty(relatedConditionProperty) &&
                relatedConditionMatches != null &&
                !relatedConditionMatches.isEmpty();
     }
-
     protected boolean hasValidCondition(String property) {
         if(Strings.isNullOrEmpty(property) || !this.hasCondition())
             return false;

@@ -613,22 +613,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         valuePath = PropertyUtil.removeDataPrefix(valuePath);
         Map<String, Object> propertyValues = new HashMap<>();
         if (valuePath.contains(ARRAY_SYMBOL)) { // Nested
-            String conditionProperty = null;
-            List<String> conditionMatches = null;
-            if (hasValidCondition) {
-                conditionProperty = relatedCondition.getRelatedConditionProperty();
-                conditionMatches = relatedCondition.getRelatedConditionMatches();
-            }
-
-            propertyValues = getPropertyValuesFromNestedObjects(dataMap, valuePath, conditionProperty, conditionMatches, hasValidCondition, isExtractFirstMatch);
+            propertyValues = getPropertyValuesFromNestedObjects(dataMap, valuePath, relatedCondition, hasValidCondition, isExtractFirstMatch);
         } else { // Flatten
-            String conditionProperty = null;
-            List<String> conditionMatches = null;
-            if (hasValidCondition) {
-                conditionProperty = relatedCondition.getRelatedConditionProperty();
-                conditionMatches = relatedCondition.getRelatedConditionMatches();
-            }
-            propertyValues = getPropertyValueOfNoneNestedProperty(dataMap, valuePath, conditionProperty, conditionMatches, hasValidCondition);
+            propertyValues = getPropertyValueOfNoneNestedProperty(dataMap, valuePath, relatedCondition, hasValidCondition);
             if(!isExtractFirstMatch) {
                 Map<String, Object> tmpValues = new HashMap<>();
                 for(Map.Entry<String, Object> entry : propertyValues.entrySet()) {
@@ -648,28 +635,18 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return propertyValues;
     }
 
-    private Map<String, Object> getPropertyValuesFromNestedObjects(Map<String, Object> dataMap, String valuePath, String conditionProperty, List<String> conditionMatches, boolean hasCondition, boolean isExtractFirstMatch) {
+    private Map<String, Object> getPropertyValuesFromNestedObjects(Map<String, Object> dataMap, String valuePath, RelatedCondition relatedCondition, boolean hasCondition, boolean isExtractFirstMatch) {
         Map<String, Object> propertyValues = new HashMap<>();
 
         if (valuePath.contains(ARRAY_SYMBOL)) {
             int idx = valuePath.indexOf(NESTED_OBJECT_DELIMITER);
             String prePath = valuePath.substring(0, idx);
             String postPath = valuePath.substring(idx + NESTED_OBJECT_DELIMITER.length());
-            if(conditionProperty != null) {
-                idx = conditionProperty.indexOf(NESTED_OBJECT_DELIMITER);
-                if(idx > 0) {
-                    conditionProperty = conditionProperty.substring(idx + NESTED_OBJECT_DELIMITER.length());
-                }
-                else {
-                    // Should not reach here
-                    conditionProperty = null;
-                }
-            }
             try {
                 if (dataMap.containsKey(prePath) && dataMap.get(prePath) != null) {
                     List<Map<String, Object>> nestedObjects = (List<Map<String, Object>>) dataMap.get(prePath);
                     for (Map<String, Object> nestedObject : nestedObjects) {
-                        Map<String, Object> subPropertyValues = getPropertyValuesFromNestedObjects(nestedObject, postPath, conditionProperty, conditionMatches, hasCondition, isExtractFirstMatch);
+                        Map<String, Object> subPropertyValues = getPropertyValuesFromNestedObjects(nestedObject, postPath, relatedCondition, hasCondition, isExtractFirstMatch);
                         for (Map.Entry<String, Object> entry: subPropertyValues.entrySet()) {
                             String key = prePath + ARRAY_SYMBOL + PROPERTY_DELIMITER + entry.getKey();
                             if(isExtractFirstMatch) {
@@ -696,23 +673,23 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 //Ignore cast exception
             }
         } else {
-            propertyValues = getPropertyValueOfNoneNestedProperty(dataMap, valuePath, conditionProperty, conditionMatches, hasCondition);
+            propertyValues = getPropertyValueOfNoneNestedProperty(dataMap, valuePath, relatedCondition, hasCondition);
         }
         return propertyValues;
     }
 
-    private Map<String, Object> getPropertyValueOfNoneNestedProperty(Map<String, Object> dataMap, String valuePath, String conditionProperty, List<String> conditionMatches, boolean hasCondition) {
+    private Map<String, Object> getPropertyValueOfNoneNestedProperty(Map<String, Object> dataMap, String valuePath, RelatedCondition relatedCondition, boolean hasCondition) {
         Map<String, Object> propertyValue = PropertyUtil.getValueOfNoneNestedProperty(valuePath, dataMap);
         if(!propertyValue.isEmpty() && hasCondition) {
+            String conditionProperty = relatedCondition.getRelatedConditionProperty();
+            int idx = conditionProperty.lastIndexOf(NESTED_OBJECT_DELIMITER);
+            if(idx > 0)
+                conditionProperty = conditionProperty.substring(idx + NESTED_OBJECT_DELIMITER.length());
+            Map<String, Object> values = PropertyUtil.getValueOfNoneNestedProperty(conditionProperty, dataMap);
             boolean matched = false;
-            Map<String, Object> conditionPropertyValue = PropertyUtil.getValueOfNoneNestedProperty(conditionProperty, dataMap);
-            if (conditionPropertyValue.containsKey(conditionProperty)) {
-                for(String condition: conditionMatches) {
-                    if(PropertyUtil.isMatch(conditionPropertyValue.get(conditionProperty).toString(), condition)) {
-                        matched = true;
-                        break;
-                    }
-                }
+            if (values.containsKey(conditionProperty) && values.get(conditionProperty) != null) {
+                String conditionPropertyValue = values.get(conditionProperty).toString();
+                matched = relatedCondition.isMatch(conditionPropertyValue);
             }
             if(!matched) {
                 // Reset the propertyValue if there is no match

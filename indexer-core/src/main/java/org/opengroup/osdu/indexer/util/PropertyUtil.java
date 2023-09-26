@@ -287,22 +287,4 @@ public class PropertyUtil {
 
         return new ArrayList<>(changedProperties);
     }
-
-    /*
-     * matchCondition can be either non-empty string or regular expression
-     */
-    public static boolean isMatch(String propertyValue, String matchCondition) {
-        if(Strings.isNullOrEmpty(propertyValue) || Strings.isNullOrEmpty(matchCondition))
-            return false;
-
-        try {
-            Pattern pattern = Pattern.compile(matchCondition);
-            Matcher matcher = pattern.matcher(propertyValue);
-            return matcher.find();
-        }
-        catch(Exception ex) {
-            // If matchCondition is not regex, do string compare
-            return propertyValue.equals(matchCondition);
-        }
-    }
 }
