@@ -50,10 +50,11 @@ public class RelatedConditionTest {
         Assert.assertTrue(relatedCondition.isMatch("abc"));
    }
 
+    @Test
     public void isMatch_return_false_for_string_match() {
         RelatedCondition relatedCondition = new RelatedCondition();
         relatedCondition.setRelatedConditionMatches(Arrays.asList("xyz","abc"));
-        Assert.assertTrue(relatedCondition.isMatch("ABC"));
+        Assert.assertFalse(relatedCondition.isMatch("ABC"));
     }
 
     @Test
