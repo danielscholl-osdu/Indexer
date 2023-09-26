@@ -21,6 +21,8 @@ import com.google.common.collect.Maps;
 import org.opengroup.osdu.indexer.model.Kind;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PropertyUtil {
     public static final String DATA_VIRTUAL_DEFAULT_LOCATION = "data.VirtualProperties.DefaultLocation";
@@ -40,6 +42,33 @@ public class PropertyUtil {
         // For example, if parentPropertyPath is "data.FacilityName" and propertyPath.startsWith(parentPropertyPath) is used,
         // then the property "data.FacilityNameAlias" will be matched and unexpected result will be returned.
         return !Strings.isNullOrEmpty(propertyPath) && (propertyPath.startsWith(parentPropertyPath + PROPERTY_DELIMITER) || propertyPath.equals(parentPropertyPath));
+    }
+
+    public static Map<String, Object> getValueOfNoneNestedProperty(String propertyPath, Map<String, Object> data) {
+        if(Strings.isNullOrEmpty(propertyPath) || propertyPath.contains(ARRAY_SYMBOL) || data == null || data.isEmpty())
+            return new HashMap<>();
+
+        Map<String, Object> values = new HashMap<>();
+        if(data.containsKey(propertyPath)) {
+            values.put(propertyPath, data.get(propertyPath));
+        }
+        else {
+            for (String key : data.keySet()) {
+                if (propertyPath.startsWith(key + PROPERTY_DELIMITER)) {
+                    Object v = data.get(key);
+                    if (v instanceof Map) {
+                        propertyPath = propertyPath.substring((key + PROPERTY_DELIMITER).length());
+                        Map<String, Object> subPropertyValues = getValueOfNoneNestedProperty(propertyPath, (Map<String, Object>) v);
+                        for (Map.Entry<String, Object> entry: subPropertyValues.entrySet()) {
+                            values.put(key + PROPERTY_DELIMITER + entry.getKey(), entry.getValue());
+                        }
+                    }
+                } else if (key.startsWith(propertyPath + PROPERTY_DELIMITER)) {
+                    values.put(key, data.get(key));
+                }
+            }
+        }
+        return values;
     }
 
     public static boolean hasSameMajorKind(String left, String right) {
@@ -257,5 +286,23 @@ public class PropertyUtil {
         }
 
         return new ArrayList<>(changedProperties);
+    }
+
+    /*
+     * matchCondition can be either non-empty string or regular expression
+     */
+    public static boolean isMatch(String propertyValue, String matchCondition) {
+        if(Strings.isNullOrEmpty(propertyValue) || Strings.isNullOrEmpty(matchCondition))
+            return false;
+
+        try {
+            Pattern pattern = Pattern.compile(matchCondition);
+            Matcher matcher = pattern.matcher(propertyValue);
+            return matcher.find();
+        }
+        catch(Exception ex) {
+            // If matchCondition is not regex, do string compare
+            return propertyValue.equals(matchCondition);
+        }
     }
 }

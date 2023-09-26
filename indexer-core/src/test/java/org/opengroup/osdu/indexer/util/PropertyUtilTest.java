@@ -45,6 +45,41 @@ public class PropertyUtilTest {
     }
 
     @Test
+    public void getValueOfNoneNestedProperty() {
+        Map<String, Object> data = this.getDataMap("wellLog.json");
+
+        Map<String, Object> value = PropertyUtil.getValueOfNoneNestedProperty("SpatialLocation.SpatialGeometryTypeID", data);
+        Assert.assertTrue(value.containsKey("SpatialLocation.SpatialGeometryTypeID"));
+        Assert.assertEquals("opendes:reference-data--SpatialGeometryType:Point:", value.get("SpatialLocation.SpatialGeometryTypeID").toString());
+
+        value = PropertyUtil.getValueOfNoneNestedProperty("SpatialLocation.Wgs84Coordinates.type", data);
+        Assert.assertTrue(value.containsKey("SpatialLocation.Wgs84Coordinates.type"));
+        Assert.assertEquals("geometrycollection", value.get("SpatialLocation.Wgs84Coordinates.type").toString());
+
+        List<String> propertyNamesWithValues = Arrays.asList(
+                "SpatialLocation.SpatialGeometryTypeID",
+                "SpatialLocation.Wgs84Coordinates",
+                "SpatialLocation.IsDecimated");
+        List<String> propertyNamesWithNullValues = Arrays.asList(
+                "SpatialLocation.SpatialParameterTypeID",
+                "SpatialLocation.CoordinateQualityCheckPerformedBy",
+                "SpatialLocation.QualitativeSpatialAccuracyTypeID",
+                "SpatialLocation.QuantitativeAccuracyBandID");
+        value = PropertyUtil.getValueOfNoneNestedProperty("SpatialLocation", data);
+        for(String propertyName : propertyNamesWithValues) {
+            Assert.assertTrue(value.containsKey(propertyName));
+            Assert.assertNotNull(value.get(propertyName));
+        }
+        for(String propertyName : propertyNamesWithNullValues) {
+            Assert.assertTrue(value.containsKey(propertyName));
+            Assert.assertNull(value.get(propertyName));
+        }
+
+        value = PropertyUtil.getValueOfNoneNestedProperty("Curves[].CurveID", data);
+        Assert.assertTrue(value.isEmpty());
+    }
+
+    @Test
     public void hasSameMajorVersion() {
         Assert.assertTrue(PropertyUtil.hasSameMajorKind("osdu:wks:master-data--Well:1.0.0", "osdu:wks:master-data--Well:1.0.0"));
         Assert.assertTrue(PropertyUtil.hasSameMajorKind("osdu:wks:master-data--Well:1.1.0", "osdu:wks:master-data--Well:1.0.0"));
@@ -271,6 +306,20 @@ public class PropertyUtilTest {
         List<String> expectedChangedWellLogProperties = Arrays.asList("Curves[].CurveID");
         changedProperties.forEach(p -> Assert.assertTrue(expectedChangedWellLogProperties.contains(p)));
     }
+
+    @Test
+    public void isMatch_for_String() {
+        Assert.assertTrue(PropertyUtil.isMatch("opendes:reference-data--AliasNameType:UniqueIdentifier:", "opendes:reference-data--AliasNameType:UniqueIdentifier:"));
+        Assert.assertFalse(PropertyUtil.isMatch("OPENDES:reference-data--AliasNameType:UniqueIdentifier:", "opendes:reference-data--AliasNameType:UniqueIdentifier:"));
+    }
+
+    @Test
+    public void isMatch_for_Regex() {
+        Assert.assertTrue(PropertyUtil.isMatch("opendes:master-data--Wellbore:F03B95515F91--2B886EAF-83A9-4811-9068", "^[\\w\\-\\.]+:master-data\\-\\-Wellbore:[\\w\\-\\.\\:\\%]+$"));
+        Assert.assertTrue(PropertyUtil.isMatch("opendes:work-product-component--WellLog:8CAFB37C-A674-42F8-ABCD-34BA8E6C1480", "^[\\w\\-\\.]+:work-product-component\\-\\-WellLog:[\\w\\-\\.\\:\\%]+$"));
+        Assert.assertTrue(PropertyUtil.isMatch("opendes:work-product-component--Document:wks-0f2546ca6b45960fa32db", "^[\\w\\-\\.]+:work-product-component\\-\\-Document:[\\w\\-\\.\\:\\%]+$"));
+    }
+
 
     private Map<String, Object> getDataMap(String file) {
         String jsonText = getJsonFromFile(file);

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.api.client.util.Strings;
 import lombok.Data;
 import lombok.ToString;
+import org.opengroup.osdu.indexer.util.PropertyUtil;
 
 import java.util.List;
 
@@ -32,27 +33,44 @@ public class RelatedCondition {
 
     protected List<String> relatedConditionMatches;
 
+    protected boolean hasCondition() {
+        return !Strings.isNullOrEmpty(relatedConditionProperty) &&
+               relatedConditionMatches != null &&
+               !relatedConditionMatches.isEmpty();
+    }
+
     protected boolean hasValidCondition(String property) {
-        if(Strings.isNullOrEmpty(property) ||
-                Strings.isNullOrEmpty(relatedConditionProperty) ||
-                relatedConditionMatches == null ||
-                relatedConditionMatches.isEmpty())
+        if(Strings.isNullOrEmpty(property) || !this.hasCondition())
             return false;
 
-        if(property.indexOf(ARRAY_SYMBOL + "." ) <= 0 || property.endsWith(ARRAY_SYMBOL) ||
-           relatedConditionProperty.indexOf(ARRAY_SYMBOL + "." ) <= 0 || relatedConditionProperty.endsWith(ARRAY_SYMBOL))
+        if((property.endsWith(ARRAY_SYMBOL) || relatedConditionProperty.endsWith(ARRAY_SYMBOL)) ||
+           (property.contains(ARRAY_SYMBOL) && !relatedConditionProperty.contains(ARRAY_SYMBOL)) ||
+           (!property.contains(ARRAY_SYMBOL) && relatedConditionProperty.contains(ARRAY_SYMBOL)))
             return false;
 
-        String delimiter = "\\[\\]\\.";
+        // If it is not nested object, it is valid in terms of syntax.
+        if(!property.contains(ARRAY_SYMBOL) && !relatedConditionProperty.contains(ARRAY_SYMBOL))
+            return true;
+
+        property = this.getSubstringWithLastArrayField(
+                PropertyUtil.removeDataPrefix(property));
+        String conditionProperty = this.getSubstringWithLastArrayField(
+                PropertyUtil.removeDataPrefix(relatedConditionProperty));
+
+        String delimiter = "\\.";
         String[] propertyParts = property.split(delimiter);
-        String[] relatedConditionPropertyParts = relatedConditionProperty.split(delimiter);
-        if(propertyParts.length != relatedConditionPropertyParts.length || propertyParts.length < 2)
+        String[] relatedConditionPropertyParts = conditionProperty.split(delimiter);
+        if(propertyParts.length != relatedConditionPropertyParts.length)
             return false;
 
-        for(int i = 0; i < propertyParts.length -1; i++) {
+        for(int i = 0; i < propertyParts.length; i++) {
             if(!propertyParts[i].equals(relatedConditionPropertyParts[i]))
                 return false;
         }
         return true;
+    }
+
+    private String getSubstringWithLastArrayField(String property) {
+        return property.substring(0, property.lastIndexOf(ARRAY_SYMBOL));
     }
 }

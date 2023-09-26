@@ -267,8 +267,8 @@ public class PropertyConfigurationsServiceImplTest {
                 Assert.assertEquals(value, extendedProperties.get(name));
             }
             else if(value instanceof List) {
-                List<String> expectedValues = (List<String>)value;
-                List<String> values = (List<String>)extendedProperties.get(name);
+                List<String> expectedValues = ((List<String>)value).stream().sorted().toList();
+                List<String> values = ((List<String>)extendedProperties.get(name)).stream().sorted().toList();
                 Assert.assertEquals(expectedValues.size(), values.size());
                 for(int i = 0; i < expectedValues.size(); i++) {
                     Assert.assertEquals(expectedValues.get(i), values.get(i));
