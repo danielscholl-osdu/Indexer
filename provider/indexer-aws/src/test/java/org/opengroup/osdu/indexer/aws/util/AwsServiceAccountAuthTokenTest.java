@@ -22,6 +22,8 @@ import org.opengroup.osdu.core.common.http.HttpClient;
 import org.opengroup.osdu.core.common.http.HttpRequest;
 import org.opengroup.osdu.core.common.http.HttpResponse;
 
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -108,7 +110,7 @@ public class AwsServiceAccountAuthTokenTest {
             this.authorizer = new AwsServiceAccountAuthToken();
             String firstToken = this.authorizer.getAuthToken();
             assertEquals("abcd", this.authorizer.getAuthToken());
-            assertTrue(firstToken == this.authorizer.getAuthToken());
+            assertSame(firstToken, this.authorizer.getAuthToken());
 
         }
 
@@ -126,7 +128,7 @@ public class AwsServiceAccountAuthTokenTest {
             this.authorizer = new AwsServiceAccountAuthToken();
             String firstToken = this.authorizer.getAuthToken();
             assertEquals("abcd", this.authorizer.getAuthToken());
-            assertFalse(firstToken == this.authorizer.getAuthToken());
+            assertNotSame(firstToken, this.authorizer.getAuthToken());
 
         }
 

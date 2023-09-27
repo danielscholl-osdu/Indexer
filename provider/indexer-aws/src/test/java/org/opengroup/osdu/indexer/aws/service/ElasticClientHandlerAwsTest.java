@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.mock;
 
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,10 +38,6 @@ public class ElasticClientHandlerAwsTest {
 
     @Mock
     SSLContext sslContext;
-
-    public void setUp() {
-        sslContext = mock(SSLContext.class);
-    }
 
     @Test
     public void createClientBuilder() throws Exception {

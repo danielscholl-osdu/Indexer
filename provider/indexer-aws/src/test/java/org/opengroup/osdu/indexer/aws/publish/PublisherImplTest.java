@@ -37,7 +37,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -54,10 +53,6 @@ public class PublisherImplTest {
 
     @Mock
     AmazonSNS snsClient;
-
-    public void setUp() {
-        snsClient = mock(AmazonSNS.class);
-    }
 
     @Test
     public void publishStatusChangedTagsToTopic() throws Exception {

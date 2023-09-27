@@ -56,8 +56,7 @@ public class RequestInfoImpl implements IRequestInfo {
             // throw to prevent null reference exception below
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Invalid Headers", "Headers Map DpsHeaders is null");
         }
-        DpsHeaders headers = this.getCoreServiceHeaders(headersMap.getHeaders());
-        return headers;
+        return this.getCoreServiceHeaders(headersMap.getHeaders());
     }
 
     /**
@@ -94,9 +93,7 @@ public class RequestInfoImpl implements IRequestInfo {
     private DpsHeaders getCoreServiceHeaders(Map<String, String> input) {
         Preconditions.checkNotNull(input, "input headers cannot be null");
 
-        DpsHeaders output = DpsHeaders.createFromMap(input);
-
-        return output;
+        return DpsHeaders.createFromMap(input);
     }
 
     @Override

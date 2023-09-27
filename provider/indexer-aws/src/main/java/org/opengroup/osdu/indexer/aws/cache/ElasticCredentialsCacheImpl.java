@@ -18,11 +18,11 @@ import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCac
 import org.springframework.stereotype.Component;
 
 @Component
-public class ElasticCredentialsCacheImpl implements IElasticCredentialsCache {
+public class ElasticCredentialsCacheImpl implements IElasticCredentialsCache<Object, Object> {
 
     @Override
     public void put(Object o, Object o2) {
-
+        //Do nothing currently
     }
 
     @Override
@@ -32,11 +32,11 @@ public class ElasticCredentialsCacheImpl implements IElasticCredentialsCache {
 
     @Override
     public void delete(Object o) {
-
+        //Do nothing currently
     }
 
     @Override
     public void clearAll() {
-
+        //Do nothing currently
     }
 }

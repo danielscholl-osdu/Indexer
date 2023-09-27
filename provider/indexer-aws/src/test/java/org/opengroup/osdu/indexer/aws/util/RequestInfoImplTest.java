@@ -30,6 +30,7 @@ import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
 import org.mockito.runners.MockitoJUnitRunner;
 import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -76,7 +77,7 @@ public class RequestInfoImplTest {
 
         String result = request_info.getPartitionId();
 
-        assertTrue(result==null);
+        assertNull(result);
     }
 
     @Test
