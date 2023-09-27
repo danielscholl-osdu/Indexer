@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.aws.service;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -33,7 +34,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.mockito.runners.MockitoJUnitRunner;
+import javax.security.auth.x500.X500Principal;
+
 import org.springframework.boot.test.context.SpringBootTest;
 import org.opengroup.osdu.indexer.aws.IndexerAwsApplication;
 import java.net.Socket;
@@ -108,6 +110,11 @@ class Certificate extends X509Certificate{
 
     @Override
     public Principal getSubjectDN() {
+        return null;
+    }
+
+    @Override
+    public X500Principal getSubjectX500Principal() {
         return null;
     }
 
