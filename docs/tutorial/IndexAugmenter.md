@@ -257,36 +257,40 @@ the parent entities are not well-defined in the document schema.
 {
   "data": {
     "Code": "osdu:wks:work-product-component--Document:1.",
-    "Configurations": [
-      {
-        "Name": "AssociatedEntityNames",
+    "Configurations": [{
+        "Name": "AssociatedFacilityNames",
         "Policy": "ExtractAllMatches",
-        "Paths": [
-          {
-            "RelatedObjectsSpec": {
-              "RelationshipDirection": "ChildToParent",
-              "RelatedObjectID": "data.LineageAssertions[].ID",
-              "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
-              "RelatedConditionMatches": [ "^[\\w\\-\\.]+:master-data\\-\\-Wellbore:[\\w\\-\\.\\:\\%]+$" ],
-              "RelatedConditionProperty": "data.LineageAssertions[].ID"
-            },
-            "ValueExtraction": {
-              "ValuePath": "data.FacilityName"
-            }
+        "Paths": [{
+          "RelatedObjectsSpec": {
+            "RelationshipDirection": "ChildToParent",
+            "RelatedObjectID": "data.LineageAssertions[].ID",
+            "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
+            "RelatedConditionMatches": [
+              "^[\\w\\-\\.]+:master-data\\-\\-Wellbore:[\\w\\-\\.\\:\\%]+$"
+            ],
+            "RelatedConditionProperty": "data.LineageAssertions[].ID"
           },
-          {
-            "RelatedObjectsSpec": {
-              "RelationshipDirection": "ChildToParent",
-              "RelatedObjectID": "data.LineageAssertions[].ID",
-              "RelatedObjectKind": "osdu:wks:master-data--SeismicAcquisitionSurvey:1.",
-              "RelatedConditionMatches": [ "^[\\w\\-\\.]+:master-data\\-\\-SeismicAcquisitionSurvey:[\\w\\-\\.\\:\\%]+$" ],
-              "RelatedConditionProperty": "data.LineageAssertions[].ID"
-            },
-            "ValueExtraction": {
-              "ValuePath": "data.ProjectName"
-            }
+          "ValueExtraction": {
+            "ValuePath": "data.FacilityName"
           }
-        ]
+        }]
+      }, {
+        "Name": "AssociatedProjectNames",
+        "Policy": "ExtractAllMatches",
+        "Paths": [{
+          "RelatedObjectsSpec": {
+            "RelationshipDirection": "ChildToParent",
+            "RelatedObjectID": "data.LineageAssertions[].ID",
+            "RelatedObjectKind": "osdu:wks:master-data--SeismicAcquisitionSurvey:1.",
+            "RelatedConditionMatches": [
+              "^[\\w\\-\\.]+:master-data\\-\\-SeismicAcquisitionSurvey:[\\w\\-\\.\\:\\%]+$"
+            ],
+            "RelatedConditionProperty": "data.LineageAssertions[].ID"
+          },
+          "ValueExtraction": {
+            "ValuePath": "data.ProjectName"
+          }
+        }]
       }
     ]
   }
