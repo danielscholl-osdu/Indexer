@@ -16,26 +16,26 @@
 package org.opengroup.osdu.indexer.cache;
 
 import org.opengroup.osdu.core.common.cache.VmCache;
-import org.opengroup.osdu.indexer.cache.interfaces.IPropertyConfigurationsCache;
+import org.opengroup.osdu.indexer.cache.interfaces.IAugmenterConfigurationCache;
 import org.opengroup.osdu.indexer.model.Constants;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PropertyConfigurationsCacheVmImpl implements IPropertyConfigurationsCache {
-    private VmCache<String, PropertyConfigurations> cache;
+public class AugmenterConfigurationCacheVmImpl implements IAugmenterConfigurationCache {
+    private VmCache<String, AugmenterConfiguration> cache;
 
-    public PropertyConfigurationsCacheVmImpl() {
+    public AugmenterConfigurationCacheVmImpl() {
         cache = new VmCache<>(Constants.SPEC_CACHE_EXPIRATION, Constants.SPEC_MAX_CACHE_SIZE);
     }
 
     @Override
-    public void put(String s, PropertyConfigurations o) {
+    public void put(String s, AugmenterConfiguration o) {
         this.cache.put(s, o);
     }
 
     @Override
-    public PropertyConfigurations get(String s) {
+    public AugmenterConfiguration get(String s) {
         return this.cache.get(s);
     }
 

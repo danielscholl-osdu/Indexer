@@ -40,7 +40,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.cache.partitionsafe.*;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.*;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -57,18 +57,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
-public class PropertyConfigurationsServiceImplTest {
+public class AugmenterConfigurationServiceImplTest {
     private final Gson gson = new Gson();
 
     @InjectMocks
-    private PropertyConfigurationsServiceImpl sut;
+    private AugmenterConfigurationServiceImpl sut;
 
     @Mock
     private IndexerConfigurationProperties configurationProperties;
     @Mock
-    private PropertyConfigurationsCache propertyConfigurationCache;
+    private AugmenterConfigurationCache augmenterConfigurationCache;
     @Mock
-    private ConfigurationsEnabledCache propertyConfigurationsEnabledCache;
+    private AugmenterConfigurationEnabledCache augmenterConfigurationEnabledCache;
     @Mock
     private ChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
     @Mock
@@ -90,89 +90,89 @@ public class PropertyConfigurationsServiceImplTest {
     @Mock
     private JaxRsDpsLog jaxRsDpsLog;
 
-    private final String propertyConfigurationKind = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
+    private final String augmenterConfigurationKind = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
     private String childKind;
     private String childId;
     private String parentKind;
     private String parentId;
 
     @Test
-    public void isPropertyConfigurationsEnabled_invalid_kind() {
-        Assert.assertFalse(sut.isPropertyConfigurationsEnabled(null));
-        Assert.assertFalse(sut.isPropertyConfigurationsEnabled(""));
-        Assert.assertFalse(sut.isPropertyConfigurationsEnabled("anyAuth:anySource:anyEntity"));
+    public void isAugmenterConfigurationEnabled_invalid_kind() {
+        Assert.assertFalse(sut.isConfigurationEnabled(null));
+        Assert.assertFalse(sut.isConfigurationEnabled(""));
+        Assert.assertFalse(sut.isConfigurationEnabled("anyAuth:anySource:anyEntity"));
     }
 
     @Test
-    public void isPropertyConfigurationsEnabled_with_value_true_in_cache() {
+    public void isAugmenterConfigurationEnabled_with_value_true_in_cache() {
         String kind = "anyAuth:anySource:anyEntity:1.";
-        when(this.propertyConfigurationsEnabledCache.get(any())).thenReturn(true);
-        Assert.assertTrue(sut.isPropertyConfigurationsEnabled(kind));
-        verify(this.propertyConfigurationsEnabledCache, times(0)).put(any(), any());
+        when(this.augmenterConfigurationEnabledCache.get(any())).thenReturn(true);
+        Assert.assertTrue(sut.isConfigurationEnabled(kind));
+        verify(this.augmenterConfigurationEnabledCache, times(0)).put(any(), any());
     }
 
     @Test
-    public void isPropertyConfigurationsEnabled_with_value_false_in_cache() {
+    public void isAugmenterConfigurationEnabled_with_value_false_in_cache() {
         String kind = "anyAuth:anySource:anyEntity:1.";
-        when(this.propertyConfigurationsEnabledCache.get(any())).thenReturn(false);
-        Assert.assertFalse(sut.isPropertyConfigurationsEnabled(kind));
-        verify(this.propertyConfigurationsEnabledCache, times(0)).put(any(), any());
+        when(this.augmenterConfigurationEnabledCache.get(any())).thenReturn(false);
+        Assert.assertFalse(sut.isConfigurationEnabled(kind));
+        verify(this.augmenterConfigurationEnabledCache, times(0)).put(any(), any());
     }
 
     @Test
-    public void isPropertyConfigurationsEnabled_with_result_from_search() throws URISyntaxException {
+    public void isAugmenterConfigurationEnabled_with_result_from_search() throws URISyntaxException {
         String kind = "anyAuth:anySource:anyEntity:1.";
         SearchResponse response = new SearchResponse();
         response.setResults(Arrays.asList(new SearchRecord()));
-        when(this.propertyConfigurationsEnabledCache.get(any())).thenReturn(null);
+        when(this.augmenterConfigurationEnabledCache.get(any())).thenReturn(null);
         when(this.searchService.query(any())).thenReturn(response);
-        Assert.assertTrue(sut.isPropertyConfigurationsEnabled(kind));
-        verify(this.propertyConfigurationsEnabledCache, times(1)).put(any(), any());
+        Assert.assertTrue(sut.isConfigurationEnabled(kind));
+        verify(this.augmenterConfigurationEnabledCache, times(1)).put(any(), any());
     }
 
     @Test
-    public void isPropertyConfigurationsEnabled_without_result_from_search() throws URISyntaxException {
+    public void isAugmenterConfigurationEnabled_without_result_from_search() throws URISyntaxException {
         String kind = "anyAuth:anySource:anyEntity:1.";
         SearchResponse response = new SearchResponse();
-        when(this.propertyConfigurationsEnabledCache.get(any())).thenReturn(null);
+        when(this.augmenterConfigurationEnabledCache.get(any())).thenReturn(null);
         when(this.searchService.query(any())).thenReturn(response);
-        Assert.assertFalse(sut.isPropertyConfigurationsEnabled(kind));
-        verify(this.propertyConfigurationsEnabledCache, times(1)).put(any(), any());
+        Assert.assertFalse(sut.isConfigurationEnabled(kind));
+        verify(this.augmenterConfigurationEnabledCache, times(1)).put(any(), any());
     }
 
     @Test
-    public void getPropertyConfigurations_invalid_kind() {
-        Assert.assertNull(sut.getPropertyConfigurations(null));
-        Assert.assertNull(sut.getPropertyConfigurations(""));
-        Assert.assertNull(sut.getPropertyConfigurations("anyAuth:anySource:anyEntity"));
+    public void getAugmenterConfiguration_invalid_kind() {
+        Assert.assertNull(sut.getConfiguration(null));
+        Assert.assertNull(sut.getConfiguration(""));
+        Assert.assertNull(sut.getConfiguration("anyAuth:anySource:anyEntity"));
     }
 
     @Test
-    public void getPropertyConfigurations_with_configuration_in_cache() {
+    public void getAugmenterConfiguration_with_configuration_in_cache() {
         String code = "anyAuth:anySource:anyEntity:1.";
         String kind = "anyAuth:anySource:anyEntity:1.0.0";
-        PropertyConfigurations configuration = new PropertyConfigurations();
+        AugmenterConfiguration configuration = new AugmenterConfiguration();
         configuration.setCode(code);
-        when(this.propertyConfigurationCache.get(eq(code))).thenReturn(configuration);
-        PropertyConfigurations configuration2 = sut.getPropertyConfigurations(kind);
+        when(this.augmenterConfigurationCache.get(eq(code))).thenReturn(configuration);
+        AugmenterConfiguration configuration2 = sut.getConfiguration(kind);
 
         Assert.assertNotNull(configuration2);
         Assert.assertEquals(code, configuration2.getCode());
     }
 
     @Test
-    public void getPropertyConfigurations_with_empty_configuration_in_cache() {
+    public void getAugmenterConfiguration_with_empty_configuration_in_cache() {
         String code = "anyAuth:anySource:anyEntity:1.";
         String kind = "anyAuth:anySource:anyEntity:1.0.0";
-        PropertyConfigurations configuration = new PropertyConfigurations();
-        when(this.propertyConfigurationCache.get(eq(code))).thenReturn(configuration);
-        PropertyConfigurations configuration2 = sut.getPropertyConfigurations(kind);
+        AugmenterConfiguration configuration = new AugmenterConfiguration();
+        when(this.augmenterConfigurationCache.get(eq(code))).thenReturn(configuration);
+        AugmenterConfiguration configuration2 = sut.getConfiguration(kind);
 
         Assert.assertNull(configuration2);
     }
 
     @Test
-    public void getPropertyConfigurations_with_result_from_search() throws URISyntaxException {
+    public void getAugmenterConfiguration_with_result_from_search() throws URISyntaxException {
         Map<String, Object> data = this.getDataMap("well_configuration_record.json");
         SearchRecord searchRecord = new SearchRecord();
         searchRecord.setData(data);
@@ -183,32 +183,32 @@ public class PropertyConfigurationsServiceImplTest {
         when(this.searchService.query(any())).thenReturn(searchResponse);
         String kind = "osdu:wks:master-data--Well:1.0.0";
         String code = "osdu:wks:master-data--Well:1.";
-        PropertyConfigurations configuration = sut.getPropertyConfigurations(kind);
+        AugmenterConfiguration configuration = sut.getConfiguration(kind);
 
-        ArgumentCaptor<PropertyConfigurations> argumentCaptor = ArgumentCaptor.forClass(PropertyConfigurations.class);
+        ArgumentCaptor<AugmenterConfiguration> argumentCaptor = ArgumentCaptor.forClass(AugmenterConfiguration.class);
         // If we mock the implementation of propertyConfigurationCache, it should be called once
-        verify(this.propertyConfigurationCache, times(2)).put(any(), argumentCaptor.capture());
+        verify(this.augmenterConfigurationCache, times(2)).put(any(), argumentCaptor.capture());
         Assert.assertNotNull(configuration);
         Assert.assertEquals(code, configuration.getCode());
         Assert.assertEquals(code, argumentCaptor.getValue().getCode());
     }
 
     @Test
-    public void getPropertyConfigurations_without_result_from_search() throws URISyntaxException {
+    public void getAugmenterConfiguration_without_result_from_search() throws URISyntaxException {
         when(this.searchService.query(any())).thenReturn(new SearchResponse());
 
         String kind = "osdu:wks:master-data--Well:1.0.0";
-        PropertyConfigurations configuration = sut.getPropertyConfigurations(kind);
+        AugmenterConfiguration configuration = sut.getConfiguration(kind);
 
-        ArgumentCaptor<PropertyConfigurations> argumentCaptor = ArgumentCaptor.forClass(PropertyConfigurations.class);
-        verify(this.propertyConfigurationCache, times(1)).put(any(), argumentCaptor.capture());
+        ArgumentCaptor<AugmenterConfiguration> argumentCaptor = ArgumentCaptor.forClass(AugmenterConfiguration.class);
+        verify(this.augmenterConfigurationCache, times(1)).put(any(), argumentCaptor.capture());
         Assert.assertNull(configuration);
         Assert.assertNull(argumentCaptor.getValue().getCode());
     }
 
     @Test
     public void getExtendedProperties_from_children_objects() throws JsonProcessingException, URISyntaxException {
-        PropertyConfigurations propertyConfigurations = getConfigurations("wellbore_configuration_record.json");
+        AugmenterConfiguration propertyConfigurations = getConfigurations("wellbore_configuration_record.json");
         Map<String, Object> originalDataMap = getDataMap("wellbore_data.json");
         String jsonText = getJsonFromFile("welllog_search_records.json");
         Type type = new TypeToken<List<SearchRecord>>() {}.getType();
@@ -224,7 +224,7 @@ public class PropertyConfigurationsServiceImplTest {
 
     @Test
     public void getExtendedProperties_from_self_and_parent_objects() throws JsonProcessingException, URISyntaxException {
-        PropertyConfigurations propertyConfigurations = getConfigurations("welllog_configuration_record.json");
+        AugmenterConfiguration propertyConfigurations = getConfigurations("welllog_configuration_record.json");
         Map<String, Object> originalDataMap = getDataMap("welllog_original_data.json");
 
         SearchResponse searchResponse = new SearchResponse();
@@ -282,7 +282,7 @@ public class PropertyConfigurationsServiceImplTest {
 
     @Test
     public void getExtendedSchemaItems_from_self_and_parent_object_kind() throws JsonProcessingException {
-        PropertyConfigurations propertyConfigurations = getConfigurations("well_configuration_record.json");
+        AugmenterConfiguration propertyConfigurations = getConfigurations("well_configuration_record.json");
         Schema originalSchema = getSchema("well_storage_schema.json");
         Schema geoPoliticalEntitySchema = getSchema("geo_political_entity_storage_schema.json");
         String relatedObjectKind = "osdu:wks:master-data--GeoPoliticalEntity:1.";
@@ -306,7 +306,7 @@ public class PropertyConfigurationsServiceImplTest {
 
     @Test
     public void getExtendedSchemaItems_from_multiple_object_kinds() throws JsonProcessingException {
-        PropertyConfigurations propertyConfigurations = getConfigurations("welllog_configuration_record.json");
+        AugmenterConfiguration propertyConfigurations = getConfigurations("welllog_configuration_record.json");
         Schema originalSchema = getSchema("welllog_storage_schema.json");
         Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
         Schema wellboreSchema = getSchema("wellbore_storage_schema.json");
@@ -654,7 +654,7 @@ public class PropertyConfigurationsServiceImplTest {
         when(this.searchService.query(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             SearchResponse searchResponse = new SearchResponse();
-            if (searchRequest.getKind().toString().equals(propertyConfigurationKind)) {
+            if (searchRequest.getKind().toString().equals(augmenterConfigurationKind)) {
                 if (searchRequest.getQuery().contains("ParentToChildren")) {
                     // Return of getParentChildRelatedObjectsSpecs(...)
                     Map<String, Object> dataMap = getDataMap("wellbore_configuration_record.json");
@@ -818,7 +818,7 @@ public class PropertyConfigurationsServiceImplTest {
         when(this.searchService.query(any())).thenAnswer(invocation -> {
             SearchRequest searchRequest = invocation.getArgument(0);
             SearchResponse searchResponse = new SearchResponse();
-            if (searchRequest.getKind().toString().equals(propertyConfigurationKind)) {
+            if (searchRequest.getKind().toString().equals(augmenterConfigurationKind)) {
                 if (searchRequest.getQuery().contains("ChildToParent") || searchRequest.getQuery().contains("data.Code:")) {
                     // Return of getParentChildRelatedObjectsSpecs(...) or
                     // getPropertyConfigurations(...)
@@ -868,11 +868,11 @@ public class PropertyConfigurationsServiceImplTest {
         return gson.fromJson(jsonText, Schema.class);
     }
 
-    private PropertyConfigurations getConfigurations(String file) throws JsonProcessingException {
+    private AugmenterConfiguration getConfigurations(String file) throws JsonProcessingException {
         Map<String, Object> dataMap = getDataMap(file);
         ObjectMapper objectMapper = new ObjectMapper();
         String data = objectMapper.writeValueAsString(dataMap);
-        PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
+        AugmenterConfiguration configurations = objectMapper.readValue(data, AugmenterConfiguration.class);
         return configurations;
     }
 

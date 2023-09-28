@@ -13,31 +13,34 @@
  * limitations under the License.
  */
 
-package org.opengroup.osdu.indexer.cache.partitionsafe;
+package org.opengroup.osdu.indexer.cache;
 
-import org.opengroup.osdu.indexer.cache.interfaces.IPropertyConfigurationsEnabledCache;
+import org.opengroup.osdu.core.common.cache.VmCache;
+import org.opengroup.osdu.indexer.cache.interfaces.IAugmenterConfigurationEnabledCache;
+import org.opengroup.osdu.indexer.model.Constants;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-
 @Component
-public class ConfigurationsEnabledCache extends AbstractPartitionSafeCache<String,Boolean> {
-    @Inject
-    private IPropertyConfigurationsEnabledCache cache;
+public class AugmenterConfigurationEnabledCacheVmImpl implements IAugmenterConfigurationEnabledCache {
+    private VmCache<String, Boolean> cache;
 
-    @Override
-    public void put(String s, Boolean  o) {
-        this.cache.put(cacheKey(s), o);
+    public AugmenterConfigurationEnabledCacheVmImpl() {
+        cache = new VmCache<>(Constants.SPEC_CACHE_EXPIRATION, Constants.SPEC_MAX_CACHE_SIZE);
     }
 
     @Override
-    public Boolean  get(String s) {
-        return this.cache.get(cacheKey(s));
+    public void put(String s, Boolean o) {
+        this.cache.put(s,o);
+    }
+
+    @Override
+    public Boolean get(String s) {
+        return this.cache.get(s);
     }
 
     @Override
     public void delete(String s) {
-        this.cache.delete(cacheKey(s));
+        this.cache.delete(s);
     }
 
     @Override

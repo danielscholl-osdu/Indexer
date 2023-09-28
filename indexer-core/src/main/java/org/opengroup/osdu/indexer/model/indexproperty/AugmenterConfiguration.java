@@ -26,12 +26,19 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 @Data
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PropertyConfigurations {
+public class AugmenterConfiguration {
+    // Version must be ended with dot and major version only
+    // e.g. "Code": "osdu:wks:master-data--Well:1."
+    private static final String KIND_WITH_MAJOR_VERSION_PATTERN = "[\\w\\-\\.]+:[\\w\\-\\.]+:[\\w\\-\\.]+:[0-9]+.$";
+
     @JsonProperty("Name")
     private String name;
 
@@ -69,14 +76,14 @@ public class PropertyConfigurations {
             return false;
         }
 
-        String[] parts = this.code.split(":");
-        if(parts.length != 4) {
+        try {
+            Pattern pattern = Pattern.compile(KIND_WITH_MAJOR_VERSION_PATTERN);
+            Matcher matcher = pattern.matcher(this.code);
+            return matcher.find();
+        }
+        catch(PatternSyntaxException ex) {
             return false;
         }
-        // Version must be ended with dot and major version only
-        // e.g. "Code": "osdu:wks:master-data--Well:1."
-        String version = parts[3];
-        return (version.length() > 1 && version.indexOf(".") == version.length() - 1);
     }
 
     public boolean hasValidConfigurations() {

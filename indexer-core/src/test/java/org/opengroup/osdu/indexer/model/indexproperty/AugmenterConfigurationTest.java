@@ -31,14 +31,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
-public class PropertyConfigurationsTest {
-    private PropertyConfigurations configurations;
+public class AugmenterConfigurationTest {
+    private AugmenterConfiguration configurations;
 
     @Before
     public void setup() throws JsonProcessingException {
         String jsonText = getJsonFromFile("well_configuration_record.json");
         ObjectMapper objectMapper = new ObjectMapper();
-        configurations = objectMapper.readValue(jsonText, PropertyConfigurations.class);
+        configurations = objectMapper.readValue(jsonText, AugmenterConfiguration.class);
     }
 
     @Test

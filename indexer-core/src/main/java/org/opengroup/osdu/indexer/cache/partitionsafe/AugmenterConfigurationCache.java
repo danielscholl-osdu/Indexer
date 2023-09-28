@@ -15,24 +15,24 @@
 
 package org.opengroup.osdu.indexer.cache.partitionsafe;
 
-import org.opengroup.osdu.indexer.cache.interfaces.IPropertyConfigurationsCache;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.cache.interfaces.IAugmenterConfigurationCache;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
 @Component
-public class PropertyConfigurationsCache extends AbstractPartitionSafeCache<String,PropertyConfigurations> {
+public class AugmenterConfigurationCache extends AbstractPartitionSafeCache<String, AugmenterConfiguration> {
     @Inject
-    private IPropertyConfigurationsCache cache;
+    private IAugmenterConfigurationCache cache;
 
     @Override
-    public void put(String s, PropertyConfigurations o) {
+    public void put(String s, AugmenterConfiguration o) {
         this.cache.put(cacheKey(s), o);
     }
 
     @Override
-    public PropertyConfigurations get(String s) {
+    public AugmenterConfiguration get(String s) {
         return this.cache.get(cacheKey(s));
     }
 

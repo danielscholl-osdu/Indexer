@@ -45,7 +45,7 @@ import java.util.*;
 
 
 @Component
-public class PropertyConfigurationsServiceImpl implements PropertyConfigurationsService {
+public class AugmenterConfigurationServiceImpl implements AugmenterConfigurationService {
     private static final String ASSOCIATED_IDENTITIES_PROPERTY = "AssociatedIdentities";
     private static final String VERSION_PROPERTY = "version";
     private static final String ASSOCIATED_IDENTITIES_PROPERTY_STORAGE_FORMAT_TYPE = "[]string";
@@ -67,7 +67,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     private static final String STRING_ARRAY_KIND = "[]string";
 
-    private static final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations();
+    private static final AugmenterConfiguration EMPTY_AUGMENTER_CONFIGURATION = new AugmenterConfiguration();
     private static final String SEARCH_GENERAL_ERROR = "Failed to call search service.";
 
     private final Gson gson = new Gson();
@@ -76,9 +76,9 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     @Inject
     private IndexerConfigurationProperties configurationProperties;
     @Inject
-    private PropertyConfigurationsCache propertyConfigurationCache;
+    private AugmenterConfigurationCache augmenterConfigurationCache;
     @Inject
-    private ConfigurationsEnabledCache propertyConfigurationsEnabledCache;
+    private AugmenterConfigurationEnabledCache augmenterConfigurationEnabledCache;
     @Inject
     private ChildRelationshipSpecsCache parentChildRelationshipSpecsCache;
     @Inject
@@ -101,12 +101,12 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private JaxRsDpsLog jaxRsDpsLog;
 
     @Override
-    public boolean isPropertyConfigurationsEnabled(String kind) {
+    public boolean isConfigurationEnabled(String kind) {
         kind = PropertyUtil.getKindWithMajor(kind);
         if (Strings.isNullOrEmpty(kind))
             return false;
 
-        Boolean enabled = propertyConfigurationsEnabledCache.get(kind);
+        Boolean enabled = augmenterConfigurationEnabledCache.get(kind);
         if(enabled == null) {
             SearchRequest searchRequest = new SearchRequest();
             searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
@@ -118,69 +118,69 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             else {
                 enabled = false;
             }
-            propertyConfigurationsEnabledCache.put(kind, enabled);
+            augmenterConfigurationEnabledCache.put(kind, enabled);
         }
 
         return enabled;
     }
 
     @Override
-    public PropertyConfigurations getPropertyConfigurations(String kind) {
+    public AugmenterConfiguration getConfiguration(String kind) {
         kind = PropertyUtil.getKindWithMajor(kind);
         if (Strings.isNullOrEmpty(kind))
             return null;
 
-        PropertyConfigurations configuration = propertyConfigurationCache.get(kind);
-        if (configuration == null) {
-            configuration = searchConfigurations(kind);
-            if (configuration != null) {
-                if(configuration.isValid()) {
+        AugmenterConfiguration augmenterConfiguration = augmenterConfigurationCache.get(kind);
+        if (augmenterConfiguration == null) {
+            augmenterConfiguration = searchConfigurations(kind);
+            if (augmenterConfiguration != null) {
+                if(augmenterConfiguration.isValid()) {
                     // Log for debug
-                    if(configuration.hasInvalidConfigurations()) {
-                        String msg = String.format("PropertyConfigurations: it has invalid PropertyConfiguration for configurations with name '%s':", configuration.getName());
+                    if(augmenterConfiguration.hasInvalidConfigurations()) {
+                        String msg = String.format("PropertyConfigurations: it has invalid PropertyConfiguration for configurations with name '%s':", augmenterConfiguration.getName());
                         this.jaxRsDpsLog.warning(msg);
                     }
                 }
                 else {
                     // Log for debug
                     StringBuilder msgBuilder = new StringBuilder();
-                    msgBuilder.append(String.format("PropertyConfigurations: it is invalid for configurations with name '%s':", configuration.getName()));
-                    if(!configuration.hasValidCode()) {
+                    msgBuilder.append(String.format("PropertyConfigurations: it is invalid for configurations with name '%s':", augmenterConfiguration.getName()));
+                    if(!augmenterConfiguration.hasValidCode()) {
                         msgBuilder.append(System.lineSeparator());
-                        msgBuilder.append(String.format("The code '%s' is invalid. It should be a valid kind with major version ended with '.'", configuration.getCode()));
+                        msgBuilder.append(String.format("The code '%s' is invalid. It should be a valid kind with major version ended with '.'", augmenterConfiguration.getCode()));
                     }
-                    if(!configuration.hasValidConfigurations()) {
+                    if(!augmenterConfiguration.hasValidConfigurations()) {
                         msgBuilder.append(System.lineSeparator());
                         msgBuilder.append("It does not have any valid PropertyConfiguration");
                     }
                     this.jaxRsDpsLog.warning(msgBuilder.toString());
 
-                    configuration = EMPTY_CONFIGURATIONS; // reset
+                    augmenterConfiguration = EMPTY_AUGMENTER_CONFIGURATION; // reset
                 }
 
-                propertyConfigurationCache.put(kind, configuration);
+                augmenterConfigurationCache.put(kind, augmenterConfiguration);
             } else {
-                // It is common that a kind does not have extended property. So we need to cache an empty configuration
+                // It is common that a kind does not have extended property. So we need to cache an empty augmenterConfiguration
                 // to avoid unnecessary search
-                propertyConfigurationCache.put(kind, EMPTY_CONFIGURATIONS);
+                augmenterConfigurationCache.put(kind, EMPTY_AUGMENTER_CONFIGURATION);
             }
         }
 
-        if (!isNullOrEmptyConfigurations(configuration)) {
-            return configuration;
+        if (!isEmptyConfiguration(augmenterConfiguration)) {
+            return augmenterConfiguration;
         }
 
         return null;
     }
 
     @Override
-    public Map<String, Object> getExtendedProperties(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
+    public Map<String, Object> getExtendedProperties(String objectId, Map<String, Object> originalDataMap, AugmenterConfiguration augmenterConfiguration) {
         // Get all data maps of the related objects in one query in order to improve the performance.
-        Map<String, Map<String, Object>> idObjectDataMap = getRelatedObjectsData(originalDataMap, propertyConfigurations);
+        Map<String, Map<String, Object>> idObjectDataMap = getRelatedObjectsData(originalDataMap, augmenterConfiguration);
 
         Set<String> associatedIdentities = new HashSet<>();
         Map<String, Object> extendedDataMap = new HashMap<>();
-        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
+        for (PropertyConfiguration configuration : augmenterConfiguration.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
             String extendedPropertyName = configuration.getExtendedPropertyName();
             if (originalDataMap.containsKey(extendedPropertyName) && originalDataMap.get(extendedPropertyName) != null) {
                 // If the original record already has the property, then we should not override.
@@ -249,10 +249,10 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     }
 
     @Override
-    public List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, Map<String, Schema> relatedObjectKindSchemas, PropertyConfigurations propertyConfigurations) {
+    public List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, Map<String, Schema> relatedObjectKindSchemas, AugmenterConfiguration augmenterConfiguration) {
         List<SchemaItem> extendedSchemaItems = new ArrayList<>();
         boolean hasChildToParentRelationship = false;
-        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
+        for (PropertyConfiguration configuration : augmenterConfiguration.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
             Schema schema = null;
             PropertyPath propertyPath = null;
             for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidRelatedObjectsSpec()).toList()) {
@@ -365,7 +365,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     }
 
     /******************************************************** Private methods **************************************************************/
-    private boolean isNullOrEmptyConfigurations(PropertyConfigurations configuration) {
+    private boolean isEmptyConfiguration(AugmenterConfiguration configuration) {
         return configuration == null || Strings.isNullOrEmpty(configuration.getCode());
     }
 
@@ -427,10 +427,10 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return data;
     }
 
-    private Map<String, Map<String, Object>> getRelatedObjectsData(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
+    private Map<String, Map<String, Object>> getRelatedObjectsData(Map<String, Object> originalDataMap, AugmenterConfiguration augmenterConfiguration) {
         Map<String, Map<String, Object>> idData = new HashMap<>();
         Map<String, Set<String>> kindIds = new HashMap<>();
-        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
+        for (PropertyConfiguration configuration : augmenterConfiguration.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
             for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).toList()) {
                 if (path.hasValidRelatedObjectsSpec()) {
                     RelatedObjectsSpec relatedObjectsSpec = path.getRelatedObjectsSpec();
@@ -706,7 +706,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         if(childrenKinds == null) {
             childrenKinds = new ChildrenKinds();
             Set<String> kinds = new HashSet<>();
-            for (PropertyConfigurations propertyConfigurations: searchChildrenKindConfigurations(parentKindWithMajor)) {
+            for (AugmenterConfiguration propertyConfigurations: searchChildrenKindConfigurations(parentKindWithMajor)) {
                 kinds.add(propertyConfigurations.getCode());
             }
             childrenKinds.setKinds(new ArrayList<>(kinds));
@@ -725,8 +725,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             specs = new ParentChildRelationshipSpecs();
             specs.setSpecList(specsList);
 
-            List<PropertyConfigurations> configurationsList = searchParentKindConfigurations((childKindWithMajor));
-            for (PropertyConfigurations configurations : configurationsList) {
+            List<AugmenterConfiguration> configurationsList = searchParentKindConfigurations((childKindWithMajor));
+            for (AugmenterConfiguration configurations : configurationsList) {
                 for (PropertyConfiguration configuration : configurations.getConfigurations()) {
                     List<PropertyPath> matchedPropertyPaths = configuration.getPaths().stream().filter(p ->
                                             p.hasValidRelatedObjectsSpec() &&
@@ -840,7 +840,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             return true;
         }
 
-        PropertyConfigurations propertyConfigurations = this.getPropertyConfigurations(childKind);
+        AugmenterConfiguration propertyConfigurations = this.getConfiguration(childKind);
         if(propertyConfigurations != null) {
             for (PropertyConfiguration propertyConfiguration : propertyConfigurations.getConfigurations()) {
                 for (PropertyPath propertyPath : propertyConfiguration.getPaths().stream().filter(
@@ -949,7 +949,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return searchRequest;
     }
 
-    private PropertyConfigurations searchConfigurations(String kind) {
+    private AugmenterConfiguration searchConfigurations(String kind) {
         String query = String.format("data.Code: \"%s\"", kind);
         SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
         // If there is more than PropertyConfigurations, pick the one that was last modified.
@@ -959,7 +959,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         sort.setField(Arrays.asList(VERSION_PROPERTY));
         sort.setOrder(Arrays.asList(SortOrder.DESC));
         searchRequest.setSort(sort);
-        List<PropertyConfigurations> propertyConfigurationsList = searchConfigurations(searchRequest);
+        List<AugmenterConfiguration> propertyConfigurationsList = searchConfigurations(searchRequest);
         if(!propertyConfigurationsList.isEmpty()) {
             if(propertyConfigurationsList.size() > 1) {
                 jaxRsDpsLog.warning(String.format("There is more than one PropertyConfigurations for kind: %s", kind));
@@ -969,26 +969,26 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return null;
     }
 
-    private List<PropertyConfigurations> searchParentKindConfigurations(String childKind) {
+    private List<AugmenterConfiguration> searchParentKindConfigurations(String childKind) {
         String query = String.format(PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT, childKind);
         SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
         return searchConfigurations(searchRequest);
     }
 
-    private List<PropertyConfigurations> searchChildrenKindConfigurations(String parentKind) {
+    private List<AugmenterConfiguration> searchChildrenKindConfigurations(String parentKind) {
         String query = String.format(CHILDREN_PARENT_CONFIGURATION_QUERY_FORMAT, parentKind);
         SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
         return searchConfigurations(searchRequest);
     }
 
-    private List<PropertyConfigurations> searchConfigurations(SearchRequest searchRequest) {
-        List<PropertyConfigurations> configurationsList = new ArrayList<>();
+    private List<AugmenterConfiguration> searchConfigurations(SearchRequest searchRequest) {
+        List<AugmenterConfiguration> configurationsList = new ArrayList<>();
         for (SearchRecord searchRecord : searchRecords(searchRequest)) {
             try {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
-                PropertyConfigurations configurations = objectMapper.readValue(data, PropertyConfigurations.class);
+                AugmenterConfiguration configurations = objectMapper.readValue(data, AugmenterConfiguration.class);
                 String kind = PropertyUtil.getKindWithMajor(configurations.getCode());
-                propertyConfigurationCache.put(kind, configurations);
+                augmenterConfigurationCache.put(kind, configurations);
                 configurationsList.add(configurations);
             } catch (JsonProcessingException e) {
                 jaxRsDpsLog.error("failed to deserialize PropertyConfigurations object", e);

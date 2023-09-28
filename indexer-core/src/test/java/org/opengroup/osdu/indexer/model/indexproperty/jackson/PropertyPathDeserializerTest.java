@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfiguration;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyPath;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -36,7 +36,7 @@ public class PropertyPathDeserializerTest {
     public void deserialize_configurations_test() throws JsonProcessingException {
         String jsonText = getJsonFromFile("well_configuration_record.json");
         ObjectMapper objectMapper = new ObjectMapper();
-        PropertyConfigurations configurations = objectMapper.readValue(jsonText, PropertyConfigurations.class);
+        AugmenterConfiguration configurations = objectMapper.readValue(jsonText, AugmenterConfiguration.class);
         Assert.assertNotNull(configurations);
         Assert.assertEquals(2, configurations.getConfigurations().size());
         PropertyConfiguration countryNameConfiguration = configurations.getConfigurations().get(0);
