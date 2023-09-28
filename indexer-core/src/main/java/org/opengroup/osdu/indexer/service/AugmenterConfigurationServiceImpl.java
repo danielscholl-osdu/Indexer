@@ -132,7 +132,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
 
         AugmenterConfiguration augmenterConfiguration = augmenterConfigurationCache.get(kind);
         if (augmenterConfiguration == null) {
-            augmenterConfiguration = searchConfigurations(kind);
+            augmenterConfiguration = searchConfiguration(kind);
             if (augmenterConfiguration != null) {
                 if(augmenterConfiguration.isValid()) {
                     // Log for debug
@@ -725,16 +725,16 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             specs = new ParentChildRelationshipSpecs();
             specs.setSpecList(specsList);
 
-            List<AugmenterConfiguration> configurationsList = searchParentKindConfigurations((childKindWithMajor));
-            for (AugmenterConfiguration configurations : configurationsList) {
-                for (PropertyConfiguration configuration : configurations.getConfigurations()) {
-                    List<PropertyPath> matchedPropertyPaths = configuration.getPaths().stream().filter(p ->
+            List<AugmenterConfiguration> augmenterConfigurations = searchParentKindConfigurations((childKindWithMajor));
+            for (AugmenterConfiguration augmenterConfiguration : augmenterConfigurations) {
+                for (PropertyConfiguration propertyConfiguration : augmenterConfiguration.getConfigurations()) {
+                    List<PropertyPath> matchedPropertyPaths = propertyConfiguration.getPaths().stream().filter(p ->
                                             p.hasValidRelatedObjectsSpec() &&
                                             p.getRelatedObjectsSpec().isParentToChildren() &&
                                             p.getRelatedObjectsSpec().getRelatedObjectKind().contains(childKindWithMajor))
                             .toList();
                     for(PropertyPath propertyPath: matchedPropertyPaths) {
-                        ParentChildRelationshipSpec spec = toParentChildRelationshipSpec(propertyPath, configurations.getCode(), childKindWithMajor);
+                        ParentChildRelationshipSpec spec = toParentChildRelationshipSpec(propertyPath, augmenterConfiguration.getCode(), childKindWithMajor);
                         boolean merged = false;
                         for(ParentChildRelationshipSpec sp: specsList) {
                             if(sp.equals(spec)) {
@@ -840,9 +840,9 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             return true;
         }
 
-        AugmenterConfiguration propertyConfigurations = this.getConfiguration(childKind);
-        if(propertyConfigurations != null) {
-            for (PropertyConfiguration propertyConfiguration : propertyConfigurations.getConfigurations()) {
+        AugmenterConfiguration augmenterConfiguration = this.getConfiguration(childKind);
+        if(augmenterConfiguration != null) {
+            for (PropertyConfiguration propertyConfiguration : augmenterConfiguration.getConfigurations()) {
                 for (PropertyPath propertyPath : propertyConfiguration.getPaths().stream().filter(
                         p -> p.hasValidValueExtraction() && p.hasValidRelatedObjectsSpec()).toList()) {
                     String relatedObjectKind = propertyPath.getRelatedObjectsSpec().getRelatedObjectKind();
@@ -949,7 +949,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         return searchRequest;
     }
 
-    private AugmenterConfiguration searchConfigurations(String kind) {
+    private AugmenterConfiguration searchConfiguration(String kind) {
         String query = String.format("data.Code: \"%s\"", kind);
         SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
         // If there is more than PropertyConfigurations, pick the one that was last modified.
@@ -959,12 +959,12 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         sort.setField(Arrays.asList(VERSION_PROPERTY));
         sort.setOrder(Arrays.asList(SortOrder.DESC));
         searchRequest.setSort(sort);
-        List<AugmenterConfiguration> propertyConfigurationsList = searchConfigurations(searchRequest);
-        if(!propertyConfigurationsList.isEmpty()) {
-            if(propertyConfigurationsList.size() > 1) {
+        List<AugmenterConfiguration> augmenterConfigurations = searchConfigurations(searchRequest);
+        if(!augmenterConfigurations.isEmpty()) {
+            if(augmenterConfigurations.size() > 1) {
                 jaxRsDpsLog.warning(String.format("There is more than one PropertyConfigurations for kind: %s", kind));
             }
-            return propertyConfigurationsList.get(0);
+            return augmenterConfigurations.get(0);
         }
         return null;
     }
@@ -982,19 +982,19 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     }
 
     private List<AugmenterConfiguration> searchConfigurations(SearchRequest searchRequest) {
-        List<AugmenterConfiguration> configurationsList = new ArrayList<>();
+        List<AugmenterConfiguration> augmenterConfigurations = new ArrayList<>();
         for (SearchRecord searchRecord : searchRecords(searchRequest)) {
             try {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
                 AugmenterConfiguration configurations = objectMapper.readValue(data, AugmenterConfiguration.class);
                 String kind = PropertyUtil.getKindWithMajor(configurations.getCode());
                 augmenterConfigurationCache.put(kind, configurations);
-                configurationsList.add(configurations);
+                augmenterConfigurations.add(configurations);
             } catch (JsonProcessingException e) {
                 jaxRsDpsLog.error("failed to deserialize PropertyConfigurations object", e);
             }
         }
-        return configurationsList;
+        return augmenterConfigurations;
     }
 
     private List<SearchRecord> searchRelatedRecords(List<String> relatedObjectKinds, List<String> relatedObjectIds) {

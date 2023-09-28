@@ -348,13 +348,13 @@ public class IndexerSchemaServiceTest {
                 "    ]\n" +
                 "}";
         ObjectMapper objectMapper = new ObjectMapper();
-        AugmenterConfiguration configurations = objectMapper.readValue(propertyConfigurations, AugmenterConfiguration.class);
+        AugmenterConfiguration augmenterConfiguration = objectMapper.readValue(propertyConfigurations, AugmenterConfiguration.class);
 
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
         when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
-        when(this.propertyConfigurationsService.getConfiguration(kind)).thenReturn(configurations);
+        when(this.propertyConfigurationsService.getConfiguration(kind)).thenReturn(augmenterConfiguration);
         when(this.propertyConfigurationsService.resolveConcreteKind(anyString())).thenAnswer(invocation -> {
             String relatedObjectKind = invocation.getArgument(0);
             return relatedObjectKind + "0.0";

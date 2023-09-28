@@ -32,74 +32,74 @@ import java.util.List;
 
 @RunWith(SpringRunner.class)
 public class AugmenterConfigurationTest {
-    private AugmenterConfiguration configurations;
+    private AugmenterConfiguration augmenterConfiguration;
 
     @Before
     public void setup() throws JsonProcessingException {
         String jsonText = getJsonFromFile("well_configuration_record.json");
         ObjectMapper objectMapper = new ObjectMapper();
-        configurations = objectMapper.readValue(jsonText, AugmenterConfiguration.class);
+        augmenterConfiguration = objectMapper.readValue(jsonText, AugmenterConfiguration.class);
     }
 
     @Test
     public void isValid() {
-        Assert.assertTrue(configurations.hasValidCode());
-        Assert.assertTrue(configurations.hasValidConfigurations());
-        Assert.assertFalse(configurations.hasInvalidConfigurations());
-        Assert.assertTrue(configurations.isValid());
+        Assert.assertTrue(augmenterConfiguration.hasValidCode());
+        Assert.assertTrue(augmenterConfiguration.hasValidConfigurations());
+        Assert.assertFalse(augmenterConfiguration.hasInvalidConfigurations());
+        Assert.assertTrue(augmenterConfiguration.isValid());
     }
 
     @Test
     public void hasInvalidCode() {
-        String code = configurations.getCode();
+        String code = augmenterConfiguration.getCode();
 
-        configurations.setCode(code + "0.0");
-        Assert.assertFalse(configurations.hasValidCode());
-        Assert.assertFalse(configurations.isValid());
+        augmenterConfiguration.setCode(code + "0.0");
+        Assert.assertFalse(augmenterConfiguration.hasValidCode());
+        Assert.assertFalse(augmenterConfiguration.isValid());
 
-        configurations.setCode("a:b:1.");
-        Assert.assertFalse(configurations.hasValidCode());
-        Assert.assertFalse(configurations.isValid());
+        augmenterConfiguration.setCode("a:b:1.");
+        Assert.assertFalse(augmenterConfiguration.hasValidCode());
+        Assert.assertFalse(augmenterConfiguration.isValid());
 
-        configurations.setCode("");
-        Assert.assertFalse(configurations.hasValidCode());
-        Assert.assertFalse(configurations.isValid());
+        augmenterConfiguration.setCode("");
+        Assert.assertFalse(augmenterConfiguration.hasValidCode());
+        Assert.assertFalse(augmenterConfiguration.isValid());
 
-        configurations.setCode(null);
-        Assert.assertFalse(configurations.hasValidCode());
-        Assert.assertFalse(configurations.isValid());
+        augmenterConfiguration.setCode(null);
+        Assert.assertFalse(augmenterConfiguration.hasValidCode());
+        Assert.assertFalse(augmenterConfiguration.isValid());
     }
 
     @Test
     public void hasNoValidConfigurations() {
-        List<PropertyConfiguration> propertyConfigurations = configurations.getConfigurations();
+        List<PropertyConfiguration> propertyConfigurations = augmenterConfiguration.getConfigurations();
 
-        configurations.setConfigurations(new ArrayList<>());
-        Assert.assertFalse(configurations.hasValidConfigurations());
-        Assert.assertFalse(configurations.hasInvalidConfigurations());
-        Assert.assertFalse(configurations.isValid());
+        augmenterConfiguration.setConfigurations(new ArrayList<>());
+        Assert.assertFalse(augmenterConfiguration.hasValidConfigurations());
+        Assert.assertFalse(augmenterConfiguration.hasInvalidConfigurations());
+        Assert.assertFalse(augmenterConfiguration.isValid());
 
-        configurations.setConfigurations(null);
-        Assert.assertFalse(configurations.hasValidConfigurations());
-        Assert.assertFalse(configurations.hasInvalidConfigurations());
-        Assert.assertFalse(configurations.isValid());
+        augmenterConfiguration.setConfigurations(null);
+        Assert.assertFalse(augmenterConfiguration.hasValidConfigurations());
+        Assert.assertFalse(augmenterConfiguration.hasInvalidConfigurations());
+        Assert.assertFalse(augmenterConfiguration.isValid());
 
         propertyConfigurations.forEach(p -> p.setPolicy(""));
-        configurations.setConfigurations(propertyConfigurations);
-        Assert.assertFalse(configurations.hasValidConfigurations());
-        Assert.assertTrue(configurations.hasInvalidConfigurations());
-        Assert.assertFalse(configurations.isValid());
+        augmenterConfiguration.setConfigurations(propertyConfigurations);
+        Assert.assertFalse(augmenterConfiguration.hasValidConfigurations());
+        Assert.assertTrue(augmenterConfiguration.hasInvalidConfigurations());
+        Assert.assertFalse(augmenterConfiguration.isValid());
     }
 
     @Test
     public void hasPartialValidConfigurations() {
-        List<PropertyConfiguration> propertyConfigurations = configurations.getConfigurations();
+        List<PropertyConfiguration> propertyConfigurations = augmenterConfiguration.getConfigurations();
         Assert.assertEquals(2, propertyConfigurations.size());
 
         propertyConfigurations.get(0).setPolicy("");
-        Assert.assertTrue(configurations.hasValidConfigurations());
-        Assert.assertTrue(configurations.hasInvalidConfigurations());
-        Assert.assertTrue(configurations.isValid());
+        Assert.assertTrue(augmenterConfiguration.hasValidConfigurations());
+        Assert.assertTrue(augmenterConfiguration.hasInvalidConfigurations());
+        Assert.assertTrue(augmenterConfiguration.isValid());
     }
 
     @SneakyThrows

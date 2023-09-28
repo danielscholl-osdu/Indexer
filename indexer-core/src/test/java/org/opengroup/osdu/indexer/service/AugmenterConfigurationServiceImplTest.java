@@ -208,7 +208,7 @@ public class AugmenterConfigurationServiceImplTest {
 
     @Test
     public void getExtendedProperties_from_children_objects() throws JsonProcessingException, URISyntaxException {
-        AugmenterConfiguration propertyConfigurations = getConfigurations("wellbore_configuration_record.json");
+        AugmenterConfiguration propertyConfigurations = getConfiguration("wellbore_configuration_record.json");
         Map<String, Object> originalDataMap = getDataMap("wellbore_data.json");
         String jsonText = getJsonFromFile("welllog_search_records.json");
         Type type = new TypeToken<List<SearchRecord>>() {}.getType();
@@ -224,7 +224,7 @@ public class AugmenterConfigurationServiceImplTest {
 
     @Test
     public void getExtendedProperties_from_self_and_parent_objects() throws JsonProcessingException, URISyntaxException {
-        AugmenterConfiguration propertyConfigurations = getConfigurations("welllog_configuration_record.json");
+        AugmenterConfiguration propertyConfigurations = getConfiguration("welllog_configuration_record.json");
         Map<String, Object> originalDataMap = getDataMap("welllog_original_data.json");
 
         SearchResponse searchResponse = new SearchResponse();
@@ -282,14 +282,14 @@ public class AugmenterConfigurationServiceImplTest {
 
     @Test
     public void getExtendedSchemaItems_from_self_and_parent_object_kind() throws JsonProcessingException {
-        AugmenterConfiguration propertyConfigurations = getConfigurations("well_configuration_record.json");
+        AugmenterConfiguration augmenterConfiguration = getConfiguration("well_configuration_record.json");
         Schema originalSchema = getSchema("well_storage_schema.json");
         Schema geoPoliticalEntitySchema = getSchema("geo_political_entity_storage_schema.json");
         String relatedObjectKind = "osdu:wks:master-data--GeoPoliticalEntity:1.";
         Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
         relatedObjectKindSchemas.put(relatedObjectKind, geoPoliticalEntitySchema);
 
-        List<SchemaItem> extendedSchemaItems = this.sut.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        List<SchemaItem> extendedSchemaItems = this.sut.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, augmenterConfiguration);
         Assert.assertEquals(3, extendedSchemaItems.size());
         SchemaItem countryNameItem = extendedSchemaItems.stream().filter(item -> item.getPath().equals("CountryNames")).findFirst().orElse(null);
         Assert.assertNotNull(countryNameItem);
@@ -306,7 +306,7 @@ public class AugmenterConfigurationServiceImplTest {
 
     @Test
     public void getExtendedSchemaItems_from_multiple_object_kinds() throws JsonProcessingException {
-        AugmenterConfiguration propertyConfigurations = getConfigurations("welllog_configuration_record.json");
+        AugmenterConfiguration augmenterConfiguration = getConfiguration("welllog_configuration_record.json");
         Schema originalSchema = getSchema("welllog_storage_schema.json");
         Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
         Schema wellboreSchema = getSchema("wellbore_storage_schema.json");
@@ -318,7 +318,7 @@ public class AugmenterConfigurationServiceImplTest {
         Type type = new TypeToken<List<SchemaItem>>() {}.getType();
         List<SchemaItem> expectedExtendedSchemaItems = gson.fromJson(jsonText, type);
 
-        List<SchemaItem> extendedSchemaItems = this.sut.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        List<SchemaItem> extendedSchemaItems = this.sut.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, augmenterConfiguration);
         Assert.assertEquals(expectedExtendedSchemaItems.size(), extendedSchemaItems.size());
         for(int i = 0; i < expectedExtendedSchemaItems.size(); i++) {
             SchemaItem expectedExtendedSchemaItem = expectedExtendedSchemaItems.get(i);
@@ -868,7 +868,7 @@ public class AugmenterConfigurationServiceImplTest {
         return gson.fromJson(jsonText, Schema.class);
     }
 
-    private AugmenterConfiguration getConfigurations(String file) throws JsonProcessingException {
+    private AugmenterConfiguration getConfiguration(String file) throws JsonProcessingException {
         Map<String, Object> dataMap = getDataMap(file);
         ObjectMapper objectMapper = new ObjectMapper();
         String data = objectMapper.writeValueAsString(dataMap);
