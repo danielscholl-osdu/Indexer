@@ -36,11 +36,11 @@ public class PropertyPathDeserializerTest {
     public void deserialize_configurations_test() throws JsonProcessingException {
         String jsonText = getJsonFromFile("well_configuration_record.json");
         ObjectMapper objectMapper = new ObjectMapper();
-        AugmenterConfiguration configurations = objectMapper.readValue(jsonText, AugmenterConfiguration.class);
-        Assert.assertNotNull(configurations);
-        Assert.assertEquals(2, configurations.getConfigurations().size());
-        PropertyConfiguration countryNameConfiguration = configurations.getConfigurations().get(0);
-        PropertyConfiguration wellUWIConfiguration = configurations.getConfigurations().get(1);
+        AugmenterConfiguration augmenterConfiguration = objectMapper.readValue(jsonText, AugmenterConfiguration.class);
+        Assert.assertNotNull(augmenterConfiguration);
+        Assert.assertEquals(2, augmenterConfiguration.getConfigurations().size());
+        PropertyConfiguration countryNameConfiguration = augmenterConfiguration.getConfigurations().get(0);
+        PropertyConfiguration wellUWIConfiguration = augmenterConfiguration.getConfigurations().get(1);
 
         Assert.assertEquals("CountryNames", countryNameConfiguration.getName());
         Assert.assertEquals(1, countryNameConfiguration.getPaths().size());
