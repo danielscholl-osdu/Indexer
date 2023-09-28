@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 
 @Component
 public class SearchServiceImpl implements SearchService {
+    private static final String ERROR_MESSAGE = "Search service: failed to call the search service.";
     private static final String QUERY_PATH = "query";
     private static final String QUERY_WITH_CURSOR_PATH = "query_with_cursor";
     private final Gson gson = new Gson();
@@ -78,9 +79,9 @@ public class SearchServiceImpl implements SearchService {
                 return gson.fromJson(response.getBody(), SearchResponse.class);
             } else {
                 if (response != null)
-                    jaxRsDpsLog.error(String.format("Search service: failed to call the search service: %d", response.getResponseCode()));
+                    jaxRsDpsLog.error(ERROR_MESSAGE + String.format(" responseCode = %d", response.getResponseCode()));
                 else
-                    jaxRsDpsLog.error(String.format("Search service: failed to call the search service. The response is null."));
+                    jaxRsDpsLog.error(String.format(ERROR_MESSAGE + " The response is null."));
                 return new SearchResponse();
             }
         }
@@ -88,7 +89,7 @@ public class SearchServiceImpl implements SearchService {
             throw ex;
         }
         catch(Exception ex) {
-            jaxRsDpsLog.error(String.format("Search service: failed to call the search service", ex));
+            jaxRsDpsLog.error(ERROR_MESSAGE, ex);
             throw new URISyntaxException(ex.getMessage(), "Unexpected exception type: " + ex.getClass().getName());
         }
     }

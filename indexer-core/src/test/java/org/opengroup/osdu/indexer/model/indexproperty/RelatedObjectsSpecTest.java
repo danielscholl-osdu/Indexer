@@ -108,14 +108,14 @@ public class RelatedObjectsSpecTest {
     }
 
     @Test
-    public void hasValidCondition_return_false_for_none_nested_property() {
+    public void hasValidCondition_return_true_for_none_nested_property() {
         RelatedObjectsSpec spec = new RelatedObjectsSpec();
         spec.setRelatedObjectKind("osdu:wks:master-data--GeoPoliticalEntity:1.");
         spec.setRelatedObjectID("data.GeoContexts.GeoPoliticalEntityID");
         spec.setRelatedConditionProperty("data.GeoContexts.GeoTypeID");
         List<String> matches = Arrays.asList("opendes:reference-data--GeoPoliticalEntityType:Country:");
         spec.setRelatedConditionMatches(matches);
-        Assert.assertFalse(spec.hasValidCondition());
+        Assert.assertTrue(spec.hasValidCondition());
     }
 
 }

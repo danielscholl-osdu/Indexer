@@ -40,6 +40,7 @@ is IndexPropertyPathConfiguration. The diagram below shows the decomposition int
   the `RelationshipDirection` indirection parent/related object or children. The property holding the record id to
   follow is specified in `RelatedObjectID`, so is the expected target kind. As in `ValueExtraction`, the selection can
   be filtered by a match condition (`RelatedConditionProperty` and `RelatedConditionMatches`)
+* The `RelatedConditionMatches` can be a list of strings or regular expressions.
 
 With this, the extension properties can be defined as if they were provided by a schema.
 
@@ -77,10 +78,10 @@ first value matching the condition `RelatedConditionProperty` is equal to one of
           {
             "ValueExtraction": {
               "RelatedConditionMatches": [
-                "{{data-partition-id}}:reference-data--AliasNameType:UniqueIdentifier:",
-                "{{data-partition-id}}:reference-data--AliasNameType:RegulatoryName:",
-                "{{data-partition-id}}:reference-data--AliasNameType:PreferredName:",
-                "{{data-partition-id}}:reference-data--AliasNameType:CommonName:"
+                "^[\\w\\-\\.]+:reference-data--AliasNameType:UniqueIdentifier:$",
+                "^[\\w\\-\\.]+:reference-data--AliasNameType:RegulatoryName:$",
+                "^[\\w\\-\\.]+:reference-data--AliasNameType:PreferredName:$",
+                "^[\\w\\-\\.]+:reference-data--AliasNameType:CommonName:$"
               ],
               "RelatedConditionProperty": "data.NameAliases[].AliasNameTypeID",
               "ValuePath": "data.NameAliases[].AliasName"
@@ -126,7 +127,7 @@ GeoPoliticalEntityType:Country.
               "RelatedObjectID": "data.GeoContexts[].GeoPoliticalEntityID",
               "RelatedObjectKind": "osdu:wks:master-data--GeoPoliticalEntity:1.",
               "RelatedConditionMatches": [
-                "{{data-partition-id}}:reference-data--GeoPoliticalEntityType:Country:"
+                "^[\\w\\-\\.]+:reference-data--GeoPoliticalEntityType:Country:$"
               ],
               "RelatedConditionProperty": "data.GeoContexts[].GeoTypeID"
             },
@@ -240,6 +241,66 @@ RelationshipDirection `ParentToChildren`, i.e., related objects referring the in
 
 [Back to table of contents](#TOC)
 
+---
+
+-Use Case 5: Entity Names on the Document
+
+_When a document is ingested, it can associate with one or more parent entities. As a user I want to discover
+all the related instances, including the documents, by the entity's name value._
+
+This configuration demonstrates how to extend properties from parent entities into document record when the kind(s) of
+the parent entities are not well-defined in the document schema.
+
+<details><summary>Configuration for Document, extract Name from parent entities Wellbore and SeismicAcquisitionSurvey</summary>
+
+```json
+{
+  "data": {
+    "Code": "osdu:wks:work-product-component--Document:1.",
+    "Configurations": [{
+        "Name": "AssociatedFacilityNames",
+        "Policy": "ExtractAllMatches",
+        "Paths": [{
+          "RelatedObjectsSpec": {
+            "RelationshipDirection": "ChildToParent",
+            "RelatedObjectID": "data.LineageAssertions[].ID",
+            "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
+            "RelatedConditionMatches": [
+              "^[\\w\\-\\.]+:master-data\\-\\-Wellbore:[\\w\\-\\.\\:\\%]+$"
+            ],
+            "RelatedConditionProperty": "data.LineageAssertions[].ID"
+          },
+          "ValueExtraction": {
+            "ValuePath": "data.FacilityName"
+          }
+        }]
+      }, {
+        "Name": "AssociatedProjectNames",
+        "Policy": "ExtractAllMatches",
+        "Paths": [{
+          "RelatedObjectsSpec": {
+            "RelationshipDirection": "ChildToParent",
+            "RelatedObjectID": "data.LineageAssertions[].ID",
+            "RelatedObjectKind": "osdu:wks:master-data--SeismicAcquisitionSurvey:1.",
+            "RelatedConditionMatches": [
+              "^[\\w\\-\\.]+:master-data\\-\\-SeismicAcquisitionSurvey:[\\w\\-\\.\\:\\%]+$"
+            ],
+            "RelatedConditionProperty": "data.LineageAssertions[].ID"
+          },
+          "ValueExtraction": {
+            "ValuePath": "data.ProjectName"
+          }
+        }]
+      }
+    ]
+  }
+}
+```
+
+</details>
+
+[Back to table of contents](#TOC)
+
 ## Governance <a name="governance"></a>
 
 OSDU Data Definition ships reference value list content for all reference-data group-type entities. The type
@@ -270,7 +331,9 @@ It is not permitted to
 ## Accepted Limitations <a name="limitation"></a>
 
 * A change in the configurations requires re-indexing of all the records of a major schema version kind. It is the same
-  limitation as an in-place schema change for any kind.
+  limitation as an in-place schema change for any kind. You don't need to use 'force_clean' option anymore. Users can
+  still search the data during the re-index process. Please be aware that the search result could mix the non-updated
+  and updated records before the re-index is fully completed.
 
 * One IndexPropertyPathConfiguration record corresponds to one schema kind's major version. Given the deployment of the 
   IndexPropertyPathConfiguration record is via the `Storage Service API`, it can't prevent users from deploying multiple records
@@ -321,6 +384,9 @@ Like the reference data, the deployment and un-deployment of the IndexPropertyPa
 After an IndexPropertyPathConfiguration record to a major schema version kind is created or updated and 
 all the records of the major schema version kind have been re-indexed. If the extended properties fail to be created in all 
 the records from the `OSDU search` results, any one of the following mistakes can contribute to the failure:
+
+* The extended properties are listed in the search results, but they are not searchable. In this case, re-indexing is missed.
+  The re-indexing is required for the extended kind(s).
 
 * The feature flag `index-augmenter-enabled` for `Index Augmenter` is not enabled in the given data partition. Please check 
   with the service provider.

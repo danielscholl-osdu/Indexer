@@ -38,8 +38,10 @@ public class RelatedObjectsSpec extends RelatedCondition {
     public boolean isParentToChildren() { return PARENT_TO_CHILDREN.equalsIgnoreCase(relationshipDirection); }
 
     public boolean isValid() {
-        return !Strings.isNullOrEmpty(relatedObjectID) && !Strings.isNullOrEmpty(relatedObjectKind) &&
-                (isChildToParent() || isParentToChildren());
+        return !Strings.isNullOrEmpty(relatedObjectID) &&
+               !Strings.isNullOrEmpty(relatedObjectKind) &&
+                (isChildToParent() || isParentToChildren()) &&
+               (!this.hasCondition() || this.hasValidCondition());
     }
 
     /**
@@ -48,6 +50,6 @@ public class RelatedObjectsSpec extends RelatedCondition {
      * @return
      */
     public boolean hasValidCondition() {
-        return isValid() && super.hasValidCondition(relatedObjectID);
+        return super.hasValidCondition(relatedObjectID);
     }
 }

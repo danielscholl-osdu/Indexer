@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import org.apache.commons.collections.CollectionUtils;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
@@ -39,10 +40,8 @@ import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Component
@@ -64,9 +63,15 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private static final String ARRAY_SYMBOL = "[]";
     private static final String SCHEMA_NESTED_KIND = "nested";
 
+    private static final String STRING_KIND = "string";
+
+    private static final String STRING_ARRAY_KIND = "[]string";
+
+    private static final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations();
+    private static final String SEARCH_GENERAL_ERROR = "Failed to call search service.";
+
     private final Gson gson = new Gson();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final PropertyConfigurations EMPTY_CONFIGURATIONS = new PropertyConfigurations();
 
     @Inject
     private IndexerConfigurationProperties configurationProperties;
@@ -170,12 +175,13 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     @Override
     public Map<String, Object> getExtendedProperties(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
+        // Get all data maps of the related objects in one query in order to improve the performance.
+        Map<String, Map<String, Object>> idObjectDataMap = getRelatedObjectsData(originalDataMap, propertyConfigurations);
+
         Set<String> associatedIdentities = new HashSet<>();
         Map<String, Object> extendedDataMap = new HashMap<>();
-
-        Map<String, Map<String, Object>> idObjectDataMap = getRelatedObjectsData(originalDataMap, propertyConfigurations);
-        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
-            String extendedPropertyName = configuration.getName();
+        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
+            String extendedPropertyName = configuration.getExtendedPropertyName();
             if (originalDataMap.containsKey(extendedPropertyName) && originalDataMap.get(extendedPropertyName) != null) {
                 // If the original record already has the property, then we should not override.
                 // For example, if the trajectory record already SpatialLocation value, then it should not be overridden by the SpatialLocation of the well bore.
@@ -183,7 +189,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             }
 
             Map<String, Object> allPropertyValues = new HashMap<>();
-            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
+            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).toList()) {
                 if (path.hasValidRelatedObjectsSpec()) {
                     RelatedObjectsSpec relatedObjectsSpec = path.getRelatedObjectsSpec();
                     if (relatedObjectsSpec.isChildToParent()) {
@@ -206,11 +212,11 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                         }
                     } else {
                         List<SearchRecord> childrenRecords = searchChildrenRecords(relatedObjectsSpec.getRelatedObjectKind(), relatedObjectsSpec.getRelatedObjectID(), objectId);
-                        for (SearchRecord record : childrenRecords) {
-                            // If the child record is in the cache, that means the record was updated very recently.
-                            // In this case, use the cache's record instead of the record from search result
-                            RecordData cachedRecordData = this.relatedObjectCache.get(record.getId());
-                            Map<String, Object> childDataMap = (cachedRecordData != null)? cachedRecordData.getData() : record.getData();
+                        for (SearchRecord searchRecord : childrenRecords) {
+                            // If the child record is in the cache, that means the searchRecord was updated very recently.
+                            // In this case, use the cache's record instead of the searchRecord from search result
+                            RecordData cachedRecordData = this.relatedObjectCache.get(searchRecord.getId());
+                            Map<String, Object> childDataMap = (cachedRecordData != null)? cachedRecordData.getData() : searchRecord.getData();
                             Map<String, Object> propertyValues = getExtendedPropertyValues(extendedPropertyName, childDataMap, path.getValueExtraction(), configuration.isExtractFirstMatch());
                             if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
                                 allPropertyValues = propertyValues;
@@ -246,10 +252,10 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     public List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, Map<String, Schema> relatedObjectKindSchemas, PropertyConfigurations propertyConfigurations) {
         List<SchemaItem> extendedSchemaItems = new ArrayList<>();
         boolean hasChildToParentRelationship = false;
-        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
+        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
             Schema schema = null;
             PropertyPath propertyPath = null;
-            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidRelatedObjectsSpec()).collect(Collectors.toList())) {
+            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidRelatedObjectsSpec()).toList()) {
                 RelatedObjectsSpec relatedObjectsSpec = path.getRelatedObjectsSpec();
                 if (relatedObjectsSpec.isChildToParent()) {
                     hasChildToParentRelationship = true;
@@ -370,6 +376,10 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         return extendedSchemaItem;
     }
 
+    private String createIdsQuery(List<String> ids) {
+        return String.format("id: (%s)", createIdsFilter(ids));
+    }
+
     private String createIdsFilter(List<String> ids) {
         StringBuilder idsBuilder = new StringBuilder();
         for (String id : ids) {
@@ -420,8 +430,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     private Map<String, Map<String, Object>> getRelatedObjectsData(Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
         Map<String, Map<String, Object>> idData = new HashMap<>();
         Map<String, Set<String>> kindIds = new HashMap<>();
-        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).collect(Collectors.toList())) {
-            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).collect(Collectors.toList())) {
+        for (PropertyConfiguration configuration : propertyConfigurations.getConfigurations().stream().filter(c -> c.isValid()).toList()) {
+            for (PropertyPath path : configuration.getPaths().stream().filter(p -> p.hasValidValueExtraction()).toList()) {
                 if (path.hasValidRelatedObjectsSpec()) {
                     RelatedObjectsSpec relatedObjectsSpec = path.getRelatedObjectsSpec();
                     List<String> relatedObjectIds = getRelatedObjectIds(originalDataMap, relatedObjectsSpec);
@@ -441,7 +451,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 for (String recordId : entry.getValue()) {
                     String id = PropertyUtil.removeIdPostfix(recordId);
                     RecordData recordData = relatedObjectCache.get(id);
-                    Map<String, Object> data = (recordData != null)? recordData.getData() : null;;
+                    Map<String, Object> data = (recordData != null)? recordData.getData() : null;
                     if (data != null) {
                         idData.put(id, data);
                     } else {
@@ -450,7 +460,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                     }
                 }
             }
-            if (kindsToSearch.size() > 0) {
+            if (!kindsToSearch.isEmpty()) {
                 List<SearchRecord> records = searchRelatedRecords(kindsToSearch, idsToSearch);
                 for (SearchRecord searchRecord : records) {
                     Map<String, Object> data = searchRecord.getData();
@@ -511,34 +521,35 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     private List<SchemaItem> getExtendedSchemaItems(Schema schema, PropertyConfiguration configuration, PropertyPath propertyPath) {
         String relatedPropertyPath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
+        List<SchemaItem> extendedSchemaItems;
         if (relatedPropertyPath.contains(ARRAY_SYMBOL)) { // Nested
-            List<SchemaItem> extendedSchemaItems = new ArrayList<>();
             extendedSchemaItems = cloneExtendedSchemaItemsFromNestedSchema(Arrays.asList(schema.getSchema()), configuration, relatedPropertyPath);
-            if (extendedSchemaItems.isEmpty()) {
-                // It is possible that the format of the source property is not defined
-                // In this case, we assume that the format of property is string in order to make its value(s) searchable
-                SchemaItem extendedSchemaItem = new SchemaItem();
-                extendedSchemaItem.setPath(configuration.getName());
-                if (configuration.isExtractFirstMatch()) {
-                    extendedSchemaItem.setKind("string");
-                } else {
-                    extendedSchemaItem.setKind("[]string");
-                }
-                extendedSchemaItems.add(extendedSchemaItem);
-            }
-            return extendedSchemaItems;
         } else {// Flatten
-            List<SchemaItem> schemaItems = Arrays.asList(schema.getSchema());
-            return cloneExtendedSchemaItems(schemaItems, configuration, relatedPropertyPath);
+            extendedSchemaItems = cloneExtendedSchemaItems(Arrays.asList(schema.getSchema()), configuration, relatedPropertyPath);
         }
+
+        if (extendedSchemaItems.isEmpty()) {
+            // It is possible that the format (or schema) of the source property is not defined.
+            // In this case, we assume that the format of property is string in order to make its value(s) searchable
+            SchemaItem extendedSchemaItem = new SchemaItem();
+            extendedSchemaItem.setPath(configuration.getExtendedPropertyName());
+            if (configuration.isExtractFirstMatch()) {
+                extendedSchemaItem.setKind(STRING_KIND);
+            } else {
+                extendedSchemaItem.setKind(STRING_ARRAY_KIND);
+            }
+            extendedSchemaItems.add(extendedSchemaItem);
+        }
+        return extendedSchemaItems;
     }
 
     private List<SchemaItem> cloneExtendedSchemaItems(List<SchemaItem> schemaItems, PropertyConfiguration configuration, String relatedPropertyPath) {
         List<SchemaItem> extendedSchemaItems = new ArrayList<>();
+        String extendedPropertyName = configuration.getExtendedPropertyName();
         for (SchemaItem schemaItem : schemaItems) {
             if (PropertyUtil.isPropertyPathMatched(schemaItem.getPath(), relatedPropertyPath)) {
                 String path = schemaItem.getPath();
-                path = path.replace(relatedPropertyPath, configuration.getName());
+                path = path.replace(relatedPropertyPath, extendedPropertyName);
                 SchemaItem extendedSchemaItem = new SchemaItem();
                 extendedSchemaItem.setPath(path);
                 if (configuration.isExtractFirstMatch()) {
@@ -580,8 +591,8 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         Map<String, Object> propertyValues = getPropertyValues(dataMap, relatedObjectsSpec.getRelatedObjectID(), relatedObjectsSpec, relatedObjectsSpec.hasValidCondition(), false);
         List<String> relatedObjectIds = new ArrayList<>();
         for (Object value : propertyValues.values()) {
-            if (value instanceof List) {
-                for (Object obj : (List) value) {
+            if (value instanceof List<? extends Object> values) {
+                for (Object obj : values) {
                     relatedObjectIds.add(obj.toString());
                 }
             } else {
@@ -602,42 +613,30 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         valuePath = PropertyUtil.removeDataPrefix(valuePath);
         Map<String, Object> propertyValues = new HashMap<>();
         if (valuePath.contains(ARRAY_SYMBOL)) { // Nested
-            String conditionProperty = null;
-            List<String> conditionMatches = null;
-            if (hasValidCondition) {
-                int idx = relatedCondition.getRelatedConditionProperty().lastIndexOf(NESTED_OBJECT_DELIMITER);
-                conditionProperty = relatedCondition.getRelatedConditionProperty().substring(idx + NESTED_OBJECT_DELIMITER.length());
-                conditionMatches = relatedCondition.getRelatedConditionMatches();
-            }
-
-            List<Object> valueList = getPropertyValuesFromNestedObjects(dataMap, valuePath, conditionProperty, conditionMatches, hasValidCondition, isExtractFirstMatch);
-            if (!valueList.isEmpty()) {
-                if (isExtractFirstMatch) {
-                    propertyValues.put(valuePath, valueList.get(0));
-                } else {
-                    propertyValues.put(valuePath, valueList);
-                }
-            }
+            propertyValues = getPropertyValuesFromNestedObjects(dataMap, valuePath, relatedCondition, hasValidCondition, isExtractFirstMatch);
         } else { // Flatten
-            for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
-                String key = entry.getKey();
-                if ((key.equals(valuePath) || key.startsWith(valuePath + PROPERTY_DELIMITER)) && entry.getValue() != null) {
-                    if (isExtractFirstMatch) {
-                        propertyValues.put(key, entry.getValue());
-                    } else {
+            propertyValues = getPropertyValueOfNoneNestedProperty(dataMap, valuePath, relatedCondition, hasValidCondition);
+            if(!isExtractFirstMatch) {
+                Map<String, Object> tmpValues = new HashMap<>();
+                for(Map.Entry<String, Object> entry : propertyValues.entrySet()) {
+                    if (entry.getValue() instanceof List<? extends Object>) {
+                        tmpValues.put(entry.getKey(), entry.getValue());
+                    }
+                    else {
                         List<Object> values = new ArrayList<>();
                         values.add(entry.getValue());
-                        propertyValues.put(key, values);
+                        tmpValues.put(entry.getKey(), values);
                     }
                 }
+                propertyValues = tmpValues;
             }
         }
 
         return propertyValues;
     }
 
-    private List<Object> getPropertyValuesFromNestedObjects(Map<String, Object> dataMap, String valuePath, String conditionProperty, List<String> conditionMatches, boolean hasCondition, boolean isExtractFirstMatch) {
-        Set<Object> propertyValues = new HashSet<>();
+    private Map<String, Object> getPropertyValuesFromNestedObjects(Map<String, Object> dataMap, String valuePath, RelatedCondition relatedCondition, boolean hasCondition, boolean isExtractFirstMatch) {
+        Map<String, Object> propertyValues = new HashMap<>();
 
         if (valuePath.contains(ARRAY_SYMBOL)) {
             int idx = valuePath.indexOf(NESTED_OBJECT_DELIMITER);
@@ -647,35 +646,59 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 if (dataMap.containsKey(prePath) && dataMap.get(prePath) != null) {
                     List<Map<String, Object>> nestedObjects = (List<Map<String, Object>>) dataMap.get(prePath);
                     for (Map<String, Object> nestedObject : nestedObjects) {
-                        List<Object> valueList = getPropertyValuesFromNestedObjects(nestedObject, postPath, conditionProperty, conditionMatches, hasCondition, isExtractFirstMatch);
-                        if (valueList != null && !valueList.isEmpty()) {
-                            propertyValues.addAll(valueList);
-                            if (isExtractFirstMatch)
-                                break;
+                        Map<String, Object> subPropertyValues = getPropertyValuesFromNestedObjects(nestedObject, postPath, relatedCondition, hasCondition, isExtractFirstMatch);
+                        for (Map.Entry<String, Object> entry: subPropertyValues.entrySet()) {
+                            String key = prePath + ARRAY_SYMBOL + PROPERTY_DELIMITER + entry.getKey();
+                            if(isExtractFirstMatch) {
+                                propertyValues.put(key, entry.getValue());
+                            }
+                            else {
+                                List<Object> values = propertyValues.containsKey(key)
+                                        ? (List<Object>)propertyValues.get(key)
+                                        : new ArrayList<>();
+                                if(entry.getValue() instanceof List<? extends Object> valueList) {
+                                    values.addAll(valueList);
+                                }
+                                else {
+                                    values.add(entry.getValue());
+                                }
+                                propertyValues.put(key, values);
+                            }
                         }
+                        if (isExtractFirstMatch)
+                            break;
                     }
                 }
             } catch (Exception ex) {
                 //Ignore cast exception
             }
-        } else if (dataMap.containsKey(valuePath) && dataMap.get(valuePath) != null) {
-            Object extractPropertyValue = dataMap.get(valuePath);
-            if (hasCondition) {
-                if (dataMap.containsKey(conditionProperty) && dataMap.get(conditionProperty) != null) {
-                    String conditionPropertyValue = dataMap.get(conditionProperty).toString();
-                    if (conditionMatches.contains(conditionPropertyValue) && extractPropertyValue != null) {
-                        propertyValues.add(extractPropertyValue);
-                    }
-                }
-            } else {
-                propertyValues.add(extractPropertyValue);
+        } else {
+            propertyValues = getPropertyValueOfNoneNestedProperty(dataMap, valuePath, relatedCondition, hasCondition);
+        }
+        return propertyValues;
+    }
+
+    private Map<String, Object> getPropertyValueOfNoneNestedProperty(Map<String, Object> dataMap, String valuePath, RelatedCondition relatedCondition, boolean hasCondition) {
+        Map<String, Object> propertyValue = PropertyUtil.getValueOfNoneNestedProperty(valuePath, dataMap);
+        if(!propertyValue.isEmpty() && hasCondition) {
+            String conditionProperty = relatedCondition.getRelatedConditionProperty();
+            int idx = conditionProperty.lastIndexOf(NESTED_OBJECT_DELIMITER);
+            if(idx > 0)
+                conditionProperty = conditionProperty.substring(idx + NESTED_OBJECT_DELIMITER.length());
+            Map<String, Object> values = PropertyUtil.getValueOfNoneNestedProperty(conditionProperty, dataMap);
+            boolean matched = false;
+            if (values.containsKey(conditionProperty) && values.get(conditionProperty) != null) {
+                String conditionPropertyValue = values.get(conditionProperty).toString();
+                matched = relatedCondition.isMatch(conditionPropertyValue);
+            }
+            if(!matched) {
+                // Reset the propertyValue if there is no match
+                propertyValue = new HashMap<>();
             }
         }
-
-        List<Object> propertyValueList = new ArrayList<>(propertyValues);
-        Collections.sort(propertyValueList, Comparator.comparing(Object::toString));
-        return propertyValueList;
+        return propertyValue;
     }
+
 
     private List<String> getChildrenKinds(String parentKind) {
         final String parentKindWithMajor = PropertyUtil.getKindWithMajor(parentKind);
@@ -709,7 +732,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                                             p.hasValidRelatedObjectsSpec() &&
                                             p.getRelatedObjectsSpec().isParentToChildren() &&
                                             p.getRelatedObjectsSpec().getRelatedObjectKind().contains(childKindWithMajor))
-                            .collect(Collectors.toList());
+                            .toList();
                     for(PropertyPath propertyPath: matchedPropertyPaths) {
                         ParentChildRelationshipSpec spec = toParentChildRelationshipSpec(propertyPath, configurations.getCode(), childKindWithMajor);
                         boolean merged = false;
@@ -748,13 +771,14 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
 
     private void updateAssociatedParentRecords(String ancestors, String childKind, List<RecordChangeInfo> childRecordChangeInfos) {
         ParentChildRelationshipSpecs specs = getParentChildRelatedObjectsSpecs(childKind);
-        Set ancestorSet = new HashSet<>(Arrays.asList(ancestors.split(ANCESTRY_KINDS_DELIMITER)));
+        Set<String> ancestorSet = new HashSet<>(Arrays.asList(ancestors.split(ANCESTRY_KINDS_DELIMITER)));
         for (ParentChildRelationshipSpec spec : specs.getSpecList()) {
-            List childRecordIds = getChildRecordIdsWithExtendedPropertiesChanged(spec, childRecordChangeInfos);
-            if (childRecordIds.isEmpty())
-                continue;
+            List<String> childRecordIds = getChildRecordIdsWithExtendedPropertiesChanged(spec, childRecordChangeInfos);
 
-            List<String> parentIds = searchUniqueParentIds(childKind, childRecordIds, spec.getParentObjectIdPath());
+            List<String> parentIds = new ArrayList<>();
+            if (!childRecordIds.isEmpty()) {
+                parentIds = searchUniqueParentIds(childKind, childRecordIds, spec.getParentObjectIdPath());
+            }
             if (parentIds.isEmpty())
                 continue;
 
@@ -820,7 +844,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         if(propertyConfigurations != null) {
             for (PropertyConfiguration propertyConfiguration : propertyConfigurations.getConfigurations()) {
                 for (PropertyPath propertyPath : propertyConfiguration.getPaths().stream().filter(
-                        p -> p.hasValidValueExtraction() && p.hasValidRelatedObjectsSpec()).collect(Collectors.toList())) {
+                        p -> p.hasValidValueExtraction() && p.hasValidRelatedObjectsSpec()).toList()) {
                     String relatedObjectKind = propertyPath.getRelatedObjectsSpec().getRelatedObjectKind();
                     String valuePath = PropertyUtil.removeDataPrefix(propertyPath.getValueExtraction().getValuePath());
 
@@ -828,7 +852,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                     RecordChangeInfo parentRecordChangeInfo = parentRecordChangeInfos.stream().filter(info -> {
                         if (PropertyUtil.hasSameMajorKind(info.getRecordInfo().getKind(), relatedObjectKind)) {
                             List<String> matchedProperties = info.getUpdatedProperties().stream().filter(
-                                    p -> PropertyUtil.isPropertyPathMatched(p, valuePath) || PropertyUtil.isPropertyPathMatched(valuePath, p)).collect(Collectors.toList());
+                                    p -> PropertyUtil.isPropertyPathMatched(p, valuePath) || PropertyUtil.isPropertyPathMatched(valuePath, p)).toList();
                             return !matchedProperties.isEmpty();
                         }
                         return false;
@@ -844,13 +868,13 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
     }
 
     private void updateAssociatedChildrenRecords(String ancestors, String parentKind, List<RecordChangeInfo> recordChangeInfos) {
-        List<String> processedIds = recordChangeInfos.stream().map(recordChangeInfo -> recordChangeInfo.getRecordInfo().getId()).collect(Collectors.toList());
+        List<String> processedIds = recordChangeInfos.stream().map(recordChangeInfo -> recordChangeInfo.getRecordInfo().getId()).toList();
         String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, createIdsFilter(processedIds));
 
         List<String> childrenKinds = getChildrenKinds(parentKind);
         for (String ancestryKind : ancestors.split(ANCESTRY_KINDS_DELIMITER)) {
             // Exclude the kinds in the ancestryKinds to prevent circular chasing
-            childrenKinds.removeIf(k -> ancestryKind.contains(k));
+            childrenKinds.removeIf(ancestryKind::contains);
         }
         if(childrenKinds.isEmpty()) {
             return;
@@ -866,18 +890,18 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         searchRequest.setQuery(query);
         searchRequest.setReturnedFields(Arrays.asList("kind", "id", "data." + ASSOCIATED_IDENTITIES_PROPERTY));
         List<RecordInfo> recordInfos = new ArrayList<>();
-        for (SearchRecord record : searchRecordsWithCursor(searchRequest)) {
-            Map<String, Object> data = record.getData();
+        for (SearchRecord searchRecord : searchRecordsWithCursor(searchRequest)) {
+            Map<String, Object> data = searchRecord.getData();
             if (!data.containsKey(ASSOCIATED_IDENTITIES_PROPERTY) || data.get(ASSOCIATED_IDENTITIES_PROPERTY) == null)
                 continue;
 
             List<String> associatedParentIds = (List<String>) data.get(ASSOCIATED_IDENTITIES_PROPERTY);
             List<RecordChangeInfo> associatedParentRecordChangeInfos = recordChangeInfos.stream().filter(
-                    info -> associatedParentIds.contains(info.getRecordInfo().getId())).collect(Collectors.toList());
-            if (areExtendedPropertiesChanged(record.getKind(), associatedParentRecordChangeInfos)) {
+                    info -> associatedParentIds.contains(info.getRecordInfo().getId())).toList();
+            if (areExtendedPropertiesChanged(searchRecord.getKind(), associatedParentRecordChangeInfos)) {
                 RecordInfo recordInfo = new RecordInfo();
-                recordInfo.setKind(record.getKind());
-                recordInfo.setId(record.getId());
+                recordInfo.setKind(searchRecord.getKind());
+                recordInfo.setId(searchRecord.getId());
                 recordInfo.setOp(OperationType.update.getValue());
                 recordInfos.add(recordInfo);
 
@@ -900,7 +924,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         String latestKind = null;
         try {
             SchemaInfoResponse response = schemaService.getSchemaInfos(kind.getAuthority(), kind.getSource(), kind.getType(), majorVersion, null, null, true);
-            if (response != null && response.getSchemaInfos() != null && response.getSchemaInfos().size() > 0) {
+            if (response != null && !CollectionUtils.isEmpty(response.getSchemaInfos())) {
                 SchemaInfo schemaInfo = response.getSchemaInfos().get(0);
                 SchemaIdentity schemaIdentity = schemaInfo.getSchemaIdentity();
                 latestKind = schemaIdentity.getAuthority() + ":" +
@@ -910,9 +934,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                         schemaIdentity.getSchemaVersionMinor() + "." +
                         schemaIdentity.getSchemaVersionPatch();
             }
-        } catch (URISyntaxException e) {
-            jaxRsDpsLog.error("failed to get schema info", e);
-        } catch (UnsupportedEncodingException e) {
+        } catch (Exception e) {
             jaxRsDpsLog.error("failed to get schema info", e);
         }
 
@@ -984,7 +1006,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             kinds.add(kind);
         }
         searchRequest.setKind(kinds);
-        String query = String.format("id: (%s)", createIdsFilter(relatedObjectIds));
+        String query = createIdsQuery(relatedObjectIds);
         searchRequest.setQuery(query);
         return searchRecords(searchRequest);
     }
@@ -994,16 +1016,16 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         SearchRequest searchRequest = new SearchRequest();
         String kind = PropertyUtil.isConcreteKind(majorKind) ? majorKind : majorKind + "*";
         searchRequest.setKind(kind);
-        String query = String.format("id: (%s)", createIdsFilter(ids));
+        String query = createIdsQuery(ids);
         searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
         searchRequest.setQuery(query);
-        for (SearchRecord record : searchRecords(searchRequest)) {
-            if (kindIds.containsKey(record.getKind())) {
-                kindIds.get(record.getKind()).add(record.getId());
+        for (SearchRecord searchRecord : searchRecords(searchRequest)) {
+            if (kindIds.containsKey(searchRecord.getKind())) {
+                kindIds.get(searchRecord.getKind()).add(searchRecord.getId());
             } else {
                 List<String> idList = new ArrayList<>();
-                idList.add(record.getId());
-                kindIds.put(record.getKind(), idList);
+                idList.add(searchRecord.getId());
+                kindIds.put(searchRecord.getKind(), idList);
             }
         }
         return kindIds;
@@ -1013,13 +1035,13 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
         Set<String> parentIds = new HashSet<>();
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setKind(childKind);
-        String query = String.format("id: (%s)", createIdsFilter(childRecordIds));
+        String query = createIdsQuery(childRecordIds);
         searchRequest.setReturnedFields(Arrays.asList(parentObjectIdPath));
         searchRequest.setQuery(query);
         parentObjectIdPath = PropertyUtil.removeDataPrefix(parentObjectIdPath);
-        for (SearchRecord record : searchRecords(searchRequest)) {
-            if (record.getData().containsKey(parentObjectIdPath)) {
-                Object id = record.getData().get(parentObjectIdPath);
+        for (SearchRecord searchRecord : searchRecords(searchRequest)) {
+            if (searchRecord.getData().containsKey(parentObjectIdPath)) {
+                Object id = searchRecord.getData().get(parentObjectIdPath);
                 if (id != null && !parentIds.contains(id)) {
                     parentIds.add(id.toString());
                 }
@@ -1045,7 +1067,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             do {
                 SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
                 results = searchResponse.getResults();
-                if (results != null && results.size() > 0) {
+                if (!CollectionUtils.isEmpty(results)) {
                     allRecords.addAll(results);
                     if (!Strings.isNullOrEmpty(searchResponse.getCursor()) && results.size() == MAX_SEARCH_LIMIT) {
                         searchRequest.setCursor(searchResponse.getCursor());
@@ -1053,7 +1075,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 }
             } while(results != null && results.size() == MAX_SEARCH_LIMIT);
         } catch (URISyntaxException e) {
-            jaxRsDpsLog.error("Failed to call search service.", e);
+            jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, e);
         }
         return allRecords;
     }
@@ -1068,14 +1090,14 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
             do {
                 SearchResponse searchResponse = searchService.query(searchRequest);
                 results = searchResponse.getResults();
-                if (results != null && results.size() > 0) {
+                if (!CollectionUtils.isEmpty(results)) {
                     allRecords.addAll(results);
                     offset += results.size();
                     searchRequest.setOffset(offset);
                 }
             } while(results != null && results.size() == MAX_SEARCH_LIMIT);
         } catch (URISyntaxException e) {
-            jaxRsDpsLog.error("Failed to call search service.", e);
+            jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, e);
         }
         return allRecords;
     }
@@ -1089,7 +1111,7 @@ public class PropertyConfigurationsServiceImpl implements PropertyConfigurations
                 return results.get(0);
             }
         } catch (URISyntaxException e) {
-            jaxRsDpsLog.error("Failed to call search service.", e);
+            jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, e);
         }
         return null;
     }

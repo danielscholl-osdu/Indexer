@@ -53,7 +53,9 @@ public class PropertyConfigurations {
 
         Set<String> relatedObjectKinds = new HashSet<>();
         for(PropertyConfiguration configuration : configurations) {
-            String relatedObjectKind = configuration.getRelatedObjectKind();
+            // In the same configuration, we can use any related object kind to
+            // resolve the schema of the extended property in this configuration
+            String relatedObjectKind = configuration.getFirstRelatedObjectKind();
             if(!Strings.isNullOrEmpty(relatedObjectKind)) {
                 relatedObjectKinds.add(relatedObjectKind);
             }
