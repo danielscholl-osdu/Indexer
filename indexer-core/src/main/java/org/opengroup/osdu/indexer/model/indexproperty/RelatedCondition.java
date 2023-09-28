@@ -49,6 +49,7 @@ public class RelatedCondition {
                     return true;
             }
             catch(PatternSyntaxException ex) {
+                //The condition can be plain text, not non-regular expression
                 if(propertyValue.equals(condition))
                     return true;
             }
@@ -62,18 +63,23 @@ public class RelatedCondition {
                relatedConditionMatches != null &&
                !relatedConditionMatches.isEmpty();
     }
+
     protected boolean hasValidCondition(String property) {
         if(Strings.isNullOrEmpty(property) || !this.hasCondition())
-            return false;
-
-        if((property.endsWith(ARRAY_SYMBOL) || relatedConditionProperty.endsWith(ARRAY_SYMBOL)) ||
-           (property.contains(ARRAY_SYMBOL) && !relatedConditionProperty.contains(ARRAY_SYMBOL)) ||
-           (!property.contains(ARRAY_SYMBOL) && relatedConditionProperty.contains(ARRAY_SYMBOL)))
             return false;
 
         // If it is not nested object, it is valid in terms of syntax.
         if(!property.contains(ARRAY_SYMBOL) && !relatedConditionProperty.contains(ARRAY_SYMBOL))
             return true;
+
+        return hasMatchNestedParts(property);
+    }
+
+    private boolean hasMatchNestedParts(String property) {
+        if((property.endsWith(ARRAY_SYMBOL) || relatedConditionProperty.endsWith(ARRAY_SYMBOL)) ||
+           (property.contains(ARRAY_SYMBOL) && !relatedConditionProperty.contains(ARRAY_SYMBOL)) ||
+           (!property.contains(ARRAY_SYMBOL) && relatedConditionProperty.contains(ARRAY_SYMBOL)))
+            return false;
 
         property = this.getSubstringWithLastArrayField(
                 PropertyUtil.removeDataPrefix(property));
@@ -92,6 +98,7 @@ public class RelatedCondition {
         }
         return true;
     }
+
 
     private String getSubstringWithLastArrayField(String property) {
         return property.substring(0, property.lastIndexOf(ARRAY_SYMBOL));
