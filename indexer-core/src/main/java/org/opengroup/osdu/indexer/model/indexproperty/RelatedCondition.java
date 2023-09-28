@@ -19,8 +19,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.api.client.util.Strings;
 import lombok.Data;
 import lombok.ToString;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +38,9 @@ public class RelatedCondition {
 
     protected List<String> relatedConditionMatches;
 
+    @Inject
+    private JaxRsDpsLog jaxRsDpsLog;
+
     public boolean isMatch(String propertyValue) {
         if(relatedConditionMatches == null || relatedConditionMatches.isEmpty() || Strings.isNullOrEmpty(propertyValue)) {
             return false;
@@ -49,9 +54,7 @@ public class RelatedCondition {
                     return true;
             }
             catch(PatternSyntaxException ex) {
-                //The condition can be plain text, not non-regular expression
-                if(propertyValue.equals(condition))
-                    return true;
+                this.jaxRsDpsLog.debug(String.format("%s is not a valid regular expression: error: %s", condition, ex.getMessage()));
             }
         }
 
