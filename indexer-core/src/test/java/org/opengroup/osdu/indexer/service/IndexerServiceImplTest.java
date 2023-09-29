@@ -30,8 +30,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.Spy;
-import org.opengroup.osdu.core.common.http.HeadersUtil;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
@@ -41,7 +39,7 @@ import org.opengroup.osdu.core.common.model.storage.ConversionStatus;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -101,7 +99,7 @@ public class IndexerServiceImplTest {
     @Mock
     private IPublisher progressPublisher;
     @Mock
-    private PropertyConfigurationsService propertyConfigurationsService;
+    private AugmenterConfigurationService propertyConfigurationsService;
     @Mock
     private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
     @Mock
@@ -182,7 +180,7 @@ public class IndexerServiceImplTest {
             prepareTestDataAndEnv(this.pubsubMsg);
 
             // setup property configuration
-            when(this.propertyConfigurationsService.isPropertyConfigurationsEnabled(any())).thenReturn(true);
+            when(this.propertyConfigurationsService.isConfigurationEnabled(any())).thenReturn(true);
             ArgumentCaptor<Map<String, List<String>>> upsertArgumentCaptor = ArgumentCaptor.forClass(Map.class);
             ArgumentCaptor<Map<String, List<String>>> deleteArgumentCaptor = ArgumentCaptor.forClass(Map.class);
 
@@ -208,7 +206,7 @@ public class IndexerServiceImplTest {
             prepareTestDataAndEnv(this.pubsubMsgForDeletion);
 
             // setup property configuration
-            when(this.propertyConfigurationsService.isPropertyConfigurationsEnabled(any())).thenReturn(true);
+            when(this.propertyConfigurationsService.isConfigurationEnabled(any())).thenReturn(true);
             ArgumentCaptor<Map<String, List<String>>> upsertArgumentCaptor = ArgumentCaptor.forClass(Map.class);
             ArgumentCaptor<Map<String, List<String>>> deleteArgumentCaptor = ArgumentCaptor.forClass(Map.class);
 
@@ -234,14 +232,14 @@ public class IndexerServiceImplTest {
             prepareTestDataAndEnv(this.pubsubMsg);
 
             // setup property configuration
-            when(this.propertyConfigurationsService.isPropertyConfigurationsEnabled(any())).thenReturn(true);
-            when(this.propertyConfigurationsService.getPropertyConfigurations(any())).thenReturn(new PropertyConfigurations());
+            when(this.propertyConfigurationsService.isConfigurationEnabled(any())).thenReturn(true);
+            when(this.propertyConfigurationsService.getConfiguration(any())).thenReturn(new AugmenterConfiguration());
 
             // test
             this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            verify(this.propertyConfigurationsService, times(2)).getPropertyConfigurations(any());
+            verify(this.propertyConfigurationsService, times(2)).getConfiguration(any());
             verify(this.propertyConfigurationsService, times(2)).getExtendedProperties(any(), any(), any());
             verify(this.propertyConfigurationsService, times(2)).cacheDataRecord(any(), any(), any());
         } catch (Exception e) {

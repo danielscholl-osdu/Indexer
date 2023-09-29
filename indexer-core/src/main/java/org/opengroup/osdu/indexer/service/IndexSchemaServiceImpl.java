@@ -33,7 +33,7 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
 import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
 import org.opengroup.osdu.indexer.model.Kind;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
@@ -71,7 +71,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
-    private PropertyConfigurationsService propertyConfigurationsService;
+    private AugmenterConfigurationService augmenterConfigurationService;
     @Inject
     private AugmenterSetting augmenterSetting;
 
@@ -178,9 +178,9 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 if(augmenterSetting.isEnabled()) {
                     try {
                         // Merge schema of the extended properties if needed
-                        PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(kind);
-                        if (propertyConfigurations != null) {
-                            schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
+                        AugmenterConfiguration augmenterConfiguration = augmenterConfigurationService.getConfiguration(kind);
+                        if (augmenterConfiguration != null) {
+                            schema = mergeSchemaFromPropertyConfiguration(schema, augmenterConfiguration);
                         }
                     }
                     catch(Exception ex) {
@@ -212,10 +212,10 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         return flatSchemaObj;
     }
 
-    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
-        Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
+    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, AugmenterConfiguration augmenterConfiguration) throws UnsupportedEncodingException, URISyntaxException {
+        Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(augmenterConfiguration);
         Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
-        List<SchemaItem> extendedSchemaItems = propertyConfigurationsService.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        List<SchemaItem> extendedSchemaItems = augmenterConfigurationService.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, augmenterConfiguration);
         if (!extendedSchemaItems.isEmpty()) {
             List<SchemaItem> originalSchemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
             originalSchemaItems.addAll(extendedSchemaItems);
@@ -226,13 +226,13 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         }
     }
 
-    private Map<String, Schema> getSchemaOfRelatedObjectKinds(PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
-        List<String> relatedObjectKinds = propertyConfigurations.getUniqueRelatedObjectKinds();
+    private Map<String, Schema> getSchemaOfRelatedObjectKinds(AugmenterConfiguration augmenterConfiguration) throws UnsupportedEncodingException, URISyntaxException {
+        List<String> relatedObjectKinds = augmenterConfiguration.getUniqueRelatedObjectKinds();
         Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
         for (String relatedObjectKind : relatedObjectKinds) {
             // The relatedObjectKind defined in property configuration can be kind having major version only
             // e.g. "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1."
-            String concreteRelatedObjectKind = propertyConfigurationsService.resolveConcreteKind(relatedObjectKind);
+            String concreteRelatedObjectKind = augmenterConfigurationService.resolveConcreteKind(relatedObjectKind);
             if (Strings.isNullOrEmpty(concreteRelatedObjectKind))
                 continue;
 

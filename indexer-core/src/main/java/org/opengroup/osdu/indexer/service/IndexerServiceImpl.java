@@ -44,7 +44,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.model.BulkRequestResult;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -106,7 +106,7 @@ public class IndexerServiceImpl implements IndexerService {
     @Inject
     private JobStatus jobStatus;
     @Inject
-    private PropertyConfigurationsService propertyConfigurationsService;
+    private AugmenterConfigurationService augmenterConfigurationService;
     @Inject
     private AugmenterSetting augmenterSetting;
 
@@ -162,7 +162,7 @@ public class IndexerServiceImpl implements IndexerService {
                     Map<String, List<String>> upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
                     Map<String, List<String>> deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
                     if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
-                        propertyConfigurationsService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
+                        augmenterConfigurationService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
                     }
                 }
                 catch(Exception ex) {
@@ -207,7 +207,7 @@ public class IndexerServiceImpl implements IndexerService {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         for (Map.Entry<String, Map<String, OperationType>> entry : upsertRecordMap.entrySet()) {
             String kind = entry.getKey();
-            if(propertyConfigurationsService.isPropertyConfigurationsEnabled(kind)) {
+            if(augmenterConfigurationService.isConfigurationEnabled(kind)) {
                 List<String> processedIds = entry.getValue().keySet().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
                 if (!processedIds.isEmpty()) {
                     upsertKindIds.put(kind, processedIds);
@@ -221,7 +221,7 @@ public class IndexerServiceImpl implements IndexerService {
         Map<String, List<String>> deletedRecordKindIdsMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : deleteRecordMap.entrySet()) {
             String kind = entry.getKey();
-            if(propertyConfigurationsService.isPropertyConfigurationsEnabled(kind)) {
+            if(augmenterConfigurationService.isConfigurationEnabled(kind)) {
                 List<String> processedIds = entry.getValue().stream().filter(id -> !retryRecordIds.contains(id)).collect(Collectors.toList());
                 if (!processedIds.isEmpty()) {
                     deletedRecordKindIdsMap.put(kind, processedIds);
@@ -352,14 +352,14 @@ public class IndexerServiceImpl implements IndexerService {
 
                 if(this.augmenterSetting.isEnabled()) {
                     try {
-                        if (propertyConfigurationsService.isPropertyConfigurationsEnabled(storageRecord.getKind())) {
-                            PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(storageRecord.getKind());
-                            if (propertyConfigurations != null) {
+                        if (augmenterConfigurationService.isConfigurationEnabled(storageRecord.getKind())) {
+                            AugmenterConfiguration augmenterConfiguration = augmenterConfigurationService.getConfiguration(storageRecord.getKind());
+                            if (augmenterConfiguration != null) {
                                 // Merge extended properties
-                                dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, propertyConfigurations);
+                                dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, augmenterConfiguration);
                             }
                             // We cache the dataMap in case the update of this object will trigger update of the related objects.
-                            propertyConfigurationsService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
+                            augmenterConfigurationService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
                         }
                     }
                     catch(Exception ex) {
@@ -420,8 +420,8 @@ public class IndexerServiceImpl implements IndexerService {
         return document;
     }
 
-    private Map<String, Object> mergeDataFromPropertyConfiguration(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations) {
-        Map<String, Object> extendedDataMap = propertyConfigurationsService.getExtendedProperties(objectId, originalDataMap, propertyConfigurations);
+    private Map<String, Object> mergeDataFromPropertyConfiguration(String objectId, Map<String, Object> originalDataMap, AugmenterConfiguration augmenterConfiguration) {
+        Map<String, Object> extendedDataMap = augmenterConfigurationService.getExtendedProperties(objectId, originalDataMap, augmenterConfiguration);
         if (!extendedDataMap.isEmpty()) {
             originalDataMap.putAll(extendedDataMap);
         }

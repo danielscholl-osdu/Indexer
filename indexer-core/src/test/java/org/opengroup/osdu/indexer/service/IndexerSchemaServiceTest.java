@@ -34,7 +34,7 @@ import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
 import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
@@ -81,7 +81,7 @@ public class IndexerSchemaServiceTest {
     @Mock
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Mock
-    private PropertyConfigurationsService propertyConfigurationsService;
+    private AugmenterConfigurationService propertyConfigurationsService;
     @Mock
     private AugmenterSetting augmenterSetting;
     @InjectMocks
@@ -252,7 +252,7 @@ public class IndexerSchemaServiceTest {
 
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
-        when(this.propertyConfigurationsService.getPropertyConfigurations(kind)).thenReturn(new PropertyConfigurations());
+        when(this.propertyConfigurationsService.getConfiguration(kind)).thenReturn(new AugmenterConfiguration());
         when(this.propertyConfigurationsService.getExtendedSchemaItems(any(), any(), any())).thenReturn(extendedSchemaItems);
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
@@ -293,7 +293,7 @@ public class IndexerSchemaServiceTest {
 
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
-        when(this.propertyConfigurationsService.getPropertyConfigurations(kind)).thenReturn(new PropertyConfigurations());
+        when(this.propertyConfigurationsService.getConfiguration(kind)).thenReturn(new AugmenterConfiguration());
         when(this.propertyConfigurationsService.getExtendedSchemaItems(any(), any(), any())).thenReturn(extendedSchemaItems);
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, true);
@@ -348,13 +348,13 @@ public class IndexerSchemaServiceTest {
                 "    ]\n" +
                 "}";
         ObjectMapper objectMapper = new ObjectMapper();
-        PropertyConfigurations configurations = objectMapper.readValue(propertyConfigurations, PropertyConfigurations.class);
+        AugmenterConfiguration augmenterConfiguration = objectMapper.readValue(propertyConfigurations, AugmenterConfiguration.class);
 
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
         when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
-        when(this.propertyConfigurationsService.getPropertyConfigurations(kind)).thenReturn(configurations);
+        when(this.propertyConfigurationsService.getConfiguration(kind)).thenReturn(augmenterConfiguration);
         when(this.propertyConfigurationsService.resolveConcreteKind(anyString())).thenAnswer(invocation -> {
             String relatedObjectKind = invocation.getArgument(0);
             return relatedObjectKind + "0.0";

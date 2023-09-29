@@ -18,19 +18,19 @@ package org.opengroup.osdu.indexer.service;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 
 import java.util.List;
 import java.util.Map;
 
-public interface PropertyConfigurationsService {
-    boolean isPropertyConfigurationsEnabled(String kind);
+public interface AugmenterConfigurationService {
+    boolean isConfigurationEnabled(String kind);
 
-    PropertyConfigurations getPropertyConfigurations(String kind);
+    AugmenterConfiguration getConfiguration(String kind);
 
-    Map<String, Object> getExtendedProperties(String objectId, Map<String, Object> originalDataMap, PropertyConfigurations propertyConfigurations);
+    Map<String, Object> getExtendedProperties(String objectId, Map<String, Object> originalDataMap, AugmenterConfiguration propertyConfigurations);
 
-    List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, Map<String, Schema> relatedObjectKindSchemas, PropertyConfigurations propertyConfigurations);
+    List<SchemaItem> getExtendedSchemaItems(Schema originalSchema, Map<String, Schema> relatedObjectKindSchemas, AugmenterConfiguration propertyConfigurations);
 
     String resolveConcreteKind(String kind);
 

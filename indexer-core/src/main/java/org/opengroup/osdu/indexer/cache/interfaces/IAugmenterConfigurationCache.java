@@ -16,7 +16,7 @@
 package org.opengroup.osdu.indexer.cache.interfaces;
 
 import org.opengroup.osdu.core.common.cache.ICache;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 
-public interface IPropertyConfigurationsCache extends ICache<String, PropertyConfigurations> {
+public interface IAugmenterConfigurationCache extends ICache<String, AugmenterConfiguration> {
 }
