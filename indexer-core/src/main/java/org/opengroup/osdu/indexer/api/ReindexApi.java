@@ -31,6 +31,7 @@ import org.opengroup.osdu.indexer.model.ReindexRecordsRequest;
 import org.opengroup.osdu.indexer.model.ReindexRecordsResponse;
 import org.opengroup.osdu.indexer.service.IndexSchemaService;
 import org.opengroup.osdu.indexer.service.ReindexService;
+import org.opengroup.osdu.indexer.util.Role;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -121,7 +122,7 @@ public class ReindexApi {
             @ApiResponse(responseCode = "502", description = "Bad Gateway",  content = {@Content(schema = @Schema(implementation = AppError.class))}),
             @ApiResponse(responseCode = "503", description = "Service Unavailable",  content = {@Content(schema = @Schema(implementation = AppError.class))})
     })
-    @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
+    @PreAuthorize("@authorizationFilter.hasPermission('" + Role.USER_OPS + "')")
     @PatchMapping
     public ResponseEntity<String> fullReindex( @Parameter(description = "Force Clean")
             @RequestParam(value = "force_clean", defaultValue = "false") boolean forceClean) throws IOException {
