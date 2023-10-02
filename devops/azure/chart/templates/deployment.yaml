@@ -126,5 +126,5 @@ spec:
         - name: SPRING_CONFIG_NAME
           value: "common,application"
         - name: search_service_url
-          value: http://search/api/search/v2
+          value: http://search-service/api/search/v2
       terminationGracePeriodSeconds: 101

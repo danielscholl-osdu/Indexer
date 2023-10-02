@@ -16,7 +16,7 @@
 package org.opengroup.osdu.indexer.azure.cache;
 
 import org.opengroup.osdu.core.common.cache.RedisCache;
-import org.opengroup.osdu.indexer.cache.IRecordChangeInfoCache;
+import org.opengroup.osdu.indexer.cache.interfaces.IRecordChangeInfoCache;
 import org.opengroup.osdu.indexer.model.RecordChangeInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

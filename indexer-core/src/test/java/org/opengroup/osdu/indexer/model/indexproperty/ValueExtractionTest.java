@@ -98,12 +98,22 @@ public class ValueExtractionTest {
     }
 
     @Test
-    public void hasValidCondition_return_false_for_none_nested_property() {
+    public void hasValidCondition_return_true_for_property_under_same_none_nested_property() {
         ValueExtraction valueExtraction = new ValueExtraction();
         valueExtraction.setValuePath("data.NameAliases.AliasName");
         valueExtraction.setRelatedConditionProperty("data.NameAliases.AliasNameTypeID");
         List<String> matches = Arrays.asList("opendes:reference-data--AliasNameType:UniqueIdentifier:","reference-data--AliasNameType:RegulatoryName:");
         valueExtraction.setRelatedConditionMatches(matches);
-        Assert.assertFalse(valueExtraction.hasValidCondition());
+        Assert.assertTrue(valueExtraction.hasValidCondition());
+    }
+
+    @Test
+    public void hasValidCondition_return_true_for_property_under_different_none_nested_property() {
+        ValueExtraction valueExtraction = new ValueExtraction();
+        valueExtraction.setValuePath("data.NameAliases.AliasName");
+        valueExtraction.setRelatedConditionProperty("data.AliasNameTypeID");
+        List<String> matches = Arrays.asList("opendes:reference-data--AliasNameType:UniqueIdentifier:","reference-data--AliasNameType:RegulatoryName:");
+        valueExtraction.setRelatedConditionMatches(matches);
+        Assert.assertTrue(valueExtraction.hasValidCondition());
     }
 }

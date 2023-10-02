@@ -50,7 +50,7 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.indexer.cache.PartitionSafeIndexCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -75,7 +75,7 @@ public class IndexerMappingServiceTest {
     @Mock
     private ElasticClientHandler elasticClientHandler;
     @Mock
-    private PartitionSafeIndexCache indexCache;
+    private IndexCache indexCache;
     @Mock
     private IndicesService indicesService;
     @Mock

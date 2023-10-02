@@ -30,10 +30,10 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
-import org.opengroup.osdu.indexer.cache.PartitionSafeFlattenedSchemaCache;
-import org.opengroup.osdu.indexer.cache.PartitionSafeSchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
 import org.opengroup.osdu.indexer.model.Kind;
-import org.opengroup.osdu.indexer.model.indexproperty.PropertyConfigurations;
+import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
@@ -65,13 +65,13 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private IndicesService indicesService;
     @Inject
-    private PartitionSafeSchemaCache schemaCache;
+    private SchemaCache schemaCache;
     @Inject
-    private PartitionSafeFlattenedSchemaCache flattenedSchemaCache;
+    private FlattenedSchemaCache flattenedSchemaCache;
     @Inject
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
-    private PropertyConfigurationsService propertyConfigurationsService;
+    private AugmenterConfigurationService augmenterConfigurationService;
     @Inject
     private AugmenterSetting augmenterSetting;
 
@@ -103,6 +103,15 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 // log warning
                 log.warning(String.format("Kind: %s not found", kind));
             }
+        }
+    }
+
+    @Override
+    public void processSchemaUpsert(String kind) throws AppException {
+        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+            processSchemaUpsertEvent(restClient, kind);
+        } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
         }
     }
 
@@ -169,9 +178,9 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                 if(augmenterSetting.isEnabled()) {
                     try {
                         // Merge schema of the extended properties if needed
-                        PropertyConfigurations propertyConfigurations = propertyConfigurationsService.getPropertyConfigurations(kind);
-                        if (propertyConfigurations != null) {
-                            schema = mergeSchemaFromPropertyConfiguration(schema, propertyConfigurations);
+                        AugmenterConfiguration augmenterConfiguration = augmenterConfigurationService.getConfiguration(kind);
+                        if (augmenterConfiguration != null) {
+                            schema = mergeSchemaFromPropertyConfiguration(schema, augmenterConfiguration);
                         }
                     }
                     catch(Exception ex) {
@@ -203,10 +212,10 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         return flatSchemaObj;
     }
 
-    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
-        Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(propertyConfigurations);
+    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, AugmenterConfiguration augmenterConfiguration) throws UnsupportedEncodingException, URISyntaxException {
+        Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(augmenterConfiguration);
         Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
-        List<SchemaItem> extendedSchemaItems = propertyConfigurationsService.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, propertyConfigurations);
+        List<SchemaItem> extendedSchemaItems = augmenterConfigurationService.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, augmenterConfiguration);
         if (!extendedSchemaItems.isEmpty()) {
             List<SchemaItem> originalSchemaItems = new ArrayList<>(Arrays.asList(originalSchema.getSchema()));
             originalSchemaItems.addAll(extendedSchemaItems);
@@ -217,13 +226,13 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         }
     }
 
-    private Map<String, Schema> getSchemaOfRelatedObjectKinds(PropertyConfigurations propertyConfigurations) throws UnsupportedEncodingException, URISyntaxException {
-        List<String> relatedObjectKinds = propertyConfigurations.getUniqueRelatedObjectKinds();
+    private Map<String, Schema> getSchemaOfRelatedObjectKinds(AugmenterConfiguration augmenterConfiguration) throws UnsupportedEncodingException, URISyntaxException {
+        List<String> relatedObjectKinds = augmenterConfiguration.getUniqueRelatedObjectKinds();
         Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
         for (String relatedObjectKind : relatedObjectKinds) {
             // The relatedObjectKind defined in property configuration can be kind having major version only
             // e.g. "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1."
-            String concreteRelatedObjectKind = propertyConfigurationsService.resolveConcreteKind(relatedObjectKind);
+            String concreteRelatedObjectKind = augmenterConfigurationService.resolveConcreteKind(relatedObjectKind);
             if (Strings.isNullOrEmpty(concreteRelatedObjectKind))
                 continue;
 

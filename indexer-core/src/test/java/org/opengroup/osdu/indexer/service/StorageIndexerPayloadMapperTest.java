@@ -12,12 +12,13 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
-import org.opengroup.osdu.indexer.cache.FeatureFlagCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.FeatureFlagCache;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
+import org.opengroup.osdu.indexer.service.mock.RequestInfoMock;
 import org.opengroup.osdu.indexer.service.mock.ServiceAccountJwtClientMock;
 import org.opengroup.osdu.indexer.service.mock.VirtualPropertiesSchemaCacheMock;
 import org.opengroup.osdu.indexer.util.geo.decimator.*;
@@ -45,7 +46,7 @@ import static org.junit.Assert.*;
         BooleanParser.class, DateTimeParser.class, GeoShapeParser.class, DouglasPeuckerReducer.class, GeoShapeDecimator.class,
         GeometryDecimator.class, GeometryConversionService.class, FeatureFlagCache.class,
         DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
-        ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, })
+        ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, RequestInfoMock.class})
 public class StorageIndexerPayloadMapperTest {
 
     public static final String FIRST_OBJECT_INNER_PROPERTY = "FirstObjectInnerProperty";

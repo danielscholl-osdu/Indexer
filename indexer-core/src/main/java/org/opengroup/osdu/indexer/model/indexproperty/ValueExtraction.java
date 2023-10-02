@@ -29,7 +29,7 @@ public class ValueExtraction extends RelatedCondition {
     private String valuePath;
 
     public boolean isValid() {
-        return !Strings.isNullOrEmpty(valuePath);
+        return !Strings.isNullOrEmpty(valuePath) && (!this.hasCondition() || this.hasValidCondition());
     }
 
     /**
@@ -38,6 +38,6 @@ public class ValueExtraction extends RelatedCondition {
      * @return
      */
     public boolean hasValidCondition() {
-        return isValid() && super.hasValidCondition(valuePath);
+        return super.hasValidCondition(valuePath);
     }
 }

@@ -43,7 +43,7 @@ The feature is enabled for all data partitions since M19.
 
 - Required roles
 
-  Indexer service requires that users (and service accounts) have dedicated roles in order to use it. Users must be a member of `users.datalake.viewers` or `users.datalake.editors` or `users.datalake.admins`, roles can be assigned using the [Entitlements Service](/solutions/osdu/tutorials/core-services/entitlementsservice). Please look at the API documentation for specific requirements.
+  Indexer service requires that users (and service accounts) have dedicated roles in order to use it. Users must be a member of `users.datalake.viewers` or `users.datalake.editors` or `users.datalake.admins` or `users.datalake.ops`, roles can be assigned using the [Entitlements Service](/solutions/osdu/tutorials/core-services/entitlementsservice). Please look at the API documentation for specific requirements.
 
   In addition to service roles, users __must__ be a member of data groups to access the data.
 
@@ -153,8 +153,7 @@ Users must be a member of `users.datalake.admins` or `users.datalake.ops` group.
 #### Query parameters
 
 `force_clean` <br />
-&emsp;&emsp;(optional, Boolean) If a kind has been previously indexed with a schema and if you wish to apply latest schema changes before re-indexing, than use this query parameter. It will drop the current Index schema, apply latest schema changes & re-index records. If `false`, reindex API
-will use the same schema and overwrite records with the same ids. Default value is `false`.
+&emsp;&emsp;(optional, Boolean) If there is any inconsistency between the storage records and the index records, you can use this query parameter to synchronize them. If `true`, it will drop the current index data, apply latest schema changes & re-index records. If `false`, reindex API will apply the latest schema and overwrite records with the same ids. Default value is `false`.
 
 #### Request body
 
@@ -212,6 +211,42 @@ Users must be a member of `users.datalake.admins` or `users.datalake.ops` group.
   ]
 }
 ```
+
+#### Reindex all records
+
+FullReindex API allows users to re-index all the records in a given data partition without re-ingesting the records via storage API. Reindexing a kind is an asynchronous operation and when a user calls this API, it will respond with HTTP 200 if it can launch the re-indexing or
+appropriate error code if it cannot. The response body indicates which given records were re-indexed and which ones were not found in storage.
+
+#### Request
+
+```http
+PATCH /api/indexer/v2/reindex HTTP/1.1
+```
+
+<details><summary>**Curl**</summary>
+
+```bash
+curl --request PATCH \
+  --url '/api/indexer/v2/reindex' \
+  --header 'accept: application/json' \
+  --header 'authorization: Bearer <JWT>' \
+  --header 'content-type: application/json' \
+  --header 'data-partition-id: opendes' 
+```
+
+</details><br>
+
+#### Prerequisite
+
+Users must be a member of `users.datalake.ops` group.
+
+
+#### Query parameters
+
+`force_clean` <br />
+&emsp;&emsp;(optional, Boolean) If a kind has been previously indexed with a schema and if you wish to apply latest schema changes before re-indexing, than use this query parameter. It will drop the current Index schema, apply latest schema changes & re-index records. If `false`, reindex API
+will use the same schema and overwrite records with the same ids. Default value is `false`.
+
 
 [Back to table of contents](#TOC)
 

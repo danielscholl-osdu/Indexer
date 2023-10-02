@@ -26,6 +26,7 @@ import org.opengroup.osdu.core.common.model.http.AppError;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.service.IClusterConfigurationService;
 import org.opengroup.osdu.indexer.service.IndexAliasService;
+import org.opengroup.osdu.indexer.util.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,8 +46,6 @@ import static org.opengroup.osdu.core.common.model.http.DpsHeaders.DATA_PARTITIO
 @RequestScope
 @Tag(name = "partition-setup-api", description = "Partition Setup API")
 public class PartitionSetupApi {
-
-    private static final String OPS = "users.datalake.ops";
 
     @Autowired
     private IndexAliasService indexAliasService;
@@ -69,7 +68,7 @@ public class PartitionSetupApi {
             @ApiResponse(responseCode = "502", description = "Bad Gateway", content = {@Content(schema = @Schema(implementation = AppError.class))}),
             @ApiResponse(responseCode = "503", description = "Service Unavailable", content = {@Content(schema = @Schema(implementation = AppError.class))})
     })
-    @PreAuthorize("@authorizationFilter.hasPermission('" + OPS + "')")
+    @PreAuthorize("@authorizationFilter.hasPermission('" + Role.USER_OPS + "')")
     @PutMapping(path = "/provision", consumes = "application/json")
     public ResponseEntity<?> provisionPartition(@RequestHeader(DATA_PARTITION_ID) String dataPartitionId) throws IOException {
         this.jaxRsDpsLog.info("applying cluster configuration for partition: " + dataPartitionId);

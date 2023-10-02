@@ -42,6 +42,33 @@ public class PropertyUtil {
         return !Strings.isNullOrEmpty(propertyPath) && (propertyPath.startsWith(parentPropertyPath + PROPERTY_DELIMITER) || propertyPath.equals(parentPropertyPath));
     }
 
+    public static Map<String, Object> getValueOfNoneNestedProperty(String propertyPath, Map<String, Object> data) {
+        if(Strings.isNullOrEmpty(propertyPath) || propertyPath.contains(ARRAY_SYMBOL) || data == null || data.isEmpty())
+            return new HashMap<>();
+
+        Map<String, Object> values = new HashMap<>();
+        if(data.containsKey(propertyPath)) {
+            values.put(propertyPath, data.get(propertyPath));
+        }
+        else {
+            for (String key : data.keySet()) {
+                if (propertyPath.startsWith(key + PROPERTY_DELIMITER)) {
+                    Object v = data.get(key);
+                    if (v instanceof Map) {
+                        propertyPath = propertyPath.substring((key + PROPERTY_DELIMITER).length());
+                        Map<String, Object> subPropertyValues = getValueOfNoneNestedProperty(propertyPath, (Map<String, Object>) v);
+                        for (Map.Entry<String, Object> entry: subPropertyValues.entrySet()) {
+                            values.put(key + PROPERTY_DELIMITER + entry.getKey(), entry.getValue());
+                        }
+                    }
+                } else if (key.startsWith(propertyPath + PROPERTY_DELIMITER)) {
+                    values.put(key, data.get(key));
+                }
+            }
+        }
+        return values;
+    }
+
     public static boolean hasSameMajorKind(String left, String right) {
         try {
             Kind leftKind = new Kind(left);

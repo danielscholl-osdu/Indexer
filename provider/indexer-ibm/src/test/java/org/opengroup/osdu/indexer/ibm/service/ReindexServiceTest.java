@@ -88,7 +88,7 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(null);
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String response = sut.reindexKind(recordReindexRequest, false);
+            String response = sut.reindexKind(recordReindexRequest, false, false);
 
             Assert.assertNull(response);
         } catch (Exception e) {
@@ -102,7 +102,7 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(new ArrayList<>());
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String response = sut.reindexKind(recordReindexRequest, false);
+            String response = sut.reindexKind(recordReindexRequest, false, false);
 
             Assert.assertNull(response);
         } catch (Exception e) {
@@ -122,7 +122,7 @@ public class ReindexServiceTest {
 
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String taskQueuePayload = sut.reindexKind(recordReindexRequest, false);
+            String taskQueuePayload = sut.reindexKind(recordReindexRequest, false, false);
 
             Assert.assertEquals("{\"kind\":\"tenant:test:test:1.0.0\",\"cursor\":\"100\"}", taskQueuePayload);
         } catch (Exception e) {
@@ -138,7 +138,7 @@ public class ReindexServiceTest {
             recordQueryResponse.setResults(results);
             when(storageService.getRecordsByKind(ArgumentMatchers.any())).thenReturn(recordQueryResponse);
 
-            String taskQueuePayload = sut.reindexKind(recordReindexRequest, false);
+            String taskQueuePayload = sut.reindexKind(recordReindexRequest, false, false);
 
             Assert.assertEquals(String.format("{\"data\":\"[{\\\"id\\\":\\\"test1\\\",\\\"kind\\\":\\\"tenant:test:test:1.0.0\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{\"slb-correlation-id\":\"%s\"}}", correlationId), taskQueuePayload);
         } catch (Exception e) {

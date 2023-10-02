@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opengroup.osdu.indexer.model.indexproperty.PropertyPath;
+import org.opengroup.osdu.indexer.model.indexproperty.RelatedCondition;
 import org.opengroup.osdu.indexer.model.indexproperty.RelatedObjectsSpec;
 import org.opengroup.osdu.indexer.model.indexproperty.ValueExtraction;
 
@@ -26,7 +27,7 @@ public class PropertyPathDeserializer extends JsonDeserializer<PropertyPath> {
     private final String VALUE_EXTRACTION_RELATED_CONDITION_MATCHES = "ValueExtraction.RelatedConditionMatches";
 
     @Override
-    public PropertyPath deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+    public PropertyPath deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         PropertyPath propertyPath = new PropertyPath();
         ObjectCodec codec = jsonParser.getCodec();
         JsonNode node = codec.readTree(jsonParser);
@@ -64,16 +65,7 @@ public class PropertyPathDeserializer extends JsonDeserializer<PropertyPath> {
             if(isNotNull(relatedObjectID)) {
                 relatedObjectsSpec.setRelatedObjectID(relatedObjectID.asText());
             }
-            if(isNotNull(relatedConditionProperty)) {
-                relatedObjectsSpec.setRelatedConditionProperty(relatedConditionProperty.asText());
-            }
-            if(isNotNull(relatedConditionMatches) && relatedConditionMatches.isArray()) {
-                List<String> conditionMatches = new ArrayList<>();
-                for (JsonNode subNode : relatedConditionMatches) {
-                    conditionMatches.add(subNode.asText());
-                }
-                relatedObjectsSpec.setRelatedConditionMatches(conditionMatches);
-            }
+            setRelatedCondition(relatedObjectsSpec, relatedConditionProperty, relatedConditionMatches);
             return relatedObjectsSpec;
         }
 
@@ -92,20 +84,24 @@ public class PropertyPathDeserializer extends JsonDeserializer<PropertyPath> {
             if(isNotNull(valuePath)) {
                 valueExtraction.setValuePath(valuePath.asText());
             }
-            if(isNotNull(relatedConditionProperty)) {
-                valueExtraction.setRelatedConditionProperty(relatedConditionProperty.asText());
-            }
-            if(isNotNull(relatedConditionMatches) && relatedConditionMatches.isArray()) {
-                List<String> conditionMatches = new ArrayList<>();
-                for (JsonNode subNode : relatedConditionMatches) {
-                    conditionMatches.add(subNode.asText());
-                }
-                valueExtraction.setRelatedConditionMatches(conditionMatches);
-            }
+            setRelatedCondition(valueExtraction, relatedConditionProperty, relatedConditionMatches);
             return valueExtraction;
         }
 
         return null;
+    }
+
+    private void setRelatedCondition(RelatedCondition relatedCondition, JsonNode relatedConditionProperty, JsonNode relatedConditionMatches) {
+        if(isNotNull(relatedConditionProperty)) {
+            relatedCondition.setRelatedConditionProperty(relatedConditionProperty.asText());
+        }
+        if(isNotNull(relatedConditionMatches) && relatedConditionMatches.isArray()) {
+            List<String> conditionMatches = new ArrayList<>();
+            for (JsonNode subNode : relatedConditionMatches) {
+                conditionMatches.add(subNode.asText());
+            }
+            relatedCondition.setRelatedConditionMatches(conditionMatches);
+        }
     }
 
     private boolean isNotNull(JsonNode node) {

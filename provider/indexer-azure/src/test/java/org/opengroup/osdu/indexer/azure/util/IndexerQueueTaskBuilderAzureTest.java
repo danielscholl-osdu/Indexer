@@ -31,7 +31,12 @@ import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION
 @RunWith(MockitoJUnitRunner.class)
 public class IndexerQueueTaskBuilderAzureTest {
 
-    private String payload = "{payload : value }";
+    private String payload = "{\n" +
+            "    \"data\": \"[{\\\"id\\\":\\\"opendes:work-product-component--WellLog:566edebc-1a9f-4f4d-9a30-ed458e959ac7\\\",\\\"kind\\\":\\\"osdu:wks:work-product-component--WellLog:1.2.0\\\",\\\"op\\\":\\\"create\\\"},{\\\"id\\\":\\\"opendes:work-product-component--WellLog:84958febe54e4908a1703778e1918dae\\\",\\\"kind\\\":\\\"osdu:wks:work-product-component--WellLog:1.2.0\\\",\\\"op\\\":\\\"create\\\"}]\",\n" +
+            "    \"attributes\": {\n" +
+            "        \"data-partition-id\": \"opendes\"\n" +
+            "    }\n" +
+            "}";
     private static String partitionId = "opendes";
     private static String correlationId = "correlationId";
     private static String serviceBusReindexTopicNameField = "serviceBusReindexTopicName";
@@ -92,7 +97,7 @@ public class IndexerQueueTaskBuilderAzureTest {
 
         sut.createWorkerTask(payload, milliseconds, dpsHeaders);
 
-        verify(dpsHeaders, times(2)).addCorrelationIdIfMissing();
+        verify(dpsHeaders, times(1)).addCorrelationIdIfMissing();
         verify(dpsHeaders, times(4)).getPartitionIdWithFallbackToAccountId();
         verify(dpsHeaders, times(2)).getCorrelationId();
         verify(topicClientFactory, times(1)).getClient(partitionId, serviceBusReindexTopicNameValue);
@@ -116,7 +121,7 @@ public class IndexerQueueTaskBuilderAzureTest {
         verify(requestInfo, times(1)).checkOrGetAuthorizationHeader();
         verify(dpsHeaders, times(1)).put(AUTHORIZATION, authorisedHeader);
         verify(storageService, times(1)).getRecordsByKind(any());
-        verify(dpsHeaders, times(1)).addCorrelationIdIfMissing();
+        verify(dpsHeaders, times(0)).addCorrelationIdIfMissing();
     }
 
     @Test
@@ -137,9 +142,9 @@ public class IndexerQueueTaskBuilderAzureTest {
         verify(requestInfo, times(1)).checkOrGetAuthorizationHeader();
         verify(dpsHeaders, times(1)).put(AUTHORIZATION, authorisedHeader);
         verify(storageService, times(1)).getRecordsByKind(any());
-        verify(dpsHeaders, times(6)).getPartitionIdWithFallbackToAccountId();
-        verify(dpsHeaders, times(3)).getCorrelationId();
-        verify(dpsHeaders, times(2)).addCorrelationIdIfMissing();
+        verify(dpsHeaders, times(4)).getPartitionIdWithFallbackToAccountId();
+        verify(dpsHeaders, times(2)).getCorrelationId();
+        verify(dpsHeaders, times(1)).addCorrelationIdIfMissing();
         verify(topicClientFactory, times(1)).getClient(partitionId, serviceBusReindexTopicNameValue);
     }
 
@@ -161,9 +166,9 @@ public class IndexerQueueTaskBuilderAzureTest {
         verify(requestInfo, times(1)).checkOrGetAuthorizationHeader();
         verify(dpsHeaders, times(1)).put(AUTHORIZATION, authorisedHeader);
         verify(storageService, times(1)).getRecordsByKind(any());
-        verify(dpsHeaders, times(120)).getPartitionIdWithFallbackToAccountId();
-        verify(dpsHeaders, times(60)).getCorrelationId();
-        verify(dpsHeaders, times(21)).addCorrelationIdIfMissing();
+        verify(dpsHeaders, times(80)).getPartitionIdWithFallbackToAccountId();
+        verify(dpsHeaders, times(40)).getCorrelationId();
+        verify(dpsHeaders, times(1)).addCorrelationIdIfMissing();
         verify(topicClientFactory, times(20)).getClient(partitionId, serviceBusReindexTopicNameValue);
     }
 
@@ -180,6 +185,6 @@ public class IndexerQueueTaskBuilderAzureTest {
         verify(requestInfo, times(1)).checkOrGetAuthorizationHeader();
         verify(dpsHeaders, times(1)).put(AUTHORIZATION, authorisedHeader);
         verify(storageService, times(1)).getRecordsByKind(any());
-        verify(dpsHeaders, times(1)).addCorrelationIdIfMissing();
+        verify(dpsHeaders, times(0)).addCorrelationIdIfMissing();
     }
 }

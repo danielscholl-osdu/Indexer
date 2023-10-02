@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
+import org.opengroup.osdu.indexer.util.PropertyUtil;
 
 import java.util.List;
 
@@ -41,6 +42,10 @@ public class PropertyConfiguration {
     @JsonProperty("Paths")
     private List<PropertyPath> paths;
 
+    public String getExtendedPropertyName() {
+        return PropertyUtil.removeDataPrefix(this.name);
+    }
+
     public boolean isExtractFirstMatch() {
         return EXTRACT_FIRST_MATCH_POLICY.equalsIgnoreCase(policy);
     }
@@ -54,7 +59,12 @@ public class PropertyConfiguration {
         return hasValidPath && (isExtractFirstMatch() || isExtractAllMatches());
     }
 
-    public String getRelatedObjectKind() {
+    /**
+     * Though one extended property can be mapped to a property from different kinds of source objects, we assume
+     * that all those source properties should have the same schema.
+     * @return
+     */
+    public String getFirstRelatedObjectKind() {
         if(paths != null) {
             for (PropertyPath path : paths) {
                 if (path.isValid() && path.hasValidRelatedObjectsSpec()) {
