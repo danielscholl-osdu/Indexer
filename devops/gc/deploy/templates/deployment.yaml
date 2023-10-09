@@ -53,6 +53,14 @@ spec:
           runAsNonRoot: true
         ports:
         - containerPort: 8080
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /api/indexer/v2/liveness_check
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 120
+          periodSeconds: 20
         resources:
           requests:
             cpu: {{ .Values.data.requestsCpu | quote }}
