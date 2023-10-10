@@ -33,5 +33,5 @@ public class SearchRequest {
     private String cursor;
     private List<String> returnedFields;
     private SortQuery sort;
-    private boolean trackTotalCount = true;
+    private boolean trackTotalCount;
 }
