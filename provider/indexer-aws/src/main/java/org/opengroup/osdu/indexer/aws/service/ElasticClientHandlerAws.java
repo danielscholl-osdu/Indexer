@@ -44,13 +44,13 @@ public class ElasticClientHandlerAws extends ElasticClientHandler {
 
     private static final int REST_CLIENT_CONNECT_TIMEOUT = 60000;
     private static final int REST_CLIENT_SOCKET_TIMEOUT = 60000;
-    private static final int REST_CLIENT_RETRY_TIMEOUT = 60000;
 
     @Value("${aws.es.certificate.disableTrust:false}")
     // @Value("#{new Boolean('${aws.es.certificate.disableTrust:false}')}")
     private Boolean disableSslCertificateTrust;
 
     public ElasticClientHandlerAws() {
+        //DO nothing here, just a class constructor
     }
 
     @Override
@@ -61,7 +61,7 @@ public class ElasticClientHandlerAws extends ElasticClientHandler {
                 .setConnectTimeout(REST_CLIENT_CONNECT_TIMEOUT)
                 .setSocketTimeout(REST_CLIENT_SOCKET_TIMEOUT));        
 
-        if(isLocalHost(host) || disableSslCertificateTrust) {            
+        if(isLocalHost(host) || disableSslCertificateTrust.booleanValue()) {            
 
             SSLContext sslContext;            
             try {

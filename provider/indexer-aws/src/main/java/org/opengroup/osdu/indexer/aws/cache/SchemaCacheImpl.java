@@ -30,43 +30,43 @@ import java.util.Map;
 @Component
 public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoCloseable {
     @Value("${aws.elasticache.cluster.endpoint}")
-    String REDIS_SEARCH_HOST;
+    String redisSearchHost;
     @Value("${aws.elasticache.cluster.port}")
-    String REDIS_SEARCH_PORT;
+    String redisSearchPort;
     @Value("${aws.elasticache.cluster.key}")
-    String REDIS_SEARCH_KEY;
+    String redisSearchKey;
     @Value("${aws.elasticache.cluster.schema.expiration}")
-    String SCHEMA_CACHE_EXPIRATION;
+    String schemaCacheExpiration;
     private ICache<String, String> cache;
     private Boolean local = false;
     public SchemaCacheImpl() throws K8sParameterNotFoundException, JsonProcessingException {
         int expTimeSeconds = 60 * 60;
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
-        if (provider.getLocalMode()){
+        local = provider.getLocalMode();
+        if (local.booleanValue()){
             if (Boolean.parseBoolean(System.getenv("DISABLE_CACHE"))){
                 cache = new DummyCache<>();
             }else{
-                cache = new VmCache<String,String>(expTimeSeconds, 10);
+                cache = new VmCache<>(expTimeSeconds, 10);
             }
         }else {
-            String host = provider.getParameterAsStringOrDefault("CACHE_CLUSTER_ENDPOINT", REDIS_SEARCH_HOST);
-            int port = Integer.parseInt(provider.getParameterAsStringOrDefault("CACHE_CLUSTER_PORT", REDIS_SEARCH_PORT));
+            String host = provider.getParameterAsStringOrDefault("CACHE_CLUSTER_ENDPOINT", redisSearchHost);
+            int port = Integer.parseInt(provider.getParameterAsStringOrDefault("CACHE_CLUSTER_PORT", redisSearchPort));
             Map<String, String > credential =provider.getCredentialsAsMap("CACHE_CLUSTER_KEY");
             String password;
             if (credential !=null){
                 password = credential.get("token");
             }else{
-                password = REDIS_SEARCH_KEY;
+                password = redisSearchKey;
             }
             cache = new RedisCache<>(host, port, password, expTimeSeconds, String.class, String.class);
         }
-        local = cache instanceof AutoCloseable;
     }
 
     @Override
     public void close() throws Exception {
-        if (this.local){
-            // do nothing, this is using local dummy cache
+        if (this.local.booleanValue()){
+            // do nothing, this is using local dummy cache or vm cache
         }else {
             // cast to redis cache so it can be closed
             ((AutoCloseable)this.cache).close();

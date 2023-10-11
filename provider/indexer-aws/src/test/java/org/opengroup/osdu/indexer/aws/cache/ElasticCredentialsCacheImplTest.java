@@ -14,29 +14,19 @@
 
 package org.opengroup.osdu.indexer.aws.cache;
 
-import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCache;
-import org.springframework.stereotype.Component;
+import org.junit.Test;
+import org.junit.Assert;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.opengroup.osdu.indexer.aws.IndexerAwsApplication;
 
-@Component
-public class ElasticCredentialsCacheImpl implements IElasticCredentialsCache<Object, Object> {
+@SpringBootTest(classes = {IndexerAwsApplication.class})
+public class ElasticCredentialsCacheImplTest {
+    
+    private ElasticCredentialsCacheImpl cache = new ElasticCredentialsCacheImpl();
 
-    @Override
-    public void put(Object o, Object o2) {
-        //Do nothing currently
+    @Test
+    public void get_should_return_null() throws Exception {
+        Assert.assertNull(cache.get(new Object()));
     }
 
-    @Override
-    public Object get(Object o) {
-        return null;
-    }
-
-    @Override
-    public void delete(Object o) {
-        //Do nothing currently
-    }
-
-    @Override
-    public void clearAll() {
-        //Do nothing currently
-    }
 }

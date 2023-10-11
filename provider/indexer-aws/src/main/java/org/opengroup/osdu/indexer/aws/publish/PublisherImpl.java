@@ -14,7 +14,6 @@
 
 package org.opengroup.osdu.indexer.aws.publish;
 
-import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.AmazonSNS;
 
@@ -22,14 +21,13 @@ import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
 import org.opengroup.osdu.core.aws.sns.PublishRequestBuilder;
+import org.opengroup.osdu.core.common.model.indexer.RecordStatus;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class PublisherImpl implements IPublisher {
@@ -39,6 +37,9 @@ public class PublisherImpl implements IPublisher {
 
     @Value("${aws.region}")
     private String amazonSNSRegion;
+
+    @Value("${OSDU_TOPIC}")
+    private String osduIndexerTopic;
 
     @Inject
     public void init() throws K8sParameterNotFoundException {
@@ -50,20 +51,10 @@ public class PublisherImpl implements IPublisher {
 
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception
     {
-        // Attributes
-        Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
-        messageAttributes.put(DpsHeaders.ACCOUNT_ID, new MessageAttributeValue()
-                .withDataType("String")
-                .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
-        messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, new MessageAttributeValue()
-                .withDataType("String")
-                .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
-        headers.addCorrelationIdIfMissing();
-        messageAttributes.put(DpsHeaders.CORRELATION_ID, new MessageAttributeValue()
-                .withDataType("String")
-                .withStringValue(headers.getCorrelationId()));
+        PublishRequestBuilder<RecordStatus> publishRequestBuilder = new PublishRequestBuilder<>();
+        publishRequestBuilder.setGeneralParametersFromHeaders(headers);
 
-        PublishRequest publishRequest = new PublishRequestBuilder().generatePublishRequest("data", indexerBatchStatus.getStatusesList(), messageAttributes, amazonSNSTopic);
+        PublishRequest publishRequest = publishRequestBuilder.generatePublishRequest(osduIndexerTopic, amazonSNSTopic, indexerBatchStatus.getStatusesList());
 
         snsClient.publish(publishRequest);
     }

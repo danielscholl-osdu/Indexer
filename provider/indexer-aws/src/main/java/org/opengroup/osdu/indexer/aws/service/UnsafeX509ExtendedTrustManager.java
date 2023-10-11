@@ -34,42 +34,42 @@ class UnsafeX509ExtendedTrustManager extends X509ExtendedTrustManager {
     @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(CLIENT_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectDN());
+            LOGGER.debug(CLIENT_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectX500Principal());
         }
     }
 
     @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String authType, Socket socket) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(CLIENT_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectDN());
+            LOGGER.debug(CLIENT_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectX500Principal());
         }
     }
 
     @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String authType, SSLEngine sslEngine) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(CLIENT_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectDN());
+            LOGGER.debug(CLIENT_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectX500Principal());
         }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String authType) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(SERVER_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectDN());
+            LOGGER.debug(SERVER_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectX500Principal());
         }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String authType, Socket socket) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(SERVER_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectDN());
+            LOGGER.debug(SERVER_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectX500Principal());
         }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String authType, SSLEngine sslEngine) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(SERVER_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectDN());
+            LOGGER.debug(SERVER_CERTIFICATE_LOG_MESSAGE, x509Certificates[0].getSubjectX500Principal());
         }
     }
 
