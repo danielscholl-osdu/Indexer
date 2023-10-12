@@ -48,7 +48,7 @@
         <mockito.version>3.11.2</mockito.version>
         <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
         <spring-security-oauth2.version>2.3.6.RELEASE</spring-security-oauth2.version>
-        <netty.version>4.1.96.Final</netty.version>
+        <netty.version>4.1.98.Final</netty.version>
         <reactor-netty.version>1.0.7</reactor-netty.version>
         <reactor-core.version>3.4.24</reactor-core.version>
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
@@ -197,6 +197,10 @@
                 <exclusion>
                     <artifactId>azure-core</artifactId>
                     <groupId>com.azure</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.microsoft.azure</groupId>
+                    <artifactId>documentdb-bulkexecutor</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
