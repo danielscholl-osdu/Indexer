@@ -608,12 +608,12 @@ The following software have components provided under the terms of this license:
 - aalto-xml (from https://github.com/FasterXML/aalto-xml, https://repo1.maven.org/maven2/com/fasterxml/aalto-xml)
 - aggs-matrix-stats (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
 - compiler (from http://github.com/spullara/mustache.java)
-- elasticsearch (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git, https://repo1.maven.org/maven2/org/elasticsearch/elasticsearch)
-- elasticsearch-cli (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
-- elasticsearch-core (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
+- elasticsearch (from https://github.com/elastic/elasticsearch, https://repo1.maven.org/maven2/org/elasticsearch/elasticsearch)
+- elasticsearch-cli (from https://github.com/elastic/elasticsearch)
+- elasticsearch-core (from https://github.com/elastic/elasticsearch)
 - elasticsearch-geo (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
-- elasticsearch-secure-sm (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
-- elasticsearch-x-content (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
+- elasticsearch-secure-sm (from https://github.com/elastic/elasticsearch)
+- elasticsearch-x-content (from https://github.com/elastic/elasticsearch)
 - error-prone annotations (from https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations)
 - io.grpc:grpc-alts (from https://github.com/grpc/grpc-java)
 - io.grpc:grpc-api (from https://github.com/grpc/grpc-java)
@@ -1240,7 +1240,7 @@ SunPro
 The following software have components provided under the terms of this license:
 
 - Lucene Core (from https://repo1.maven.org/maven2/org/apache/lucene/lucene-core)
-- elasticsearch-core (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
+- elasticsearch-core (from https://github.com/elastic/elasticsearch)
 
 ========================================================================
 W3C
