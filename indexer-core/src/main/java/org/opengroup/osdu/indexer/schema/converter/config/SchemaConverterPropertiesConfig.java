@@ -25,8 +25,7 @@ public class SchemaConverterPropertiesConfig implements SchemaConverterConfig {
 
 
     private Set<String> getDefaultSkippedDefinitions() {
-        return new HashSet<>(Arrays.asList("AbstractAnyCrsFeatureCollection",
-            "anyCrsGeoJsonFeatureCollection"));
+        return new HashSet<>();
     }
 
     private Set<String> getDefaultSupportedArrayTypes() {
