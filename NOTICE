@@ -423,10 +423,10 @@ The following software have components provided under the terms of this license:
 - JBoss Marshalling River (from https://repo1.maven.org/maven2/org/jboss/marshalling/jboss-marshalling-river)
 - JCIP Annotations under Apache License (from http://stephenc.github.com/jcip-annotations)
 - JDOM
+- JJWT :: Legacy Transitive Dependency Jar (from https://repo1.maven.org/maven2/io/jsonwebtoken/jjwt)
 - JMES Path Query library (from https://aws.amazon.com/sdkforjava)
 - JOpt Simple (from http://jopt-simple.github.io/jopt-simple, http://pholser.github.io/jopt-simple)
 - JSON Small and Fast Parser (from https://repo1.maven.org/maven2/net/minidev/json-smart, https://urielch.github.io/)
-- JSON Web Token support for the JVM (from https://github.com/jwtk/jjwt)
 - JSON library from Android SDK (from http://developer.android.com/sdk)
 - JSON.simple (from http://code.google.com/p/json-simple/)
 - JSONassert (from http://github.com/skyscreamer/yoga, https://github.com/skyscreamer/JSONassert)
@@ -611,12 +611,12 @@ The following software have components provided under the terms of this license:
 - aggs-matrix-stats (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
 - compiler (from http://github.com/spullara/mustache.java)
 - documentdb-bulkexecutor (from http://azure.microsoft.com/en-us/services/documentdb/)
-- elasticsearch (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git, https://repo1.maven.org/maven2/org/elasticsearch/elasticsearch)
-- elasticsearch-cli (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
-- elasticsearch-core (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
+- elasticsearch (from https://github.com/elastic/elasticsearch, https://repo1.maven.org/maven2/org/elasticsearch/elasticsearch)
+- elasticsearch-cli (from https://github.com/elastic/elasticsearch)
+- elasticsearch-core (from https://github.com/elastic/elasticsearch)
 - elasticsearch-geo (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
-- elasticsearch-secure-sm (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
-- elasticsearch-x-content (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
+- elasticsearch-secure-sm (from https://github.com/elastic/elasticsearch)
+- elasticsearch-x-content (from https://github.com/elastic/elasticsearch)
 - error-prone annotations (from https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations)
 - io.grpc:grpc-alts (from https://github.com/grpc/grpc-java)
 - io.grpc:grpc-api (from https://github.com/grpc/grpc-java)
@@ -1245,7 +1245,7 @@ SunPro
 The following software have components provided under the terms of this license:
 
 - Lucene Core (from https://repo1.maven.org/maven2/org/apache/lucene/lucene-core)
-- elasticsearch-core (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
+- elasticsearch-core (from https://github.com/elastic/elasticsearch)
 
 ========================================================================
 W3C
