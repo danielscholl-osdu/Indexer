@@ -18,7 +18,7 @@
   <parent>
       <groupId>org.opengroup.osdu.indexer</groupId>
       <artifactId>indexer-service</artifactId>
-      <version>0.24.0-SNAPSHOT</version>
+      <version>0.25.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -26,7 +26,7 @@
   <artifactId>indexer-aws</artifactId>
   <description>Indexer service on AWS</description>
   <packaging>jar</packaging>
-    <version>0.24.0-SNAPSHOT</version>
+    <version>0.25.0-SNAPSHOT</version>
 
   <properties>
       <aws.version>1.11.1018</aws.version>
@@ -35,6 +35,7 @@
       <jackson-databind.version>2.13.2.2</jackson-databind.version>
       <jackson.version>2.13.2</jackson.version>
       <spring-webmvc.version>5.3.22</spring-webmvc.version>
+      <mockito.version>3.11.2</mockito.version>
   </properties>
 
   <dependencyManagement>
@@ -66,12 +67,12 @@
     <dependency>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-core</artifactId>
-        <version>0.24.0-SNAPSHOT</version>
+        <version>0.25.0-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
         <artifactId>os-core-lib-aws</artifactId>
-        <version>0.23.0</version>
+        <version>0.24.0</version>
     </dependency>
 
     <!-- AWS managed packages -->
@@ -160,15 +161,35 @@
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>1.10.19</version>
-      <scope>test</scope>
-    </dependency>
   <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+    <exclusions>
+      <exclusion>
+        <groupId>org.junit</groupId>
+        <artifactId>junit</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>org.mockito</groupId>
+        <artifactId>mockito-all</artifactId>
+    </exclusion>
+      </exclusions>
+  </dependency>
+  <dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-core</artifactId>
+    <version>${mockito.version}</version>
+    <scope>test</scope>
+  </dependency>
+  <dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-inline</artifactId>
+    <version>4.2.0</version>
     <scope>test</scope>
   </dependency>
   <dependency>
@@ -208,6 +229,7 @@
                     <argLine>
                         @{argLine} --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/javax.net.ssl=ALL-UNNAMED
                     </argLine>
                 </configuration>
             </plugin>

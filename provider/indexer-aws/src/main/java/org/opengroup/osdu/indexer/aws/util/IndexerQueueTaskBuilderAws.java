@@ -37,6 +37,8 @@ import java.util.Map;
 @Component
 public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
+    private static final String TYPE_STRING = "String";
+    private static final String RETRY_STRING = "retry";
     private static final int INITIAL_RETRY_DELAY_SECONDS = 5;
     private static final int MAX_RETRY_DELAY_SECONDS = 900; // 15 minutes (900 seconds) is the hard limit SQS sets of message delays
 
@@ -44,7 +46,6 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
     private String storageQueue;
     private String dlq;
-    private final String retryString = "retry";
 
     private Gson gson;
 
@@ -74,23 +75,23 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
     public void createReIndexTask(String payload,DpsHeaders headers) {
         Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
         messageAttributes.put(DpsHeaders.ACCOUNT_ID, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
         messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
         headers.addCorrelationIdIfMissing();
         messageAttributes.put(DpsHeaders.CORRELATION_ID, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getCorrelationId()));
         messageAttributes.put(DpsHeaders.USER_EMAIL, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getUserEmail()));
         messageAttributes.put(DpsHeaders.AUTHORIZATION, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getAuthorization()));
         messageAttributes.put("ReIndexCursor", new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue("True"));
         SendMessageRequest sendMessageRequest = new SendMessageRequest()
                 .withQueueUrl(storageQueue)
@@ -106,28 +107,28 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
     private void createTask(String payload, DpsHeaders headers) {
         Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
         messageAttributes.put(DpsHeaders.ACCOUNT_ID, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
         messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
         headers.addCorrelationIdIfMissing();
         messageAttributes.put(DpsHeaders.CORRELATION_ID, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getCorrelationId()));
         messageAttributes.put(DpsHeaders.USER_EMAIL, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getUserEmail()));
         messageAttributes.put(DpsHeaders.AUTHORIZATION, new MessageAttributeValue()
-                .withDataType("String")
+                .withDataType(TYPE_STRING)
                 .withStringValue(headers.getAuthorization()));
 
         RecordChangedMessages message = gson.fromJson(payload, RecordChangedMessages.class);
 
         int retryCount;
         int retryDelay;
-        if (message.getAttributes().containsKey(retryString)) {
-            retryCount = Integer.parseInt(message.getAttributes().get(retryString));
+        if (message.getAttributes().containsKey(RETRY_STRING)) {
+            retryCount = Integer.parseInt(message.getAttributes().get(RETRY_STRING));
             retryCount++;
             retryDelay = Math.min(getWaitTimeExp(retryCount), MAX_RETRY_DELAY_SECONDS);
         } else {
@@ -140,14 +141,14 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
         System.out.println("Delay (in seconds) before next retry: " + retryDelay);
 
         // Append the retry count to the message attributes
-        messageAttributes.put(retryString, new MessageAttributeValue()
-                .withDataType("String")
+        messageAttributes.put(RETRY_STRING, new MessageAttributeValue()
+                .withDataType(TYPE_STRING)
                 .withStringValue(String.valueOf(retryCount))
         );
         // Append the ancestry kinds used to prevent circular chasing
         if(message.getAttributes().containsKey(Constants.ANCESTRY_KINDS)) {
             messageAttributes.put(Constants.ANCESTRY_KINDS, new MessageAttributeValue()
-                    .withDataType("String")
+                    .withDataType(TYPE_STRING)
                     .withStringValue(message.getAttributes().get(Constants.ANCESTRY_KINDS)));
         }
 
@@ -158,7 +159,7 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
             sendMessageRequest = new SendMessageRequest()
                     .withQueueUrl(storageQueue)
                     .withMessageBody(message.getData())
-                    .withDelaySeconds(new Integer(retryDelay))
+                    .withDelaySeconds(Integer.valueOf(retryDelay))
                     .withMessageAttributes(messageAttributes);
         }else{
             sendMessageRequest = new SendMessageRequest()

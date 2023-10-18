@@ -34,8 +34,8 @@ import java.util.Map;
 
 @Component
 public class AwsServiceAccountAuthToken {
-    private String client_credentials_secret;
-    private String client_credentials_clientid;
+    private String clientCredentialsSecret;
+    private String clientCredentialsClientId;
     private String tokenUrl;
     private String oauthCustomScope;
     private String token= null;
@@ -45,8 +45,8 @@ public class AwsServiceAccountAuthToken {
     private void init() {
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
         try {
-            this.client_credentials_clientid = provider.getParameterAsString("CLIENT_CREDENTIALS_ID");
-            this.client_credentials_secret = provider.getCredentialsAsMap("CLIENT_CREDENTIALS_SECRET").get("client_credentials_client_secret");
+            this.clientCredentialsClientId = provider.getParameterAsString("CLIENT_CREDENTIALS_ID");
+            this.clientCredentialsSecret = provider.getCredentialsAsMap("CLIENT_CREDENTIALS_SECRET").get("client_credentials_client_secret");
             this.tokenUrl = provider.getParameterAsString("OAUTH_TOKEN_URI");
             this.oauthCustomScope = provider.getParameterAsString("OAUTH_CUSTOM_SCOPE");
         } catch (K8sParameterNotFoundException | JsonProcessingException e) {
@@ -57,8 +57,8 @@ public class AwsServiceAccountAuthToken {
     public String getAuthToken() throws AppException {
         if (expiredToken()){
             Map<String,String> headers = new HashMap<>();
-            String authorizationHeaderContents=getEncodedAuthorization(this.client_credentials_clientid,this.client_credentials_secret);
-            headers.put("Authorization","Basic "+authorizationHeaderContents);
+            String authorizationHeaderContents=getEncodedAuthorization(this.clientCredentialsClientId, this.clientCredentialsSecret);
+            headers.put("Authorization","Basic "+ authorizationHeaderContents);
             headers.put("Content-Type", "application/x-www-form-urlencoded");
     
             IHttpClient httpClient = new HttpClient();

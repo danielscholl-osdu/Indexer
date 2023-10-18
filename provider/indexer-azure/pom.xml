@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-service</artifactId>
-        <version>0.24.0-SNAPSHOT</version>
+        <version>0.25.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>indexer-azure</artifactId>
-    <version>0.24.0-SNAPSHOT</version>
+    <version>0.25.0-SNAPSHOT</version>
     <name>indexer-azure</name>
     <description>Indexer Service Azure</description>
     <packaging>jar</packaging>
@@ -39,7 +39,7 @@
         <azure.appservice.subscription />
         <log4j.version>2.17.1</log4j.version>
         <nimbus-jose-jwt.version>8.20.2</nimbus-jose-jwt.version>
-        <indexer-core.version>0.24.0-SNAPSHOT</indexer-core.version>
+        <indexer-core.version>0.25.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
         <osdu.corelibazure.version>0.23.2</osdu.corelibazure.version>
         <os-core-common.version>0.23.3</os-core-common.version>
@@ -48,7 +48,7 @@
         <mockito.version>3.11.2</mockito.version>
         <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
         <spring-security-oauth2.version>2.3.6.RELEASE</spring-security-oauth2.version>
-        <netty.version>4.1.96.Final</netty.version>
+        <netty.version>4.1.98.Final</netty.version>
         <reactor-netty.version>1.0.7</reactor-netty.version>
         <reactor-core.version>3.4.24</reactor-core.version>
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
@@ -197,6 +197,10 @@
                 <exclusion>
                     <artifactId>azure-core</artifactId>
                     <groupId>com.azure</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.microsoft.azure</groupId>
+                    <artifactId>documentdb-bulkexecutor</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
