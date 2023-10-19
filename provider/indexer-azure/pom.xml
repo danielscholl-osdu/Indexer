@@ -41,8 +41,8 @@
         <nimbus-jose-jwt.version>8.20.2</nimbus-jose-jwt.version>
         <indexer-core.version>0.25.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
-        <osdu.corelibazure.version>0.23.2</osdu.corelibazure.version>
-        <os-core-common.version>0.23.3</os-core-common.version>
+        <osdu.corelibazure.version>0.24.0</osdu.corelibazure.version>
+        <os-core-common.version>0.24.0</os-core-common.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
         <java-jwt.version>3.8.1</java-jwt.version>
         <mockito.version>3.11.2</mockito.version>
