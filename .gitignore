@@ -43,3 +43,7 @@ provider/indexer-gcp/bin/*
 .envrc
 /.gradle/checksums/checksums.lock
 /.gradle/6.7/fileHashes/fileHashes.lock
+
+aws/
+awscliv2.zip
+kubectl

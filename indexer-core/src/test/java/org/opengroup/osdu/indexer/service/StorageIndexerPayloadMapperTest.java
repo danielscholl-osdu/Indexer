@@ -249,6 +249,20 @@ public class StorageIndexerPayloadMapperTest {
         return coordinates;
     }
 
+    @Test
+    public void mapDataPayloadTestAsIngestedCoordinates() {
+        final String kind = "osdu:wks:master-data--Well:1.2.0";
+
+        Map<String, Object> storageRecordData = new HashMap<>();
+        storageRecordData = loadObject("/converter/index-as-ingested-coordinates/wellStorageRecordData.json", storageRecordData.getClass());
+
+        IndexSchema indexSchema = loadObject("/converter/index-as-ingested-coordinates/wellStorageSchema.json", IndexSchema.class);
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
+        assertEquals(dataCollectorMap, null);
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.test"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.test"), "found");
+    }
+
     private <T> T loadObject(String file, Class<T> valueType) {
         String jsonString = readResourceFile(file);
         return this.gson.fromJson(jsonString, valueType);

@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 public class StorageIndexerPayloadMapper {
     private static final String SPATIAL_LOCATION_WGS84 = "SpatialLocation.Wgs84Coordinates";
     private static final String SPATIAL_AREA_WGS84 = "SpatialArea.Wgs84Coordinates";
+    private static final String AS_INGESTED_COORDINATES = "AsIngestedCoordinates";
 
     @Inject
     private JaxRsDpsLog log;
@@ -70,6 +71,7 @@ public class StorageIndexerPayloadMapper {
 
         mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
         mapVirtualPropertiesPayload(storageSchema, recordId, dataCollectorMap);
+        mapAsIngestedCoordinatesPayload(storageRecordData, dataCollectorMap);
 
         return dataCollectorMap;
     }
@@ -303,5 +305,76 @@ public class StorageIndexerPayloadMapper {
 
         // None of the original properties has value, return the default one
         return priorities.get(0);
+    }
+
+    private void mapAsIngestedCoordinatesPayload(Map<String, Object> storageRecordData, Map<String, Object> dataCollectorMap) {
+        findAsIngestedCoordinates(storageRecordData, dataCollectorMap, "");
+    }
+
+    private void findAsIngestedCoordinates(Map<String, Object> dataMap, Map<String, Object> dataCollectorMap, String path) {
+        for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
+            if (entry.getValue() instanceof Map) {
+                Map inner = (Map) entry.getValue();
+                findAsIngestedCoordinates(inner, dataCollectorMap, path + entry.getKey() + ".");
+            }
+            if (entry.getKey().equals(AS_INGESTED_COORDINATES)) {
+                ArrayList<Float> firstPoint = (ArrayList<Float>) extractFirstPoint((Map) entry.getValue()); 
+                dataCollectorMap.put(path + entry.getKey() + ".FirstPoint.X", firstPoint.get(0));
+                dataCollectorMap.put(path + entry.getKey() + ".FirstPoint.Y", firstPoint.get(1));
+                if (firstPoint.size() == 3) {
+                    dataCollectorMap.put(path + entry.getKey() + ".FirstPoint.Z", firstPoint.get(2));
+                }
+                break;
+            }
+        }
+    }
+
+    private ArrayList<Float> extractFirstPoint(Map<String, Object> asIngestedCoordinatesMap) {
+        if (!asIngestedCoordinatesMap.containsKey("features")) {
+            return new ArrayList<>();
+        }
+        List features = (List) asIngestedCoordinatesMap.get("features");
+        if (features.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Map firstFeature = (Map) features.get(0);
+        Map geometry = (Map) firstFeature.get("geometry");
+        return extractFirstPointFromGeometry(geometry);
+    }
+
+    private ArrayList<Float> extractFirstPointFromGeometry(Map<String, Object> geometry) {
+
+        Object firstPoint;
+        String type = (String) geometry.get("type");
+        ArrayList coordinates = (ArrayList<Object>) geometry.get("coordinates");
+        switch (type) {
+            case "AnyCrsPoint":
+                return getNestedArrayList(coordinates, 0);
+            case "AnyCrsLineString":
+                return getNestedArrayList(coordinates, 1);
+            case "AnyCrsPolygon":
+                return getNestedArrayList(coordinates, 2);
+            case "AnyCrsMultiPoint":
+                return getNestedArrayList(coordinates, 1);
+            case "AnyCrsMultiLineString":
+                return getNestedArrayList(coordinates, 2);
+            case "AnyCrsMultiPolygon":
+                return getNestedArrayList(coordinates, 3);
+            case "AnyCrsGeometryCollection":
+                List geometries = (List) geometry.get("geometries");
+                firstPoint = extractFirstPointFromGeometry((Map) geometries.get(0));
+                break;
+            default:
+                firstPoint = new ArrayList<>();
+        }
+        return (ArrayList<Float>) firstPoint;
+    }
+
+    private ArrayList<Float> getNestedArrayList(ArrayList arr, int level) {
+        ArrayList tmp = arr;
+        for (int i = 0; i < level; ++i) {
+            tmp = (ArrayList<Object>)((ArrayList<Object>) tmp).get(0);
+        }
+        return (ArrayList<Float>) tmp;
     }
 }
