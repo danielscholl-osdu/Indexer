@@ -69,21 +69,19 @@
   "SpatialLocation": {
       "AsIngestedCoordinates": {
           "CoordinateReferenceSystemID": "osdu:reference-data--CoordinateReferenceSystem:BoundProjected:EPSG::29874_EPSG::1852:",
+          "VerticalCoordinateReferenceSystemID": "osdu:reference-data--CoordinateReferenceSystem:Vertical:EPSG::5714:",
+          "VerticalUnitID": "osdu:reference-data--UnitOfMeasure:ft:",
           "features": [
               {
                   "geometry": {
-                    "type": "AnyCrsMultiLineString", 
+                    "type": "AnyCrsPolygon", 
                     "coordinates": [
                         [
-                            [10.0, 10.0],
-                            [20.0, 20.0],
-                            [10.0, 40.0]
-                        ],
-                        [
-                            [40.0, 40.0],
-                            [30.0, 30.0],
-                            [40.0, 20.0],
-                            [30.0, 10.0]
+                            [30.0, 10.0, 60.0],
+                            [40.0, 40.0, 60.0],
+                            [20.0, 40.0, 60.0],
+                            [10.0, 20.0, 60.0],
+                            [30.0, 10.0, 60.0]
                         ]
                     ]
                 },
@@ -101,9 +99,7 @@
           " Geographic ~Pass: Point is inside the BBOX area QC for CRS \"Timbalai 1948 [1852_4298] [EPSG::4298]\". ",
           "Projected ~Pass: Point is inside the BBOX area QC for CRS \"Timbalai 1948 / RSO Sarawak [1852_29874] [EPSG::29874]\"."
       ],
-      "QualitativeSpatialAccuracyTypeID": "osdu:reference-data--QualitativeSpatialAccuracyType:Unchecked:",
-      "VerticalCoordinateReferenceSystemID": "osdu:reference-data--CoordinateReferenceSystem:Vertical:EPSG::5714:",
-      "VerticalUnitID": "osdu:reference-data--UnitOfMeasure:ft:"
+      "QualitativeSpatialAccuracyTypeID": "osdu:reference-data--QualitativeSpatialAccuracyType:Unchecked:"
   },
   "VerticalMeasurements": [
       {

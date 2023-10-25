@@ -22,6 +22,7 @@ import org.opengroup.osdu.indexer.service.mock.RequestInfoMock;
 import org.opengroup.osdu.indexer.service.mock.ServiceAccountJwtClientMock;
 import org.opengroup.osdu.indexer.service.mock.VirtualPropertiesSchemaCacheMock;
 import org.opengroup.osdu.indexer.util.geo.decimator.*;
+import org.opengroup.osdu.indexer.util.geo.extractor.*;
 import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
@@ -44,7 +45,7 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
         BooleanParser.class, DateTimeParser.class, GeoShapeParser.class, DouglasPeuckerReducer.class, GeoShapeDecimator.class,
-        GeometryDecimator.class, GeometryConversionService.class, FeatureFlagCache.class,
+        GeometryDecimator.class, PointExtractor.class, GeometryConversionService.class, FeatureFlagCache.class,
         DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
         ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, RequestInfoMock.class})
 public class StorageIndexerPayloadMapperTest {
@@ -258,9 +259,22 @@ public class StorageIndexerPayloadMapperTest {
 
         IndexSchema indexSchema = loadObject("/converter/index-as-ingested-coordinates/wellStorageSchema.json", IndexSchema.class);
         Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
-        assertEquals(dataCollectorMap, null);
-        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.test"));
-        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.test"), "found");
+
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.X"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.X"), 30.0);
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.Y"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.Y"), 10.0);
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.Z"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.Z"), 60.0);
+
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"));
+        assertNotNull(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"));
+
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.VerticalCoordinateReferenceSystemID"));
+        assertNotNull(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.VerticalCoordinateReferenceSystemID"));
+
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.VerticalUnitID"));
+        assertNotNull(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.VerticalUnitID"));
     }
 
     private <T> T loadObject(String file, Class<T> valueType) {

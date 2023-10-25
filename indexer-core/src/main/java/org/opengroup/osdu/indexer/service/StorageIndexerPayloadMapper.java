@@ -33,6 +33,8 @@ import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimationSetting;
+import org.opengroup.osdu.indexer.util.geo.extractor.PointExtractor;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -45,6 +47,12 @@ public class StorageIndexerPayloadMapper {
     private static final String SPATIAL_LOCATION_WGS84 = "SpatialLocation.Wgs84Coordinates";
     private static final String SPATIAL_AREA_WGS84 = "SpatialArea.Wgs84Coordinates";
     private static final String AS_INGESTED_COORDINATES = "AsIngestedCoordinates";
+    private static final String COORDINATE_REFERENCE_SYSTEM_ID = "CoordinateReferenceSystemID";
+    private static final String VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID = "VerticalCoordinateReferenceSystemID";
+    private static final String VERTICAL_UNIT_ID = "VerticalUnitID";
+    private static final String PERSISTABLE_REFERENCE_CRS = "persistableReferenceCrs";
+    private static final String PERSISTABLE_REFERENCE_VERTICAL_CRS = "persistableReferenceVerticalCrs";
+    private static final String PERSISTABLE_REFERENCE_UNIT_Z = "persistableReferenceUnitZ";
 
     @Inject
     private JaxRsDpsLog log;
@@ -58,6 +66,10 @@ public class StorageIndexerPayloadMapper {
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
     private GeoShapeDecimator decimator;
+    @Inject
+    private GeoShapeDecimationSetting decimationSetting;
+    @Inject
+    private PointExtractor pointExtractor;
 
     public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {
@@ -71,7 +83,7 @@ public class StorageIndexerPayloadMapper {
 
         mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
         mapVirtualPropertiesPayload(storageSchema, recordId, dataCollectorMap);
-        mapAsIngestedCoordinatesPayload(storageRecordData, dataCollectorMap);
+        mapAsIngestedCoordinatesPayload(recordId, storageRecordData, dataCollectorMap);
 
         return dataCollectorMap;
     }
@@ -307,74 +319,54 @@ public class StorageIndexerPayloadMapper {
         return priorities.get(0);
     }
 
-    private void mapAsIngestedCoordinatesPayload(Map<String, Object> storageRecordData, Map<String, Object> dataCollectorMap) {
-        findAsIngestedCoordinates(storageRecordData, dataCollectorMap, "");
+    private void mapAsIngestedCoordinatesPayload(String recordId, Map<String, Object> storageRecordData, Map<String, Object> dataCollectorMap) {
+        ArrayList<String> asIngestedCoordinatesPaths = findAsIngestedCoordinatesPaths(storageRecordData, dataCollectorMap, "");
+        for (String path : asIngestedCoordinatesPaths) {
+            mapFirstPointFromAsIngestedFeatureCollection(recordId, storageRecordData, path, dataCollectorMap);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + COORDINATE_REFERENCE_SYSTEM_ID);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + VERTICAL_UNIT_ID);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + PERSISTABLE_REFERENCE_CRS);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + PERSISTABLE_REFERENCE_VERTICAL_CRS);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + PERSISTABLE_REFERENCE_UNIT_Z);
+        }
     }
 
-    private void findAsIngestedCoordinates(Map<String, Object> dataMap, Map<String, Object> dataCollectorMap, String path) {
+    private ArrayList<String> findAsIngestedCoordinatesPaths(Map<String, Object> dataMap, Map<String, Object> dataCollectorMap, String path) {
+        ArrayList<String> paths = new ArrayList<>();
         for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
-            if (entry.getValue() instanceof Map) {
-                Map inner = (Map) entry.getValue();
-                findAsIngestedCoordinates(inner, dataCollectorMap, path + entry.getKey() + ".");
-            }
             if (entry.getKey().equals(AS_INGESTED_COORDINATES)) {
-                ArrayList<Float> firstPoint = (ArrayList<Float>) extractFirstPoint((Map) entry.getValue()); 
-                dataCollectorMap.put(path + entry.getKey() + ".FirstPoint.X", firstPoint.get(0));
-                dataCollectorMap.put(path + entry.getKey() + ".FirstPoint.Y", firstPoint.get(1));
-                if (firstPoint.size() == 3) {
-                    dataCollectorMap.put(path + entry.getKey() + ".FirstPoint.Z", firstPoint.get(2));
-                }
+                paths.add(path + entry.getKey());
                 break;
+            } else if (entry.getValue() instanceof Map) {
+                Map nested = (Map) entry.getValue();
+                paths.addAll(findAsIngestedCoordinatesPaths(nested, dataCollectorMap, path + entry.getKey() + "."));
             }
         }
+        return paths;
     }
 
-    private ArrayList<Float> extractFirstPoint(Map<String, Object> asIngestedCoordinatesMap) {
-        if (!asIngestedCoordinatesMap.containsKey("features")) {
-            return new ArrayList<>();
+    private void mapFirstPointFromAsIngestedFeatureCollection(String recordId, Map<String, Object> storageRecordData, String path, Map<String, Object> dataCollectorMap) {
+        Map<String, Object> asIngestedCoordinates = (Map) getPropertyValue(recordId, storageRecordData, path);
+        ArrayList<Double> firstPoint = pointExtractor.extractFirstPointFromFeatureCollection(asIngestedCoordinates);
+        if (!firstPoint.isEmpty()) {
+            dataCollectorMap.put(path + ".FirstPoint.X", firstPoint.get(0));
+            dataCollectorMap.put(path + ".FirstPoint.Y", firstPoint.get(1));
+            if (firstPoint.size() == 3) {
+                dataCollectorMap.put(path + ".FirstPoint.Z", firstPoint.get(2));
+            }
+        } else {
+            this.jobStatus
+                    .addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST,
+                            String.format("record-id: %s | %s", recordId, "Could not extract first point from as ingested feature collection"));
         }
-        List features = (List) asIngestedCoordinatesMap.get("features");
-        if (features.isEmpty()) {
-            return new ArrayList<>();
-        }
-        Map firstFeature = (Map) features.get(0);
-        Map geometry = (Map) firstFeature.get("geometry");
-        return extractFirstPointFromGeometry(geometry);
     }
 
-    private ArrayList<Float> extractFirstPointFromGeometry(Map<String, Object> geometry) {
-
-        Object firstPoint;
-        String type = (String) geometry.get("type");
-        ArrayList coordinates = (ArrayList<Object>) geometry.get("coordinates");
-        switch (type) {
-            case "AnyCrsPoint":
-                return getNestedArrayList(coordinates, 0);
-            case "AnyCrsLineString":
-                return getNestedArrayList(coordinates, 1);
-            case "AnyCrsPolygon":
-                return getNestedArrayList(coordinates, 2);
-            case "AnyCrsMultiPoint":
-                return getNestedArrayList(coordinates, 1);
-            case "AnyCrsMultiLineString":
-                return getNestedArrayList(coordinates, 2);
-            case "AnyCrsMultiPolygon":
-                return getNestedArrayList(coordinates, 3);
-            case "AnyCrsGeometryCollection":
-                List geometries = (List) geometry.get("geometries");
-                firstPoint = extractFirstPointFromGeometry((Map) geometries.get(0));
-                break;
-            default:
-                firstPoint = new ArrayList<>();
+    private void mapPropertyString(String recordId, Map<String, Object> storageRecordData, Map<String, Object> dataCollectorMap, String propertyKey) {
+        String value = (String) getPropertyValue(recordId, storageRecordData, propertyKey);
+        if (value != null) {
+            dataCollectorMap.put(propertyKey, value);
         }
-        return (ArrayList<Float>) firstPoint;
     }
 
-    private ArrayList<Float> getNestedArrayList(ArrayList arr, int level) {
-        ArrayList tmp = arr;
-        for (int i = 0; i < level; ++i) {
-            tmp = (ArrayList<Object>)((ArrayList<Object>) tmp).get(0);
-        }
-        return (ArrayList<Float>) tmp;
-    }
 }
