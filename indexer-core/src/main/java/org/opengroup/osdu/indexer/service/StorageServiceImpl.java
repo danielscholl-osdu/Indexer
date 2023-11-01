@@ -147,8 +147,9 @@ public class StorageServiceImpl implements StorageService {
         }
         try {
             Records records = this.objectMapper.readValue(response.getBody(), Records.class);
-            ids.removeAll(records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList()));
-            records.setNotFound(ids);
+            List<String> notFoundRecordIds = new ArrayList<>(ids);
+            notFoundRecordIds.removeAll(records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList()));
+            records.setNotFound(notFoundRecordIds);
             return records;
         } catch (JsonProcessingException e) {
             throw new AppException(RequestStatus.INVALID_RECORD, "Invalid request", "Successful Storage service response with wrong json", e);
