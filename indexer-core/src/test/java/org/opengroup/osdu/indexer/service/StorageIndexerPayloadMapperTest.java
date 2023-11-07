@@ -287,6 +287,63 @@ public class StorageIndexerPayloadMapperTest {
         assertNotNull(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.VerticalUnitID"));
     }
 
+    @Test
+    public void mapDataPayloadTestAsIngestedCoordinatesGeographicBottomHoleLocationAndSpatialLocation() {
+        Map<String, Object> storageRecordData = new HashMap<>();
+        storageRecordData = loadObject("/converter/index-virtual-properties/storageRecordData.json", storageRecordData.getClass());
+
+        IndexSchema indexSchema = loadObject("/converter/index-virtual-properties/storageSchema.json", IndexSchema.class);
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
+
+        assertTrue(dataCollectorMap.containsKey("GeographicBottomHoleLocation.AsIngestedCoordinates.FirstPoint.X"));
+        assertEquals(dataCollectorMap.get("GeographicBottomHoleLocation.AsIngestedCoordinates.FirstPoint.X"), 2504888.13869565);
+        assertTrue(dataCollectorMap.containsKey("GeographicBottomHoleLocation.AsIngestedCoordinates.FirstPoint.Y"));
+        assertEquals(dataCollectorMap.get("GeographicBottomHoleLocation.AsIngestedCoordinates.FirstPoint.Y"), -3525752.63921785);
+        assertTrue(dataCollectorMap.containsKey("GeographicBottomHoleLocation.AsIngestedCoordinates.FirstPoint.Z"));
+        assertEquals(dataCollectorMap.get("GeographicBottomHoleLocation.AsIngestedCoordinates.FirstPoint.Z"), 13.0);
+
+        assertTrue(dataCollectorMap.containsKey("GeographicBottomHoleLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"));
+        assertNotNull(dataCollectorMap.get("GeographicBottomHoleLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"));
+
+        assertFalse(dataCollectorMap.containsKey("GeographicBottomHoleLocation.AsIngestedCoordinates.VerticalCoordinateReferenceSystemID"));
+        assertNull(dataCollectorMap.get("GeographicBottomHoleLocation.AsIngestedCoordinates.VerticalCoordinateReferenceSystemID"));
+
+        assertFalse(dataCollectorMap.containsKey("GeographicBottomHoleLocation.AsIngestedCoordinates.VerticalUnitID"));
+        assertNull(dataCollectorMap.get("GeographicBottomHoleLocation.AsIngestedCoordinates.VerticalUnitID"));
+
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.X"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.X"), 2504888.13869565);
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.Y"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.Y"), -3525752.63921785);
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.Z"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.Z"), 13.0);
+
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"));
+        assertNotNull(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"));
+
+        assertFalse(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.VerticalCoordinateReferenceSystemID"));
+        assertNull(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.VerticalCoordinateReferenceSystemID"));
+
+        assertFalse(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.VerticalUnitID"));
+        assertNull(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.VerticalUnitID"));
+    }
+
+    @Test
+    public void mapDataPayloadTestAsIngestedCoordinatesWithEmptyZCoordinate() {
+        Map<String, Object> storageRecordData = new HashMap<>();
+        storageRecordData = loadObject("/converter/index-as-ingested-coordinates/wellStorageRecordData-v2.json", storageRecordData.getClass());
+
+        IndexSchema indexSchema = loadObject("/converter/index-as-ingested-coordinates/wellStorageSchema.json", IndexSchema.class);
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
+
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.X"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.X"), 30.0);
+        assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.Y"));
+        assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.Y"), 10.0);
+        assertFalse(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.Z"));
+        assertNull(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.Z"));
+    }
+
     private <T> T loadObject(String file, Class<T> valueType) {
         String jsonString = readResourceFile(file);
         return this.gson.fromJson(jsonString, valueType);
