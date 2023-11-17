@@ -33,7 +33,6 @@ import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
-import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimationSetting;
 import org.opengroup.osdu.indexer.util.geo.extractor.PointExtractor;
 import org.springframework.stereotype.Component;
 
@@ -60,8 +59,6 @@ public class StorageIndexerPayloadMapper {
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
     private GeoShapeDecimator decimator;
-    @Inject
-    private GeoShapeDecimationSetting decimationSetting;
     @Inject
     private PointExtractor pointExtractor;
 
