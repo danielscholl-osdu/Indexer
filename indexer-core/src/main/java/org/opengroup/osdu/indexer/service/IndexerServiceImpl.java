@@ -78,6 +78,7 @@ public class IndexerServiceImpl implements IndexerService {
 
     // we index a normalized kind (authority + source + entity type + major version) as a tags attribute for all records
     private static String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
+    private static final String VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID = "VerticalCoordinateReferenceSystemID";
 
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
@@ -312,11 +313,14 @@ public class IndexerServiceImpl implements IndexerService {
                 continue;
             }
 
+            ArrayList<String> asIngestedCoordinatesPaths = findAsIngestedCoordinatesPaths(storageRecord.getData(), "");
             IndexSchema schema = kindSchemaMap.get(storageRecord.getKind());
+            // enrich schema with AsIngestedCoordinates properties
+            addAsIngestedCoordinatesFieldsToSchema(schema, storageRecord, asIngestedCoordinatesPaths);
             schemas.add(schema);
 
             // skip indexing of records if data block is empty
-            RecordIndexerPayload.Record document = prepareIndexerPayload(schema, storageRecord, idOperationMap);
+            RecordIndexerPayload.Record document = prepareIndexerPayload(schema, storageRecord, idOperationMap, asIngestedCoordinatesPaths);
             if (document != null) {
                 indexerPayload.add(document);
             }
@@ -330,7 +334,50 @@ public class IndexerServiceImpl implements IndexerService {
         return RecordIndexerPayload.builder().records(indexerPayload).schemas(schemas).build();
     }
 
-    private RecordIndexerPayload.Record prepareIndexerPayload(IndexSchema schemaObj, Records.Entity storageRecord, Map<String, OperationType> idToOperationMap) {
+    private ArrayList<String> findAsIngestedCoordinatesPaths(Map<String, Object> dataMap, String path) {
+        ArrayList<String> paths = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
+            if (entry.getKey().equals(Constants.AS_INGESTED_COORDINATES)) {
+                paths.add(path + entry.getKey());
+                break;
+            } else if (entry.getValue() instanceof Map) {
+                Map nested = (Map) entry.getValue();
+                paths.addAll(findAsIngestedCoordinatesPaths(nested, path + entry.getKey() + "."));
+            }
+        }
+        return paths;
+    }
+
+    private void addAsIngestedCoordinatesFieldsToSchema(IndexSchema schemaObj, Records.Entity storageRecord, ArrayList<String> asIngestedCoordinatesPaths) {
+        Map<String, Object> storageRecordData = storageRecord.getData();
+        String recordId = storageRecord.getId();
+        Map<String, String> asIngestedProperties = new HashMap<>();
+
+        for (String path : asIngestedCoordinatesPaths) {
+            addAsIngestedProperty(false, recordId, storageRecordData, asIngestedProperties, path + "." + "FirstPoint.X", "long");
+            addAsIngestedProperty(false, recordId, storageRecordData, asIngestedProperties, path + "." + "FirstPoint.Y", "long");
+            addAsIngestedProperty(false, recordId, storageRecordData, asIngestedProperties, path + "." + "FirstPoint.Z", "long");
+            addAsIngestedProperty(true, recordId, storageRecordData, asIngestedProperties, path + "." + Constants.COORDINATE_REFERENCE_SYSTEM_ID, "text");
+            addAsIngestedProperty(true, recordId, storageRecordData, asIngestedProperties, path + "." + VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID, "text");
+            addAsIngestedProperty(true, recordId, storageRecordData, asIngestedProperties, path + "." + Constants.VERTICAL_UNIT_ID, "text");
+        }
+        schemaObj.getDataSchema().putAll(asIngestedProperties);
+    }
+
+    private void addAsIngestedProperty(boolean checkIfFieldExists, String recordId, Map<String, Object> storageRecordData, Map<String, String> asIngestedProperties, String propertyKey, String propertyType) {
+        if (checkIfFieldExists && !checkPropertyExists(recordId, storageRecordData, propertyKey)) return;
+        asIngestedProperties.put(propertyKey, propertyType);
+    }
+
+    private boolean checkPropertyExists(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
+        Object propertyValue = this.storageIndexerPayloadMapper.getPropertyValue(recordId, storageRecordData, propertyKey);
+        if (propertyValue != null) {
+            return true;
+        }
+        return false;
+    }
+
+    private RecordIndexerPayload.Record prepareIndexerPayload(IndexSchema schemaObj, Records.Entity storageRecord, Map<String, OperationType> idToOperationMap, ArrayList<String> asIngestedCoordinatesPaths) {
 
         RecordIndexerPayload.Record document = null;
         
@@ -343,7 +390,7 @@ public class IndexerServiceImpl implements IndexerService {
             } else if (schemaObj.isDataSchemaMissing()) {
                 document.setSchemaMissing(true);
             } else {
-                Map<String, Object> dataMap = this.storageIndexerPayloadMapper.mapDataPayload(schemaObj, storageRecordData, storageRecord.getId());
+                Map<String, Object> dataMap = this.storageIndexerPayloadMapper.mapDataPayload(asIngestedCoordinatesPaths, schemaObj, storageRecordData, storageRecord.getId());
                 if (dataMap.isEmpty()) {
                     document.setMappingMismatch(true);
                     String message = String.format("complete schema mismatch: none of the data attribute can be mapped | data: %s", storageRecordData);

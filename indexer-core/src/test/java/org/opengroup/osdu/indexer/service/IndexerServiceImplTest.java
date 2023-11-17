@@ -284,7 +284,7 @@ public class IndexerServiceImplTest {
 
         Map<String, Object> indexerMappedPayload = new HashMap<>();
         indexerMappedPayload.put("id", "keyword");
-        when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any())).thenReturn(indexerMappedPayload);
+        when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any(), any())).thenReturn(indexerMappedPayload);
 
         BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(), prepareSuccessfulResponse(), prepare400Response()};
         when(this.bulkResponse.getItems()).thenReturn(responses);

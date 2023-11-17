@@ -35,6 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +67,8 @@ public class StorageIndexerPayloadMapperTest {
     public static final String FIRST_FLATTENED_TEST_VALUE = "first-flattened-test-value";
     public static final String SECOND_FLATTENED_TEST_VALUE = "second-flattened-test-value";
     public static final String RECORD_TEST_ID = "test-id";
+
+    private static final ArrayList<String> emptyAsIngestedCoordinatesPaths = new ArrayList<>();
 
     private static IndexSchema indexSchema;
     private static Map<String, Object> storageRecordData;
@@ -118,7 +121,7 @@ public class StorageIndexerPayloadMapperTest {
 
     @Test
     public void mapDataPayloadTestNested() {
-        Map<String, Object> stringObjectMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData,
+        Map<String, Object> stringObjectMap = payloadMapper.mapDataPayload(emptyAsIngestedCoordinatesPaths, indexSchema, storageRecordData,
                 RECORD_TEST_ID);
         Object nestedProperty = stringObjectMap.get(NESTED_PROPERTY);
 
@@ -136,7 +139,7 @@ public class StorageIndexerPayloadMapperTest {
 
     @Test
     public void mapDataPayloadTestFlattened() {
-        Map<String, Object> stringObjectMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData,
+        Map<String, Object> stringObjectMap = payloadMapper.mapDataPayload(emptyAsIngestedCoordinatesPaths, indexSchema, storageRecordData,
                 RECORD_TEST_ID);
         Object objectProperty = stringObjectMap.get(FLATTENED_PROPERTY);
 
@@ -150,7 +153,7 @@ public class StorageIndexerPayloadMapperTest {
 
     @Test
     public void mapDataPayloadTestObject() {
-        Map<String, Object> stringObjectMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData,
+        Map<String, Object> stringObjectMap = payloadMapper.mapDataPayload(emptyAsIngestedCoordinatesPaths, indexSchema, storageRecordData,
                 RECORD_TEST_ID);
         Object objectProperty = stringObjectMap.get(OBJECT_PROPERTY);
 
@@ -175,7 +178,7 @@ public class StorageIndexerPayloadMapperTest {
         assertFalse(storageRecordData.containsKey("VirtualProperties.DefaultName"));
 
         IndexSchema indexSchema = loadObject("/converter/index-virtual-properties/storageSchema.json", IndexSchema.class);
-        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(emptyAsIngestedCoordinatesPaths, indexSchema, storageRecordData, RECORD_TEST_ID);
         assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
         assertNotNull(dataCollectorMap.get("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
         assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultName"));
@@ -196,7 +199,7 @@ public class StorageIndexerPayloadMapperTest {
         assertFalse(storageRecordData.containsKey("VirtualProperties.DefaultName"));
 
         IndexSchema indexSchema = loadObject("/converter/index-virtual-properties/storageSchema.json", IndexSchema.class);
-        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(emptyAsIngestedCoordinatesPaths, indexSchema, storageRecordData, RECORD_TEST_ID);
         assertFalse(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
         assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultName"));
         assertNull(dataCollectorMap.get("VirtualProperties.DefaultName"));
@@ -213,7 +216,7 @@ public class StorageIndexerPayloadMapperTest {
         Map<String, Object> storageRecordData = new HashMap<>();
         storageRecordData = loadObject("/converter/index-virtual-properties/survey_storage_data.json", storageRecordData.getClass());
 
-        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, record_id);
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(emptyAsIngestedCoordinatesPaths, indexSchema, storageRecordData, record_id);
         assertTrue(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
         assertTrue(dataCollectorMap.containsKey("SpatialLocation.Wgs84Coordinates"));
 
@@ -233,7 +236,7 @@ public class StorageIndexerPayloadMapperTest {
         Map<String, Object> storageRecordData = new HashMap<>();
         storageRecordData = loadObject("/converter/index-virtual-properties/survey_storage_data.json", storageRecordData.getClass());
 
-        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, record_id);
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(emptyAsIngestedCoordinatesPaths, indexSchema, storageRecordData, record_id);
         assertFalse(dataCollectorMap.containsKey("VirtualProperties.DefaultLocation.Wgs84Coordinates"));
         assertTrue(dataCollectorMap.containsKey("SpatialLocation.Wgs84Coordinates"));
 
@@ -252,13 +255,20 @@ public class StorageIndexerPayloadMapperTest {
 
     @Test
     public void mapDataPayloadTestAsIngestedCoordinates() {
-        final String kind = "osdu:wks:master-data--Well:1.2.0";
-
+        ArrayList<String> asIngestedCoordinatesPaths = new ArrayList<>(Arrays.asList("SpatialLocation.AsIngestedCoordinates"));
         Map<String, Object> storageRecordData = new HashMap<>();
+
         storageRecordData = loadObject("/converter/index-as-ingested-coordinates/wellStorageRecordData.json", storageRecordData.getClass());
 
         IndexSchema indexSchema = loadObject("/converter/index-as-ingested-coordinates/wellStorageSchema.json", IndexSchema.class);
-        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(indexSchema, storageRecordData, RECORD_TEST_ID);
+        indexSchema.getDataSchema().put("SpatialLocation.AsIngestedCoordinates.FirstPoint.X", "long");
+        indexSchema.getDataSchema().put("SpatialLocation.AsIngestedCoordinates.FirstPoint.Y", "long");
+        indexSchema.getDataSchema().put("SpatialLocation.AsIngestedCoordinates.FirstPoint.Z", "long");
+        indexSchema.getDataSchema().put("SpatialLocation.AsIngestedCoordinates.CoordinateReferenceSystemID", "text");
+        indexSchema.getDataSchema().put("SpatialLocation.AsIngestedCoordinates.VerticalCoordinateReferenceSystemID", "text");
+        indexSchema.getDataSchema().put("SpatialLocation.AsIngestedCoordinates.VerticalUnitID", "text");
+
+        Map<String, Object> dataCollectorMap = payloadMapper.mapDataPayload(asIngestedCoordinatesPaths, indexSchema, storageRecordData, RECORD_TEST_ID);
 
         assertTrue(dataCollectorMap.containsKey("SpatialLocation.AsIngestedCoordinates.FirstPoint.X"));
         assertEquals(dataCollectorMap.get("SpatialLocation.AsIngestedCoordinates.FirstPoint.X"), 30.0);

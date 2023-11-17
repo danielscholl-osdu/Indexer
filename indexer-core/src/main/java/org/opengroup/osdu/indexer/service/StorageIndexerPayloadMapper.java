@@ -46,13 +46,7 @@ import java.util.stream.Collectors;
 public class StorageIndexerPayloadMapper {
     private static final String SPATIAL_LOCATION_WGS84 = "SpatialLocation.Wgs84Coordinates";
     private static final String SPATIAL_AREA_WGS84 = "SpatialArea.Wgs84Coordinates";
-    private static final String AS_INGESTED_COORDINATES = "AsIngestedCoordinates";
-    private static final String COORDINATE_REFERENCE_SYSTEM_ID = "CoordinateReferenceSystemID";
-    private static final String VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID = "VerticalCoordinateReferenceSystemID";
-    private static final String VERTICAL_UNIT_ID = "VerticalUnitID";
-    private static final String PERSISTABLE_REFERENCE_CRS = "persistableReferenceCrs";
     private static final String PERSISTABLE_REFERENCE_VERTICAL_CRS = "persistableReferenceVerticalCrs";
-    private static final String PERSISTABLE_REFERENCE_UNIT_Z = "persistableReferenceUnitZ";
 
     @Inject
     private JaxRsDpsLog log;
@@ -71,7 +65,7 @@ public class StorageIndexerPayloadMapper {
     @Inject
     private PointExtractor pointExtractor;
 
-    public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
+    public Map<String, Object> mapDataPayload(ArrayList<String> asIngestedCoordinatesPaths, IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {
 
         Map<String, Object> dataCollectorMap = new HashMap<>();
@@ -83,7 +77,7 @@ public class StorageIndexerPayloadMapper {
 
         mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
         mapVirtualPropertiesPayload(storageSchema, recordId, dataCollectorMap);
-        mapAsIngestedCoordinatesPayload(recordId, storageRecordData, dataCollectorMap);
+        mapAsIngestedCoordinatesPayload(recordId, asIngestedCoordinatesPaths, storageRecordData, dataCollectorMap);
 
         return dataCollectorMap;
     }
@@ -198,7 +192,7 @@ public class StorageIndexerPayloadMapper {
         return elasticType;
     }
 
-    private Object getPropertyValue(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
+    public Object getPropertyValue(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
 
         try {
             // try getting first level property using optimized collection
@@ -319,31 +313,13 @@ public class StorageIndexerPayloadMapper {
         return priorities.get(0);
     }
 
-    private void mapAsIngestedCoordinatesPayload(String recordId, Map<String, Object> storageRecordData, Map<String, Object> dataCollectorMap) {
-        ArrayList<String> asIngestedCoordinatesPaths = findAsIngestedCoordinatesPaths(storageRecordData, dataCollectorMap, "");
+    private void mapAsIngestedCoordinatesPayload(String recordId, ArrayList<String> asIngestedCoordinatesPaths, Map<String, Object> storageRecordData, Map<String, Object> dataCollectorMap) {
         for (String path : asIngestedCoordinatesPaths) {
             mapFirstPointFromAsIngestedFeatureCollection(recordId, storageRecordData, path, dataCollectorMap);
-            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + COORDINATE_REFERENCE_SYSTEM_ID);
-            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID);
-            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + VERTICAL_UNIT_ID);
-            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + PERSISTABLE_REFERENCE_CRS);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + Constants.PERSISTABLE_REFERENCE_CRS);
             mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + PERSISTABLE_REFERENCE_VERTICAL_CRS);
-            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + PERSISTABLE_REFERENCE_UNIT_Z);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + Constants.PERSISTABLE_REFERENCE_UNIT_Z);
         }
-    }
-
-    private ArrayList<String> findAsIngestedCoordinatesPaths(Map<String, Object> dataMap, Map<String, Object> dataCollectorMap, String path) {
-        ArrayList<String> paths = new ArrayList<>();
-        for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
-            if (entry.getKey().equals(AS_INGESTED_COORDINATES)) {
-                paths.add(path + entry.getKey());
-                break;
-            } else if (entry.getValue() instanceof Map) {
-                Map nested = (Map) entry.getValue();
-                paths.addAll(findAsIngestedCoordinatesPaths(nested, dataCollectorMap, path + entry.getKey() + "."));
-            }
-        }
-        return paths;
     }
 
     private void mapFirstPointFromAsIngestedFeatureCollection(String recordId, Map<String, Object> storageRecordData, String path, Map<String, Object> dataCollectorMap) {
