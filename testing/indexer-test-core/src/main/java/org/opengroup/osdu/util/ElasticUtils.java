@@ -315,6 +315,21 @@ public class ElasticUtils {
         }
     }
 
+    public long fetchRecordsByAsIngestedCoordinates(String index, String pointX, Double topPointX, Double bottomPointX, String pointY, Double topPointY, Double bottomPointY) throws Exception {
+        try (RestHighLevelClient client = this.createClient(username, password, host)) {
+            SearchRequest searchRequest = new SearchRequest(index);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(boolQuery().must(rangeQuery(pointX).lte(topPointX).gte(bottomPointX)).must(rangeQuery(pointY).lte(topPointY).gte(bottomPointY)));
+            searchRequest.source(searchSourceBuilder);
+
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            return searchResponse.getHits().getTotalHits().value;
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        }
+    }
+
     public long fetchRecordsByNestedQuery(String index, String path, String firstNestedField, String firstNestedValue, String secondNestedField, String secondNestedValue) throws Exception{
         try (RestHighLevelClient client = this.createClient(username, password, host)) {
             SearchRequest searchRequest = new SearchRequest(index);

@@ -9,9 +9,9 @@ import java.util.Map;
 public class RecordData {
 
     @JsonProperty("data")
-    private Map<String, List<Map<String,Object>>> data;
+    private Map<String, Object> data;
 
-    public Map<String, List<Map<String, Object>>> getData() {
+    public Map<String, Object> getData() {
         return data;
     }
 
