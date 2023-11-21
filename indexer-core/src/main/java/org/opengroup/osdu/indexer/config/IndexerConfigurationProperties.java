@@ -14,7 +14,8 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 public class IndexerConfigurationProperties {
 	public static final String KEYWORD_LOWER_FEATURE_NAME = "featureFlag.keywordLower.enabled";
-
+	public static final String BAG_OF_WORDS_FEATURE_NAME = "featureFlag.bagOfWords.enabled";
+	
 	//Search query properties
 	private Integer queryDefaultLimit = 10;
 	private Integer queryLimitMaximum = 1000;

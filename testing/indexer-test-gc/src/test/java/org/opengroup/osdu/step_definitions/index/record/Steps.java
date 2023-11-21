@@ -124,4 +124,9 @@ public class Steps extends SchemaServiceRecordSteps {
         String actualName = generateActualName(index, null);
         super.i_should_get_object_in_search_response_without_hints_in_schema(objectInnerField ,actualName, recordFile, acl, kind);
     }
+
+    @Then("^I reindex records of  \"([^\"]*)\"$")
+    public void iReindexKind(String kind) throws Throwable {
+        super.iReindexKind(kind);
+    }
 }

@@ -17,8 +17,8 @@ public class TypeMapperTest {
 
     @Test
     public void getIndexerTypeTest() {
-        assertEquals(ElasticType.KEYWORD.getValue(), TypeMapper.getIndexerType(StorageType.LINK.getValue(), ElasticType.TEXT.getValue()));
-        assertEquals(ElasticType.KEYWORD_ARRAY.getValue(), TypeMapper.getIndexerType(StorageType.LINK_ARRAY.getValue(), ElasticType.TEXT.getValue()));
+        assertEquals("link", TypeMapper.getIndexerType(StorageType.LINK.getValue(), ElasticType.TEXT.getValue()));
+        assertEquals("link", TypeMapper.getIndexerType(StorageType.LINK_ARRAY.getValue(), ElasticType.TEXT.getValue()));
         assertEquals(ElasticType.BOOLEAN.getValue(), TypeMapper.getIndexerType(StorageType.BOOLEAN.getValue(), ElasticType.TEXT.getValue()));
         assertEquals(ElasticType.TEXT.getValue(), TypeMapper.getIndexerType(StorageType.STRING.getValue(), ElasticType.TEXT.getValue()));
         assertEquals(ElasticType.INTEGER.getValue(), TypeMapper.getIndexerType(StorageType.INT.getValue(), ElasticType.TEXT.getValue()));

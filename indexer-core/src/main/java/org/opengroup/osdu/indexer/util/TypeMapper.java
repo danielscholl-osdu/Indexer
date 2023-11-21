@@ -24,6 +24,10 @@ import org.opengroup.osdu.core.common.model.indexer.StorageType;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +35,7 @@ import java.util.Map;
 
 public class TypeMapper {
 
-    private static final Map<String, String> storageToIndexerType = new HashMap<>();
+    private static final Map<String, Object> storageToIndexerType = new HashMap<>();
 
     private static final Map<String, Object> metaAttributeIndexerType = new HashMap<>();
 
@@ -40,6 +44,10 @@ public class TypeMapper {
     private static final String STORAGE_TYPE_NESTED = "nested";
 
     private static final String STORAGE_TYPE_FLATTENED = "flattened";
+
+    private static final String BAG_OF_WORDS = "bagOfWords";
+
+    private static final String LINK_TYPE = "link";
 
     static {
 
@@ -60,9 +68,10 @@ public class TypeMapper {
         metaAttributeIndexerType.put(RecordMetaAttribute.MODIFY_USER.getValue(), ElasticType.KEYWORD.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.CREATE_TIME.getValue(), ElasticType.DATE.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.MODIFY_TIME.getValue(), ElasticType.DATE.getValue());
+        metaAttributeIndexerType.put(RecordMetaAttribute.BAG_OF_WORDS.getValue(), getBagOfWordsMapping());
 
-        storageToIndexerType.put(StorageType.LINK.getValue(), ElasticType.KEYWORD.getValue());
-        storageToIndexerType.put(StorageType.LINK_ARRAY.getValue(), ElasticType.KEYWORD_ARRAY.getValue());
+        storageToIndexerType.put(StorageType.LINK.getValue(), LINK_TYPE);
+        storageToIndexerType.put(StorageType.LINK_ARRAY.getValue(), LINK_TYPE);
         storageToIndexerType.put(StorageType.BOOLEAN.getValue(), ElasticType.BOOLEAN.getValue());
         storageToIndexerType.put(StorageType.BOOLEAN_ARRAY.getValue(), ElasticType.BOOLEAN_ARRAY.getValue());
         storageToIndexerType.put(StorageType.STRING.getValue(), ElasticType.TEXT.getValue());
@@ -86,7 +95,7 @@ public class TypeMapper {
         storageToIndexerType.put(STORAGE_TYPE_FLATTENED, ElasticType.FLATTENED.getValue());
     }
 
-    public static String getIndexerType(String storageType, String defaultType) {
+    public static Object getIndexerType(String storageType, String defaultType) {
         return storageToIndexerType.getOrDefault(storageType, defaultType);
     }
 
@@ -106,7 +115,8 @@ public class TypeMapper {
 
     public static Object getMetaAttributeIndexerMapping(String key, String value) {
         if (key.equals(RecordMetaAttribute.ACL.getValue())
-                || key.equals(RecordMetaAttribute.LEGAL.getValue()) || key.equals(RecordMetaAttribute.ANCESTRY.getValue()) || key.equals(RecordMetaAttribute.INDEX_STATUS.getValue())) {
+                || key.equals(RecordMetaAttribute.LEGAL.getValue()) || key.equals(RecordMetaAttribute.ANCESTRY.getValue())
+                || key.equals(RecordMetaAttribute.INDEX_STATUS.getValue()) || key.equals(RecordMetaAttribute.BAG_OF_WORDS.getValue())) {
             return metaAttributeIndexerType.get(key);
         } else if (key.equals(RecordMetaAttribute.AUTHORITY.getValue()) || key.equals(RecordMetaAttribute.SOURCE.getValue())) {
             return getConstantIndexerType(key, value);
@@ -114,15 +124,22 @@ public class TypeMapper {
         return Records.Type.builder().type(metaAttributeIndexerType.get(key).toString()).build();
     }
 
-    public static Object getDataAttributeIndexerMapping(Object indexerType, Boolean keywordLowerEnabled) {
+    public static Object getDataAttributeIndexerMapping(Object indexerType, Boolean keywordLowerEnabled, Boolean bagOfWordsEnabled) {
         if (ElasticType.TEXT.getValue().equalsIgnoreCase(indexerType.toString())) {
-            return getTextIndexerMapping(keywordLowerEnabled);
+            return getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled);
+        }
+
+        if (LINK_TYPE.equalsIgnoreCase(indexerType.toString())) {
+            return getLinkIndexerMapping(bagOfWordsEnabled);
         }
 
         if (isArray(indexerType.toString())) {
             String memberType = getArrayMemberType(indexerType.toString());
             if (ElasticType.TEXT.getValue().equalsIgnoreCase(memberType)) {
-                return getTextIndexerMapping(keywordLowerEnabled);
+                return getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled);
+            }
+            if (ElasticType.KEYWORD.getValue().equalsIgnoreCase(memberType)) {
+                return getLinkIndexerMapping(bagOfWordsEnabled);
             }
             return Records.Type.builder().type(memberType).build();
         }
@@ -132,9 +149,11 @@ public class TypeMapper {
             Map<String, Object> propertiesMap = (Map<String, Object>) type.get(Constants.PROPERTIES);
             for (Map.Entry<String, Object> entry : propertiesMap.entrySet()) {
                 if (isMap(entry.getValue())) {
-                    entry.setValue(getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled));
+                    entry.setValue(getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled, bagOfWordsEnabled));
                 } else if (ElasticType.TEXT.getValue().equalsIgnoreCase(String.valueOf(entry.getValue()))) {
-                    entry.setValue(getTextIndexerMapping(keywordLowerEnabled));
+                    entry.setValue(getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled));
+                } else if (LINK_TYPE.equalsIgnoreCase(String.valueOf(entry.getValue()))) {
+                    entry.setValue(getLinkIndexerMapping(bagOfWordsEnabled));
                 } else if (isArray(String.valueOf(entry.getValue()))) {
                     entry.setValue(Records.Type.builder().type(getArrayMemberType(String.valueOf(entry.getValue()))).build());
                 } else {
@@ -211,7 +230,7 @@ public class TypeMapper {
         return indexStatusProperties;
     }
 
-    private static Object getTextIndexerMapping(Boolean keywordLowerEnabled) {
+    private static Object getTextIndexerMapping(Boolean keywordLowerEnabled, Boolean bagOfWordsEnabled) {
         Map<String, Object> keywordMap = getKeywordMap();
         Map<String, Object> keywordLowerMap = getKeywordLowerMap();
         Map<String, Object> fieldIndexTypeMap = new HashMap<>();
@@ -222,6 +241,18 @@ public class TypeMapper {
         Map<String, Object> textMap = new HashMap<>();
         textMap.put("type", "text");
         textMap.put("fields", fieldIndexTypeMap);
+        if (bagOfWordsEnabled) {
+            textMap.put("copy_to", BAG_OF_WORDS);
+        }
+        return textMap;
+    }
+
+    private static Object getLinkIndexerMapping(Boolean bagOfWordsEnabled) {
+        Map<String, Object> textMap = new HashMap<>();
+        textMap.put("type", "keyword");
+        if (bagOfWordsEnabled) {
+            textMap.put("copy_to", BAG_OF_WORDS);
+        }
         return textMap;
     }
 
@@ -242,6 +273,21 @@ public class TypeMapper {
         return keywordLowerMap;
     } 
 
+    private static Map<String, Object> getBagOfWordsMapping() {
+        JsonElement jsonMapping = JsonParser.parseString("""
+            { 
+                "type": "text",
+                "store": true,
+                "fields": {
+                    "autocomplete": {
+                        "type": "completion"
+                    }
+                }
+            }
+        """);
+        return (Map<String, Object>) new Gson().fromJson(jsonMapping, HashMap.class);
+    }
+    
     private static Map<String, Object> getConstantKeywordMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("type", "constant_keyword");

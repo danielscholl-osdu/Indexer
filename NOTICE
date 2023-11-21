@@ -758,6 +758,7 @@ BSD-3-Clause
 ========================================================================
 The following software have components provided under the terms of this license:
 
+- ${project.groupId}:${project.artifactId} (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 - API Common (from https://github.com/googleapis, https://github.com/googleapis/api-common-java, https://repo1.maven.org/maven2/com/google/api/api-common)
 - ASM Analysis (from http://asm.ow2.io/)
 - ASM Commons (from http://asm.ow2.io/, https://repo1.maven.org/maven2/org/ow2/asm/asm-commons)
@@ -819,7 +820,6 @@ The following software have components provided under the terms of this license:
 - jersey-core-server (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-server)
 - jersey-ext-bean-validation (from https://repo1.maven.org/maven2/org/glassfish/jersey/ext/jersey-bean-validation)
 - jersey-media-json-jackson (from https://repo1.maven.org/maven2/org/glassfish/jersey/media/jersey-media-json-jackson)
-- jts-io-common (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 - org.locationtech.jts:jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 
 ========================================================================
@@ -937,6 +937,7 @@ EPL-1.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
+- ${project.groupId}:${project.artifactId} (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 - AspectJ Weaver (from http://www.aspectj.org, https://www.eclipse.org/aspectj/)
 - JUnit Jupiter (Aggregator) (from https://junit.org/junit5/)
 - JUnit Jupiter API (from http://junit.org/junit5/, https://junit.org/junit5/)
@@ -959,7 +960,6 @@ The following software have components provided under the terms of this license:
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
 - jersey-core-server (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-server)
 - jersey-media-json-jackson (from https://repo1.maven.org/maven2/org/glassfish/jersey/media/jersey-media-json-jackson)
-- jts-io-common (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 - org.locationtech.jts:jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 
 ========================================================================

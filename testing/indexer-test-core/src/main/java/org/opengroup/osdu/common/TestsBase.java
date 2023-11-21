@@ -18,10 +18,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.opengroup.osdu.util.Config.*;
 import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
+
 
 @Log
 public abstract class TestsBase {
@@ -172,4 +172,10 @@ public abstract class TestsBase {
         legal.setOtherRelevantDataCountries(otherRelevantCountries);
         return legal;
     }
+
+    protected void iReindexKind(String kind) throws Throwable {
+        final IndexerClientUtil indexerClientUtil = new IndexerClientUtil(this.httpClient);
+        indexerClientUtil.reIndex(kind, true);
+    }
+
 }

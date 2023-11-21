@@ -17,6 +17,7 @@ package org.opengroup.osdu.indexer.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -28,6 +29,9 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -69,9 +73,9 @@ public class IndexerMappingServiceTest {
     private final String kind = "tenant:test:test:1.0.0";
     private final String index = "tenant-test-test-1.0.0";
     private final String type = "test";
-    private final String validMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
-    private final String validKeywordLowerMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
-    private final String emptyDataValidMapping = "{\"dynamic\":false,\"properties\":{\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"}}}";
+    private final String validMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"keyword\"},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"bagOfWords\":{\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
+    private final String validKeywordLowerMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"keyword\"},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"bagOfWords\":{\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
+    private final String emptyDataValidMapping = "{\"dynamic\":false,\"properties\":{\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}},\"bagOfWords\":{\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"}}}";
 
     @Mock
     private RestClient restClient;
@@ -123,6 +127,7 @@ public class IndexerMappingServiceTest {
         Map<String, Object> metaMapping = new HashMap<>();
         metaMapping.put(RecordMetaAttribute.ID.getValue(), "keyword");
         metaMapping.put(RecordMetaAttribute.ACL.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.ACL));
+        metaMapping.put(RecordMetaAttribute.BAG_OF_WORDS.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.BAG_OF_WORDS));
         metaMapping.put(RecordMetaAttribute.AUTHORITY.getValue(), TypeMapper.getIndexerType(RecordMetaAttribute.AUTHORITY));
         return metaMapping;
     }
@@ -133,7 +138,7 @@ public class IndexerMappingServiceTest {
         dataMapping.put("Msg", "text");
         Map<String, Object> intervalNestedAttribute = new HashMap<>();
         Map<String, Object> intervalProperties = new HashMap<>();
-        intervalProperties.put("StopMarkerID", "text");
+        intervalProperties.put("StopMarkerID", "link");
         intervalProperties.put("GeologicUnitInterpretationIDs", "text");
         intervalProperties.put("StopMeasuredDepth", "double");
         intervalNestedAttribute.put("properties", intervalProperties);
@@ -202,7 +207,7 @@ public class IndexerMappingServiceTest {
 
             IndexerMappingServiceImpl indexerMappingServiceLocal = spy(new IndexerMappingServiceImpl());
             String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
-            assertEquals(this.validMapping, mapping);
+            assertEquals(validMapping, mapping);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -213,7 +218,7 @@ public class IndexerMappingServiceTest {
         try {
             Map<String, Object> documentMapping = this.sut.getIndexMappingFromRecordSchema(this.indexSchema);
             String documentMappingJson = new Gson().toJson(documentMapping);
-            assertEquals(this.validMapping, documentMappingJson);
+            assertEquals(validMapping, documentMappingJson);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -225,7 +230,7 @@ public class IndexerMappingServiceTest {
             IndexSchema emptyDataIndexSchema = IndexSchema.builder().kind(kind).type(type).metaSchema(getMetaAttributeMapping()).build();
             Map<String, Object> documentMapping = this.sut.getIndexMappingFromRecordSchema(emptyDataIndexSchema);
             String documentMappingJson = new Gson().toJson(documentMapping);
-            assertEquals(this.emptyDataValidMapping, documentMappingJson);
+            assertEquals(emptyDataValidMapping, documentMappingJson);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -244,7 +249,7 @@ public class IndexerMappingServiceTest {
     @Test
     public void should_applyNoUpdate_givenUpdateIndex() throws Exception {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
-        final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
+        final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"},\"bagOfWords\":{\"search_analyzer\":\"whitespace\",\"analyzer\":\"detailExtractor\",\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\",\"analyzer\":\"detailExtractor\",\"search_analyzer\":\"whitespace\",\"max_input_length\":256}}}}}";
         doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
         this.sut.syncIndexMappingIfRequired(restHighLevelClient, noDataIndexSchema);
 

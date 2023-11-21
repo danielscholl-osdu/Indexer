@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMappingService {
@@ -62,7 +63,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Autowired
-    private IFeatureFlag keywordLowerFeatureFlag;
+    private IFeatureFlag featureFlagChecker;
 
 
     /**
@@ -155,12 +156,13 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
 
     private Map<String, Object> getDataMapping(IndexSchema schema) {
         Map<String, Object> dataMapping = new HashMap<>();
-        boolean keywordLowerEnabled = this.keywordLowerFeatureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME);;
+        boolean keywordLowerEnabled = this.featureFlagChecker.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME);
+        boolean bagOfWordsEnabled = this.featureFlagChecker.isFeatureEnabled(BAG_OF_WORDS_FEATURE_NAME);
 
         if (schema.getDataSchema() == null || schema.getDataSchema().isEmpty()) return dataMapping;
 
         for (Map.Entry<String, Object> entry : schema.getDataSchema().entrySet()) {
-            dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled));
+            dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled, bagOfWordsEnabled));
         }
         return dataMapping;
     }
@@ -250,6 +252,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
             createTypeWithMappingInElasticsearch(client, index, type, mapping);
         }
     }
+
+    
 
     /**
      * Check if a type already exists
