@@ -31,6 +31,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -51,6 +52,7 @@ import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -63,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @Service
 @Primary
@@ -110,6 +114,9 @@ public class IndexerServiceImpl implements IndexerService {
     private AugmenterConfigurationService augmenterConfigurationService;
     @Inject
     private AugmenterSetting augmenterSetting;
+
+    @Autowired
+    private IFeatureFlag asIngestedCoordinatesFeatureFlag;
 
     private DpsHeaders headers;
 
@@ -313,10 +320,16 @@ public class IndexerServiceImpl implements IndexerService {
                 continue;
             }
 
-            ArrayList<String> asIngestedCoordinatesPaths = findAsIngestedCoordinatesPaths(storageRecord.getData(), "");
+            ArrayList<String> asIngestedCoordinatesPaths = null;
+            if (this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)) {
+                asIngestedCoordinatesPaths = findAsIngestedCoordinatesPaths(storageRecord.getData(), "");
+            }
+
             IndexSchema schema = kindSchemaMap.get(storageRecord.getKind());
-            // enrich schema with AsIngestedCoordinates properties
-            addAsIngestedCoordinatesFieldsToSchema(schema, storageRecord, asIngestedCoordinatesPaths);
+            if (this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)) {
+                // enrich schema with AsIngestedCoordinates properties
+                addAsIngestedCoordinatesFieldsToSchema(schema, storageRecord, asIngestedCoordinatesPaths);
+            }
             schemas.add(schema);
 
             // skip indexing of records if data block is empty

@@ -8,6 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
@@ -31,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -42,13 +44,17 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
+
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
         BooleanParser.class, DateTimeParser.class, GeoShapeParser.class, DouglasPeuckerReducer.class, GeoShapeDecimator.class,
         GeometryDecimator.class, PointExtractor.class, GeometryConversionService.class, FeatureFlagCache.class,
         DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
-        ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, RequestInfoMock.class})
+        ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, RequestInfoMock.class,
+        IFeatureFlag.class})
 public class StorageIndexerPayloadMapperTest {
 
     public static final String FIRST_OBJECT_INNER_PROPERTY = "FirstObjectInnerProperty";
@@ -79,6 +85,9 @@ public class StorageIndexerPayloadMapperTest {
 
     @Autowired
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+
+    @MockBean
+    protected IFeatureFlag asIngestedCoordinatesFeatureFlag;
 
     @BeforeClass
     public static void setUp() {
@@ -255,6 +264,8 @@ public class StorageIndexerPayloadMapperTest {
 
     @Test
     public void mapDataPayloadTestAsIngestedCoordinates() {
+        when(this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)).thenReturn(true);
+
         ArrayList<String> asIngestedCoordinatesPaths = new ArrayList<>(Arrays.asList("SpatialLocation.AsIngestedCoordinates"));
         Map<String, Object> storageRecordData = new HashMap<>();
 
@@ -289,6 +300,8 @@ public class StorageIndexerPayloadMapperTest {
 
     @Test
     public void mapDataPayloadTestAsIngestedCoordinatesGeographicBottomHoleLocationAndSpatialLocation() {
+        when(this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)).thenReturn(true);
+
         ArrayList<String> asIngestedCoordinatesPaths = new ArrayList<>(Arrays.asList("GeographicBottomHoleLocation.AsIngestedCoordinates", "SpatialLocation.AsIngestedCoordinates"));
         Map<String, Object> storageRecordData = new HashMap<>();
         storageRecordData = loadObject("/converter/index-virtual-properties/storageRecordData.json", storageRecordData.getClass());
@@ -350,6 +363,8 @@ public class StorageIndexerPayloadMapperTest {
 
     @Test
     public void mapDataPayloadTestAsIngestedCoordinatesWithEmptyZCoordinate() {
+        when(this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)).thenReturn(true);
+
         ArrayList<String> asIngestedCoordinatesPaths = new ArrayList<>(Arrays.asList("SpatialLocation.AsIngestedCoordinates"));
         Map<String, Object> storageRecordData = new HashMap<>();
         storageRecordData = loadObject("/converter/index-as-ingested-coordinates/wellStorageRecordData-v2.json", storageRecordData.getClass());

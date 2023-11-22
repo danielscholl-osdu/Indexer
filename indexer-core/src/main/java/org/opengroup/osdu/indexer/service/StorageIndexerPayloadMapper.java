@@ -20,6 +20,7 @@ import org.apache.commons.beanutils.NestedNullException;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
@@ -35,11 +36,14 @@ import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
 import org.opengroup.osdu.indexer.util.geo.extractor.PointExtractor;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @Component
 public class StorageIndexerPayloadMapper {
@@ -62,6 +66,9 @@ public class StorageIndexerPayloadMapper {
     @Inject
     private PointExtractor pointExtractor;
 
+    @Autowired
+    private IFeatureFlag asIngestedCoordinatesFeatureFlag;
+
     public Map<String, Object> mapDataPayload(ArrayList<String> asIngestedCoordinatesPaths, IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {
 
@@ -74,7 +81,9 @@ public class StorageIndexerPayloadMapper {
 
         mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
         mapVirtualPropertiesPayload(storageSchema, recordId, dataCollectorMap);
-        mapAsIngestedCoordinatesPayload(recordId, asIngestedCoordinatesPaths, storageRecordData, dataCollectorMap);
+        if (this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)) {
+            mapAsIngestedCoordinatesPayload(recordId, asIngestedCoordinatesPaths, storageRecordData, dataCollectorMap);
+        }
 
         return dataCollectorMap;
     }

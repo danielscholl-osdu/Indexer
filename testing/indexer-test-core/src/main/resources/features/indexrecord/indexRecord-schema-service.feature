@@ -108,6 +108,7 @@ Feature: Indexing of the documents
       | kind                                              | recordFile                       | number | index                                             | acl                            | path              | first_nested_field           | first_nested_value | second_nested_field          | second_nested_value | flattened_inner_field           | flattened_inner_value | object_inner_field |
       | "tenant1:wks:ArraysOfObjectsTestCollection:4.0.0" | "r3-index_record_arrayofobjects" | 1      | "tenant1-wks-arraysofobjectstestcollection-4.0.0" | "data.default.viewers@tenant1" | "data.NestedTest" | "data.NestedTest.NumberTest" | 12345              | "data.NestedTest.StringTest" | "test string"       | "data.FlattenedTest.StringTest" | "test string"         | "ObjectTest"       |
 
+  @as-ingested-coordinates
   Scenario Outline: Ingest the record and Index in the Elastic with AsIngestedCoordinates properties
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should be able search <number> documents for the <index> by flattened inner properties (<flattened_inner_field>, <flattened_inner_value>)
@@ -121,6 +122,7 @@ Feature: Indexing of the documents
       | "tenant1:indexer:virtual-properties-Integration:1.0.0" | "index_record_virtual_properties" | 2      | "tenant1-indexer-virtual-properties-integration-1.0.0" | "data.default.viewers@tenant1" | "data.GeographicBottomHoleLocation.AsIngestedCoordinates.CoordinateReferenceSystemID" | "osdu:reference-data--CoordinateReferenceSystem:WGS_1984_World_Mercator:" | "GeographicBottomHoleLocation.AsIngestedCoordinates.persistableReferenceCrs" |
       | "tenant1:indexer:virtual-properties-Integration:1.0.0" | "index_record_virtual_properties" | 3      | "tenant1-indexer-virtual-properties-integration-1.0.0" | "data.default.viewers@tenant1" | "data.SpatialLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"              | "osdu:reference-data--CoordinateReferenceSystem:WGS_1984_World_Mercator:" | "SpatialLocation.AsIngestedCoordinates.persistableReferenceCrs"              |
 
+  @as-ingested-coordinates
   Scenario Outline: Ingest the record and Index in the Elastic with AsIngestedCoordinates properties and search by coordinates
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should be able search <number> documents for the <index> by bounding box query with points (<topPointX>, <bottomPointX>) on field <pointX> and points (<topPointY>, <bottomPointY>) on field <pointY>
