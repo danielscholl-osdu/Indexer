@@ -1091,7 +1091,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             List<SearchRecord> results = null;
             do {
                 SearchResponse searchResponse = searchService.query(searchRequest);
-                if(searchResponse.totalCount >= MAX_TOTAL_COUNT) {
+                if(searchResponse.getTotalCount() >= MAX_TOTAL_COUNT) {
                     // The search without cursor can return max. 10,000 records
                     // If the totalCount reaches 10,1000 records, we should switch to using query with cursor
                     return searchRecordsWithCursor(searchRequest);
