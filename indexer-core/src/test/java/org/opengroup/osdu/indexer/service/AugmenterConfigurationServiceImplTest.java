@@ -215,7 +215,7 @@ public class AugmenterConfigurationServiceImplTest {
         List<SearchRecord> childrenRecords = gson.fromJson(jsonText, type);
         SearchResponse response = new SearchResponse();
         response.setResults(childrenRecords);
-        when(this.searchService.queryWithCursor(any())).thenReturn(response);
+        when(this.searchService.query(any())).thenReturn(response);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("wellbore_extended_data.json");
@@ -831,13 +831,7 @@ public class AugmenterConfigurationServiceImplTest {
                     // No result
                 }
             }
-            return searchResponse;
-        });
-
-        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
-            SearchRequest searchRequest = invocation.getArgument(0);
-            SearchResponse searchResponse = new SearchResponse();
-            if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
+            else if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
                 // Return of searchUniqueParentIds(...)
                 SearchRecord searchRecord = new SearchRecord();
                 Map<String, Object> childDataMap = new HashMap<>();
