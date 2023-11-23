@@ -57,6 +57,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ChildToParent AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
     private static final String HAS_CONFIGURATIONS_QUERY_FORMAT =  "data.Code: \"%s\" OR nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
     private static final int MAX_SEARCH_LIMIT = 1000;
+    private static final int MAX_TOTAL_COUNT = 10000;
 
     private static final String PROPERTY_DELIMITER = ".";
     private static final String NESTED_OBJECT_DELIMITER = "[].";
@@ -890,7 +891,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         searchRequest.setQuery(query);
         searchRequest.setReturnedFields(Arrays.asList("kind", "id", "data." + ASSOCIATED_IDENTITIES_PROPERTY));
         List<RecordInfo> recordInfos = new ArrayList<>();
-        for (SearchRecord searchRecord : searchRecordsWithCursor(searchRequest)) {
+        for (SearchRecord searchRecord : searchRecords(searchRequest)) {
             Map<String, Object> data = searchRecord.getData();
             if (!data.containsKey(ASSOCIATED_IDENTITIES_PROPERTY) || data.get(ASSOCIATED_IDENTITIES_PROPERTY) == null)
                 continue;
@@ -1056,7 +1057,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         searchRequest.setKind(kind);
         String query = String.format("%s: \"%s\"", childrenObjectField, parentId);
         searchRequest.setQuery(query);
-        return searchRecordsWithCursor(searchRequest);
+        return searchRecords(searchRequest);
     }
 
     private List<SearchRecord> searchRecordsWithCursor(SearchRequest searchRequest) {
@@ -1064,23 +1065,24 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         List<SearchRecord> allRecords = new ArrayList<>();
         try {
             List<SearchRecord> results = null;
+            String cursor = null;
             do {
                 SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
                 results = searchResponse.getResults();
+                cursor = searchResponse.getCursor();
                 if (!CollectionUtils.isEmpty(results)) {
                     allRecords.addAll(results);
-                    if (!Strings.isNullOrEmpty(searchResponse.getCursor()) && results.size() == MAX_SEARCH_LIMIT) {
-                        searchRequest.setCursor(searchResponse.getCursor());
+                    if (!Strings.isNullOrEmpty(cursor)) {
+                        searchRequest.setCursor(cursor);
                     }
                 }
-            } while(results != null && results.size() == MAX_SEARCH_LIMIT);
+            } while(results != null && cursor != null);
         } catch (URISyntaxException e) {
             jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, e);
         }
         return allRecords;
     }
 
-    // The search without cursor can return max. 10,000 records
     private List<SearchRecord> searchRecords(SearchRequest searchRequest) {
         searchRequest.setLimit(MAX_SEARCH_LIMIT);
         int offset = 0;
@@ -1089,6 +1091,11 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             List<SearchRecord> results = null;
             do {
                 SearchResponse searchResponse = searchService.query(searchRequest);
+                if(searchResponse.totalCount >= MAX_TOTAL_COUNT) {
+                    // The search without cursor can return max. 10,000 records
+                    // If the totalCount reaches 10,1000 records, we should switch to using query with cursor
+                    return searchRecordsWithCursor(searchRequest);
+                }
                 results = searchResponse.getResults();
                 if (!CollectionUtils.isEmpty(results)) {
                     allRecords.addAll(results);
