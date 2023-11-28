@@ -215,7 +215,7 @@ public class AugmenterConfigurationServiceImplTest {
         List<SearchRecord> childrenRecords = gson.fromJson(jsonText, type);
         SearchResponse response = new SearchResponse();
         response.setResults(childrenRecords);
-        when(this.searchService.queryWithCursor(any())).thenReturn(response);
+        when(this.searchService.query(any())).thenReturn(response);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("wellbore_extended_data.json");
@@ -763,6 +763,7 @@ public class AugmenterConfigurationServiceImplTest {
         Assert.assertEquals(1, infoList.size());
         Assert.assertEquals(childKind, infoList.get(0).getKind());
         Assert.assertEquals(childId, infoList.get(0).getId());
+        verify(this.searchService,times(0)).queryWithCursor(any());
     }
 
     @Test
@@ -788,6 +789,7 @@ public class AugmenterConfigurationServiceImplTest {
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
+        verify(this.searchService,times(0)).queryWithCursor(any());
     }
 
     @Test
@@ -806,6 +808,7 @@ public class AugmenterConfigurationServiceImplTest {
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
+        verify(this.searchService,times(0)).queryWithCursor(any());
     }
 
     private void updateAssociatedRecords_updateAssociatedChildrenRecords_baseSetup() throws URISyntaxException {
@@ -830,6 +833,133 @@ public class AugmenterConfigurationServiceImplTest {
                     // Search ParentToChildren
                     // No result
                 }
+            }
+            else if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
+                // Return of searchUniqueParentIds(...)
+                SearchRecord searchRecord = new SearchRecord();
+                Map<String, Object> childDataMap = new HashMap<>();
+                childDataMap.put("AssociatedIdentities", Arrays.asList(parentId));
+                searchRecord.setKind(childKind);
+                searchRecord.setId(childId);
+                searchRecord.setData(childDataMap);
+                searchResponse.setResults(Arrays.asList(searchRecord));
+            }
+            else {
+                // This branch is a setup for test case:
+                // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
+                throw new Exception("Unexpected search");
+            }
+            return searchResponse;
+        });
+
+        // setup headers
+        DpsHeaders dpsHeaders = new DpsHeaders();
+        dpsHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
+        dpsHeaders.put(DpsHeaders.DATA_PARTITION_ID, "opendes");
+        dpsHeaders.put(DpsHeaders.CORRELATION_ID, "123");
+        when(this.requestInfo.getHeadersWithDwdAuthZ()).thenReturn(dpsHeaders);
+    }
+
+    @Test
+    public void updateAssociatedRecords_updateAssociatedChildrenRecords_with_cursor_query_for_updated_parentRecord_with_extendedPropertyChanged() throws URISyntaxException {
+        updateAssociatedRecords_updateAssociatedChildrenRecords_with_query_by_cursor_baseSetup();
+
+        RecordChangeInfo recordChangeInfo = new RecordChangeInfo();
+        RecordInfo recordInfo = new RecordInfo();
+        recordInfo.setKind(parentKind);
+        recordInfo.setId(parentId);
+        recordInfo.setOp(OperationType.update.getValue());
+        recordChangeInfo.setRecordInfo(recordInfo);
+        recordChangeInfo.setUpdatedProperties(Arrays.asList("GeoPoliticalEntityName"));
+        when(this.recordChangeInfoCache.get(any())).thenReturn(recordChangeInfo);
+
+        // Test
+        RecordChangedMessages recordChangedMessages = new RecordChangedMessages();
+        recordChangedMessages.setAttributes(new HashMap<>());
+        Map<String, List<String>> upsertKindIds = new HashMap<>();
+        Map<String, List<String>> deleteKindIds = new HashMap<>();
+        upsertKindIds.put(parentKind, Arrays.asList(parentId));
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+
+        // Verify
+        ArgumentCaptor<String> payloadArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        verify(this.indexerQueueTaskBuilder,times(1)).createWorkerTask(payloadArgumentCaptor.capture(), any(), any());
+
+        RecordChangedMessages newMessages = gson.fromJson(payloadArgumentCaptor.getValue(), RecordChangedMessages.class);
+        Type type = new TypeToken<List<RecordInfo>>() {}.getType();
+        List<RecordInfo> infoList = gson.fromJson(newMessages.getData(), type);
+        Assert.assertEquals(parentKind, newMessages.getAttributes().get(Constants.ANCESTRY_KINDS));
+        Assert.assertEquals(1, infoList.size());
+        Assert.assertEquals(childKind, infoList.get(0).getKind());
+        Assert.assertEquals(childId, infoList.get(0).getId());
+
+        verify(this.searchService,times(1)).queryWithCursor(any());
+    }
+
+    @Test
+    public void updateAssociatedRecords_updateAssociatedChildrenRecords_with_cursor_query_for_updated_parentRecord_without_extendedPropertyChanged() throws URISyntaxException {
+        updateAssociatedRecords_updateAssociatedChildrenRecords_with_query_by_cursor_baseSetup();
+
+        RecordChangeInfo recordChangeInfo = new RecordChangeInfo();
+        RecordInfo recordInfo = new RecordInfo();
+        recordInfo.setKind(parentKind);
+        recordInfo.setId(parentId);
+        recordInfo.setOp(OperationType.update.getValue());
+        recordChangeInfo.setRecordInfo(recordInfo);
+        recordChangeInfo.setUpdatedProperties(Arrays.asList("abc"));
+        when(this.recordChangeInfoCache.get(any())).thenReturn(recordChangeInfo);
+
+        // Test
+        RecordChangedMessages recordChangedMessages = new RecordChangedMessages();
+        recordChangedMessages.setAttributes(new HashMap<>());
+        Map<String, List<String>> upsertKindIds = new HashMap<>();
+        Map<String, List<String>> deleteKindIds = new HashMap<>();
+        upsertKindIds.put(parentKind, Arrays.asList(parentId));
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+
+        // Verify
+        verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
+        verify(this.searchService,times(1)).queryWithCursor(any());
+    }
+    
+    private void updateAssociatedRecords_updateAssociatedChildrenRecords_with_query_by_cursor_baseSetup() throws URISyntaxException {
+        childKind = "osdu:wks:master-data--Well:1.0.0";
+        childId = "anyChildId";
+        parentKind = "osdu:wks:master-data--GeoPoliticalEntity:1.0.0";
+        parentId = "anyParentId";
+
+        // Setup search response for searchService.query(...)
+        when(this.searchService.query(any())).thenAnswer(invocation -> {
+            SearchRequest searchRequest = invocation.getArgument(0);
+            SearchResponse searchResponse = new SearchResponse();
+            if (searchRequest.getKind().toString().equals(augmenterConfigurationKind)) {
+                if (searchRequest.getQuery().contains("ChildToParent") || searchRequest.getQuery().contains("data.Code:")) {
+                    // Return of getParentChildRelatedObjectsSpecs(...) or
+                    // getPropertyConfigurations(...)
+                    Map<String, Object> dataMap = getDataMap("well_configuration_record.json");
+                    SearchRecord searchRecord = new SearchRecord();
+                    searchRecord.setData(dataMap);
+                    searchResponse.setResults(Arrays.asList(searchRecord));
+                } else {
+                    // Search ParentToChildren
+                    // No result
+                }
+            }
+            else if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
+                // Return of searchUniqueParentIds(...)
+                SearchRecord searchRecord = new SearchRecord();
+                Map<String, Object> childDataMap = new HashMap<>();
+                childDataMap.put("AssociatedIdentities", Arrays.asList(parentId));
+                searchRecord.setKind(childKind);
+                searchRecord.setId(childId);
+                searchRecord.setData(childDataMap);
+                searchResponse.setResults(Arrays.asList(searchRecord));
+                searchResponse.setTotalCount(10000);
+            }
+            else {
+                // This branch is a setup for test case:
+                // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
+                throw new Exception("Unexpected search");
             }
             return searchResponse;
         });
