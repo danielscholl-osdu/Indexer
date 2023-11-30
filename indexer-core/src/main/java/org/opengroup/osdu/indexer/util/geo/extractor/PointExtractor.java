@@ -1,5 +1,6 @@
 package org.opengroup.osdu.indexer.util.geo.extractor;
 import org.springframework.stereotype.Component;
+import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -14,17 +15,17 @@ public class PointExtractor {
             return new ArrayList<>();
         }
 
-        if (!featureCollection.containsKey("features")) {
+        if (!featureCollection.containsKey(GeoJsonConstants.FEATURES)) {
             return new ArrayList<>();
         }
 
-        List features = (List) featureCollection.get("features");
+        List<Map> features = (List<Map>) featureCollection.get(GeoJsonConstants.FEATURES);
 
         if (features.isEmpty()) {
             return new ArrayList<>();
         }
 
-        Map firstFeature = (Map) features.get(0);
+        Map<String,Map> firstFeature = (Map<String,Map>) features.get(0);
         Map geometry = (Map) firstFeature.get("geometry");
 
         ArrayList<Double> point = extractFirstPointFromGeometry(geometry);
@@ -37,27 +38,24 @@ public class PointExtractor {
     }
 
     private ArrayList<Double> extractFirstPointFromGeometry(Map<String, Object> geometry) {
-
-        String type = (String) geometry.get("type");
+        String type = (String) geometry.get(GeoJsonConstants.TYPE);
         type = type.replace("AnyCrs", "");
 
-        ArrayList coordinates = (ArrayList<Object>) geometry.get("coordinates");
+        ArrayList coordinates = (ArrayList<Object>) geometry.get(GeoJsonConstants.COORDINATES);
 
         switch (type) {
             case "Point":
                 return getNestedArrayList(coordinates, 0);
             case "LineString":
-                return getNestedArrayList(coordinates, 1);
-            case "Polygon":
-                return getNestedArrayList(coordinates, 2);
             case "MultiPoint":
                 return getNestedArrayList(coordinates, 1);
+            case "Polygon":
             case "MultiLineString":
                 return getNestedArrayList(coordinates, 2);
             case "MultiPolygon":
                 return getNestedArrayList(coordinates, 3);
             case "GeometryCollection":
-                List geometries = (List) geometry.get("geometries");
+                List<Map> geometries = (List<Map>) geometry.get(GeoJsonConstants.GEOMETRIES);
                 return extractFirstPointFromGeometry((Map) geometries.get(0));
             default:
                 return new ArrayList<>();
@@ -65,14 +63,27 @@ public class PointExtractor {
     }
 
     private ArrayList<Double> getNestedArrayList(ArrayList arr, int level) {
+        // Initial assignment
         ArrayList tmp = arr;
+
+        // Iteratively cast and retrieve nested ArrayList up to the specified level
         for (int i = 0; i < level; ++i) {
-            tmp = (ArrayList<Object>)((ArrayList<Object>) tmp).get(0);
+            ArrayList<Object> tmpCasted = (ArrayList<Object>) tmp;
+            tmp = (ArrayList<Object>)tmpCasted.get(0);
         }
+
         try {
-          return new ArrayList<>(((ArrayList<Number>) tmp).stream().map(Number::doubleValue).collect(Collectors.toList()));
+            // Explicit cast to ArrayList<Number>
+            ArrayList<Number> numbers = (ArrayList<Number>) tmp;
+
+            // Use stream to convert each Number to Double
+            List<Double> doubleList = numbers.stream().map(Number::doubleValue).collect(Collectors.toList());
+
+            // Create a new ArrayList<Double> from the List<Double>
+            return new ArrayList<>(doubleList);
         } catch (ClassCastException e) {
-          return new ArrayList<>();
+            // Return an empty ArrayList<Double> in case of a ClassCastException
+            return new ArrayList<>();
         }
     }
 

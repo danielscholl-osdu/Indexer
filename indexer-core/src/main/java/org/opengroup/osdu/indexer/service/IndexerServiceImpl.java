@@ -353,8 +353,9 @@ public class IndexerServiceImpl implements IndexerService {
             if (entry.getKey().equals(Constants.AS_INGESTED_COORDINATES)) {
                 paths.add(path + entry.getKey());
                 break;
-            } else if (entry.getValue() instanceof Map) {
-                Map nested = (Map) entry.getValue();
+            }
+            Object entryObj = entry.getValue();
+            if (entryObj instanceof Map nested) {
                 paths.addAll(findAsIngestedCoordinatesPaths(nested, path + entry.getKey() + "."));
             }
         }
