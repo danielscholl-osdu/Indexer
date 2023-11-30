@@ -1,13 +1,20 @@
 package org.opengroup.osdu.indexer.util.geo.extractor;
+
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 import org.springframework.stereotype.Component;
 import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 
+import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.lang.ClassCastException;
 
 @Component
 public class PointExtractor {
+
+    @Inject
+    private JaxRsDpsLog log;
 
     public ArrayList<Double> extractFirstPointFromFeatureCollection(Map<String, Object> featureCollection) {
 
@@ -64,17 +71,17 @@ public class PointExtractor {
 
     private ArrayList<Double> getNestedArrayList(ArrayList arr, int level) {
         // Initial assignment
-        ArrayList tmp = arr;
+        ArrayList temporaryNestedArray = arr;
 
         // Iteratively cast and retrieve nested ArrayList up to the specified level
         for (int i = 0; i < level; ++i) {
-            ArrayList<Object> tmpCasted = (ArrayList<Object>) tmp;
-            tmp = (ArrayList<Object>)tmpCasted.get(0);
+            ArrayList<Object> nestedObjArray = (ArrayList<Object>) temporaryNestedArray;
+            temporaryNestedArray = (ArrayList<Object>) nestedObjArray.get(0);
         }
 
         try {
             // Explicit cast to ArrayList<Number>
-            ArrayList<Number> numbers = (ArrayList<Number>) tmp;
+            ArrayList<Number> numbers = (ArrayList<Number>) temporaryNestedArray;
 
             // Use stream to convert each Number to Double
             List<Double> doubleList = numbers.stream().map(Number::doubleValue).collect(Collectors.toList());
@@ -83,6 +90,7 @@ public class PointExtractor {
             return new ArrayList<>(doubleList);
         } catch (ClassCastException e) {
             // Return an empty ArrayList<Double> in case of a ClassCastException
+            this.log.warning(String.format("nestedArray: %s | error casting to numeric value | error: %s", temporaryNestedArray, e.getMessage()));
             return new ArrayList<>();
         }
     }

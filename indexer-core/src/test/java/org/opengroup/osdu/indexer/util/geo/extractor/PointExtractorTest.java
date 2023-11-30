@@ -8,6 +8,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.model.geojson.*;
 import org.opengroup.osdu.indexer.util.geo.extractor.PointExtractor;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -22,6 +24,9 @@ public class PointExtractorTest {
 
     @InjectMocks
     private PointExtractor extractor;
+
+    @Mock
+    private JaxRsDpsLog log;
 
     @BeforeClass
     public static void setup() {
