@@ -21,6 +21,7 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.opengroup.osdu.util.Config.*;
+import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
 
 @Log
 public abstract class TestsBase {
@@ -120,9 +121,9 @@ public abstract class TestsBase {
         T response = new Gson().fromJson(responseEntity, typeParameterClass);
         response.setHeaders(clientResponse.getHeaders());
         response.setResponseCode(clientResponse.getStatus());
+        log.info(String.format("Response body: %s\nCorrelation id: %s\nResponse Status code: %s", indentatedResponseBody(responseEntity), response.getHeaders().get("correlation-id"), response.getResponseCode()));
         return response;
     }
-
 
     private void logCorrelationIdWithFunctionName(MultivaluedMap<String, String> headers) {
         log.info(String.format("Scenario Name: %s, Correlation-Id: %s", scenario.getId(), headers.get("correlation-id")));

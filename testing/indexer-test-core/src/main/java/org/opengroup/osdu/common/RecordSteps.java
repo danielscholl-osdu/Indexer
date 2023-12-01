@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import static org.junit.Assert.*;
 import static org.opengroup.osdu.util.Config.getEntitlementsDomain;
 import static org.opengroup.osdu.util.Config.getStorageBaseURL;
+import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
 
 @Log
 public class RecordSteps extends TestsBase {
@@ -127,6 +128,7 @@ public class RecordSteps extends TestsBase {
             String payLoad = new Gson().toJson(records);
             log.log(Level.INFO, "Start ingesting records={0}", payLoad);
             ClientResponse clientResponse = httpClient.send(HttpMethod.PUT, getStorageBaseURL() + "records", payLoad, headers, httpClient.getAccessToken());
+            log.info(String.format("Response body: %s\n Correlation id: %s\nResponse Status code: %s", indentatedResponseBody(clientResponse.getEntity(String.class)), clientResponse.getHeaders().get("correlation-id"), clientResponse.getStatus()));
             assertEquals(201, clientResponse.getStatus());
         } catch (Exception ex) {
             throw new AssertionError(ex.getMessage());

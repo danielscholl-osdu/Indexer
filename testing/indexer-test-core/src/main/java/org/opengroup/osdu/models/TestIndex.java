@@ -8,11 +8,11 @@ import lombok.Data;
 
 import javax.ws.rs.HttpMethod;
 
+import org.opengroup.osdu.util.HTTPClient;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.model.legal.Legal;
 import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.FileHandler;
-import org.opengroup.osdu.util.HTTPClient;
 import org.opengroup.osdu.util.IndexerClientUtil;
 
 import java.util.HashSet;
@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.opengroup.osdu.util.Config.*;
+import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
 
 @Data
 public class TestIndex {
@@ -60,8 +61,9 @@ public class TestIndex {
 
     public void setupSchema() {
         ClientResponse clientResponse = this.httpClient.send(HttpMethod.POST, getStorageBaseURL() + "schemas", this.getStorageSchemaFromJson(), headers, httpClient.getAccessToken());
-        if (clientResponse.getType() != null)
-            LOGGER.info(String.format("Response status: %s, type: %s", clientResponse.getStatus(), clientResponse.getType().toString()));
+        if (clientResponse.getType() != null) {
+            LOGGER.info(String.format("Response status: %s, type: %s\nResponse body: %s", clientResponse.getStatus(), clientResponse.getType().toString(), indentatedResponseBody(clientResponse.getEntity(String.class))));
+        }
     }
 
     public void deleteSchema(String kind) {
