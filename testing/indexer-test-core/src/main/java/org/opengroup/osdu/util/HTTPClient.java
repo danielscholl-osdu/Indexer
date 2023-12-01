@@ -1,5 +1,8 @@
 package org.opengroup.osdu.util;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -90,5 +93,15 @@ public abstract class HTTPClient {
         String value = String.join(",", partitions);
         currentHeaders.put("data-partition-id", value);
         return currentHeaders;
+    }
+    
+    public static String indentatedResponseBody(String responseBody) {
+        JsonParser jsonParser = new JsonParser();
+        if(responseBody!= null) {
+            JsonElement jsonElement = jsonParser.parse(responseBody);
+            String indentedResponseEntity = new GsonBuilder().setPrettyPrinting().create().toJson(jsonElement);
+            return indentedResponseEntity;
+        }
+        return responseBody;
     }
 }
