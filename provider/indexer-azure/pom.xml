@@ -26,7 +26,6 @@
     </parent>
 
     <artifactId>indexer-azure</artifactId>
-    <version>0.25.0-SNAPSHOT</version>
     <name>indexer-azure</name>
     <description>Indexer Service Azure</description>
     <packaging>jar</packaging>
@@ -42,7 +41,6 @@
         <indexer-core.version>0.25.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
         <osdu.corelibazure.version>0.24.0</osdu.corelibazure.version>
-        <os-core-common.version>0.24.0</os-core-common.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
         <java-jwt.version>3.8.1</java-jwt.version>
         <mockito.version>3.11.2</mockito.version>
@@ -52,7 +50,6 @@
         <reactor-netty.version>1.0.7</reactor-netty.version>
         <reactor-core.version>3.4.24</reactor-core.version>
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
-        <spring-webmvc.version>5.3.22</spring-webmvc.version>
         <azure-core.version>1.31.0</azure-core.version>
         <azure-security-keyvault-keys.version>4.4.6</azure-security-keyvault-keys.version>
         <azure-security-keyvault-secrets.version>4.4.6</azure-security-keyvault-secrets.version>
@@ -72,6 +69,20 @@
             </dependency>
             <!-- Override version defined in parent's POM -->
             <!-- Inherit managed dependencies from core-lib-azure -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>2.7.17</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-bom</artifactId>
+                <version>5.7.11</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.opengroup.osdu</groupId>
                 <artifactId>core-lib-azure</artifactId>
@@ -369,7 +380,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
-            <version>${spring-webmvc.version}</version>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>

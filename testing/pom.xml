@@ -21,7 +21,7 @@
 	<version>0.25.0-SNAPSHOT</version>
 	<description>Indexer Service Integration Test Root Project</description>
 	<properties>
-		<spring.version>5.3.23</spring.version>
+		<spring.version>5.3.30</spring.version>
 	</properties>
 	<packaging>pom</packaging>
 
