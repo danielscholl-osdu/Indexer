@@ -81,7 +81,7 @@ public class IndexerServiceImpl implements IndexerService {
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     // we index a normalized kind (authority + source + entity type + major version) as a tags attribute for all records
-    private static String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
+    private static final String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
     private static final String VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID = "VerticalCoordinateReferenceSystemID";
 
     @Inject
@@ -124,7 +124,7 @@ public class IndexerServiceImpl implements IndexerService {
     public JobStatus processRecordChangedMessages(RecordChangedMessages message, List<RecordInfo> recordInfos) throws Exception {
 
         // this should not happen
-        if (recordInfos.size() == 0) return null;
+        if (recordInfos.isEmpty()) return null;
 
         String errorMessage = "";
         List<String> retryRecordIds = new LinkedList<>();
@@ -161,7 +161,7 @@ public class IndexerServiceImpl implements IndexerService {
             }
 
             // process failed records
-            if (retryRecordIds.size() > 0) {
+            if (!retryRecordIds.isEmpty()) {
                 retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
             }
 
@@ -362,17 +362,25 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
     private void addAsIngestedCoordinatesFieldsToSchema(IndexSchema schemaObj, Records.Entity storageRecord, ArrayList<String> asIngestedCoordinatesPaths) {
-        Map<String, Object> storageRecordData = storageRecord.getData();
-        String recordId = storageRecord.getId();
         Map<String, String> asIngestedProperties = new HashMap<>();
+        String recordId = storageRecord.getId();
+        Map<String, Object> storageRecordData = storageRecord.getData();
 
-        for (String path : asIngestedCoordinatesPaths) {
-            addAsIngestedProperty(false, recordId, storageRecordData, asIngestedProperties, path + "." + "FirstPoint.X", "long");
-            addAsIngestedProperty(false, recordId, storageRecordData, asIngestedProperties, path + "." + "FirstPoint.Y", "long");
-            addAsIngestedProperty(false, recordId, storageRecordData, asIngestedProperties, path + "." + "FirstPoint.Z", "long");
-            addAsIngestedProperty(true, recordId, storageRecordData, asIngestedProperties, path + "." + Constants.COORDINATE_REFERENCE_SYSTEM_ID, "text");
-            addAsIngestedProperty(true, recordId, storageRecordData, asIngestedProperties, path + "." + VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID, "text");
-            addAsIngestedProperty(true, recordId, storageRecordData, asIngestedProperties, path + "." + Constants.VERTICAL_UNIT_ID, "text");
+        Map<String, String> propertyKeyTypeMap = new HashMap<>();
+        propertyKeyTypeMap.put("FirstPoint.X", "long");
+        propertyKeyTypeMap.put("FirstPoint.Y", "long");
+        propertyKeyTypeMap.put("FirstPoint.Z", "long");
+        propertyKeyTypeMap.put(Constants.COORDINATE_REFERENCE_SYSTEM_ID, "text");
+        propertyKeyTypeMap.put(VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID, "text");
+        propertyKeyTypeMap.put(Constants.VERTICAL_UNIT_ID, "text");
+
+        for(String path: asIngestedCoordinatesPaths){
+            for(Map.Entry<String,String> propertyKeyTypeEntry: propertyKeyTypeMap.entrySet()) {
+                String pathPropertyKey = path + "." + propertyKeyTypeEntry.getKey();
+                String propertyValue = propertyKeyTypeEntry.getValue();
+                if(checkPropertyExists(recordId, storageRecordData, pathPropertyKey))
+                    asIngestedProperties.put(pathPropertyKey, propertyValue);
+            }
         }
         schemaObj.getDataSchema().putAll(asIngestedProperties);
     }
@@ -383,11 +391,7 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
     private boolean checkPropertyExists(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
-        Object propertyValue = this.storageIndexerPayloadMapper.getPropertyValue(recordId, storageRecordData, propertyKey);
-        if (propertyValue != null) {
-            return true;
-        }
-        return false;
+        return (this.storageIndexerPayloadMapper.getPropertyValue(recordId, storageRecordData, propertyKey) != null);
     }
 
     private RecordIndexerPayload.Record prepareIndexerPayload(IndexSchema schemaObj, Records.Entity storageRecord, Map<String, OperationType> idToOperationMap, ArrayList<String> asIngestedCoordinatesPaths) {

@@ -3,7 +3,6 @@ package org.opengroup.osdu.indexer.util.geo.extractor;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 import org.springframework.stereotype.Component;
-import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 
 import javax.inject.Inject;
 import java.util.*;
@@ -17,31 +16,19 @@ public class PointExtractor {
     private JaxRsDpsLog log;
 
     public ArrayList<Double> extractFirstPointFromFeatureCollection(Map<String, Object> featureCollection) {
+        ArrayList<Double> extractedFirstPoint = new ArrayList<>();
 
-        if (featureCollection == null) {
-            return new ArrayList<>();
+        if (featureCollection != null && featureCollection.containsKey(GeoJsonConstants.FEATURES)) {
+            List<Map> features = (List<Map>) featureCollection.get(GeoJsonConstants.FEATURES);
+            if(!features.isEmpty()) {
+                Map<String,Map> firstFeature = (Map<String,Map>) features.get(0);
+                Map geometry = firstFeature.get("geometry");
+                ArrayList<Double> firstPoint = extractFirstPointFromGeometry(geometry);
+                if(firstPoint.size() >= 2)
+                    extractedFirstPoint = firstPoint;
+            }
         }
-
-        if (!featureCollection.containsKey(GeoJsonConstants.FEATURES)) {
-            return new ArrayList<>();
-        }
-
-        List<Map> features = (List<Map>) featureCollection.get(GeoJsonConstants.FEATURES);
-
-        if (features.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        Map<String,Map> firstFeature = (Map<String,Map>) features.get(0);
-        Map geometry = (Map) firstFeature.get("geometry");
-
-        ArrayList<Double> point = extractFirstPointFromGeometry(geometry);
-
-        if (point.size() < 2) {
-          return new ArrayList<>();
-        }
-
-        return point;
+        return extractedFirstPoint;
     }
 
     private ArrayList<Double> extractFirstPointFromGeometry(Map<String, Object> geometry) {
@@ -53,11 +40,9 @@ public class PointExtractor {
         switch (type) {
             case "Point":
                 return getNestedArrayList(coordinates, 0);
-            case "LineString":
-            case "MultiPoint":
+            case "LineString", "MultiPoint":
                 return getNestedArrayList(coordinates, 1);
-            case "Polygon":
-            case "MultiLineString":
+            case "Polygon", "MultiLineString":
                 return getNestedArrayList(coordinates, 2);
             case "MultiPolygon":
                 return getNestedArrayList(coordinates, 3);
