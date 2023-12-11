@@ -14,16 +14,18 @@
 
 package org.opengroup.osdu.util;
 
+
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import lombok.ToString;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response;
-import java.net.SocketTimeoutException;
 import java.util.Map;
-@Log
+import java.util.UUID;
+
+@Slf4j
 @ToString
 public class AzureHTTPClient extends HTTPClient {
 
@@ -41,42 +43,42 @@ public class AzureHTTPClient extends HTTPClient {
         return token;
     }
     public ClientResponse send(String httpMethod, String url, String payLoad, Map<String, String> headers, String token) {
-        ClientResponse response;
+        ClientResponse response = null;
         System.out.println("in Azure send method");
-        String correlationId = java.util.UUID.randomUUID().toString();
-        log.info(String.format("Request correlation id: %s", correlationId));
-        headers.put(HEADER_CORRELATION_ID, correlationId);
         Client client = getClient();
         client.setReadTimeout(300000);
         client.setConnectTimeout(300000);
-        log.info(String.format("httpMethod: %s", httpMethod));
-        log.info(String.format("payLoad: %s", payLoad));
-        log.info(String.format("headers: %s", headers));
-        log.info(String.format("URL: %s", url));
         WebResource webResource = client.resource(url);
         log.info("waiting on response in azure send");
-        int retryCount = 2;
-        try{
-            response = this.getClientResponse(httpMethod, payLoad, webResource, headers, token);
-            while (retryCount > 0) {
+        int count = 1;
+        int MaxRetry = 3;
+        while (count < MaxRetry) {
+            try {
+                headers.put("correlation-id", headers.getOrDefault("correlation-id", UUID.randomUUID().toString()));
+                //removing Auth header before logging
+                headers.remove("Authorization");
+                log.info(String.format("Request method: %s\nHeaders: %s\nRequest Body: %s", httpMethod, headers, indentatedResponseBody(payLoad)));
+                log.info(String.format("Attempt: #%s/%s, CorrelationId: %s", count, MaxRetry, headers.get("correlation-id")));
+                response = this.getClientResponse(httpMethod, payLoad, webResource, headers, token);
                 if (response.getStatusInfo().getFamily().equals(Response.Status.Family.valueOf("SERVER_ERROR"))) {
-                    log.info(String.format("got resoponse : %s", response.getStatusInfo()));
+                    count++;
                     Thread.sleep(5000);
-                    log.info(String.format("Retrying --- "));
-                    response = this.getClientResponse(httpMethod, payLoad, webResource, headers, token);
-                } else
+                    continue;
+                } else {
                     break;
-                retryCount--;
+                }
+            } catch (Exception ex) {
+                log.error("Exception While Making Request: ", ex);
+                count++;
+                if (count == MaxRetry) {
+                    throw new AssertionError("Error: Send request error", ex);
+                }
+            } finally {
+                if (response != null) {
+                    log.info(String.format("This is the response received : %s\nHeaders: %s\nStatus code: %s", response, response.getHeaders(), response.getStatus()));
+                }
             }
-            System.out.println("sending response from azure send method");
-            return response;
-        } catch (Exception e) {
-            if (e.getCause() instanceof SocketTimeoutException) {
-                System.out.println("Retrying in case of socket timeout exception");
-                return this.getClientResponse(httpMethod, payLoad, webResource, headers, token);
-            }
-            e.printStackTrace();
-            throw new AssertionError("Error: Send request error", e);
         }
+        return response;
     }
 }
