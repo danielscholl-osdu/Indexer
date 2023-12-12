@@ -36,7 +36,7 @@
         <cucumber.version>1.2.5</cucumber.version>
         <junit.jupiter.version>5.6.0</junit.jupiter.version>
         <elasticsearch.version>7.8.1</elasticsearch.version>
-        <os-core-common.version>0.24.0</os-core-common.version>
+        <os-core-common.version>0.25.0</os-core-common.version>
         <jackson.version>2.13.2</jackson.version>
         <argLine>
             --add-opens java.base/java.lang=ALL-UNNAMED
@@ -78,7 +78,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-lib-azure</artifactId>
-            <version>0.24.0</version>
+            <version>0.25.0</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
