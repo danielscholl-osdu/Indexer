@@ -320,15 +320,13 @@ public class IndexerServiceImpl implements IndexerService {
                 continue;
             }
 
+            IndexSchema schema = kindSchemaMap.get(storageRecord.getKind());
+
             ArrayList<String> asIngestedCoordinatesPaths = null;
             if (this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)) {
-                asIngestedCoordinatesPaths = findAsIngestedCoordinatesPaths(storageRecord.getData(), "");
-            }
-
-            IndexSchema schema = kindSchemaMap.get(storageRecord.getKind());
-            if (this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)) {
                 // enrich schema with AsIngestedCoordinates properties
-                addAsIngestedCoordinatesFieldsToSchema(schema, storageRecord, asIngestedCoordinatesPaths);
+                asIngestedCoordinatesPaths = findAsIngestedCoordinatesPaths(storageRecord.getData(), "");
+                addAsIngestedCoordinatesFieldsToSchema(schema, asIngestedCoordinatesPaths);
             }
             schemas.add(schema);
 
@@ -361,10 +359,8 @@ public class IndexerServiceImpl implements IndexerService {
         return paths;
     }
 
-    private void addAsIngestedCoordinatesFieldsToSchema(IndexSchema schemaObj, Records.Entity storageRecord, ArrayList<String> asIngestedCoordinatesPaths) {
+    private void addAsIngestedCoordinatesFieldsToSchema(IndexSchema schemaObj, ArrayList<String> asIngestedCoordinatesPaths) {
         Map<String, String> asIngestedProperties = new HashMap<>();
-        String recordId = storageRecord.getId();
-        Map<String, Object> storageRecordData = storageRecord.getData();
 
         Map<String, String> propertyKeyTypeMap = new HashMap<>();
         propertyKeyTypeMap.put("FirstPoint.X", "long");
@@ -378,20 +374,10 @@ public class IndexerServiceImpl implements IndexerService {
             for(Map.Entry<String,String> propertyKeyTypeEntry: propertyKeyTypeMap.entrySet()) {
                 String pathPropertyKey = path + "." + propertyKeyTypeEntry.getKey();
                 String propertyValue = propertyKeyTypeEntry.getValue();
-                if(checkPropertyExists(recordId, storageRecordData, pathPropertyKey))
-                    asIngestedProperties.put(pathPropertyKey, propertyValue);
+                asIngestedProperties.put(pathPropertyKey, propertyValue);
             }
         }
         schemaObj.getDataSchema().putAll(asIngestedProperties);
-    }
-
-    private void addAsIngestedProperty(boolean checkIfFieldExists, String recordId, Map<String, Object> storageRecordData, Map<String, String> asIngestedProperties, String propertyKey, String propertyType) {
-        if (checkIfFieldExists && !checkPropertyExists(recordId, storageRecordData, propertyKey)) return;
-        asIngestedProperties.put(propertyKey, propertyType);
-    }
-
-    private boolean checkPropertyExists(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
-        return (this.storageIndexerPayloadMapper.getPropertyValue(recordId, storageRecordData, propertyKey) != null);
     }
 
     private RecordIndexerPayload.Record prepareIndexerPayload(IndexSchema schemaObj, Records.Entity storageRecord, Map<String, OperationType> idToOperationMap, ArrayList<String> asIngestedCoordinatesPaths) {
