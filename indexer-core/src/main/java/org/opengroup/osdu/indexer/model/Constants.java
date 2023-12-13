@@ -27,4 +27,6 @@ public class Constants {
     public static final int DATA_CACHE_EXPIRATION = 120;
     public static final int DATA_CHANGE_INFO_CACHE_EXPIRATION = 3600;
     public static final int DATA_MAX_CACHE_SIZE = 20000;
+
+    public static final String AS_INGESTED_COORDINATES_FEATURE_NAME = "asIngestedCoordinates_enabled";
 }

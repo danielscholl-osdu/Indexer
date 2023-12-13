@@ -43,7 +43,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.AS_INGESTED_COORDINATES_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @Component
 public class StorageIndexerPayloadMapper {

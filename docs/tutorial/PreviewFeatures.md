@@ -129,6 +129,6 @@ Note:
 - AsingestedCoordinates.FirstPoint.Type is not needed because Wgs84Coordinates will have the original type. 
 - AsingestedCoordinates.SpatialLocationCoordinatesDate is not needed because QC time is already there and this is more for plate motion that seems not needed at the moment.
 
-If the property "as-ingested-coordinates-enabled" is not created or the property value is set to "false" (String type) in the given data partition, 
+If the property "asIngestedCoordinates_enabled" is not created or the property value is set to "false" (String type) in the given data partition, 
 the AsIngestedCoordinates field will not be indexed. 
 

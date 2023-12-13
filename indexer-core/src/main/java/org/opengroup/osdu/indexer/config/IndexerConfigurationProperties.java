@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class IndexerConfigurationProperties {
-	public static final String AS_INGESTED_COORDINATES_FEATURE_NAME = "as-ingested-coordinates-enabled";
 
 	//Search query properties
 	private Integer queryDefaultLimit = 10;

@@ -46,7 +46,7 @@ import java.util.Map;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.AS_INGESTED_COORDINATES_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {StorageIndexerPayloadMapper.class, AttributeParsingServiceImpl.class, NumberParser.class,
