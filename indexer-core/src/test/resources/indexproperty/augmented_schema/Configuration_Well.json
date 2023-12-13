@@ -21,7 +21,7 @@
             "Paths": [{
                     "RelatedObjectsSpec.RelatedObjectID": "data.GeoContexts[].GeoPoliticalEntityID",
                     "RelatedObjectsSpec.RelatedConditionMatches": [
-                        "perftest-qa-sis-internal-hq:reference-data--GeoPoliticalEntityType:Country:"
+                        "opendes:reference-data--GeoPoliticalEntityType:Country:"
                     ],
                     "ValueExtraction.ValuePath": "data.GeoPoliticalEntityName",
                     "RelatedObjectsSpec.RelatedObjectKind": "osdu:wks:master-data--GeoPoliticalEntity:1.",
@@ -41,11 +41,11 @@
                     "RelatedObjectsSpec.RelatedConditionProperty": null,
                     "RelatedObjectsSpec.RelationshipDirection": null,
                     "ValueExtraction.RelatedConditionMatches": [
-                        "perftest-qa-sis-internal-hq:reference-data--AliasNameType:UniqueIdentifier:",
-                        "perftest-qa-sis-internal-hq:reference-data--AliasNameType:RegulatoryName:",
-                        "perftest-qa-sis-internal-hq:reference-data--AliasNameType:PreferredName:",
-                        "perftest-qa-sis-internal-hq:reference-data--AliasNameType:CommonName:",
-                        "perftest-qa-sis-internal-hq:reference-data--AliasNameType:ShortName:"
+                        "opendes:reference-data--AliasNameType:UniqueIdentifier:",
+                        "opendes:reference-data--AliasNameType:RegulatoryName:",
+                        "opendes:reference-data--AliasNameType:PreferredName:",
+                        "opendes:reference-data--AliasNameType:CommonName:",
+                        "opendes:reference-data--AliasNameType:ShortName:"
                     ],
                     "ValueExtraction.RelatedConditionProperty": "data.NameAliases[].AliasNameTypeID"
                 }
