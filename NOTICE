@@ -520,11 +520,11 @@ The following software have components provided under the terms of this license:
 - Lucene QueryParsers (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-queryparser)
 - Lucene Sandbox (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-sandbox)
 - Lucene Spatial 3D (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-spatial3d)
-- Maven Artifact (from https://maven.apache.org/ref/4.0.0-alpha-8/maven-artifact/, https://repo1.maven.org/maven2/org/apache/maven/maven-artifact)
+- Maven Artifact (from https://repo1.maven.org/maven2/org/apache/maven/maven-artifact)
 - Maven Artifact Manager (from https://repo1.maven.org/maven2/org/apache/maven/maven-artifact-manager)
 - Maven Core (from https://maven.apache.org/ref/4.0.0-alpha-8/maven-core/, https://repo1.maven.org/maven2/org/apache/maven/maven-core)
 - Maven Error Diagnostics (from https://repo1.maven.org/maven2/org/apache/maven/maven-error-diagnostics)
-- Maven Model (from https://maven.apache.org/ref/4.0.0-alpha-8/maven-model/, https://repo1.maven.org/maven2/org/apache/maven/maven-model)
+- Maven Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-model)
 - Maven Monitor (from https://repo1.maven.org/maven2/org/apache/maven/maven-monitor)
 - Maven Plugin API (from https://maven.apache.org/ref/4.0.0-alpha-8/maven-plugin-api/, https://repo1.maven.org/maven2/org/apache/maven/maven-plugin-api)
 - Maven Plugin Descriptor Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-plugin-descriptor)
@@ -532,8 +532,8 @@ The following software have components provided under the terms of this license:
 - Maven Plugin Registry Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-plugin-registry)
 - Maven Profile Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-profile)
 - Maven Project (from https://repo1.maven.org/maven2/org/apache/maven/maven-project)
-- Maven Repository Metadata Model (from https://maven.apache.org/ref/4.0.0-alpha-8/maven-repository-metadata/, https://repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata)
-- Maven Settings (from https://maven.apache.org/ref/4.0.0-alpha-8/maven-settings/, https://repo1.maven.org/maven2/org/apache/maven/maven-settings)
+- Maven Repository Metadata Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata)
+- Maven Settings (from https://repo1.maven.org/maven2/org/apache/maven/maven-settings)
 - Metrics Core (from https://repo1.maven.org/maven2/io/dropwizard/metrics/metrics-core)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
@@ -758,6 +758,7 @@ BSD-3-Clause
 ========================================================================
 The following software have components provided under the terms of this license:
 
+- ${project.groupId}:${project.artifactId} (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 - API Common (from https://github.com/googleapis, https://github.com/googleapis/api-common-java, https://repo1.maven.org/maven2/com/google/api/api-common)
 - ASM Analysis (from http://asm.ow2.io/)
 - ASM Commons (from http://asm.ow2.io/, https://repo1.maven.org/maven2/org/ow2/asm/asm-commons)
@@ -782,6 +783,7 @@ The following software have components provided under the terms of this license:
 - Hamcrest (from http://hamcrest.org/JavaHamcrest/)
 - Hamcrest Core (from http://hamcrest.org/, http://hamcrest.org/JavaHamcrest/, https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core)
 - JSch (from http://www.jcraft.com/jsch/)
+- Jackson module: Afterburner (from http://wiki.fasterxml.com/JacksonHome, https://github.com/FasterXML/jackson-modules-base)
 - Jakarta Activation API (from https://github.com/eclipse-ee4j/jaf, https://github.com/jakartaee/jaf-api, https://repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api)
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
 - Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api)
@@ -818,7 +820,6 @@ The following software have components provided under the terms of this license:
 - jersey-core-server (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-server)
 - jersey-ext-bean-validation (from https://repo1.maven.org/maven2/org/glassfish/jersey/ext/jersey-bean-validation)
 - jersey-media-json-jackson (from https://repo1.maven.org/maven2/org/glassfish/jersey/media/jersey-media-json-jackson)
-- jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 - jts-io-common (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 
 ========================================================================
@@ -936,6 +937,7 @@ EPL-1.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
+- ${project.groupId}:${project.artifactId} (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 - AspectJ Weaver (from http://www.aspectj.org, https://www.eclipse.org/aspectj/)
 - JUnit Jupiter (Aggregator) (from https://junit.org/junit5/)
 - JUnit Jupiter API (from http://junit.org/junit5/, https://junit.org/junit5/)
@@ -958,7 +960,6 @@ The following software have components provided under the terms of this license:
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
 - jersey-core-server (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-server)
 - jersey-media-json-jackson (from https://repo1.maven.org/maven2/org/glassfish/jersey/media/jersey-media-json-jackson)
-- jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 - jts-io-common (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 
 ========================================================================
@@ -1106,13 +1107,6 @@ ImageMagick
 The following software have components provided under the terms of this license:
 
 - aalto-xml (from https://github.com/FasterXML/aalto-xml, https://repo1.maven.org/maven2/com/fasterxml/aalto-xml)
-
-========================================================================
-Info-ZIP
-========================================================================
-The following software have components provided under the terms of this license:
-
-- ClassGraph (from https://github.com/classgraph/classgraph)
 
 ========================================================================
 LGPL-2.0-only
@@ -1324,13 +1318,6 @@ cc-pd
 The following software have components provided under the terms of this license:
 
 - Netty/Codec (from https://repo1.maven.org/maven2/io/netty/netty-codec)
-
-========================================================================
-mit-old-style-no-advert
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Brave (from https://repo1.maven.org/maven2/io/zipkin/brave/brave)
 
 ========================================================================
 proprietary-license

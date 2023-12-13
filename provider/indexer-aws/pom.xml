@@ -27,7 +27,6 @@
   <description>Indexer service on AWS</description>
   <packaging>jar</packaging>
   <version>0.26.0-SNAPSHOT</version>
-
   <properties>
       <aws.version>1.12.261</aws.version>
       <deployment.environment>dev</deployment.environment>
@@ -57,7 +56,7 @@
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-core</artifactId>
         <version>5.8.2</version>
-      </dependency>
+    </dependency>
     </dependencies>
   </dependencyManagement>
 
