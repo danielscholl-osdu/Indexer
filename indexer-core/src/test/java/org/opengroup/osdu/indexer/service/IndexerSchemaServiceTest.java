@@ -368,7 +368,7 @@ public class IndexerSchemaServiceTest {
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
         assertEquals(2, indexSchema.getDataSchema().size());
         verify(this.augmenterConfigurationService, times(2)).resolveConcreteKind(any());
-        verify(this.schemaCache, times(3)).get(any());
+        verify(this.schemaCache, times(5)).get(any());
         verify(this.schemaService, times(3)).getSchema(any());
     }
 
@@ -585,6 +585,13 @@ public class IndexerSchemaServiceTest {
         Assert.assertEquals("osdu:wks:master-data--Well:1.3.0", schemaResolvedOrders.get(order++));
         Assert.assertEquals("osdu:wks:work-product-component--WellLog:1.4.0", schemaResolvedOrders.get(order++));
         Assert.assertEquals("osdu:wks:master-data--Wellbore:1.4.0", schemaResolvedOrders.get(order++));
+
+        // Only the schema of the kinds without configuration and the kind requested should be cached
+        Assert.assertTrue(schemaCacheMock.size() > 1);
+        Assert.assertFalse(schemaCacheMock.containsKey("osdu:wks:master-data--Well:1.3.0"));
+        Assert.assertFalse(schemaCacheMock.containsKey("osdu:wks:work-product-component--WellLog:1.4.0"));
+        Assert.assertTrue(schemaCacheMock.containsKey("osdu:wks:master-data--Wellbore:1.4.0"));
+
         Map<String, String> propertiesAndTypes = getWellboreVerifiedSchema();
         for(Map.Entry<String, String> entry : propertiesAndTypes.entrySet()) {
             String property = entry.getKey();
@@ -663,6 +670,13 @@ public class IndexerSchemaServiceTest {
         Assert.assertEquals("osdu:wks:master-data--Well:1.3.0", schemaResolvedOrders.get(order++));
         Assert.assertEquals("osdu:wks:master-data--Wellbore:1.4.0", schemaResolvedOrders.get(order++));
         Assert.assertEquals("osdu:wks:work-product-component--WellLog:1.4.0", schemaResolvedOrders.get(order++));
+
+        // Only the schema of the kinds without configuration and the kind requested should be cached
+        Assert.assertTrue(schemaCacheMock.size() > 1);
+        Assert.assertFalse(schemaCacheMock.containsKey("osdu:wks:master-data--Well:1.3.0"));
+        Assert.assertFalse(schemaCacheMock.containsKey("osdu:wks:master-data--Wellbore:1.4.0"));
+        Assert.assertTrue(schemaCacheMock.containsKey("osdu:wks:work-product-component--WellLog:1.4.0"));
+
         Map<String, String> propertiesAndTypes = getWellLogVerifiedSchema();
         for(Map.Entry<String, String> entry : propertiesAndTypes.entrySet()) {
             String property = entry.getKey();

@@ -189,25 +189,38 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     }
 
     private String getSchema(String kind, String accessors) throws AppException, UnsupportedEncodingException, URISyntaxException {
-        String schema = this.schemaProvider.getSchema(kind);
+        if(!Strings.isNullOrEmpty(accessors)) {
+            String schema = this.schemaCache.get(kind);
+            if(!Strings.isNullOrEmpty(schema)) {
+                return schema;
+            }
+        }
+
         // accessors used to prevent infinite loop
         if(accessors.contains(kind)) {
-            return schema;
+            return null;
         }
         else {
             accessors += ";" + kind;
         }
+        String schema = this.schemaProvider.getSchema(kind);
+        boolean augmented = false;
         if (!Strings.isNullOrEmpty(schema) && augmenterSetting.isEnabled()) {
             try {
                 // Merge schema of the extended properties if needed
                 AugmenterConfiguration augmenterConfiguration = augmenterConfigurationService.getConfiguration(kind);
                 if (augmenterConfiguration != null) {
+                    augmented = true;
                     schema = mergeSchemaFromPropertyConfiguration(schema, augmenterConfiguration, accessors);
                 }
             }
             catch(Exception ex) {
                 log.error(String.format("Augmenter: Failed to merge schema of the extended properties for kind: '%s'", kind), ex);
             }
+        }
+        if(!augmented) {
+            // augmented schema could be incomplete because of infinite loop prevention
+            cacheAndNormalizeSchema(kind, schema);
         }
         return schema;
     }
@@ -250,9 +263,6 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             String relatedObjectKindSchema = this.schemaCache.get(concreteRelatedObjectKind);
             if (Strings.isNullOrEmpty(relatedObjectKindSchema)) {
                 relatedObjectKindSchema = this.getSchema(concreteRelatedObjectKind, accessors);
-                if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
-                    cacheAndNormalizeSchema(concreteRelatedObjectKind, relatedObjectKindSchema);
-                }
             }
 
             if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
