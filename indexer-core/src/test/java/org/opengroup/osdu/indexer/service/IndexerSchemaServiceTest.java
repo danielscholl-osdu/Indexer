@@ -17,7 +17,9 @@ package org.opengroup.osdu.indexer.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import lombok.SneakyThrows;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.util.Strings;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,11 +27,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
+import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
@@ -41,8 +46,7 @@ import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -50,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Map.entry;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -81,7 +86,7 @@ public class IndexerSchemaServiceTest {
     @Mock
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Mock
-    private AugmenterConfigurationService propertyConfigurationsService;
+    private AugmenterConfigurationService augmenterConfigurationService;
     @Mock
     private AugmenterSetting augmenterSetting;
     @InjectMocks
@@ -252,8 +257,8 @@ public class IndexerSchemaServiceTest {
 
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
-        when(this.propertyConfigurationsService.getConfiguration(kind)).thenReturn(new AugmenterConfiguration());
-        when(this.propertyConfigurationsService.getExtendedSchemaItems(any(), any(), any())).thenReturn(extendedSchemaItems);
+        when(this.augmenterConfigurationService.getConfiguration(kind)).thenReturn(new AugmenterConfiguration());
+        when(this.augmenterConfigurationService.getExtendedSchemaItems(any(), any(), any())).thenReturn(extendedSchemaItems);
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
         assertNotNull(indexSchema);
@@ -293,8 +298,8 @@ public class IndexerSchemaServiceTest {
 
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
-        when(this.propertyConfigurationsService.getConfiguration(kind)).thenReturn(new AugmenterConfiguration());
-        when(this.propertyConfigurationsService.getExtendedSchemaItems(any(), any(), any())).thenReturn(extendedSchemaItems);
+        when(this.augmenterConfigurationService.getConfiguration(kind)).thenReturn(new AugmenterConfiguration());
+        when(this.augmenterConfigurationService.getExtendedSchemaItems(any(), any(), any())).thenReturn(extendedSchemaItems);
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, true);
         assertNotNull(indexSchema);
@@ -354,16 +359,16 @@ public class IndexerSchemaServiceTest {
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
         when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
-        when(this.propertyConfigurationsService.getConfiguration(kind)).thenReturn(augmenterConfiguration);
-        when(this.propertyConfigurationsService.resolveConcreteKind(anyString())).thenAnswer(invocation -> {
+        when(this.augmenterConfigurationService.getConfiguration(kind)).thenReturn(augmenterConfiguration);
+        when(this.augmenterConfigurationService.resolveConcreteKind(anyString())).thenAnswer(invocation -> {
             String relatedObjectKind = invocation.getArgument(0);
             return relatedObjectKind + "0.0";
         });
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
         assertEquals(2, indexSchema.getDataSchema().size());
-        verify(this.propertyConfigurationsService, times(2)).resolveConcreteKind(any());
-        verify(this.schemaCache, times(3)).get(any());
+        verify(this.augmenterConfigurationService, times(2)).resolveConcreteKind(any());
+        verify(this.schemaCache, times(5)).get(any());
         verify(this.schemaService, times(3)).getSchema(any());
     }
 
@@ -511,6 +516,176 @@ public class IndexerSchemaServiceTest {
     }
 
     @Test
+    public void should_get_augmented_schema_with_ParentToChildren_and_ChildToParent_relationships() throws Exception {
+        // Prepare
+        Map<String, String> schemaCacheMock = new HashMap<>();
+        when(this.schemaCache.get(anyString())).thenAnswer(invocation ->
+                schemaCacheMock.getOrDefault(invocation.getArgument(0), null));
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                schemaCacheMock.put(invocation.getArgument(0), invocation.getArgument(1));
+                return null;
+            }
+        }).when(schemaCache).put(anyString(), anyString());
+
+        Map<String, String> flattenedSchemaCacheMock = new HashMap<>();
+        when(this.flattenedSchemaCache.get(anyString())).thenAnswer(invocation ->
+                flattenedSchemaCacheMock.getOrDefault(invocation.getArgument(0), null));
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                flattenedSchemaCacheMock.put(invocation.getArgument(0), invocation.getArgument(1));
+                return null;
+            }
+        }).when(flattenedSchemaCache).put(anyString(), anyString());
+
+        Map<String, String> kindsMap = getKindsMap();
+        when(this.augmenterConfigurationService.resolveConcreteKind(anyString())).thenAnswer(invocation ->
+                kindsMap.getOrDefault(invocation.getArgument(0), null));
+
+        Map<String, String> schemaFilesMap = getSchemaFilesMap();
+        when(this.schemaService.getSchema(any())).thenAnswer(invocation -> {
+            String kind = (String)invocation.getArgument(0);
+            String jsonFile = schemaFilesMap.get(kind);
+            return getJsonFromFile(jsonFile);
+        });
+
+        Map<String, String> configurationFilesMap = getConfigurationFilesMap();
+        ObjectMapper mapper = new ObjectMapper();
+        when(this.augmenterConfigurationService.getConfiguration(any())).thenAnswer(invocation -> {
+            String kind = (String)invocation.getArgument(0);
+            String jsonFile = configurationFilesMap.getOrDefault(kind, null);
+            if(Strings.isBlank(jsonFile)) {
+                return null;
+            }
+            else {
+                String jsonText = getJsonFromFile(jsonFile);
+                return mapper.readValue(jsonText, AugmenterConfiguration.class);
+            }
+        });
+
+        AugmenterConfigurationService augmenterConfigurationServiceMock = new AugmenterConfigurationServiceImpl();
+        List<String> schemaResolvedOrders = new ArrayList<>();
+        when(this.augmenterConfigurationService.getExtendedSchemaItems(any(), any(), any())).thenAnswer(invocation -> {
+            Schema originalSchema = invocation.getArgument(0);
+            String kind = originalSchema.getKind();
+            schemaResolvedOrders.add(kind);
+            Map<String, Schema> relatedObjectKindSchemas = invocation.getArgument(1);
+            AugmenterConfiguration augmenterConfiguration = invocation.getArgument(2);
+            return augmenterConfigurationServiceMock.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, augmenterConfiguration);
+        });
+
+        // Test method
+        IndexSchema schema = this.sut.getIndexerInputSchema("osdu:wks:master-data--Wellbore:1.4.0", false);
+
+        // Verify
+        // The order is reverse
+        int order = 0;
+        Assert.assertEquals("osdu:wks:master-data--Well:1.3.0", schemaResolvedOrders.get(order++));
+        Assert.assertEquals("osdu:wks:work-product-component--WellLog:1.4.0", schemaResolvedOrders.get(order++));
+        Assert.assertEquals("osdu:wks:master-data--Wellbore:1.4.0", schemaResolvedOrders.get(order++));
+
+        // Only the schema of the kinds without configuration and the kind requested should be cached
+        Assert.assertTrue(schemaCacheMock.size() > 1);
+        Assert.assertFalse(schemaCacheMock.containsKey("osdu:wks:master-data--Well:1.3.0"));
+        Assert.assertFalse(schemaCacheMock.containsKey("osdu:wks:work-product-component--WellLog:1.4.0"));
+        Assert.assertTrue(schemaCacheMock.containsKey("osdu:wks:master-data--Wellbore:1.4.0"));
+
+        Map<String, String> propertiesAndTypes = getWellboreVerifiedSchema();
+        for(Map.Entry<String, String> entry : propertiesAndTypes.entrySet()) {
+            String property = entry.getKey();
+            Assert.assertTrue(String.format("Property '%s' not found", property), schema.getDataSchema().containsKey(property));
+            Assert.assertEquals(entry.getValue(), schema.getDataSchema().get(property));
+        }
+    }
+
+    @Test
+    public void should_get_augmented_schema_with_ChildToParent_relationships() throws Exception {
+        // Prepare
+        Map<String, String> schemaCacheMock = new HashMap<>();
+        when(this.schemaCache.get(anyString())).thenAnswer(invocation ->
+                schemaCacheMock.getOrDefault(invocation.getArgument(0), null));
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                schemaCacheMock.put(invocation.getArgument(0), invocation.getArgument(1));
+                return null;
+            }
+        }).when(schemaCache).put(anyString(), anyString());
+
+        Map<String, String> flattenedSchemaCacheMock = new HashMap<>();
+        when(this.flattenedSchemaCache.get(anyString())).thenAnswer(invocation ->
+                flattenedSchemaCacheMock.getOrDefault(invocation.getArgument(0), null));
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                flattenedSchemaCacheMock.put(invocation.getArgument(0), invocation.getArgument(1));
+                return null;
+            }
+        }).when(flattenedSchemaCache).put(anyString(), anyString());
+
+        Map<String, String> kindsMap = getKindsMap();
+        when(this.augmenterConfigurationService.resolveConcreteKind(anyString())).thenAnswer(invocation ->
+                kindsMap.getOrDefault(invocation.getArgument(0), null));
+
+        Map<String, String> schemaFilesMap = getSchemaFilesMap();
+        when(this.schemaService.getSchema(any())).thenAnswer(invocation -> {
+            String kind = (String)invocation.getArgument(0);
+            String jsonFile = schemaFilesMap.get(kind);
+            return getJsonFromFile(jsonFile);
+        });
+
+        Map<String, String> configurationFilesMap = getConfigurationFilesMap();
+        ObjectMapper mapper = new ObjectMapper();
+        when(this.augmenterConfigurationService.getConfiguration(any())).thenAnswer(invocation -> {
+            String kind = (String)invocation.getArgument(0);
+            String jsonFile = configurationFilesMap.getOrDefault(kind, null);
+            if(Strings.isBlank(jsonFile)) {
+                return null;
+            }
+            else {
+                String jsonText = getJsonFromFile(jsonFile);
+                return mapper.readValue(jsonText, AugmenterConfiguration.class);
+            }
+        });
+
+        AugmenterConfigurationService augmenterConfigurationServiceMock = new AugmenterConfigurationServiceImpl();
+        List<String> schemaResolvedOrders = new ArrayList<>();
+        when(this.augmenterConfigurationService.getExtendedSchemaItems(any(), any(), any())).thenAnswer(invocation -> {
+            Schema originalSchema = invocation.getArgument(0);
+            String kind = originalSchema.getKind();
+            schemaResolvedOrders.add(kind);
+            Map<String, Schema> relatedObjectKindSchemas = invocation.getArgument(1);
+            AugmenterConfiguration augmenterConfiguration = invocation.getArgument(2);
+            return augmenterConfigurationServiceMock.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, augmenterConfiguration);
+        });
+
+        // Test method
+        IndexSchema schema = this.sut.getIndexerInputSchema("osdu:wks:work-product-component--WellLog:1.4.0", false);
+
+        // Verify
+        // The order is reverse
+        int order = 0;
+        Assert.assertEquals("osdu:wks:master-data--Well:1.3.0", schemaResolvedOrders.get(order++));
+        Assert.assertEquals("osdu:wks:master-data--Wellbore:1.4.0", schemaResolvedOrders.get(order++));
+        Assert.assertEquals("osdu:wks:work-product-component--WellLog:1.4.0", schemaResolvedOrders.get(order++));
+
+        // Only the schema of the kinds without configuration and the kind requested should be cached
+        Assert.assertTrue(schemaCacheMock.size() > 1);
+        Assert.assertFalse(schemaCacheMock.containsKey("osdu:wks:master-data--Well:1.3.0"));
+        Assert.assertFalse(schemaCacheMock.containsKey("osdu:wks:master-data--Wellbore:1.4.0"));
+        Assert.assertTrue(schemaCacheMock.containsKey("osdu:wks:work-product-component--WellLog:1.4.0"));
+
+        Map<String, String> propertiesAndTypes = getWellLogVerifiedSchema();
+        for(Map.Entry<String, String> entry : propertiesAndTypes.entrySet()) {
+            String property = entry.getKey();
+            Assert.assertTrue(String.format("Property '%s' not found", property), schema.getDataSchema().containsKey(property));
+            Assert.assertEquals(entry.getValue(), schema.getDataSchema().get(property));
+        }
+    }
+
+    @Test
     public void should_throw_exception_while_snapshot_running_sync_schema_with_storage() throws Exception {
         String kind = "tenant1:avocet:completion:1.0.0";
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(kind.replace(":", "-"));
@@ -583,5 +758,127 @@ public class IndexerSchemaServiceTest {
 
         assertNotNull(indexSchema);
         assertTrue(errors.get(0).contains("error processing schema, RuntimeException exception thrown"));
+    }
+
+    @SneakyThrows
+    private String getJsonFromFile(String file) {
+        InputStream inStream = this.getClass().getResourceAsStream("/indexproperty/" + file);
+        BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
+        StringBuilder stringBuilder = new StringBuilder();
+        String sCurrentLine;
+        while ((sCurrentLine = br.readLine()) != null)
+        {
+            stringBuilder.append(sCurrentLine).append("\n");
+        }
+        return stringBuilder.toString();
+    }
+
+    private Map<String, String> getKindsMap() {
+        Map<String, String> map = Map.ofEntries(
+                entry("osdu:wks:work-product-component--WellLog:1.", "osdu:wks:work-product-component--WellLog:1.4.0"),
+                entry("osdu:wks:master-data--Wellbore:1.", "osdu:wks:master-data--Wellbore:1.4.0"),
+                entry("osdu:wks:reference-data--OperatingEnvironment:1.", "osdu:wks:reference-data--OperatingEnvironment:1.0.0"),
+                entry("osdu:wks:reference-data--WellBusinessIntention:1.", "osdu:wks:reference-data--WellBusinessIntention:1.0.0"),
+                entry("osdu:wks:reference-data--WellStatusSummary:1.", "osdu:wks:reference-data--WellStatusSummary:1.0.0"),
+                entry("osdu:wks:reference-data--WellProductType:1.", "osdu:wks:reference-data--WellProductType:1.0.0"),
+                entry("osdu:wks:master-data--Organisation:1.", "osdu:wks:master-data--Organisation:1.2.0"),
+                entry("osdu:wks:reference-data--FacilityStateType:1.", "osdu:wks:reference-data--FacilityStateType:1.0.0"),
+                entry("osdu:wks:reference-data--WellboreTrajectoryType:1.", "osdu:wks:reference-data--WellboreTrajectoryType:1.0.0"),
+                entry("osdu:wks:master-data--Well:1.", "osdu:wks:master-data--Well:1.3.0"),
+                entry("osdu:wks:master-data--GeoPoliticalEntity:1.", "osdu:wks:master-data--GeoPoliticalEntity:1.1.0"),
+                entry("osdu:wks:master-data--Field:1.", "osdu:wks:master-data--Field:1.1.0")
+        );
+        return map;
+    }
+
+    private Map<String, String> getSchemaFilesMap() {
+        Map<String, String> map = Map.ofEntries(
+                entry("osdu:wks:work-product-component--WellLog:1.4.0", "augmented_schema/Schema_WellLog.json"),
+                entry("osdu:wks:master-data--Wellbore:1.4.0", "augmented_schema/Schema_Wellbore.json"),
+                entry("osdu:wks:reference-data--OperatingEnvironment:1.0.0", "augmented_schema/Schema_OperatingEnvironment.json"),
+                entry("osdu:wks:reference-data--WellBusinessIntention:1.0.0", "augmented_schema/Schema_WellBusinessIntention.json"),
+                entry("osdu:wks:reference-data--WellStatusSummary:1.0.0", "augmented_schema/Schema_WellStatusSummary.json"),
+                entry( "osdu:wks:reference-data--WellProductType:1.0.0", "augmented_schema/Schema_WellProductType.json"),
+                entry( "osdu:wks:master-data--Organisation:1.2.0", "augmented_schema/Schema_Organisation.json"),
+                entry( "osdu:wks:reference-data--FacilityStateType:1.0.0", "augmented_schema/Schema_FacilityStateType.json"),
+                entry( "osdu:wks:reference-data--WellboreTrajectoryType:1.0.0", "augmented_schema/Schema_WellboreTrajectoryType.json"),
+                entry("osdu:wks:master-data--Well:1.3.0", "augmented_schema/Schema_Well.json"),
+                entry("osdu:wks:master-data--GeoPoliticalEntity:1.1.0", "augmented_schema/Schema_GeoPoliticalEntity.json"),
+                entry("osdu:wks:master-data--Field:1.1.0", "augmented_schema/Schema_Field.json")
+        );
+        return map;
+    }
+
+    private Map<String, String> getConfigurationFilesMap() {
+        Map<String, String> map = Map.ofEntries(
+                entry("osdu:wks:work-product-component--WellLog:1.4.0", "augmented_schema/Configuration_WellLog.json"),
+                entry("osdu:wks:work-product-component--WellLog:1.", "augmented_schema/Configuration_WellLog.json"),
+                entry("osdu:wks:master-data--Wellbore:1.4.0", "augmented_schema/Configuration_Wellbore.json"),
+                entry("osdu:wks:master-data--Wellbore:1.", "augmented_schema/Configuration_Wellbore.json"),
+                entry("osdu:wks:master-data--Well:1.3.0", "augmented_schema/Configuration_Well.json"),
+                entry("osdu:wks:master-data--Well:1.", "augmented_schema/Configuration_Well.json")
+        );
+        return map;
+    }
+
+    private Map<String, String> getWellboreVerifiedSchema() {
+        Map<String, String> map = Map.ofEntries(
+                // Part of the original properties
+                entry("RoleID", "text"),
+                entry("SequenceNumber", "integer"),
+                entry("FacilityName", "text"),
+                entry("KickOffWellbore", "text"),
+                // Augmented properties
+                entry("CountryNames", "text_array"),
+                entry("WellUWI", "text"),
+                entry("CountryName", "text"),
+                entry("RegionName", "text"),
+                entry("BlockName", "text"),
+                entry("FieldName", "text"),
+                entry("WellName", "text"),
+                entry("UWI", "text"),
+                entry("WellboreStatus", "text"),
+                entry("CurrentOperator", "text"),
+                entry("WellboreClassification", "text"),
+                entry("WellborePhase", "text"),
+                entry("WellboreHydrocarbonType", "text"),
+                entry("WellboreSituation", "text"),
+                entry("WellboreTrajectoryType", "text"),
+                entry("WellLogs", "text_array")
+        );
+
+        return map;
+    }
+
+    private Map<String, String> getWellLogVerifiedSchema() {
+        Map<String, String> map = Map.ofEntries(
+                // Part of the original properties
+                entry("CompanyID", "text"),
+                entry("SamplingInterval", "double"),
+                entry("LogActivity", "text"),
+                entry("AuthorIDs", "text_array"),
+                entry("ZeroTime", "date"),
+                // Augmented properties
+                entry("CountryNames", "text_array"),
+                entry("WellUWI", "text"),
+                entry("WellboreName", "text"),
+                entry("CountryName", "text"),
+                entry("RegionName", "text"),
+                entry("BlockName", "text"),
+                entry("FieldName", "text"),
+                entry("WellName", "text"),
+                entry("UWI", "text"),
+                entry("UBHI", "text"),
+                entry("WellboreStatus", "text"),
+                entry("CurrentOperator", "text"),
+                entry("WellborePhase", "text"),
+                entry("WellboreHydrocarbonType", "text"),
+                entry("WellboreSituation", "text"),
+                entry("WellboreTrajectoryType", "text"),
+                entry("SpatialLocation.Wgs84Coordinates", "geo_shape"),
+                entry("VirtualProperties.DefaultLocation.Wgs84Coordinates", "geo_shape")
+        );
+
+        return map;
     }
 }

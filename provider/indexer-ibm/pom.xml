@@ -33,7 +33,6 @@
 	<properties>
 		<tomcat.embed.core.version>9.0.69</tomcat.embed.core.version>
         <os-core-lib-ibm.version>0.25.0</os-core-lib-ibm.version>
-        <spring-webmvc.version>5.3.22</spring-webmvc.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
         <jackson.version>2.13.4</jackson.version>
     </properties>
@@ -103,7 +102,6 @@
          <dependency>
              <groupId>org.springframework</groupId>
              <artifactId>spring-webmvc</artifactId>
-             <version>${spring-webmvc.version}</version>
          </dependency>
          <dependency>
     	    <groupId>com.fasterxml.jackson.core</groupId>

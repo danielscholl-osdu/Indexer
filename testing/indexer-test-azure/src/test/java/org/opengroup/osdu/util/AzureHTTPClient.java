@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.UUID;
+import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
 
 @Slf4j
 @ToString

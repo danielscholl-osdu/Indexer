@@ -26,15 +26,13 @@
   <artifactId>indexer-aws</artifactId>
   <description>Indexer service on AWS</description>
   <packaging>jar</packaging>
-    <version>0.26.0-SNAPSHOT</version>
-
+  <version>0.26.0-SNAPSHOT</version>
   <properties>
       <aws.version>1.12.261</aws.version>
       <deployment.environment>dev</deployment.environment>
       <netty.version>4.1.51.Final</netty.version>
       <jackson-databind.version>2.13.2.2</jackson-databind.version>
       <jackson.version>2.13.2</jackson.version>
-      <spring-webmvc.version>5.3.22</spring-webmvc.version>
       <mockito.version>3.11.2</mockito.version>
   </properties>
 
@@ -54,6 +52,11 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-core</artifactId>
+        <version>5.8.2</version>
+    </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -97,27 +100,22 @@
     <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-config</artifactId>
-        <version>5.6.12</version>
     </dependency>
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-autoconfigure</artifactId>
-        <version>2.7.12</version>
     </dependency>
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-actuator-autoconfigure</artifactId>
-        <version>2.7.11</version>
     </dependency>
     <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-core</artifactId>
-        <version>5.3.27</version>
     </dependency>
     <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-web</artifactId>
-        <version>5.3.14</version>
     </dependency>
 
     <dependency>
@@ -145,12 +143,10 @@
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-oauth2-jose</artifactId>
-      <version>5.5.0</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-webmvc</artifactId>
-      <version>${spring-webmvc.version}</version>
     </dependency>
     <dependency>
       <groupId>javax.inject</groupId>

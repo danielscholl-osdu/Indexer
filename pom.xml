@@ -26,13 +26,7 @@
         <woodstox-core.version>6.4.0</woodstox-core.version>
         <log4j2.version>2.17.1</log4j2.version>
         <spring-boot-maven-plugin.version>2.7.6</spring-boot-maven-plugin.version>
-<!--        <spring-boot.version>2.1.18.RELEASE</spring-boot.version>-->
         <json-smart.version>2.4.7</json-smart.version>
-<!--        <maven.war.plugin>2.6</maven.war.plugin>-->
-<!--        <appengine.maven.plugin>1.0.0</appengine.maven.plugin>-->
-<!--        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
-<!--        <failOnMissingWebXml>false</failOnMissingWebXml>-->
-<!--        <spring-cloud.version>Greenwich.SR2</spring-cloud.version>-->
         <openapi.version>1.6.14</openapi.version>
     </properties>
 
@@ -130,6 +124,13 @@
                 <artifactId>json-smart</artifactId>
                 <version>${json-smart.version}</version>
             </dependency>
+            <dependency>
+		        <groupId>org.springframework.security</groupId>
+		        <artifactId>spring-security-bom</artifactId>
+		        <version>5.7.11</version>
+		        <type>pom</type>
+		        <scope>import</scope>
+		    </dependency>
         </dependencies>
     </dependencyManagement>
 

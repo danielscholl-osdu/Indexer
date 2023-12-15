@@ -52,7 +52,6 @@
         <reactor-netty.version>1.0.7</reactor-netty.version>
         <reactor-core.version>3.4.24</reactor-core.version>
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
-        <spring-webmvc.version>5.3.22</spring-webmvc.version>
         <azure-core.version>1.31.0</azure-core.version>
         <azure-security-keyvault-keys.version>4.4.6</azure-security-keyvault-keys.version>
         <azure-security-keyvault-secrets.version>4.4.6</azure-security-keyvault-secrets.version>
@@ -70,6 +69,20 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+			<dependency>
+			    <groupId>org.springframework.boot</groupId>
+			    <artifactId>spring-boot-dependencies</artifactId>
+			    <version>2.7.17</version>
+			    <type>pom</type>
+			    <scope>import</scope>
+			</dependency>
+            <dependency>
+		        <groupId>org.springframework.security</groupId>
+		        <artifactId>spring-security-bom</artifactId>
+		        <version>5.7.11</version>
+		        <type>pom</type>
+		        <scope>import</scope>
+		    </dependency>
             <!-- Override version defined in parent's POM -->
             <!-- Inherit managed dependencies from core-lib-azure -->
             <dependency>
@@ -373,7 +386,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
-            <version>${spring-webmvc.version}</version>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
