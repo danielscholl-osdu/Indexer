@@ -27,6 +27,7 @@ import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
@@ -47,6 +48,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
+
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMappingService {
 
@@ -58,6 +61,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     private IndexCache indexCache;
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
+    @Autowired
+    private IFeatureFlag keywordLowerFeatureFlag;
 
 
     /**
@@ -150,10 +155,12 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
 
     private Map<String, Object> getDataMapping(IndexSchema schema) {
         Map<String, Object> dataMapping = new HashMap<>();
+        boolean keywordLowerEnabled = this.keywordLowerFeatureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME);;
+
         if (schema.getDataSchema() == null || schema.getDataSchema().isEmpty()) return dataMapping;
 
         for (Map.Entry<String, Object> entry : schema.getDataSchema().entrySet()) {
-            dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue()));
+            dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled));
         }
         return dataMapping;
     }

@@ -16,6 +16,7 @@ package org.opengroup.osdu.indexer.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -46,6 +47,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.invocation.Invocation;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
@@ -53,15 +55,22 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {IFeatureFlag.class})
 public class IndexerMappingServiceTest {
 
     private final String kind = "tenant:test:test:1.0.0";
     private final String index = "tenant-test-test-1.0.0";
     private final String type = "test";
     private final String validMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
+    private final String validKeywordLowerMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
     private final String emptyDataValidMapping = "{\"dynamic\":false,\"properties\":{\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"}}}";
 
     @Mock
@@ -80,6 +89,8 @@ public class IndexerMappingServiceTest {
     private IndicesService indicesService;
     @Mock
     private ElasticIndexNameResolver elasticIndexNameResolver;
+    @MockBean
+    private IFeatureFlag keywordLowerFeatureFlag;
 
     @Spy
     @InjectMocks
@@ -128,7 +139,8 @@ public class IndexerMappingServiceTest {
     }
 
     @Test
-    public void should_returnValidMapping_givenFalseMerge_createMappingTest() {
+    public void should_returnValidMapping_givenFalseMerge_keywordLowerDisabled_createMappingTest() {
+        when(this.keywordLowerFeatureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(false);
         try {
             String mapping = this.sut.createMapping(restHighLevelClient, indexSchema, index, false);
             assertEquals(validMapping, mapping);
@@ -136,6 +148,18 @@ public class IndexerMappingServiceTest {
             fail("Should not throw this exception" + e.getMessage());
         }
     }
+
+    @Test
+    public void should_returnValidMapping_givenFalseMerge_keywordLowerEnabled_createMappingTest() {
+        when(this.keywordLowerFeatureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(true);
+        try {
+            String mapping = this.sut.createMapping(restHighLevelClient, indexSchema, index, false);
+            assertEquals(validKeywordLowerMapping, mapping);
+        } catch (Exception e) {
+            fail("Should not throw this exception" + e.getMessage());
+        }
+    }
+
 
     @Test
     public void should_returnValidMapping_givenTrueMerge_createMappingTest() {
@@ -146,6 +170,21 @@ public class IndexerMappingServiceTest {
 
             String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
             assertEquals(this.validMapping, mapping);
+        } catch (Exception e) {
+            fail("Should not throw this exception" + e.getMessage());
+        }
+    }
+
+    @Test
+    public void should_returnValidMapping_givenTrueMerge_keywordLowerEnabled_createMappingTest() {
+        when(this.keywordLowerFeatureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(true);
+        try {
+            AcknowledgedResponse mappingResponse = new AcknowledgedResponse(true);
+            doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
+            doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
+
+            String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
+            assertEquals(validKeywordLowerMapping, mapping);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
