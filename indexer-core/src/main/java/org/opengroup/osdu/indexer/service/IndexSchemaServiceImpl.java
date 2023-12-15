@@ -171,23 +171,10 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         String schema = this.schemaCache.get(kind);
         if (Strings.isNullOrEmpty(schema)) {
             // get from storage
-            schema = this.schemaProvider.getSchema(kind);
+            schema = this.getSchema(kind, "");
             if (Strings.isNullOrEmpty(schema)) {
                 return this.getEmptySchema(kind);
             } else {
-                if(augmenterSetting.isEnabled()) {
-                    try {
-                        // Merge schema of the extended properties if needed
-                        AugmenterConfiguration augmenterConfiguration = augmenterConfigurationService.getConfiguration(kind);
-                        if (augmenterConfiguration != null) {
-                            schema = mergeSchemaFromPropertyConfiguration(schema, augmenterConfiguration);
-                        }
-                    }
-                    catch(Exception ex) {
-                        log.error(String.format("Augmenter: Failed to merge schema of the extended properties for kind: '%s'", kind), ex);
-                    }
-                }
-
                 IndexSchema flatSchemaObj = cacheAndNormalizeSchema(kind, schema);
                 return flatSchemaObj;
             }
@@ -201,6 +188,43 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         }
     }
 
+    private String getSchema(String kind, String accessors) throws AppException, UnsupportedEncodingException, URISyntaxException {
+        if(!Strings.isNullOrEmpty(accessors)) {
+            String schema = this.schemaCache.get(kind);
+            if(!Strings.isNullOrEmpty(schema)) {
+                return schema;
+            }
+        }
+
+        // accessors used to prevent infinite loop
+        if(accessors.contains(kind)) {
+            return null;
+        }
+        else {
+            accessors += ";" + kind;
+        }
+        String schema = this.schemaProvider.getSchema(kind);
+        boolean augmented = false;
+        if (!Strings.isNullOrEmpty(schema) && augmenterSetting.isEnabled()) {
+            try {
+                // Merge schema of the extended properties if needed
+                AugmenterConfiguration augmenterConfiguration = augmenterConfigurationService.getConfiguration(kind);
+                if (augmenterConfiguration != null) {
+                    augmented = true;
+                    schema = mergeSchemaFromPropertyConfiguration(schema, augmenterConfiguration, accessors);
+                }
+            }
+            catch(Exception ex) {
+                log.error(String.format("Augmenter: Failed to merge schema of the extended properties for kind: '%s'", kind), ex);
+            }
+        }
+        if(!augmented) {
+            // augmented schema could be incomplete because of infinite loop prevention
+            cacheAndNormalizeSchema(kind, schema);
+        }
+        return schema;
+    }
+
     private IndexSchema cacheAndNormalizeSchema(String kind, String schema) {
         // cache the schema
         this.schemaCache.put(kind, schema);
@@ -212,8 +236,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         return flatSchemaObj;
     }
 
-    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, AugmenterConfiguration augmenterConfiguration) throws UnsupportedEncodingException, URISyntaxException {
-        Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(augmenterConfiguration);
+    private String mergeSchemaFromPropertyConfiguration(String originalSchemaStr, AugmenterConfiguration augmenterConfiguration, String accessors) throws UnsupportedEncodingException, URISyntaxException {
+        Map<String, Schema> relatedObjectKindSchemas = getSchemaOfRelatedObjectKinds(augmenterConfiguration, accessors);
         Schema originalSchema = gson.fromJson(originalSchemaStr, Schema.class);
         List<SchemaItem> extendedSchemaItems = augmenterConfigurationService.getExtendedSchemaItems(originalSchema, relatedObjectKindSchemas, augmenterConfiguration);
         if (!extendedSchemaItems.isEmpty()) {
@@ -226,7 +250,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         }
     }
 
-    private Map<String, Schema> getSchemaOfRelatedObjectKinds(AugmenterConfiguration augmenterConfiguration) throws UnsupportedEncodingException, URISyntaxException {
+    private Map<String, Schema> getSchemaOfRelatedObjectKinds(AugmenterConfiguration augmenterConfiguration, String accessors) throws UnsupportedEncodingException, URISyntaxException {
         List<String> relatedObjectKinds = augmenterConfiguration.getUniqueRelatedObjectKinds();
         Map<String, Schema> relatedObjectKindSchemas = new HashMap<>();
         for (String relatedObjectKind : relatedObjectKinds) {
@@ -238,10 +262,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
             String relatedObjectKindSchema = this.schemaCache.get(concreteRelatedObjectKind);
             if (Strings.isNullOrEmpty(relatedObjectKindSchema)) {
-                relatedObjectKindSchema = this.schemaProvider.getSchema(concreteRelatedObjectKind);
-                if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
-                    cacheAndNormalizeSchema(concreteRelatedObjectKind, relatedObjectKindSchema);
-                }
+                relatedObjectKindSchema = this.getSchema(concreteRelatedObjectKind, accessors);
             }
 
             if (!Strings.isNullOrEmpty(relatedObjectKindSchema)) {
