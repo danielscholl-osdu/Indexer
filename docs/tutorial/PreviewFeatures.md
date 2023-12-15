@@ -132,3 +132,10 @@ Note:
 If the property "featureFlag.asIngestedCoordinates.enabled" is not created or the property value is set to "false" (String type) in the given data partition, 
 the AsIngestedCoordinates field will not be indexed. 
 
+## Case agnostic strict search and sort
+Currently for all strict searches we provide .keyword subfield. In this preview we are adding possibility to case agnostic
+strict search with additional .keywordLower subfield. This allows simpler querying values which casing might be non-trivial.
+Details how to construct search query to use consume this feature are described in search service tutorial.
+Also it allows to sort text values truly alphabetically as currently uppercase words are before lowercase letters.
+
+Feature is enabled for OSDU Data Platform deployment with keywordLower flag enabled in application properties file.

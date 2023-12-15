@@ -93,6 +93,15 @@ Feature: Indexing of the documents
       | kind                                      | recordFile                   | number | index                                     | acl                            | field                                   | top_left_latitude | top_left_longitude | bottom_right_latitude | bottom_right_longitude |
       | "tenant1:wks:master-data--Wellbore:2.0.3" | "r3-index_record_wks_master" | 1      | "tenant1-wks-master-data--wellbore-2.0.3" | "data.default.viewers@tenant1" | "data.SpatialLocation.Wgs84Coordinates" | 52                | -100               | 0                     | 100                    |
 
+  @keyword-lower
+  Scenario Outline: Ingest record and Index in the Elastic Search with keywordLower attribute for text fields
+    When I ingest records with the <recordFile> with <acl> for a given <kind>
+    Then I should be able to search <number> record with index <index> by extended data field <field> and value <value>
+
+    Examples:
+      | kind                                           | recordFile                    | number | index                                           | acl                            |  field                            | value           |
+      | "test:indexer:index-property--Wellbore:1.0.0"  | "index-property-wellbore_v1"  | 1      |  "test-indexer-index-property--wellbore-1.0.0"  | "data.default.viewers@tenant1" | "data.FacilityName.keywordLower"  | "facility_123"  |
+
   @default
   Scenario Outline: Ingest records with geo-shape and Index with virtual properties in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>

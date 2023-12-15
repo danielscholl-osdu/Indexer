@@ -4,9 +4,9 @@ variables:
 
 gc-test:
   variables:
-    CUCUMBER_OPTIONS: "--tags ~@indexer-extended"
+    CUCUMBER_OPTIONS: "--tags @default"
 
 gc-baremetal-test:
   variables:
     GC_VENDOR: baremetal
-    CUCUMBER_OPTIONS: "--tags ~@indexer-extended"
+    CUCUMBER_OPTIONS: "--tags @default"
