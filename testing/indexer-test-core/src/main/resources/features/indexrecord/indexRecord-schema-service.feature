@@ -8,12 +8,15 @@ Feature: Indexing of the documents
       | tenant1:indexer:test-data--Integration:2.0.1        | tenant1-indexer-test-data--integration-2.0.1        | index_records_2                |
       | tenant1:indexer:test-data--Integration:3.0.1        | tenant1-indexer-test-data--integration-3.0.1        | index_records_3                |
       | tenant1:wks:master-data--Wellbore:2.0.3             | tenant1-wks-master-data--wellbore-2.0.3             | r3-index_record_wks_master     |
+      | tenant1:wks:master-data--Wellbore:2.0.4             | tenant1-wks-master-data--wellbore-2.0.4             | r3-index_record_wks_master     |
       | tenant1:wks:ArraysOfObjectsTestCollection:4.0.0     | tenant1-wks-arraysofobjectstestcollection-4.0.0     | r3-index_record_arrayofobjects |
       | tenant1:indexer:test-mapping--Sync:2.0.0            | tenant1-indexer-test-mapping--sync-2.0.0            | index_record_sync_mapping      |
       | tenant1:indexer:test-update-data--Integration:1.0.1 | tenant1-indexer-test-update-data--integration-1.0.1 | index_update_records_kind_v1   |
       | tenant1:indexer:test-update-data--Integration:2.0.1 | tenant1-indexer-test-update-data--integration-2.0.1 | index_update_records_kind_v2   |
       | tenant1:indexer:virtual-properties-Integration:1.0.0 | tenant1-indexer-virtual-properties-integration-1.0.0 | index_record_virtual_properties   |
+      | tenant1:indexer:virtual-properties-Integration:1.0.1 | tenant1-indexer-virtual-properties-integration-1.0.1 | index_record_virtual_properties   |
       | tenant1:indexer:decimation-Integration:1.0.0        | tenant1-indexer-decimation-integration-1.0.0        | index_record_seismic_survey    |
+      | tenant1:indexer:decimation-Integration:1.0.1        | tenant1-indexer-decimation-integration-1.0.1        | index_record_seismic_survey    |
       | osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0 | osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0 | osdu_wks_IndexPropertyPathConfiguration_v1 |
       | test:indexer:index-property--Wellbore:1.0.0         | test-indexer-index-property--wellbore-1.0.0         | index-property-wellbore_v1     |
       | test:indexer:index-property--WellLog:1.0.0          | test-indexer-index-property--welllog-1.0.0          | index-property-welllog_v1      |
