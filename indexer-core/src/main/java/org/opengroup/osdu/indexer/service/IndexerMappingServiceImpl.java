@@ -212,6 +212,17 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
             }
         }
 
+        // sync data-source attributes
+        Map<String, Object> dataMapping = this.getDataMapping(schema);
+        if (!dataMapping.isEmpty()) {
+            // inner properties.data.properties block
+            Map<String, Object> dataProperties = new HashMap<>();
+            dataProperties.put(Constants.PROPERTIES, dataMapping);
+
+            // data & meta block
+            properties.put(Constants.DATA, dataProperties);
+        }
+
         Map<String, Object> documentMapping = new HashMap<>();
         documentMapping.put(Constants.PROPERTIES, properties);
 
