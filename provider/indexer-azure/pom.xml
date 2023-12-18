@@ -41,8 +41,8 @@
         <nimbus-jose-jwt.version>8.20.2</nimbus-jose-jwt.version>
         <indexer-core.version>0.26.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
-        <osdu.corelibazure.version>0.25.0-rc2</osdu.corelibazure.version>
-        <os-core-common.version>0.25.0-rc3</os-core-common.version>
+        <osdu.corelibazure.version>0.25.0</osdu.corelibazure.version>
+        <os-core-common.version>0.25.0</os-core-common.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
         <java-jwt.version>3.8.1</java-jwt.version>
         <mockito.version>3.11.2</mockito.version>
@@ -56,6 +56,7 @@
         <azure-security-keyvault-keys.version>4.4.6</azure-security-keyvault-keys.version>
         <azure-security-keyvault-secrets.version>4.4.6</azure-security-keyvault-secrets.version>
         <guava.version>32.1.2-jre</guava.version>
+        <jackson-bom.version>2.14.1</jackson-bom.version>
     </properties>
 
     <dependencyManagement>
@@ -66,6 +67,13 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-bom</artifactId>
                 <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

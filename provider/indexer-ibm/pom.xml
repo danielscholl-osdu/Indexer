@@ -32,7 +32,7 @@
 	
 	<properties>
 		<tomcat.embed.core.version>9.0.69</tomcat.embed.core.version>
-        <os-core-lib-ibm.version>0.24.0</os-core-lib-ibm.version>
+        <os-core-lib-ibm.version>0.25.0</os-core-lib-ibm.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
         <jackson.version>2.13.4</jackson.version>
     </properties>
