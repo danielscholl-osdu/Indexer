@@ -123,6 +123,31 @@ Feature: Indexing of the documents
       | kind                                              | recordFile                       | number | index                                             | acl                            | path              | first_nested_field           | first_nested_value | second_nested_field          | second_nested_value | flattened_inner_field           | flattened_inner_value | object_inner_field |
       | "tenant1:wks:ArraysOfObjectsTestCollection:4.0.0" | "r3-index_record_arrayofobjects" | 1      | "tenant1-wks-arraysofobjectstestcollection-4.0.0" | "data.default.viewers@tenant1" | "data.NestedTest" | "data.NestedTest.NumberTest" | 12345              | "data.NestedTest.StringTest" | "test string"       | "data.FlattenedTest.StringTest" | "test string"         | "ObjectTest"       |
 
+  @as-ingested-coordinates
+  Scenario Outline: Ingest the record and Index in the Elastic with AsIngestedCoordinates properties
+    When I ingest records with the <recordFile> with <acl> for a given <kind>
+    Then I should be able search <number> documents for the <index> by flattened inner properties (<flattened_inner_field>, <flattened_inner_value>)
+    Then I should get <inner_field> in search response for the <index>
+
+    Examples:
+      | kind                                                   | recordFile                        | number | index                                                  | acl                            | flattened_inner_field                                                                 | flattened_inner_value                                                     | inner_field                                                                  |
+      | "tenant1:wks:master-data--Wellbore:2.0.3"              | "r3-index_record_wks_master"      | 1      | "tenant1-wks-master-data--wellbore-2.0.3"              | "data.default.viewers@tenant1" | "data.ProjectedBottomHoleLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"  | "osdu:reference-data--CoordinateReferenceSystem:ED_1950_UTM_Zone_31N:"    | "ProjectedBottomHoleLocation.AsIngestedCoordinates.persistableReferenceCrs"  |
+      | "tenant1:wks:master-data--Wellbore:2.0.3"              | "r3-index_record_wks_master"      | 1      | "tenant1-wks-master-data--wellbore-2.0.3"              | "data.default.viewers@tenant1" | "data.SpatialLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"              | "osdu:reference-data--CoordinateReferenceSystem:ED_1950_UTM_Zone_31N:"    | "SpatialLocation.AsIngestedCoordinates.persistableReferenceCrs"              |
+      | "tenant1:indexer:virtual-properties-Integration:1.0.0" | "index_record_virtual_properties" | 1      | "tenant1-indexer-virtual-properties-integration-1.0.0" | "data.default.viewers@tenant1" | "data.ProjectedBottomHoleLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"  | "osdu:reference-data--CoordinateReferenceSystem:WGS_1984_World_Mercator:" | "ProjectedBottomHoleLocation.AsIngestedCoordinates.persistableReferenceCrs"  |
+      | "tenant1:indexer:virtual-properties-Integration:1.0.0" | "index_record_virtual_properties" | 2      | "tenant1-indexer-virtual-properties-integration-1.0.0" | "data.default.viewers@tenant1" | "data.GeographicBottomHoleLocation.AsIngestedCoordinates.CoordinateReferenceSystemID" | "osdu:reference-data--CoordinateReferenceSystem:WGS_1984_World_Mercator:" | "GeographicBottomHoleLocation.AsIngestedCoordinates.persistableReferenceCrs" |
+      | "tenant1:indexer:virtual-properties-Integration:1.0.0" | "index_record_virtual_properties" | 3      | "tenant1-indexer-virtual-properties-integration-1.0.0" | "data.default.viewers@tenant1" | "data.SpatialLocation.AsIngestedCoordinates.CoordinateReferenceSystemID"              | "osdu:reference-data--CoordinateReferenceSystem:WGS_1984_World_Mercator:" | "SpatialLocation.AsIngestedCoordinates.persistableReferenceCrs"              |
+
+  @as-ingested-coordinates
+  Scenario Outline: Ingest the record and Index in the Elastic with AsIngestedCoordinates properties and search by coordinates
+    When I ingest records with the <recordFile> with <acl> for a given <kind>
+    Then I should be able search <number> documents for the <index> by bounding box query with points (<topPointX>, <bottomPointX>) on field <pointX> and points (<topPointY>, <bottomPointY>) on field <pointY>
+
+    Examples:
+      | kind                                                   | recordFile                        | number | index                                                  | acl                            | pointX                                                                | topPointX | bottomPointX | pointY                                                                | topPointY | bottomPointY |
+      | "tenant1:wks:master-data--Wellbore:2.0.3"              | "r3-index_record_wks_master"      | 1      | "tenant1-wks-master-data--wellbore-2.0.3"              | "data.default.viewers@tenant1" | "data.ProjectedBottomHoleLocation.AsIngestedCoordinates.FirstPoint.X" | 710000    | 700000       | "data.ProjectedBottomHoleLocation.AsIngestedCoordinates.FirstPoint.Y" | 5800000   | 5700000      |
+      | "tenant1:indexer:virtual-properties-Integration:1.0.0" | "index_record_virtual_properties" | 1      | "tenant1-indexer-virtual-properties-integration-1.0.0" | "data.default.viewers@tenant1" | "data.ProjectedBottomHoleLocation.AsIngestedCoordinates.FirstPoint.X" | 2600000   | 2500000      | "data.ProjectedBottomHoleLocation.AsIngestedCoordinates.FirstPoint.Y" | -3500000  | -3600000     |
+      | "tenant1:indexer:decimation-Integration:1.0.0"         | "index_record_seismic_survey"     | 1      | "tenant1-indexer-decimation-integration-1.0.0"         | "data.default.viewers@tenant1" | "data.SpatialLocation.AsIngestedCoordinates.FirstPoint.X"             | 1151940   | 1151930      | "data.SpatialLocation.AsIngestedCoordinates.FirstPoint.Y"             | 4843810   | 4843800      |
+
   @default
   Scenario Outline: Synchronize meta attribute mapping on existing indexed kind
     When I create index with <mappingFile> for a given <index> and <kind>

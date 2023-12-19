@@ -195,11 +195,6 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
             missing.add(attribute);
         }
 
-        if (missing.isEmpty()) {
-            this.indexCache.put(cacheKey, true);
-            return;
-        }
-
         Map<String, Object> properties = new HashMap<>();
         Kind kind = new Kind(schema.getKind());
         for (String attribute : missing) {
@@ -210,6 +205,22 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
             } else {
                 properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, null));
             }
+        }
+
+        // sync data-source attributes
+        Map<String, Object> dataMapping = this.getDataMapping(schema);
+        if (!dataMapping.isEmpty()) {
+            // inner properties.data.properties block
+            Map<String, Object> dataProperties = new HashMap<>();
+            dataProperties.put(Constants.PROPERTIES, dataMapping);
+
+            // data & meta block
+            properties.put(Constants.DATA, dataProperties);
+        }
+
+        if (properties.isEmpty()) {
+            this.indexCache.put(cacheKey, true);
+            return;
         }
 
         Map<String, Object> documentMapping = new HashMap<>();

@@ -31,6 +31,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -51,6 +52,7 @@ import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -63,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @Service
 @Primary
@@ -77,7 +81,8 @@ public class IndexerServiceImpl implements IndexerService {
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     // we index a normalized kind (authority + source + entity type + major version) as a tags attribute for all records
-    private static String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
+    private static final String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
+    private static final String VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID = "VerticalCoordinateReferenceSystemID";
 
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
@@ -110,13 +115,16 @@ public class IndexerServiceImpl implements IndexerService {
     @Inject
     private AugmenterSetting augmenterSetting;
 
+    @Autowired
+    private IFeatureFlag asIngestedCoordinatesFeatureFlag;
+
     private DpsHeaders headers;
 
     @Override
     public JobStatus processRecordChangedMessages(RecordChangedMessages message, List<RecordInfo> recordInfos) throws Exception {
 
         // this should not happen
-        if (recordInfos.size() == 0) return null;
+        if (recordInfos.isEmpty()) return null;
 
         String errorMessage = "";
         List<String> retryRecordIds = new LinkedList<>();
@@ -153,7 +161,7 @@ public class IndexerServiceImpl implements IndexerService {
             }
 
             // process failed records
-            if (retryRecordIds.size() > 0) {
+            if (!retryRecordIds.isEmpty()) {
                 retryAndEnqueueFailedRecords(recordInfos, retryRecordIds, message);
             }
 
@@ -313,10 +321,17 @@ public class IndexerServiceImpl implements IndexerService {
             }
 
             IndexSchema schema = kindSchemaMap.get(storageRecord.getKind());
+
+            ArrayList<String> asIngestedCoordinatesPaths = null;
+            if (this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)) {
+                // enrich schema with AsIngestedCoordinates properties
+                asIngestedCoordinatesPaths = findAsIngestedCoordinatesPaths(storageRecord.getData(), "");
+                addAsIngestedCoordinatesFieldsToSchema(schema, asIngestedCoordinatesPaths);
+            }
             schemas.add(schema);
 
             // skip indexing of records if data block is empty
-            RecordIndexerPayload.Record document = prepareIndexerPayload(schema, storageRecord, idOperationMap);
+            RecordIndexerPayload.Record document = prepareIndexerPayload(schema, storageRecord, idOperationMap, asIngestedCoordinatesPaths);
             if (document != null) {
                 indexerPayload.add(document);
             }
@@ -330,7 +345,42 @@ public class IndexerServiceImpl implements IndexerService {
         return RecordIndexerPayload.builder().records(indexerPayload).schemas(schemas).build();
     }
 
-    private RecordIndexerPayload.Record prepareIndexerPayload(IndexSchema schemaObj, Records.Entity storageRecord, Map<String, OperationType> idToOperationMap) {
+    private ArrayList<String> findAsIngestedCoordinatesPaths(Map<String, Object> dataMap, String path) {
+        ArrayList<String> paths = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
+            if (entry.getKey().equals(Constants.AS_INGESTED_COORDINATES)) {
+                paths.add(path + entry.getKey());
+                break;
+            }
+            if (entry.getValue() instanceof Map nested) {
+                paths.addAll(findAsIngestedCoordinatesPaths(nested, path + entry.getKey() + "."));
+            }
+        }
+        return paths;
+    }
+
+    private void addAsIngestedCoordinatesFieldsToSchema(IndexSchema schemaObj, ArrayList<String> asIngestedCoordinatesPaths) {
+        Map<String, String> asIngestedProperties = new HashMap<>();
+
+        Map<String, String> propertyKeyTypeMap = new HashMap<>();
+        propertyKeyTypeMap.put("FirstPoint.X", "long");
+        propertyKeyTypeMap.put("FirstPoint.Y", "long");
+        propertyKeyTypeMap.put("FirstPoint.Z", "long");
+        propertyKeyTypeMap.put(Constants.COORDINATE_REFERENCE_SYSTEM_ID, "text");
+        propertyKeyTypeMap.put(VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID, "text");
+        propertyKeyTypeMap.put(Constants.VERTICAL_UNIT_ID, "text");
+
+        for(String path: asIngestedCoordinatesPaths){
+            for(Map.Entry<String,String> propertyKeyTypeEntry: propertyKeyTypeMap.entrySet()) {
+                String pathPropertyKey = path + "." + propertyKeyTypeEntry.getKey();
+                String propertyValue = propertyKeyTypeEntry.getValue();
+                asIngestedProperties.put(pathPropertyKey, propertyValue);
+            }
+        }
+        schemaObj.getDataSchema().putAll(asIngestedProperties);
+    }
+
+    private RecordIndexerPayload.Record prepareIndexerPayload(IndexSchema schemaObj, Records.Entity storageRecord, Map<String, OperationType> idToOperationMap, ArrayList<String> asIngestedCoordinatesPaths) {
 
         RecordIndexerPayload.Record document = null;
         
@@ -343,7 +393,7 @@ public class IndexerServiceImpl implements IndexerService {
             } else if (schemaObj.isDataSchemaMissing()) {
                 document.setSchemaMissing(true);
             } else {
-                Map<String, Object> dataMap = this.storageIndexerPayloadMapper.mapDataPayload(schemaObj, storageRecordData, storageRecord.getId());
+                Map<String, Object> dataMap = this.storageIndexerPayloadMapper.mapDataPayload(asIngestedCoordinatesPaths, schemaObj, storageRecordData, storageRecord.getId());
                 if (dataMap.isEmpty()) {
                     document.setMappingMismatch(true);
                     String message = String.format("complete schema mismatch: none of the data attribute can be mapped | data: %s", storageRecordData);

@@ -20,6 +20,7 @@ import org.apache.commons.beanutils.NestedNullException;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.Constants;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
@@ -33,17 +34,22 @@ import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
+import org.opengroup.osdu.indexer.util.geo.extractor.PointExtractor;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES_FEATURE_NAME;
+
 @Component
 public class StorageIndexerPayloadMapper {
     private static final String SPATIAL_LOCATION_WGS84 = "SpatialLocation.Wgs84Coordinates";
     private static final String SPATIAL_AREA_WGS84 = "SpatialArea.Wgs84Coordinates";
+    private static final String PERSISTABLE_REFERENCE_VERTICAL_CRS = "persistableReferenceVerticalCrs";
 
     @Inject
     private JaxRsDpsLog log;
@@ -57,8 +63,13 @@ public class StorageIndexerPayloadMapper {
     private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
     private GeoShapeDecimator decimator;
+    @Inject
+    private PointExtractor pointExtractor;
 
-    public Map<String, Object> mapDataPayload(IndexSchema storageSchema, Map<String, Object> storageRecordData,
+    @Autowired
+    private IFeatureFlag asIngestedCoordinatesFeatureFlag;
+
+    public Map<String, Object> mapDataPayload(ArrayList<String> asIngestedCoordinatesPaths, IndexSchema storageSchema, Map<String, Object> storageRecordData,
                                               String recordId) {
 
         Map<String, Object> dataCollectorMap = new HashMap<>();
@@ -70,6 +81,9 @@ public class StorageIndexerPayloadMapper {
 
         mapDataPayload(storageSchema.getDataSchema(), storageRecordData, recordId, dataCollectorMap);
         mapVirtualPropertiesPayload(storageSchema, recordId, dataCollectorMap);
+        if (this.asIngestedCoordinatesFeatureFlag.isFeatureEnabled(AS_INGESTED_COORDINATES_FEATURE_NAME)) {
+            mapAsIngestedCoordinatesPayload(recordId, asIngestedCoordinatesPaths, storageRecordData, dataCollectorMap);
+        }
 
         return dataCollectorMap;
     }
@@ -184,7 +198,7 @@ public class StorageIndexerPayloadMapper {
         return elasticType;
     }
 
-    private Object getPropertyValue(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
+    public Object getPropertyValue(String recordId, Map<String, Object> storageRecordData, String propertyKey) {
 
         try {
             // try getting first level property using optimized collection
@@ -304,4 +318,37 @@ public class StorageIndexerPayloadMapper {
         // None of the original properties has value, return the default one
         return priorities.get(0);
     }
+
+    private void mapAsIngestedCoordinatesPayload(String recordId, ArrayList<String> asIngestedCoordinatesPaths, Map<String, Object> storageRecordData, Map<String, Object> dataCollectorMap) {
+        for (String path : asIngestedCoordinatesPaths) {
+            mapFirstPointFromAsIngestedFeatureCollection(recordId, storageRecordData, path, dataCollectorMap);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + Constants.PERSISTABLE_REFERENCE_CRS);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + PERSISTABLE_REFERENCE_VERTICAL_CRS);
+            mapPropertyString(recordId, storageRecordData, dataCollectorMap, path + "." + Constants.PERSISTABLE_REFERENCE_UNIT_Z);
+        }
+    }
+
+    private void mapFirstPointFromAsIngestedFeatureCollection(String recordId, Map<String, Object> storageRecordData, String path, Map<String, Object> dataCollectorMap) {
+        Map<String, Object> asIngestedCoordinates = (Map) getPropertyValue(recordId, storageRecordData, path);
+        ArrayList<Double> firstPoint = pointExtractor.extractFirstPointFromFeatureCollection(asIngestedCoordinates);
+        if (!firstPoint.isEmpty()) {
+            dataCollectorMap.put(path + ".FirstPoint.X", firstPoint.get(0));
+            dataCollectorMap.put(path + ".FirstPoint.Y", firstPoint.get(1));
+            if (firstPoint.size() == 3) {
+                dataCollectorMap.put(path + ".FirstPoint.Z", firstPoint.get(2));
+            }
+        } else {
+            this.jobStatus
+                    .addOrUpdateRecordStatus(recordId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST,
+                            String.format("record-id: %s | %s", recordId, "Could not extract first point from as ingested feature collection"));
+        }
+    }
+
+    private void mapPropertyString(String recordId, Map<String, Object> storageRecordData, Map<String, Object> dataCollectorMap, String propertyKey) {
+        String value = (String) getPropertyValue(recordId, storageRecordData, propertyKey);
+        if (value != null) {
+            dataCollectorMap.put(propertyKey, value);
+        }
+    }
+
 }

@@ -97,6 +97,8 @@ public class IndexerMappingServiceTest {
     private IndexerMappingServiceImpl sut = new IndexerMappingServiceImpl();
 
     private IndexSchema indexSchema;
+    private IndexSchema noDataIndexSchema;
+
     private IndicesClient indicesClient;
     private RestHighLevelClient restHighLevelClient;
 
@@ -105,6 +107,7 @@ public class IndexerMappingServiceTest {
         initMocks(this);
 
         this.indexSchema = IndexSchema.builder().kind(kind).type(type).dataSchema(getDataAttributeMapping()).metaSchema(getMetaAttributeMapping()).build();
+        this.noDataIndexSchema = IndexSchema.builder().kind(kind).type(type).dataSchema(null).metaSchema(getMetaAttributeMapping()).build();
 
         this.indicesClient = mock(IndicesClient.class);
         this.restHighLevelClient = mock(RestHighLevelClient.class);
@@ -243,7 +246,7 @@ public class IndexerMappingServiceTest {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
         doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema);
+        this.sut.syncIndexMappingIfRequired(restHighLevelClient, noDataIndexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);

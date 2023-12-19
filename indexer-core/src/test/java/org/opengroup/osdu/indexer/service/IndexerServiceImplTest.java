@@ -30,6 +30,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
@@ -104,6 +105,8 @@ public class IndexerServiceImplTest {
     private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
     @Mock
     private AugmenterSetting augmenterSetting;
+    @Mock
+    private IFeatureFlag asIngestedCoordinatesFeatureFlag;
 
     private List<RecordInfo> recordInfos = new ArrayList<>();
 
@@ -284,7 +287,7 @@ public class IndexerServiceImplTest {
 
         Map<String, Object> indexerMappedPayload = new HashMap<>();
         indexerMappedPayload.put("id", "keyword");
-        when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any())).thenReturn(indexerMappedPayload);
+        when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any(), any())).thenReturn(indexerMappedPayload);
 
         BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(), prepareSuccessfulResponse(), prepare400Response()};
         when(this.bulkResponse.getItems()).thenReturn(responses);

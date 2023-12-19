@@ -219,6 +219,14 @@ public class RecordSteps extends TestsBase {
         assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
+    public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_AsIngestedCoordinates(
+            int expectedNumber, String index, Double topPointX, Double bottomPointX, String pointX, Double topPointY, Double bottomPointY, String pointY) throws Throwable {
+        index = generateActualName(index, timeStamp);
+        long numOfIndexedDocuments = createIndex(index);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsByAsIngestedCoordinates(index, pointX, topPointX, bottomPointX, pointY, topPointY, bottomPointY);
+        assertEquals(expectedNumber, actualNumberOfRecords);
+    }
+
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_nestedQuery(
         int expectedNumber, String index, String path, String firstNestedField, String firstNestedValue, String secondNestedField, String secondNestedValue)
         throws Throwable {
@@ -249,6 +257,17 @@ public class RecordSteps extends TestsBase {
         RecordData actualRecordData = mapper.readValue(elasticRecordData, RecordData.class);
 
         assertEquals(expectedRecordData.getData().get(objectField),actualRecordData.getData().get(objectField));
+    }
+
+    public void i_should_get_object_in_search_response(String innerField, String index)
+            throws Throwable {
+        index = generateActualName(index, timeStamp);
+        long numOfIndexedDocuments = createIndex(index);
+
+        String elasticRecordData = elasticUtils.fetchDataFromObjectsArrayRecords(index);
+        RecordData actualRecordData = mapper.readValue(elasticRecordData, RecordData.class);
+
+        assertTrue(actualRecordData.getData().containsKey(innerField));
     }
 
     public void i_create_index_with_mapping_file_for_a_given_kind(String mappingFile, String index, String kind) throws Throwable {

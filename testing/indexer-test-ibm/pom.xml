@@ -57,7 +57,7 @@
         <dependency>
 			<groupId>org.opengroup.osdu</groupId>
 			<artifactId>os-core-lib-ibm</artifactId>
-			<version>${os-core-lib-ibm.version}</version>
+			<version>0.24.0</version>
 		</dependency>
 
         <!-- Cucumber -->
