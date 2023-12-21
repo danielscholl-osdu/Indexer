@@ -28,6 +28,7 @@ import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
 import org.opengroup.osdu.indexer.util.parser.NumberParser;
+import org.opengroup.osdu.indexer.util.parser.StringParser;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.lang.reflect.Type;
@@ -50,6 +51,8 @@ public class AttributeParsingServiceImplTest {
     private GeometryConversionService geometryConversionService;
     @Spy
     private BooleanParser booleanParser = new BooleanParser();
+    @Spy
+    private StringParser stringParser = new StringParser();
     @Spy
     private NumberParser numberParser = new NumberParser();
     @Spy
@@ -197,6 +200,31 @@ public class AttributeParsingServiceImplTest {
         };
 
         this.validateInput(this.sut::tryParseValueArray, Boolean.class, Boolean.class, inputs, dataMap);
+    }
+
+    @Test
+    public void should_parseString() {
+        Map<String, Object> dataMap = new HashMap<>();
+
+        this.sut.tryParseString("common:welldb:wellbore-OGY4ZWQ5", "dry", "", dataMap);
+        assertEquals(dataMap.size(), 1);
+        assertEquals(dataMap.get("dry"), "");
+
+        this.sut.tryParseString("common:welldb:wellbore-OGY4ZWQ5", "active", null, dataMap);
+        assertEquals(dataMap.size(), 2);
+        assertEquals(dataMap.get("active"), null);
+
+        this.sut.tryParseString("common:welldb:wellbore-OGY4ZWQ5", "notation", "E.2131", dataMap);
+        assertEquals(dataMap.size(), 3);
+        assertEquals(dataMap.get("notation"), "E.2131");
+
+        this.sut.tryParseString("common:welldb:wellbore-OGY4ZWQ5", "aw", false, dataMap);
+        assertEquals(dataMap.size(), 4);
+        assertEquals(dataMap.get("aw"), "false");
+
+        this.sut.tryParseString("common:welldb:wellbore-OGY4ZWQ5", "side", "true", dataMap);
+        assertEquals(dataMap.size(), 5);
+        assertEquals(dataMap.get("side"), "true");
     }
 
     @Test

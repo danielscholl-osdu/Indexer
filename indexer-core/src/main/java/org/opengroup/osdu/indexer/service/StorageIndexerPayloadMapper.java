@@ -117,7 +117,7 @@ public class StorageIndexerPayloadMapper {
                 case KEYWORD_ARRAY:
                 case TEXT:
                 case TEXT_ARRAY:
-                    dataCollectorMap.put(schemaPropertyName, storageRecordValue);
+                    this.attributeParsingService.tryParseString(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
                     break;
                 case INTEGER_ARRAY:
                     this.attributeParsingService.tryParseValueArray(Integer.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
