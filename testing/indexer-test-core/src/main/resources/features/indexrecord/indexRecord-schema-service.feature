@@ -105,7 +105,6 @@ Feature: Indexing of the documents
   @bag-of-words
   Scenario Outline: Ingest record and Index bag of words as an attribute 
     When I ingest records with the <recordFile> with <acl> for a given <kind>
-    Then I reindex records of <kind>
     Then I should be able to search <number> record with index <index> by extended data field <field> and value <value>
 
     Examples:

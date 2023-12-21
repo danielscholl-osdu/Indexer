@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.opengroup.osdu.core.common.model.search.RecordMetaAttribute.BAG_OF_WORDS;
 import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
 import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
 
@@ -141,6 +142,11 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     private Map<String, Object> getMetaMapping(IndexSchema schema) {
         Map<String, Object> metaMapping = new HashMap<>();
         Kind kind = new Kind(schema.getKind());
+
+        boolean bagOfWordsEnabled = this.featureFlagChecker.isFeatureEnabled(BAG_OF_WORDS_FEATURE_NAME);
+        if(bagOfWordsEnabled){
+            schema.getMetaSchema().put(BAG_OF_WORDS.getValue(), null);
+        }
 
         for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
             if (entry.getKey() == RecordMetaAttribute.AUTHORITY.getValue()) {
