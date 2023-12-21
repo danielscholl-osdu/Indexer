@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
-import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
@@ -23,7 +22,6 @@ import org.springframework.context.annotation.Configuration;
                 version = "${api.version}",
                 contact = @Contact(name = "${api.contact.name}", email = "${api.contact.email}"),
                 license = @License(name = "${api.license.name}", url = "${api.license.url}")),
-        servers = @Server(url = "${api.server.url}"),
         security = @SecurityRequirement(name = "Authorization"),
         tags = {
                 @Tag(name = "cleanup-indicies-api", description = "Cleanup Indicies API"),
