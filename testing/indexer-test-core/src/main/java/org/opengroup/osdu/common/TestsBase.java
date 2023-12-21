@@ -173,9 +173,4 @@ public abstract class TestsBase {
         return legal;
     }
 
-    protected void iReindexKind(String kind) throws Throwable {
-        final IndexerClientUtil indexerClientUtil = new IndexerClientUtil(this.httpClient);
-        indexerClientUtil.reIndex(kind, true);
-    }
-
 }

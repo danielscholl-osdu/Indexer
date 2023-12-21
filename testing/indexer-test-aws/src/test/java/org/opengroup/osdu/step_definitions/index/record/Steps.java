@@ -132,11 +132,6 @@ public class Steps extends SchemaServiceRecordSteps {
         super.iShouldCleanupIndicesOfExtendedKinds(extendedKinds);
     }
 
-    @Then("^I reindex records of  \"([^\"]*)\"$")
-    public void iReindexKind(String kind) throws Throwable {
-        super.iReindexKind(kind);
-    }
-
     @Then("^I should be able to search (\\d+) record with index \"([^\"]*)\" by extended data field \"([^\"]*)\" and value \"([^\"]*)\"$")
     public void iShouldBeAbleToSearchRecordByFieldAndFieldValue(int expectedNumber, String index, String fieldKey, String fieldValue) throws Throwable {
         super.iShouldBeAbleToSearchRecordByFieldAndFieldValue(index, fieldKey, fieldValue, expectedNumber);
