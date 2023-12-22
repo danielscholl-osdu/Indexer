@@ -87,6 +87,8 @@ public class StorageServiceImplTest {
 
         when(this.requestInfo.getHeadersMap()).thenReturn(new HashMap<>());
         when(this.requestInfo.getHeaders()).thenReturn(new DpsHeaders());
+        when(this.requestInfo.getHeadersMapWithDwdAuthZ()).thenReturn(new HashMap<>());
+        when(this.requestInfo.getHeadersWithDwdAuthZ()).thenReturn(new DpsHeaders());
 
         Type listType = new TypeToken<List<RecordInfo>>() {
         }.getType();

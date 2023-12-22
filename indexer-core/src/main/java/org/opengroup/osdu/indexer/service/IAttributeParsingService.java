@@ -19,6 +19,8 @@ public interface IAttributeParsingService {
 
     void tryParseBoolean(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap);
 
+    void tryParseString(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap);
+
     void tryParseDate(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap);
 
     void tryParseGeopoint(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap);

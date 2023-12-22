@@ -24,5 +24,5 @@ public class IndexerClientUtil {
         log.info("URL: " + url);
         ClientResponse response = httpClient.send(HttpMethod.DELETE, url, "", headers, httpClient.getAccessToken());
         log.info(response.toString());
-    }
+    }  
 }
