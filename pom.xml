@@ -26,7 +26,7 @@
         <woodstox-core.version>6.4.0</woodstox-core.version>
         <log4j2.version>2.17.1</log4j2.version>
         <spring-boot-maven-plugin.version>2.7.6</spring-boot-maven-plugin.version>
-        <json-smart.version>2.4.7</json-smart.version>
+        <json-smart.version>2.5.0</json-smart.version>
         <openapi.version>1.6.14</openapi.version>
     </properties>
 
