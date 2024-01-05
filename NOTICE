@@ -402,7 +402,7 @@ The following software have components provided under the terms of this license:
 - Apache Maven Wagon :: Providers :: SSH External Provider (from https://repo1.maven.org/maven2/org/apache/maven/wagon/wagon-ssh-external)
 - Apache Maven Wagon :: Providers :: SSH Provider (from https://repo1.maven.org/maven2/org/apache/maven/wagon/wagon-ssh)
 - Apache Velocity (from http://velocity.apache.org/engine/devel/, http://velocity.apache.org/engine/releases/velocity-1.6.1/, http://velocity.apache.org/engine/releases/velocity-1.6.2/)
-- AssertJ Core (from ${project.organization.url}#${project.artifactId})
+- AssertJ Core (from https://assertj.github.io/doc/#assertj-core)
 - Asynchronous Http Client (from https://repo1.maven.org/maven2/org/asynchttpclient/async-http-client)
 - Asynchronous Http Client Netty Utils (from https://repo1.maven.org/maven2/org/asynchttpclient/async-http-client-netty-utils)
 - AutoValue Annotations (from https://github.com/google/auto/tree/main/value, https://github.com/google/auto/tree/master/value, https://repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations)
