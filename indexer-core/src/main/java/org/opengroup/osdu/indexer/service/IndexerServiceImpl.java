@@ -56,13 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -83,6 +77,8 @@ public class IndexerServiceImpl implements IndexerService {
     // we index a normalized kind (authority + source + entity type + major version) as a tags attribute for all records
     private static final String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
     private static final String VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID = "VerticalCoordinateReferenceSystemID";
+
+    private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0";
 
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
@@ -106,6 +102,9 @@ public class IndexerServiceImpl implements IndexerService {
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Inject
     private StorageIndexerPayloadMapper storageIndexerPayloadMapper;
+
+    @Inject
+    private IndexSchemaService indexSchemaService;
     @Inject
     private IRequestInfo requestInfo;
     @Inject
@@ -172,6 +171,11 @@ public class IndexerServiceImpl implements IndexerService {
                     if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
                         augmenterConfigurationService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
                     }
+                    if(upsertRecordMap.containsKey(INDEX_PROPERTY_PATH_CONFIGURATION_KIND)) {
+                        List<String> configurationIds = upsertRecordMap.get(INDEX_PROPERTY_PATH_CONFIGURATION_KIND).
+                                keySet().stream().filter(id -> !retryRecordIds.contains(id)).toList();
+                        updateSchemaMappingOfRelatedKinds(configurationIds);
+                    }
                 }
                 catch(Exception ex) {
                     jaxRsDpsLog.error("Augmenter: Failed to update associated records", ex);
@@ -237,6 +241,26 @@ public class IndexerServiceImpl implements IndexerService {
             }
         }
         return deletedRecordKindIdsMap;
+    }
+
+    private void updateSchemaMappingOfRelatedKinds(List<String> configurationIds) {
+        List<String> relatedKinds = augmenterConfigurationService.getRelatedKindsOfConfigurations(configurationIds);
+        if(!relatedKinds.isEmpty()) {
+            try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+                for (String kind : relatedKinds) {
+                    try {
+                        this.indexSchemaService.processSchemaUpsertEvent(restClient, kind);
+                    }
+                    catch(Exception e) {
+                        jaxRsDpsLog.error(String.format("Augmenter: Failed to update schema mapping for kind %s", kind), e);
+                    }
+                }
+            }
+            catch(Exception ex) {
+                jaxRsDpsLog.error(String.format("Augmenter: Failed to update schema mapping for related kinds of configurations: %s",
+                                String.join(",", configurationIds)), ex);
+            }
+        }
     }
 
     private void processSchemaEvents(RestHighLevelClient restClient,
@@ -409,6 +433,10 @@ public class IndexerServiceImpl implements IndexerService {
                                 dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, augmenterConfiguration);
                             }
                             // We cache the dataMap in case the update of this object will trigger update of the related objects.
+                            augmenterConfigurationService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
+                        }
+                        else if(INDEX_PROPERTY_PATH_CONFIGURATION_KIND.equals(storageRecord.getKind())) {
+                            // We cache the dataMap that will be used to update the schema mapping of the related kinds
                             augmenterConfigurationService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
                         }
                     }
