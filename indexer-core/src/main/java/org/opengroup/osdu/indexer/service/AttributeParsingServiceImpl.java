@@ -64,8 +64,12 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
     @Override
     public void tryParseValueArray(Class<?> attributeClass, String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
         BiFunction<String, Object, ?> parser;
-        ElasticType elasticType = ElasticType.forValue(attributeClass.getSimpleName());
+        ElasticType elasticType = attributeClass != String.class ? ElasticType.forValue(attributeClass.getSimpleName()) : ElasticType.TEXT;
         switch (elasticType) {
+            case TEXT:
+            case KEYWORD:
+                parser = this.stringParser::parseString;
+                break; 
             case DOUBLE:
                 parser = this.numberParser::parseDouble;
                 break;
