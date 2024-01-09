@@ -174,4 +174,10 @@ public class Steps extends SchemaServiceRecordSteps {
             throws Throwable {
         super.i_should_get_object_in_search_response(innerField, index);
     }
+
+    @Then("^I should be able to search for record from \"([^\"]*)\" with id is \"([^\"]*)\" and find String arrays in  \"([^\"]*)\"$")
+    public void i_should_get_string_array_in_search_response(String index, String id, String innerField)
+            throws Throwable {
+        super.i_should_get_string_array_in_search_response(index, id, innerField);
+    }
 }
