@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
 import static org.opengroup.osdu.util.Config.getEntitlementsDomain;
 import static org.opengroup.osdu.util.Config.getStorageBaseURL;
 import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
-import static org.opengroup.osdu.util.JsonPathMatcher.DumpMap;
+import static org.opengroup.osdu.util.JsonPathMatcher.FindInJson;
 
 @Log
 public class RecordSteps extends TestsBase {
@@ -270,12 +270,10 @@ public class RecordSteps extends TestsBase {
     public void i_should_get_string_array_in_search_response(String index, String id, String innerField)
             throws Throwable {
         final List<Map<String, Object>> elasticRecordData =  elasticUtils.fetchRecordsByAttribute(index, "id", id);
-        assertFalse(elasticRecordData.isEmpty());
         assertEquals(1, elasticRecordData.size());
-        // because each element of innerField could be an array, we have to check each
-        List<String> stringList = Arrays.asList(innerField.split("\\."));
-        Map<String, Object> jsonRecord = elasticRecordData.get(0);
-        assertTrue(DumpMap(jsonRecord, "", stringList));
+        final List<String> stringList = Arrays.asList(innerField.split("\\."));
+        final Map<String, Object> jsonRecord = elasticRecordData.get(0);
+        assertTrue(FindInJson(jsonRecord, "", stringList));
     }
 
     public void i_create_index_with_mapping_file_for_a_given_kind(String mappingFile, String index, String kind) throws Throwable {

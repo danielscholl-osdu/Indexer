@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class JsonPathMatcher {
+
+    // Since there's no unit tests for tests, there's this:
     public static void main(String[] args) {
-        String jsonString = """
+        String jsonGoodString = """
 {       "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1.",
         "data": {
             "Name": "Wellbore-IndexPropertyPathConfiguration",
@@ -37,21 +39,49 @@ public class JsonPathMatcher {
         }
  }
  """;
+        String jsonBadString = """
+{       "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1.",
+        "data": {
+            "Name": "Wellbore-IndexPropertyPathConfiguration",
+            "Description": "The index property list for index-property--Wellbore:1., valid for all index-property--Wellbore kinds for major version 1.",
+            "Code": "test:indexer:index-property--Wellbore:1.",
+            "AttributionAuthority": "OSDU",
+            "Configurations": [{
+                    "Name": "WellUWI",
+                    "Policy": "ExtractFirstMatch",
+                    "Paths": [{
+                            "ValueExtraction": {
+                                "RelatedConditionMatches": "[UniqueIdentifier:$,RegulatoryName:$,PreferredName:$]",
+                                "RelatedConditionProperty": "data.NameAliases[].AliasNameTypeID",
+                                "ValuePath": "data.NameAliases[].AliasName"
+                            }
+                        }
+                    ],
+                    "UseCase": "As a user I want to discover and match Wells by their UWI. I am aware that this is not globally reliable, however, I am able to specify a prioritized AliasNameType list to look up value in the NameAliases array."
+                }
+            ]
+        }
+ }
+ """;
 
         try {
             // Create ObjectMapper instance
             ObjectMapper objectMapper = new ObjectMapper();
             // Parse JSON string into a Map<String, Object>
-            Map<String, Object> dataMap = objectMapper.readValue(jsonString, Map.class);
+            Map<String, Object> dataMap = objectMapper.readValue(jsonGoodString, Map.class);
             List<String> stringList = java.util.Arrays.asList("data.Configurations.Paths.ValueExtraction.RelatedConditionMatches".split("\\."));
-            boolean found = DumpMap(dataMap, "", stringList);
-            System.out.println("Found? "+(found?"Y":"N"));
+            boolean found = FindInJson(dataMap, "", stringList);
+            System.out.println("in Good String Found? "+(found?"Y":"N"));
+            dataMap = objectMapper.readValue(jsonBadString, Map.class);
+            found = FindInJson(dataMap, "", stringList);
+            System.out.println("in Bad String Found? "+(found?"Y":"N"));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static boolean DumpMap(Object data, String prefix, List<String> stringList) {
+    // Assure that field in the Json path in stringList is an array of strings
+    public static boolean FindInJson(Object data, String prefix, List<String> stringList) {
         if (data instanceof Map) {
             // Handle Map
             return handleMap((Map<String, Object>) data, prefix, stringList);
@@ -74,7 +104,7 @@ public class JsonPathMatcher {
                 System.out.println("Skipping " + entry.getKey() + ":\n");
                 continue;
             }
-            if (DumpMap(value, prefix + "\t", stringList.subList(1, stringList.size()))) { return true; }
+            if (FindInJson(value, prefix + "\t", stringList.subList(1, stringList.size()))) { return true; }
         }
         return false;
     }
@@ -89,7 +119,7 @@ public class JsonPathMatcher {
         int i = 0;
         for (Object arrayElementValue : arrayList) {
             System.out.println(prefix + i + ":\n");
-            if (DumpMap(arrayElementValue, prefix + "\t", stringList)) { return true; }
+            if (FindInJson(arrayElementValue, prefix + "\t", stringList)) { return true; }
             i++;
         }
         return false;
