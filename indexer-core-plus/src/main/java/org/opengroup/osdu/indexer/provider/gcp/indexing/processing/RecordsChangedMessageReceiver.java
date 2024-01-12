@@ -19,10 +19,10 @@ package org.opengroup.osdu.indexer.provider.gcp.indexing.processing;
 
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
-import org.opengroup.osdu.core.auth.TokenProvider;
+import org.opengroup.osdu.auth.TokenProvider;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
+import org.opengroup.osdu.oqm.core.model.OqmMessage;
 import org.opengroup.osdu.indexer.api.RecordIndexerApi;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.scope.ThreadDpsHeaders;
 import org.springframework.http.ResponseEntity;

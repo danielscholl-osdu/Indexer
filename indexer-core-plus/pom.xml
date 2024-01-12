@@ -9,10 +9,10 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>indexer-gc</artifactId>
+    <artifactId>indexer-core-plus</artifactId>
     <version>0.26.0-SNAPSHOT</version>
-    <name>indexer-gc</name>
-    <description>Indexer Service Google Cloud</description>
+    <name>indexer-core-plus</name>
+    <description>Indexer Core Plus Service</description>
     <packaging>jar</packaging>
 
 
@@ -39,7 +39,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-plus-common-lib</artifactId>
-            <version>0.25.0</version>
+            <version>0.24.0-rc3</version>
         </dependency>
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
@@ -151,7 +151,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>os-oqm-core</artifactId>
-            <version>0.25.0</version>
+            <version>0.25.0-rc1</version>
         </dependency>
     </dependencies>
 
@@ -174,14 +174,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.google.cloud.tools</groupId>
-                <artifactId>appengine-maven-plugin</artifactId>
-                <version>1.3.2</version>
-                <configuration>
-                    <version>1</version>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

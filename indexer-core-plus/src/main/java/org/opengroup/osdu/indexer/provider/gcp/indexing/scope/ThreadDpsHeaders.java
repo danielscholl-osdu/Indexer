@@ -22,7 +22,7 @@ import static org.springframework.context.annotation.ScopedProxyMode.TARGET_CLAS
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.opengroup.osdu.core.auth.TokenProvider;
+import org.opengroup.osdu.auth.TokenProvider;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.config.ScopeModifierPostProcessor;
 import org.springframework.context.annotation.Primary;

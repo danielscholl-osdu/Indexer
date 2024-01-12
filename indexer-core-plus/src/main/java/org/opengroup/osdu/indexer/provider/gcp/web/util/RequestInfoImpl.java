@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import javax.inject.Inject;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
-import org.opengroup.osdu.core.auth.TokenProvider;
+import org.opengroup.osdu.auth.TokenProvider;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.model.entitlements.AuthorizationResponse;
 import org.opengroup.osdu.core.common.model.http.AppException;

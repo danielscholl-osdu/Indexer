@@ -33,7 +33,6 @@ handlers:
     script: this field is required, but ignored
 
 env_variables:
-  GOOGLE_CLOUD_PROJECT: "GOOGLE_CLOUD_PROJECT_PLACE_HOLDER"
   AUTHORIZE_API: "AUTHORIZE_API_VAR"
   CRON_JOB_IP: "CRON_JOB_IP_VAR"
   LEGAL_HOSTNAME: "LEGAL_HOSTNAME_VAR"

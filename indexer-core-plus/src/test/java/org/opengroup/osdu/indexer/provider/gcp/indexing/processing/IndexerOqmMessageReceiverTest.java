@@ -30,9 +30,9 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.opengroup.osdu.core.auth.TokenProvider;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmAckReplier;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
+import org.opengroup.osdu.auth.TokenProvider;
+import org.opengroup.osdu.oqm.core.model.OqmAckReplier;
+import org.opengroup.osdu.oqm.core.model.OqmMessage;
 import org.opengroup.osdu.indexer.provider.gcp.indexing.scope.ThreadDpsHeaders;
 
 @RunWith(Theories.class)

@@ -19,7 +19,7 @@ package org.opengroup.osdu.indexer.provider.gcp.common.util;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.opengroup.osdu.core.auth.TokenProvider;
+import org.opengroup.osdu.auth.TokenProvider;
 import org.opengroup.osdu.core.common.util.IServiceAccountJwtClient;
 import org.springframework.stereotype.Component;
 

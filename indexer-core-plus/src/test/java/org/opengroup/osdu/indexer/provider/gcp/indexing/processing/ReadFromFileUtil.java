@@ -22,7 +22,7 @@ import com.google.gson.stream.JsonReader;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import org.opengroup.osdu.core.gcp.oqm.model.OqmMessage;
+import org.opengroup.osdu.oqm.core.model.OqmMessage;
 
 public class ReadFromFileUtil {
 
