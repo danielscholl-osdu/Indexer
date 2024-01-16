@@ -109,9 +109,11 @@ Feature: Indexing of the documents
     Examples:
       | kind                                                            | recordFile                                   | index                                                          | acl                            | field                                                                  | id                                                                                   |
       | "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0" | "osdu_wks_IndexPropertyPathConfiguration_v1" |"osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0" | "data.default.viewers@tenant1" | "data.Configurations.Paths.RelatedObjectsSpec.RelatedConditionMatches" | "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1." |
+      | "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0" | "well_augmenter_configuration"               |"osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0" | "data.default.viewers@tenant1" | "data.Configurations.Paths.RelatedObjectsSpec.RelatedConditionMatches" | "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1." |
+      | "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0" | "well_augmenter_configuration"               |"osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0" | "data.default.viewers@tenant1" | "data.Configurations.Paths.ValueExtraction.RelatedConditionMatches"    | "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1." |
 
   @bag-of-words
-  Scenario Outline: Ingest record and Index bag of words as an attribute 
+  Scenario Outline: Ingest record and Index bag of words as an attribute
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should be able to search <number> record with index <index> by extended data field <field> and value <value>
 
@@ -127,7 +129,7 @@ Feature: Indexing of the documents
     Examples:
       | kind                                                    | recordFile                        | number | index                                                  | acl                            | field                                                      | top_left_latitude | top_left_longitude | bottom_right_latitude | bottom_right_longitude |
       | "tenant1:indexer:virtual-properties-Integration:1.0.0"  | "index_record_virtual_properties" | 3      | "tenant1-indexer-virtual-properties-integration-1.0.0" | "data.default.viewers@tenant1" | "data.VirtualProperties.DefaultLocation.Wgs84Coordinates"  | 90                | -180               | -90                   | 180                    |
-      | "tenant1:indexer:decimation-Integration:1.0.0"          | "index_record_seismic_survey"     | 1       | "tenant1-indexer-decimation-integration-1.0.0"         | "data.default.viewers@tenant1" | "data.VirtualProperties.DefaultLocation.Wgs84Coordinates"  | 90                | -180               | -90                   | 180                    |
+      | "tenant1:indexer:decimation-Integration:1.0.0"          | "index_record_seismic_survey"     | 1       | "tenant1-indexer-decimation-integration-1.0.0"         | "data.default.viewers@tenant1" | "data.VirtualProperties.DefaultLocation.Wgs84Coordinates" | 90                | -180               | -90                   | 180                    |
 
   @default
   Scenario Outline: Ingest the r3-record with arrays of objects and hints in schema and Index in the Elastic Search
