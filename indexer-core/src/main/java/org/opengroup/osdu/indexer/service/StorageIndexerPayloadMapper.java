@@ -229,6 +229,9 @@ public class StorageIndexerPayloadMapper {
         String originalGeoShapeProperty = null;
         if(this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) != null) {
             VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
+            if (virtualProperties == null) {
+                return;
+            }
             for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
                 if (entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
                     continue;

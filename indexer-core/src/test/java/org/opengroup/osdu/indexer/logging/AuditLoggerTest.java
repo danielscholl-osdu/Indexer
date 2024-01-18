@@ -62,6 +62,20 @@ public class AuditLoggerTest {
 
     @Test
     @SuppressWarnings("rawtypes")
+    public void should_createAuditLogEvent_when_indexCreateRecordPartialSuccess() {
+        this.sut.indexCreateRecordPartialSuccess(Lists.newArrayList("anything"));
+
+        ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
+
+        verify(this.logger).audit(payloadCaptor.capture());
+
+        AuditPayload payload = payloadCaptor.getValue();
+        assertEquals("IN001", ((Map) payload.get("auditLog")).get("actionId"));
+        assertEquals("testUser", ((Map) payload.get("auditLog")).get("user"));
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexCreateRecordFail() {
         this.sut.indexCreateRecordFail(Lists.newArrayList("anything"));
 
@@ -78,6 +92,20 @@ public class AuditLoggerTest {
     @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexUpdateRecordSuccess() {
         this.sut.indexUpdateRecordSuccess(Lists.newArrayList("anything"));
+
+        ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
+
+        verify(this.logger).audit(payloadCaptor.capture());
+
+        AuditPayload payload = payloadCaptor.getValue();
+        assertEquals("IN002", ((Map) payload.get("auditLog")).get("actionId"));
+        assertEquals("testUser", ((Map) payload.get("auditLog")).get("user"));
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    public void should_createAuditLogEvent_when_indexUpdateRecordPartialSuccess() {
+        this.sut.indexUpdateRecordPartialSuccess(Lists.newArrayList("anything"));
 
         ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
 

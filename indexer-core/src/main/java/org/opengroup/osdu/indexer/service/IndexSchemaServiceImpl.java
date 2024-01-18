@@ -45,7 +45,11 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
@@ -163,7 +167,6 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     @Override
     public IndexSchema getIndexerInputSchema(String kind, boolean invalidateCached) throws AppException, UnsupportedEncodingException, URISyntaxException {
-
         if (invalidateCached) {
             this.invalidateCache(kind);
         }
@@ -175,32 +178,31 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             if (Strings.isNullOrEmpty(schema)) {
                 return this.getEmptySchema(kind);
             } else {
-                IndexSchema flatSchemaObj = cacheAndNormalizeSchema(kind, schema);
-                return flatSchemaObj;
+                return cacheAndGetFlattenedSchema(kind, schema);
             }
         } else {
             // search flattened schema in memcache
             String flattenedSchema = this.flattenedSchemaCache.get(kind);
             if (Strings.isNullOrEmpty(flattenedSchema)) {
-                return this.getEmptySchema(kind);
+                schema = this.getSchema(kind, "");
+                return cacheAndGetFlattenedSchema(kind, schema);
             }
             return this.gson.fromJson(flattenedSchema, IndexSchema.class);
         }
     }
 
     private String getSchema(String kind, String accessors) throws AppException, UnsupportedEncodingException, URISyntaxException {
-        if(!Strings.isNullOrEmpty(accessors)) {
+        if (!Strings.isNullOrEmpty(accessors)) {
             String schema = this.schemaCache.get(kind);
-            if(!Strings.isNullOrEmpty(schema)) {
+            if (!Strings.isNullOrEmpty(schema)) {
                 return schema;
             }
         }
 
         // accessors used to prevent infinite loop
-        if(accessors.contains(kind)) {
+        if (accessors.contains(kind)) {
             return null;
-        }
-        else {
+        } else {
             accessors += ";" + kind;
         }
         String schema = this.schemaProvider.getSchema(kind);
@@ -213,19 +215,18 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
                     augmented = true;
                     schema = mergeSchemaFromPropertyConfiguration(schema, augmenterConfiguration, accessors);
                 }
-            }
-            catch(Exception ex) {
+            } catch (Exception ex) {
                 log.error(String.format("Augmenter: Failed to merge schema of the extended properties for kind: '%s'", kind), ex);
             }
         }
-        if(!augmented) {
+        if (!augmented) {
             // augmented schema could be incomplete because of infinite loop prevention
-            cacheAndNormalizeSchema(kind, schema);
+            cacheAndGetFlattenedSchema(kind, schema);
         }
         return schema;
     }
 
-    private IndexSchema cacheAndNormalizeSchema(String kind, String schema) {
+    private IndexSchema cacheAndGetFlattenedSchema(String kind, String schema) {
         // cache the schema
         this.schemaCache.put(kind, schema);
         // get flatten schema and cache it

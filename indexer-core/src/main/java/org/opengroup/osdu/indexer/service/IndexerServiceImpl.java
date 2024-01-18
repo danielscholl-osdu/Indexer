@@ -287,10 +287,12 @@ public class IndexerServiceImpl implements IndexerService {
                 String kind = entry.getKey();
                 List<String> errors = new ArrayList<>();
                 IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, errors);
-                if (!errors.isEmpty()) {
-                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, String.join("|", errors), String.format("error  | kind: %s", kind));
-                } else if (schemaObj.isDataSchemaMissing()) {
-                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, "schema not found", String.format("schema not found | kind: %s", kind));
+                String error = errors.isEmpty() ? "" : String.join("|", errors);
+                String debugInfo = errors.isEmpty() ? String.format("kind: %s", kind) : String.format("kind: %s | errors: %s", kind, error);
+                if (schemaObj.isDataSchemaMissing()) {
+                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, errors.isEmpty() ? "schema not found" : String.format("schema not found | %s", error), String.format("schema not found | %s", debugInfo));
+                } else if (!errors.isEmpty()) {
+                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, error, debugInfo);
                 }
 
                 schemas.put(kind, schemaObj);
@@ -711,16 +713,20 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
     private void updateAuditLog() {
-        logAuditEvents(OperationType.create, this.auditLogger::indexCreateRecordSuccess, this.auditLogger::indexCreateRecordFail);
-        logAuditEvents(OperationType.update, this.auditLogger::indexUpdateRecordSuccess, this.auditLogger::indexUpdateRecordFail);
-        logAuditEvents(OperationType.purge, this.auditLogger::indexPurgeRecordSuccess, this.auditLogger::indexPurgeRecordFail);
-        logAuditEvents(OperationType.delete, this.auditLogger::indexDeleteRecordSuccess, this.auditLogger::indexDeleteRecordFail);
+        logAuditEvents(OperationType.create, this.auditLogger::indexCreateRecordSuccess, this.auditLogger::indexCreateRecordPartialSuccess, this.auditLogger::indexCreateRecordFail);
+        logAuditEvents(OperationType.update, this.auditLogger::indexUpdateRecordSuccess, this.auditLogger::indexUpdateRecordPartialSuccess, this.auditLogger::indexUpdateRecordFail);
+        logAuditEvents(OperationType.purge, this.auditLogger::indexPurgeRecordSuccess, null, this.auditLogger::indexPurgeRecordFail);
+        logAuditEvents(OperationType.delete, this.auditLogger::indexDeleteRecordSuccess, null, this.auditLogger::indexDeleteRecordFail);
     }
 
-    private void logAuditEvents(OperationType operationType, Consumer<List<String>> successEvent, Consumer<List<String>> failedEvent) {
+    private void logAuditEvents(OperationType operationType, Consumer<List<String>> successEvent, Consumer<List<String>> partialSuccessEvent, Consumer<List<String>> failedEvent) {
         List<RecordStatus> succeededRecords = this.jobStatus.getRecordStatuses(IndexingStatus.SUCCESS, operationType);
         if (!succeededRecords.isEmpty()) {
             successEvent.accept(succeededRecords.stream().map(RecordStatus::succeededAuditLogMessage).collect(Collectors.toList()));
+        }
+        List<RecordStatus> partiallySuccessfulRecords = this.jobStatus.getRecordStatuses(IndexingStatus.WARN, operationType);
+        if (!partiallySuccessfulRecords.isEmpty() && partialSuccessEvent != null) {
+            partialSuccessEvent.accept(partiallySuccessfulRecords.stream().map(RecordStatus::partiallySucceededAuditLogMessage).collect(Collectors.toList()));
         }
         List<RecordStatus> skippedRecords = this.jobStatus.getRecordStatuses(IndexingStatus.SKIP, operationType);
         List<RecordStatus> failedRecords = this.jobStatus.getRecordStatuses(IndexingStatus.FAIL, operationType);
