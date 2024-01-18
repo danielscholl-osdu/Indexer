@@ -19,11 +19,10 @@ package org.opengroup.osdu.indexer.provider.gcp.web.util;
 
 import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
 
-import com.google.common.base.Strings;
 import java.util.Map;
-import java.util.logging.Level;
+
 import javax.inject.Inject;
-import lombok.extern.java.Log;
+
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.auth.TokenProvider;
 import org.opengroup.osdu.core.common.Constants;
@@ -35,9 +34,12 @@ import org.opengroup.osdu.core.common.model.search.SearchServiceRole;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IAuthorizationService;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.core.gcp.model.CloudTaskHeaders;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.stereotype.Component;
+
+import com.google.common.base.Strings;
+
+import lombok.extern.java.Log;
 
 
 @Log
@@ -90,21 +92,14 @@ public class RequestInfoImpl implements IRequestInfo {
     }
 
     @Override
+    // This function no longer used and should be removed from interface in future.
     public boolean isCronRequest() {
-        String appEngineCronHeader = this.dpsHeaders.getHeaders().getOrDefault(CloudTaskHeaders.CLOUD_CRON_SERVICE, null);
-        return EXPECTED_CRON_HEADER_VALUE.equalsIgnoreCase(appEngineCronHeader);
+        return false;
     }
 
     @Override
+    // This function no longer used and should be removed from interface in future.
     public boolean isTaskQueueRequest() {
-        if (this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.CLOUD_TASK_QUEUE_NAME)) {
-            log.log(Level.INFO, "Request confirmed as cloud task, token validation in progress");
-            return isCloudTaskRequest();
-        }
-        if (this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.APPENGINE_TASK_QUEUE_NAME)) {
-            log.log(Level.INFO, "Request confirmed as AppEngine, headers validation in progress");
-            return isAppEngineTaskRequest();
-        }
         return false;
     }
 
@@ -113,15 +108,7 @@ public class RequestInfoImpl implements IRequestInfo {
         dpsHeaders.put(DpsHeaders.USER_EMAIL, authResponse.getUser());
         return true;
     }
-
-    private boolean isAppEngineTaskRequest() {
-        if (!this.dpsHeaders.getHeaders().containsKey(CloudTaskHeaders.APPENGINE_TASK_QUEUE_NAME)) {
-            return false;
-        }
-        String queueId = this.dpsHeaders.getHeaders().get(CloudTaskHeaders.APPENGINE_TASK_QUEUE_NAME);
-        return queueId.endsWith(Constants.INDEXER_QUEUE_IDENTIFIER);
-    }
-
+   
     public String checkOrGetAuthorizationHeader() {
         if (properties.getDeploymentEnvironment() == DeploymentEnvironment.LOCAL) {
             String authHeader = this.dpsHeaders.getAuthorization();

@@ -20,7 +20,7 @@ package org.opengroup.osdu.indexer.provider.gcp.common.di;
 import org.opengroup.osdu.core.common.partition.IPartitionProvider;
 import org.opengroup.osdu.core.common.partition.IPropertyResolver;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticRepository;
-import org.opengroup.osdu.core.destination.elastic.ElasticSearchDestinationResolver;
+import org.opengroup.osdu.core.di.ElasticSearchDestinationResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
