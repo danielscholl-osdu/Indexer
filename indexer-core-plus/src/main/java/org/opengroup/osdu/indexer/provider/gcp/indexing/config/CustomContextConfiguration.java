@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.indexer.IndexerApplication;
 import org.opengroup.osdu.indexer.ServerletInitializer;
 import org.opengroup.osdu.indexer.provider.gcp.web.config.WebAppMainContextConfiguration;
-import org.opengroup.osdu.indexer.provider.gcp.web.security.GcpSecurityConfig;
+import org.opengroup.osdu.indexer.provider.gcp.web.security.CorePlusSecurityConfig;
 import org.opengroup.osdu.indexer.swagger.SwaggerConfiguration;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -51,7 +51,7 @@ import org.springframework.context.annotation.PropertySource;
                 IndexerApplication.class,
                 ServerletInitializer.class,
                 SwaggerConfiguration.class,
-                GcpSecurityConfig.class,
+                CorePlusSecurityConfig.class,
                 SecurityAutoConfiguration.class,
                 ManagementWebSecurityAutoConfiguration.class,
                 SecurityFilterAutoConfiguration.class

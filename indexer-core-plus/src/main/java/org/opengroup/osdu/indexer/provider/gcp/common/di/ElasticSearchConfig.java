@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 public class ElasticSearchConfig {
 
     @Bean
-    public IElasticRepository elasticRepository(GcpConfigurationProperties properties,
+    public IElasticRepository elasticRepository(CorePlusConfigurationProperties properties,
         IPartitionProvider partitionProvider, IPropertyResolver propertyResolver) {
         return new ElasticSearchDestinationResolver(properties.getElasticsearchPropertiesPrefix(), partitionProvider, propertyResolver);
     }

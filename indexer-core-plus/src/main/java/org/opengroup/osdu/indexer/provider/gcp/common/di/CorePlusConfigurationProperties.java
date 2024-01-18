@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Primary;
 @ConfigurationProperties
 @Getter
 @Setter
-public class GcpConfigurationProperties extends IndexerConfigurationProperties {
+public class CorePlusConfigurationProperties extends IndexerConfigurationProperties {
 
     private String elasticsearchPropertiesPrefix = "elasticsearch";
 

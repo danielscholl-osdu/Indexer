@@ -26,7 +26,7 @@ import org.opengroup.osdu.core.common.partition.PartitionInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCache;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 import org.opengroup.osdu.core.cache.RedisCacheBuilder;
-import org.opengroup.osdu.indexer.provider.gcp.common.di.GcpConfigurationProperties;
+import org.opengroup.osdu.indexer.provider.gcp.common.di.CorePlusConfigurationProperties;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,7 +45,7 @@ public class CacheConfig {
     }
 
     @Bean
-    public RedisCache<String, String> schemaGCCache(GcpConfigurationProperties appProperties) {
+    public RedisCache<String, String> schemaGCCache(CorePlusConfigurationProperties appProperties) {
         return schemaCacheBuilder.buildRedisCache(
                 appProperties.getRedisSearchHost(),
                 Integer.parseInt(appProperties.getRedisSearchPort()),
@@ -63,13 +63,13 @@ public class CacheConfig {
     }
 
     @Bean
-    public RedisCache<String, ClusterSettings> elasticCache(GcpConfigurationProperties gcpAppServiceConfig) {
+    public RedisCache<String, ClusterSettings> elasticCache(CorePlusConfigurationProperties appServiceConfig) {
         return clusterSettingsCacheBuilder.buildRedisCache(
-                gcpAppServiceConfig.getRedisSearchHost(),
-                Integer.parseInt(gcpAppServiceConfig.getRedisSearchPort()),
-                gcpAppServiceConfig.getRedisSearchPassword(),
-                gcpAppServiceConfig.getRedisSearchExpiration(),
-                gcpAppServiceConfig.getRedisSearchWithSsl(),
+                appServiceConfig.getRedisSearchHost(),
+                Integer.parseInt(appServiceConfig.getRedisSearchPort()),
+                appServiceConfig.getRedisSearchPassword(),
+                appServiceConfig.getRedisSearchExpiration(),
+                appServiceConfig.getRedisSearchWithSsl(),
                 String.class,
                 ClusterSettings.class
         );
@@ -81,13 +81,13 @@ public class CacheConfig {
     }
 
     @Bean
-    public RedisCache<String, Boolean> redisCache(GcpConfigurationProperties gcpAppServiceConfig) {
+    public RedisCache<String, Boolean> redisCache(CorePlusConfigurationProperties appServiceConfig) {
         return redisCacheBuilder.buildRedisCache(
-                gcpAppServiceConfig.getRedisSearchHost(),
-                Integer.parseInt(gcpAppServiceConfig.getRedisSearchPort()),
-                gcpAppServiceConfig.getRedisSearchPassword(),
-                gcpAppServiceConfig.getRedisSearchExpiration(),
-                gcpAppServiceConfig.getRedisSearchWithSsl(),
+                appServiceConfig.getRedisSearchHost(),
+                Integer.parseInt(appServiceConfig.getRedisSearchPort()),
+                appServiceConfig.getRedisSearchPassword(),
+                appServiceConfig.getRedisSearchExpiration(),
+                appServiceConfig.getRedisSearchWithSsl(),
                 String.class,
                 Boolean.class
         );

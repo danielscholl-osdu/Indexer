@@ -27,11 +27,11 @@ import org.springframework.context.annotation.PropertySource;
 
 @SpringBootConfiguration
 @PropertySource("classpath:swagger.properties")
-public class IndexerGcpApplication {
+public class IndexerCorePlusApplication {
 
     public static void main(String[] args) {
-        SpringApplicationBuilder springApplicationBuilder = new SpringApplicationBuilder(IndexerGcpApplication.class)
-            .sources(IndexerGcpApplication.class)
+        SpringApplicationBuilder springApplicationBuilder = new SpringApplicationBuilder(IndexerCorePlusApplication.class)
+            .sources(IndexerCorePlusApplication.class)
             .web(WebApplicationType.NONE)
             .child(CustomContextConfiguration.class)
             .web(WebApplicationType.NONE)
