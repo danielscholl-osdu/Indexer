@@ -21,3 +21,9 @@ All documentation for the AWS implementation of `os-indexer` lives [here](./prov
 - api-docs (YAML) : https://host/context-path/api-docs.yaml
 
 All the Swagger and OpenAPI related common properties are managed here [swagger.properties](./indexer-core/src/main/resources/swagger.properties)
+
+#### Server Url(full path vs relative path) configuration
+- `api.server.fullUrl.enabled=true` It will generate full server url in the OpenAPI swagger
+- `api.server.fullUrl.enabled=false` It will generate only the contextPath only
+- default value is false (Currently only in Azure it is enabled)
+[Reference]:(https://springdoc.org/faq.html#_how_is_server_url_generated) 
