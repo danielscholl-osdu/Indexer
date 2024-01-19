@@ -1,31 +1,16 @@
-{
-    "id": "opendes:reference-data--IndexPropertyPathConfiguration:wks:master-data--Well:1.",
-    "kind": "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0",
-    "acl": {
-        "owners": [
-            "data.default.owners@opendes.enterprisedata.cloud.slb-ds.com"
-        ],
-        "viewers": [
-            "data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com"
-        ]
-    },
-    "legal": {
-        "legaltags": [
-            "opendes-default-legal"
-        ],
-        "otherRelevantDataCountries": [
-            "US"
-        ]
-    },
+[{
+    "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Well:1.",
     "data": {
         "Name": "Well-IndexPropertyPathConfiguration",
         "Description": "The index property list for master-data--Well:1., valid for all master-data--Well kinds for major version 1.",
         "Code": "osdu:wks:master-data--Well:1.",
         "AttributionAuthority": "OSDU",
-        "Configurations": [{
+        "Configurations": [
+            {
                 "Name": "CountryNames",
                 "Policy": "ExtractAllMatches",
-                "Paths": [{
+                "Paths": [
+                    {
                         "RelatedObjectsSpec": {
                             "RelationshipDirection": "ChildToParent",
                             "RelatedObjectID": "data.GeoContexts[].GeoPoliticalEntityID",
@@ -41,10 +26,12 @@
                     }
                 ],
                 "UseCase": "As a user I want to find objects by a country name, with the understanding that an object may extend over country boundaries."
-            }, {
+            },
+            {
                 "Name": "WellUWI",
                 "Policy": "ExtractFirstMatch",
-                "Paths": [{
+                "Paths": [
+                    {
                         "ValueExtraction": {
                             "RelatedConditionMatches": [
                                 "opendes:reference-data--AliasNameType:UniqueIdentifier:",
@@ -62,4 +49,4 @@
             }
         ]
     }
-}
+}]

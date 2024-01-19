@@ -20,17 +20,16 @@ public class JsonPathMatcher {
                     "Name": "WellUWI",
                     "Policy": "ExtractFirstMatch",
                     "Paths": [{
-                            "ValueExtraction": {
-                                "RelatedConditionMatches": [
-                                    "UniqueIdentifier:$",
-                                    "RegulatoryName:$",
-                                    "PreferredName:$",
-                                    "CommonName:$",
-                                    "ShortName:$"
-                                ],
-                                "RelatedConditionProperty": "data.NameAliases[].AliasNameTypeID",
-                                "ValuePath": "data.NameAliases[].AliasName"
-                            }
+                            "ValueExtraction.RelatedConditionMatches": [
+                                "UniqueIdentifier:$",
+                                "RegulatoryName:$",
+                                "PreferredName:$",
+                                "CommonName:$",
+                                "ShortName:$"
+                            ],
+                            "ValueExtraction.RelatedConditionProperty": "data.NameAliases[].AliasNameTypeID",
+                            "ValueExtraction.ValuePath": "data.NameAliases[].AliasName"
+                            
                         }
                     ],
                     "UseCase": "As a user I want to discover and match Wells by their UWI. I am aware that this is not globally reliable, however, I am able to specify a prioritized AliasNameType list to look up value in the NameAliases array."
@@ -65,63 +64,77 @@ public class JsonPathMatcher {
  """;
 
         try {
-            // Create ObjectMapper instance
             ObjectMapper objectMapper = new ObjectMapper();
-            // Parse JSON string into a Map<String, Object>
             Map<String, Object> dataMap = objectMapper.readValue(jsonGoodString, Map.class);
             List<String> stringList = java.util.Arrays.asList("data.Configurations.Paths.ValueExtraction.RelatedConditionMatches".split("\\."));
-            boolean found = FindInJson(dataMap, "", stringList);
-            System.out.println("in Good String Found? "+(found?"Y":"N"));
+            Object found = FindArrayInJson(dataMap, stringList);
+            System.out.println("in Good String Found? "+ objectMapper.writeValueAsString(found));
             dataMap = objectMapper.readValue(jsonBadString, Map.class);
-            found = FindInJson(dataMap, "", stringList);
-            System.out.println("in Bad String Found? "+(found?"Y":"N"));
+            found = FindArrayInJson(dataMap, stringList);
+            System.out.println("in Bad String Found? "+ objectMapper.writeValueAsString(found));
+            stringList = java.util.Arrays.asList("data.Configurations.Paths.ValueExtraction.SomeDifferentKey".split("\\."));
+            found = FindArrayInJson(dataMap, stringList);
+            System.out.println("in Bad String Found? "+ objectMapper.writeValueAsString(found));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // Assure that field in the Json path in stringList is an array of strings
-    public static boolean FindInJson(Object data, String prefix, List<String> stringList) {
+    // Assure that field in the Json path (supporting flattened fields) is an array of strings
+    public static Object FindArrayInJson(Object data, List<String> stringList) {
         if (data instanceof Map) {
             // Handle Map
-            return handleMap((Map<String, Object>) data, prefix, stringList);
+            return handleMap((Map<String, Object>) data, stringList);
         } else if (data instanceof ArrayList) {
             // Handle ArrayList
-            return handleArrayList((ArrayList<?>) data, prefix, stringList);
+            return handleArrayList((ArrayList<?>) data, stringList);
         } else {
             // Handle other types
-            System.out.println(prefix + data.toString());
-            return false;
+            return null;
         }
     }
 
-    private static boolean handleMap(Map<String, Object> map, String prefix, List<String> stringList) {
-        System.out.println("Checking for "+ stringList.get(0));
+    private static boolean isPrefix(List<String> potentialPrefix, List<String> target) {
+        boolean result = true;
+        for (Integer i = 0; i < potentialPrefix.size(); i++) {
+            if (!potentialPrefix.get(i).equals(target.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Object handleMap(Map<String, Object> map, List<String> stringList) {
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object value = entry.getValue();
-            if (!entry.getKey().equals(stringList.get(0))) {
-                System.out.println("Skipping " + entry.getKey() + ":\n");
-                continue;
+            List<String> keyParts = java.util.Arrays.asList(entry.getKey().split("\\."));
+            if (keyParts.size() > stringList.size()) {
+                if (!isPrefix(keyParts.subList(0, stringList.size()), stringList)) {
+                    continue;
+                }
+                Object result = FindArrayInJson(value, stringList.subList(0, 0));
+                if (result != null) { return result; }
+            } else {
+                if (!isPrefix(keyParts, stringList)) {
+                    continue;
+                }
+                Object result = FindArrayInJson(value, stringList.subList(keyParts.size(), stringList.size()));
+                if (result != null) { return result; }
             }
-            if (FindInJson(value, prefix + "\t", stringList.subList(1, stringList.size()))) { return true; }
         }
-        return false;
+        return null;
     }
 
-    private static boolean handleArrayList(ArrayList<?> arrayList, String prefix, List<String> stringList) {
-        System.out.println("We see an array length " + arrayList.size());
-        if (stringList.isEmpty()) return true; // we're done!
+    private static Object handleArrayList(ArrayList<?> arrayList, List<String> stringList) {
+        if (stringList.isEmpty()) return arrayList;
         if (arrayList.isEmpty()) {
-            System.out.println(prefix + ": []\n");
-            return false;
+            return null;
         }
-        int i = 0;
         for (Object arrayElementValue : arrayList) {
-            System.out.println(prefix + i + ":\n");
-            if (FindInJson(arrayElementValue, prefix + "\t", stringList)) { return true; }
-            i++;
+            Object result = FindArrayInJson(arrayElementValue, stringList);
+            if (result != null) { return result; }
         }
-        return false;
+        return null;
     }
 }
