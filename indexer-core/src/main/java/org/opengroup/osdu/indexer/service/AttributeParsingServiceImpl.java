@@ -26,6 +26,7 @@ import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
 import org.opengroup.osdu.indexer.util.parser.NumberParser;
+import org.opengroup.osdu.indexer.util.parser.StringParser;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -47,6 +48,8 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
     private NumberParser numberParser;
     @Inject
     private BooleanParser booleanParser;
+    @Inject
+    private StringParser stringParser;
     @Inject
     private DateTimeParser dateTimeParser;
     @Inject
@@ -143,6 +146,12 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
     @Override
     public void tryParseBoolean(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
         boolean parsedBoolean = this.booleanParser.parseBoolean(attributeName, attributeVal);
+        dataMap.put(attributeName, parsedBoolean);
+    }
+
+    @Override
+    public void tryParseString(String recordId, String attributeName, Object attributeVal, Map<String, Object> dataMap) {
+        String parsedBoolean = this.stringParser.parseString(attributeName, attributeVal);
         dataMap.put(attributeName, parsedBoolean);
     }
 

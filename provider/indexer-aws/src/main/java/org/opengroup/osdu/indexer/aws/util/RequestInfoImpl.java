@@ -81,7 +81,9 @@ public class RequestInfoImpl implements IRequestInfo {
 
     @Override
     public Map<String, String> getHeadersMapWithDwdAuthZ() {
-        return getHeadersMap();
+        Map<String, String> result = getHeadersMap();
+        result.put(AUTHORIZATION, this.checkOrGetAuthorizationHeader());
+        return result;
     }
 
     @Override

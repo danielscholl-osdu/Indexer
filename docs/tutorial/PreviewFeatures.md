@@ -139,3 +139,8 @@ Details how to construct search query to use consume this feature are described 
 Also it allows to sort text values truly alphabetically as currently uppercase words are before lowercase letters.
 
 Feature is enabled for OSDU Data Platform deployment with keywordLower flag enabled in application properties file.
+
+## Index bag of words and support for autocomplete
+All non-flattened text fields are now copied to internal bagOfWords field.
+This allows searching through nested fields using top level text query.
+Also bagOfWords.autocomplete subfield with completion type was added, allowing Search application to implement autocomplete using this field. 

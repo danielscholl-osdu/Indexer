@@ -28,6 +28,7 @@ import org.opengroup.osdu.indexer.util.parser.BooleanParser;
 import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
 import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
 import org.opengroup.osdu.indexer.util.parser.NumberParser;
+import org.opengroup.osdu.indexer.util.parser.StringParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -54,7 +55,7 @@ import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES
         GeometryDecimator.class, PointExtractor.class, GeometryConversionService.class, FeatureFlagCache.class,
         DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
         ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, RequestInfoMock.class,
-        IFeatureFlag.class})
+        IFeatureFlag.class, StringParser.class})
 public class StorageIndexerPayloadMapperTest {
 
     public static final String FIRST_OBJECT_INNER_PROPERTY = "FirstObjectInnerProperty";

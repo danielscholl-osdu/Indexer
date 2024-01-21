@@ -71,10 +71,15 @@ public class IndicesServiceImpl implements IndicesService {
 
     private TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
 
-    private static final Settings DEFAULT_INDEX_SETTINGS = Settings.builder()
-            .put("index.refresh_interval", "30s")
-            .put("index.number_of_replicas", "1")
-            .put("index.number_of_shards", "1").build();
+    private static final Settings DEFAULT_INDEX_SETTINGS = Settings.builder().loadFromSource("""
+        {
+                "index": {
+                    "refresh_interval": "30s",
+                    "number_of_shards": 1,
+                    "number_of_replicas": 1
+                }
+        }        
+    """, XContentType.JSON).build();
 
     /**
      * Create a new index in Elasticsearch
