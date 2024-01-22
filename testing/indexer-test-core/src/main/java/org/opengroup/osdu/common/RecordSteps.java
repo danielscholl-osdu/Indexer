@@ -269,6 +269,9 @@ public class RecordSteps extends TestsBase {
     }
     public void i_should_get_string_array_in_search_response(String index, String id, String innerField, String desiredValue)
             throws Throwable {
+        // This is actually synchronization waiter
+        createIndex(generateActualName(index, timeStamp));
+        
         final List<Map<String, Object>> elasticRecordData =  elasticUtils.fetchRecordsByAttribute(index, "id", id);
         assertEquals(1, elasticRecordData.size());
         final List<String> stringList = Arrays.asList(innerField.split("\\."));
