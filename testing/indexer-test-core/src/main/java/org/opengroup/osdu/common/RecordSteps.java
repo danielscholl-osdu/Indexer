@@ -269,8 +269,16 @@ public class RecordSteps extends TestsBase {
     }
     public void i_should_get_string_array_in_search_response(String index, String id, String innerField, String desiredValue)
             throws Throwable {
-        // This is actually synchronization waiter
-        createIndex(generateActualName(index, timeStamp));
+        long numOfIndexedDocuments = 0;
+        // Waiting for documents to be present
+        for (int i = 0; i < 10; i++) {
+            numOfIndexedDocuments = createIndex(generateActualName(index, timeStamp));
+            if (numOfIndexedDocuments > 0) {
+                break;
+            } else {
+                TimeUnit.SECONDS.sleep(4);
+            }
+        }
         
         final List<Map<String, Object>> elasticRecordData =  elasticUtils.fetchRecordsByAttribute(index, "id", id);
         assertEquals(1, elasticRecordData.size());

@@ -95,7 +95,7 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
         }
 
         try {
-            List<String> parsedStringList = isArrayType(attributeVal);
+            List<String> parsedStringList = isArrayType(attributeVal, attributeClass);
             List out = new ArrayList<>();
             for (Object o : parsedStringList) {
                 out.add(parser.apply(attributeName, o));
@@ -236,8 +236,17 @@ public class AttributeParsingServiceImpl implements IAttributeParsingService {
     }
 
 
-    private List<String> isArrayType(Object attributeVal) {
-        try {
+    private List<String> isArrayType(Object attributeVal, Class<?> attributeClass) {
+        // Handling string arrays as they're not valid JSON for code below
+        if (attributeVal != null && attributeClass == String.class && attributeVal instanceof List<?>) {
+            List<String> result = new ArrayList<>();
+            for (Object item: (List<Object>)(List<?>) attributeVal) {
+                result.add(item == null ? null : String.valueOf(item));
+            }
+            return result;
+        }
+        
+        try { 
             String value = attributeVal == null ? null : String.valueOf(attributeVal);
             if (attributeVal == null || Strings.isNullOrEmpty(value)) {
                 return Collections.EMPTY_LIST;
