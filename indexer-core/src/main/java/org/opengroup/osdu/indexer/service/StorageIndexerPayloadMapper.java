@@ -230,6 +230,7 @@ public class StorageIndexerPayloadMapper {
         if(this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) != null) {
             VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
             if (virtualProperties == null) {
+                this.log.warning(String.format("record-id: %s | error fetching virtual property from cache for the kind: %s", recordId, storageSchema.getKind()));
                 return;
             }
             for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
