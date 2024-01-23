@@ -267,24 +267,15 @@ public class RecordSteps extends TestsBase {
 
         assertTrue(actualRecordData.getData().containsKey(innerField));
     }
-    public void i_should_get_string_array_in_search_response(String index, String id, String innerField, String desiredValue)
+
+    public void i_should_get_string_array_in_search_response(String index, String field, String fieldValue, String arrayField, String desiredArrayValue)
             throws Throwable {
-        long numOfIndexedDocuments = 0;
-        // Waiting for documents to be present
-        for (int i = 0; i < 10; i++) {
-            numOfIndexedDocuments = createIndex(generateActualName(index, timeStamp));
-            if (numOfIndexedDocuments > 0) {
-                break;
-            } else {
-                TimeUnit.SECONDS.sleep(4);
-            }
-        }
-        
-        final List<Map<String, Object>> elasticRecordData =  elasticUtils.fetchRecordsByAttribute(index, "id", id);
+        TimeUnit.SECONDS.sleep(40);
+        final List<Map<String, Object>> elasticRecordData =  elasticUtils.fetchRecordsByAttribute(index, field, fieldValue);
         assertEquals(1, elasticRecordData.size());
-        final List<String> stringList = Arrays.asList(innerField.split("\\."));
+        final List<String> stringList = Arrays.asList(arrayField.split("\\."));
         final Map<String, Object> jsonRecord = elasticRecordData.get(0);
-        assertEquals(String.join(",", (ArrayList<String>) FindArrayInJson(jsonRecord, stringList)), desiredValue);
+        assertEquals(String.join(",", (ArrayList<String>) FindArrayInJson(jsonRecord, stringList)), desiredArrayValue);
     }
 
     public void i_create_index_with_mapping_file_for_a_given_kind(String mappingFile, String index, String kind) throws Throwable {

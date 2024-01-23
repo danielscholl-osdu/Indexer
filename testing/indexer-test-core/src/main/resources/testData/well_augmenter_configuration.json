@@ -4,7 +4,7 @@
         "Name": "Well-IndexPropertyPathConfiguration",
         "Description": "The index property list for master-data--Well:1., valid for all master-data--Well kinds for major version 1.",
         "Code": "osdu:wks:master-data--Well:1.",
-        "AttributionAuthority": "OSDU",
+        "AttributionAuthority": "CustomAttributionAuthority",
         "Configurations": [
             {
                 "Name": "CountryNames",

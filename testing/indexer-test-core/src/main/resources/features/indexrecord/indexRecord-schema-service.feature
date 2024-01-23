@@ -105,10 +105,10 @@ Feature: Indexing of the documents
   @default
   Scenario Outline: Ingest record and check for properly parsed array of Strings
     When I ingest records with the <recordFile> with <acl> for a given <kind>
-    Then I should be able to search for record from <index> with id is <id> and find String arrays in <field> with <value>
+    Then I should be able to search for record from <index> by <field> for value <value> and find String arrays in <arrayField> with <arrayValue>
     Examples:
-      | kind                                                            | recordFile                                   | index                                                          | acl                            | field                                                                  | id                                                                             | value |
-      | "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0" | "well_augmenter_configuration"               |"osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0" | "data.default.viewers@tenant1" | "data.Configurations.Paths.RelatedObjectsSpec.RelatedConditionMatches" | "osdu:reference-data--IndexPropertyPathConfiguration:index-property--Well:1."  | "opendes:reference-data--GeoPoliticalEntityType:Country:" |
+      | kind                                                            | recordFile                                   | index                                                          | field                               | value                        | acl                            | arrayField                                                              | arrayValue |
+      | "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0" | "well_augmenter_configuration"               |"osdu-wks-reference-data--indexpropertypathconfiguration-1.0.0" | "data.AttributionAuthority.keyword" | "CustomAttributionAuthority" | "data.default.viewers@tenant1" | "data.Configurations.Paths.RelatedObjectsSpec.RelatedConditionMatches" | "opendes:reference-data--GeoPoliticalEntityType:Country:" |
 
   @bag-of-words
   Scenario Outline: Ingest record and Index bag of words as an attribute
