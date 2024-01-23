@@ -1,9 +1,9 @@
 [{
-        "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--WellLog:1.",
+        "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--WellLog:1.0.0",
         "data": {
             "Name": "WellLogIndex-PropertyPathConfiguration",
             "Description": "The index property list for WellLog:1., valid for all WellLog kinds for major version 1.",
-            "Code": "test:indexer:index-property--WellLog:1.",
+            "Code": "test:indexer:index-property--WellLog:1.0.0",
             "AttributionAuthority": "OSDU",
             "Configurations": [{
                     "Name": "WellboreName",
@@ -11,7 +11,7 @@
                     "Paths": [{
                             "RelatedObjectsSpec": {
                                 "RelationshipDirection": "ChildToParent",
-                                "RelatedObjectKind": "test:indexer:index-property--Wellbore:1.",
+                                "RelatedObjectKind": "test:indexer:index-property--Wellbore:1.0.0",
                                 "RelatedObjectID": "data.WellboreID"
                             },
                             "ValueExtraction": {
@@ -26,7 +26,7 @@
                     "Paths": [{
                             "RelatedObjectsSpec": {
                                 "RelationshipDirection": "ChildToParent",
-                                "RelatedObjectKind": "test:indexer:index-property--Wellbore:1.",
+                                "RelatedObjectKind": "test:indexer:index-property--Wellbore:1.0.0",
                                 "RelatedObjectID": "data.WellboreID"
                             },
                             "ValueExtraction": {
@@ -39,11 +39,11 @@
             ]
         }
     }, {
-        "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1.",
+        "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1.0.0",
         "data": {
             "Name": "Wellbore-IndexPropertyPathConfiguration",
-            "Description": "The index property list for index-property--Wellbore:1., valid for all index-property--Wellbore kinds for major version 1.",
-            "Code": "test:indexer:index-property--Wellbore:1.",
+            "Description": "The index property list for index-property--Wellbore:1.0.0, valid for all index-property--Wellbore kinds for major version 1.",
+            "Code": "test:indexer:index-property--Wellbore:1.0.0",
             "AttributionAuthority": "OSDU",
             "Configurations": [{
                     "Name": "WellUWI",
