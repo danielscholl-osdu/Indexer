@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.indexer.provider.gcp.web.middleware.IndexFilter;
+import org.opengroup.osdu.indexer.web.middleware.IndexFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
