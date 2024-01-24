@@ -626,7 +626,7 @@ The following software have components provided under the terms of this license:
 - Spring Expression Language (SpEL) (from https://github.com/SpringSource/spring-framework, https://github.com/spring-projects/spring-framework, https://repo1.maven.org/maven2/org/springframework/spring-expression)
 - Spring JMS (from http://www.springframework.org, https://github.com/SpringSource/spring-framework, https://github.com/spring-projects/spring-framework, https://repo1.maven.org/maven2/org/springframework/spring-jms)
 - Spring Messaging (from https://github.com/spring-projects/spring-framework)
-- Spring Plugin - Metadata Extension (from https://github.com/spring-projects/spring-plugin/spring-plugin-metadata, https://repo1.maven.org/maven2/org/springframework/plugin/spring-plugin-metadata)
+- Spring Plugin - Metadata Extension (from https://repo1.maven.org/maven2/org/springframework/plugin/spring-plugin-metadata)
 - Spring Plugin Core (from https://github.com/spring-projects/spring-plugin/spring-plugin-core, https://repo1.maven.org/maven2/org/springframework/plugin/spring-plugin-core)
 - Spring Security - Core (from http://spring.io/spring-security, https://repo1.maven.org/maven2/org/springframework/security/spring-security-core, https://spring.io/projects/spring-security, https://spring.io/spring-security)
 - Spring Security - Namespace Configuration Module (from http://spring.io/spring-security, https://repo1.maven.org/maven2/org/springframework/security/spring-security-config, https://spring.io/projects/spring-security, https://spring.io/spring-security)
@@ -813,7 +813,7 @@ The following software have components provided under the terms of this license:
 - jersey-core-server (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-server)
 - jersey-ext-bean-validation (from https://repo1.maven.org/maven2/org/glassfish/jersey/ext/jersey-bean-validation)
 - jersey-media-json-jackson (from https://repo1.maven.org/maven2/org/glassfish/jersey/media/jersey-media-json-jackson)
-- jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
+- org.locationtech.jts:jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 
 ========================================================================
 BSL-1.0
@@ -951,7 +951,7 @@ The following software have components provided under the terms of this license:
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
 - jersey-core-server (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-server)
 - jersey-media-json-jackson (from https://repo1.maven.org/maven2/org/glassfish/jersey/media/jersey-media-json-jackson)
-- jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
+- org.locationtech.jts:jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 
 ========================================================================
 EPL-2.0
