@@ -129,4 +129,10 @@ public class Steps extends SchemaServiceRecordSteps {
         throws Throwable {
         super.i_should_get_object_in_search_response_without_hints_in_schema(objectInnerField ,index, recordFile, acl, kind);
     }
+
+    @Then("^I should be able to search for record from \"([^\"]*)\" by \"([^\"]*)\" for value \"([^\"]*)\" and find String arrays in \"([^\"]*)\" with \"([^\"]*)\"$")
+    public void i_should_get_string_array_in_search_response(String index, String field, String fieldValue, String arrayField, String arrayValue)
+            throws Throwable {
+        super.i_should_get_string_array_in_search_response(index, field, fieldValue, arrayField, arrayValue);
+    }
 }
