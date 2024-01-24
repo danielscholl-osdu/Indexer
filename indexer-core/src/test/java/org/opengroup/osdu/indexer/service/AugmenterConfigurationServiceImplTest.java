@@ -993,6 +993,86 @@ public class AugmenterConfigurationServiceImplTest {
         when(this.requestInfo.getHeadersWithDwdAuthZ()).thenReturn(dpsHeaders);
     }
 
+    @Test
+    public void getRelatedKindsOfConfigurations_returns_empty_list_when_configurationIds_is_null_or_empty() {
+        List<String> relatedKinds = sut.getRelatedKindsOfConfigurations(null);
+        Assert.assertTrue(relatedKinds.isEmpty());
+
+        relatedKinds = sut.getRelatedKindsOfConfigurations(new ArrayList<>());
+        Assert.assertTrue(relatedKinds.isEmpty());
+    }
+
+    @Test
+    public void getRelatedKindsOfConfigurations_returns_empty_list_when_related_objects_not_in_cache() {
+        when(relatedObjectCache.get(anyString())).thenReturn(null);
+
+        List<String> relatedKinds = sut.getRelatedKindsOfConfigurations(Arrays.asList("id1", "id2"));
+        Assert.assertTrue(relatedKinds.isEmpty());
+    }
+
+    @Test
+    public void getRelatedKindsOfConfigurations_returns_related_kind_list() throws UnsupportedEncodingException, URISyntaxException {
+        Map<String, Object> data =getDataMap("well_configuration_record.json");
+        RecordData recordData = new RecordData();
+        recordData.setData(data);
+
+        when(relatedObjectCache.get(eq("well_id"))).thenReturn(recordData);
+        SchemaInfoResponse response = createSchemaResponseForWell();
+        when(schemaService.getSchemaInfos(eq("osdu"), eq("wks"), eq("master-data--Well"), eq("1"),
+                eq(null),eq(null), eq(false))).thenReturn(response);
+
+        List<String> relatedKinds = sut.getRelatedKindsOfConfigurations(Arrays.asList("well_id"));
+        List<String> expectedRelatedKinds =
+                Arrays.asList("osdu:wks:master-data--Well:1.0.0", "osdu:wks:master-data--Well:1.1.0");
+        Assert.assertEquals(expectedRelatedKinds.size(), relatedKinds.size());
+        for(int i = 0; i < expectedRelatedKinds.size(); i++) {
+            Assert.assertEquals(expectedRelatedKinds.get(i), relatedKinds.get(i));
+        }
+        verify(this.augmenterConfigurationCache,times(1)).put(anyString(), any());
+    }
+
+    @Test
+    public void getRelatedKindsOfConfigurations_returns_empty_list_when_schemaService_throws_exception()
+            throws UnsupportedEncodingException, URISyntaxException {
+        Map<String, Object> data =getDataMap("well_configuration_record.json");
+        RecordData recordData = new RecordData();
+        recordData.setData(data);
+
+        when(relatedObjectCache.get(eq("well_id"))).thenReturn(recordData);
+        when(schemaService.getSchemaInfos(eq("osdu"), eq("wks"), eq("master-data--Well"), eq("1"),
+                eq(null),eq(null), eq(false))).thenThrow(UnsupportedEncodingException.class);
+
+        List<String> relatedKinds = sut.getRelatedKindsOfConfigurations(Arrays.asList("well_id"));
+        Assert.assertTrue(relatedKinds.isEmpty());
+    }
+
+    private SchemaInfoResponse createSchemaResponseForWell() {
+        SchemaInfoResponse response = new SchemaInfoResponse();
+        List<SchemaInfo> schemaInfos = new ArrayList<>();
+        SchemaInfo schemaInfo = new SchemaInfo();
+        SchemaIdentity schemaIdentity = new SchemaIdentity();
+        schemaIdentity.setAuthority("osdu");
+        schemaIdentity.setSource("wks");
+        schemaIdentity.setEntityType("master-data--Well");
+        schemaIdentity.setSchemaVersionMajor(1);
+        schemaIdentity.setSchemaVersionMinor(0);
+        schemaIdentity.setSchemaVersionPatch(0);
+        schemaInfo.setSchemaIdentity(schemaIdentity);
+        schemaInfos.add(schemaInfo);
+        SchemaInfo schemaInfo2 = new SchemaInfo();
+        SchemaIdentity schemaIdentity2 = new SchemaIdentity();
+        schemaIdentity2.setAuthority("osdu");
+        schemaIdentity2.setSource("wks");
+        schemaIdentity2.setEntityType("master-data--Well");
+        schemaIdentity2.setSchemaVersionMajor(1);
+        schemaIdentity2.setSchemaVersionMinor(1);
+        schemaIdentity2.setSchemaVersionPatch(0);
+        schemaInfo2.setSchemaIdentity(schemaIdentity2);
+        schemaInfos.add(schemaInfo2);
+        response.setSchemaInfos(schemaInfos);
+        return response;
+    }
+
     private Schema getSchema(String file) {
         String jsonText = getJsonFromFile(file);
         return gson.fromJson(jsonText, Schema.class);
