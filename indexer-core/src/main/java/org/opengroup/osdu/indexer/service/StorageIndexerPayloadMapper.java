@@ -114,11 +114,13 @@ public class StorageIndexerPayloadMapper {
 
             switch (elasticType) {
                 case KEYWORD:
-                case KEYWORD_ARRAY:
                 case TEXT:
-                case TEXT_ARRAY:
                     this.attributeParsingService.tryParseString(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
                     break;
+                case KEYWORD_ARRAY:
+                case TEXT_ARRAY:
+                    this.attributeParsingService.tryParseValueArray(String.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;    
                 case INTEGER_ARRAY:
                     this.attributeParsingService.tryParseValueArray(Integer.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
                     break;
