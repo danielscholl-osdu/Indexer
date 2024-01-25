@@ -34,6 +34,7 @@
       <jackson-databind.version>2.13.2.2</jackson-databind.version>
       <jackson.version>2.13.2</jackson.version>
       <mockito.version>3.11.2</mockito.version>
+      <spring-security-core.version>5.8.9</spring-security-core.version>
   </properties>
 
   <dependencyManagement>
@@ -229,6 +230,11 @@
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-commons</artifactId>
     <scope>compile</scope>
+  </dependency>
+  <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-core</artifactId>
+      <version>${spring-security-core.version}</version>
   </dependency>
   </dependencies>
   <build>
