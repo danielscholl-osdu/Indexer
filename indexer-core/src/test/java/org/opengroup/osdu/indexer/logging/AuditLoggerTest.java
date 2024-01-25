@@ -47,7 +47,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexCreateRecordSuccess() {
         this.sut.indexCreateRecordSuccess(Lists.newArrayList("anything"));
 
@@ -61,7 +60,19 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
+    public void should_createAuditLogEvent_when_indexCreateRecordPartialSuccess() {
+        this.sut.indexCreateRecordPartialSuccess(Lists.newArrayList("anything"));
+
+        ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
+
+        verify(this.logger).audit(payloadCaptor.capture());
+
+        AuditPayload payload = payloadCaptor.getValue();
+        assertEquals("IN001", ((Map) payload.get("auditLog")).get("actionId"));
+        assertEquals("testUser", ((Map) payload.get("auditLog")).get("user"));
+    }
+
+    @Test
     public void should_createAuditLogEvent_when_indexCreateRecordFail() {
         this.sut.indexCreateRecordFail(Lists.newArrayList("anything"));
 
@@ -75,7 +86,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexUpdateRecordSuccess() {
         this.sut.indexUpdateRecordSuccess(Lists.newArrayList("anything"));
 
@@ -89,7 +99,19 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
+    public void should_createAuditLogEvent_when_indexUpdateRecordPartialSuccess() {
+        this.sut.indexUpdateRecordPartialSuccess(Lists.newArrayList("anything"));
+
+        ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
+
+        verify(this.logger).audit(payloadCaptor.capture());
+
+        AuditPayload payload = payloadCaptor.getValue();
+        assertEquals("IN002", ((Map) payload.get("auditLog")).get("actionId"));
+        assertEquals("testUser", ((Map) payload.get("auditLog")).get("user"));
+    }
+
+    @Test
     public void should_createAuditLogEvent_when_indexUpdateRecordFail() {
         this.sut.indexUpdateRecordFail(Lists.newArrayList("anything"));
 
@@ -103,7 +125,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexDeleteRecordSuccess() {
         this.sut.indexDeleteRecordSuccess(Lists.newArrayList("anything"));
 
@@ -117,7 +138,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexDeleteRecordFail() {
         this.sut.indexDeleteRecordFail(Lists.newArrayList("anything"));
 
@@ -131,7 +151,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_getReindex() {
         this.sut.getReindex(Lists.newArrayList("anything"));
 
@@ -145,7 +164,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_copyIndex() {
         this.sut.copyIndex(Lists.newArrayList("anything"));
 
@@ -159,7 +177,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_getTaskStatus() {
         this.sut.getTaskStatus(Lists.newArrayList("anything"));
 
@@ -173,7 +190,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_getIndexCleanUpJobRun() {
         this.sut.getIndexCleanUpJobRun(Lists.newArrayList("anything"));
 
@@ -187,7 +203,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexMappingUpdateFail() {
         this.sut.indexMappingUpsertFail(Lists.newArrayList("anything"));
         ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
@@ -198,7 +213,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_indexMappingUpdateSuccess() {
         this.sut.indexMappingUpsertSuccess(Lists.newArrayList("anything"));
         ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);
@@ -209,7 +223,6 @@ public class AuditLoggerTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void should_createAuditLogEvent_when_configurePartitionSuccess() {
         this.sut.getConfigurePartition(Lists.newArrayList("anything"));
         ArgumentCaptor<AuditPayload> payloadCaptor = ArgumentCaptor.forClass(AuditPayload.class);

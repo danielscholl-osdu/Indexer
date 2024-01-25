@@ -58,6 +58,21 @@ import static java.util.Map.entry;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
@@ -106,7 +121,7 @@ public class IndexerSchemaServiceTest {
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
-        Assert.assertNotNull(indexSchema);
+        assertNotNull(indexSchema);
     }
 
     @Test
@@ -115,7 +130,7 @@ public class IndexerSchemaServiceTest {
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
-        Assert.assertEquals(kind, indexSchema.getKind());
+        assertEquals(kind, indexSchema.getKind());
     }
 
     @Test
@@ -125,7 +140,21 @@ public class IndexerSchemaServiceTest {
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
-        Assert.assertEquals(kind, indexSchema.getKind());
+        assertEquals(kind, indexSchema.getKind());
+    }
+
+    @Test
+    public void should_retry_givenSchemaWithCacheHitAndFlattenedWithNoCacheHit_getIndexerInputSchemaTest() throws Exception {
+        when(schemaService.getSchema(any())).thenReturn(someSchema);
+        when(this.schemaCache.get(kind)).thenReturn(someSchema);
+        when(this.schemaCache.get(kind + "_flattened")).thenReturn(null);
+
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
+
+        assertNotNull(indexSchema);
+        assertEquals(kind, indexSchema.getKind());
+        verify(this.schemaCache).put(any(String.class), any(String.class));
+        verify(this.flattenedSchemaCache).put(any(String.class), any(String.class));
     }
 
     @Test
@@ -137,8 +166,8 @@ public class IndexerSchemaServiceTest {
             this.sut.getIndexerInputSchema(kind, false);
             fail("Should throw exception");
         } catch (AppException e) {
-            Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getError().getCode());
-            Assert.assertEquals("An error has occurred while normalizing the schema.", e.getError().getMessage());
+            assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getError().getCode());
+            assertEquals("An error has occurred while normalizing the schema.", e.getError().getMessage());
         } catch (Exception e) {
             fail("Should not throw exception" + e.getMessage());
         }
