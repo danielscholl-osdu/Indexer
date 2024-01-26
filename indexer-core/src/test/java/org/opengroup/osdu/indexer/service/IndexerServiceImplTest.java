@@ -81,8 +81,6 @@ public class IndexerServiceImplTest {
     private StorageService storageService;
     @Mock
     private StorageIndexerPayloadMapper storageIndexerPayloadMapper;
-    @Mock
-    private IndexSchemaService indexSchemaService;
     @InjectMocks
     private JobStatus jobStatus;
     @Mock
@@ -178,8 +176,36 @@ public class IndexerServiceImplTest {
             assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
 
             verify(restHighLevelClient, times(2)).bulk(any(), any());
-            verify(this.auditLogger).indexCreateRecordSuccess(Arrays.asList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)", "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
+            verify(this.auditLogger).indexCreateRecordSuccess(Arrays.asList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)",
+                    "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
             verify(this.auditLogger).indexUpdateRecordFail(singletonList("RecordStatus(id=opendes:doc:test1, kind=opendes:testindexer1:well:1.0.0, operationType=update, status=FAIL, message=test failure)"));
+        } catch (Exception e) {
+            fail("Should not throw this exception" + e.getMessage());
+        }
+    }
+
+
+    @Test
+    public void should_properlyUpdateAuditLogs_givenPartiallyValidRecords() {
+        try {
+            preparePartiallyValidTestData(this.pubsubMsg);
+
+            // test
+            JobStatus jobStatus = this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
+
+            // validate
+            assertEquals(4, jobStatus.getStatusesList().size());
+            assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.WARN).size());
+            assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
+            assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
+
+            verify(restHighLevelClient, times(2)).bulk(any(), any());
+            verify(this.auditLogger).indexStarted(Arrays.asList("id=opendes:doc:test1 kind=opendes:testindexer1:well:1.0.0 operationType=update", "id=opendes:doc:test2 kind=opendes:testindexer2:well:1.0.0 operationType=create",
+                    "id=opendes:doc:test3 kind=opendes:testindexer2:well:1.0.0 operationType=create", "id=opendes:doc:test4 kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0 operationType=create"));
+            verify(this.auditLogger).indexCreateRecordSuccess(Arrays.asList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)",
+                    "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
+            verify(this.auditLogger).indexCreateRecordFail(singletonList("RecordStatus(id=opendes:doc:test3, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=FAIL, message=null)"));
+            verify(this.auditLogger).indexUpdateRecordPartialSuccess(singletonList("RecordStatus(id=opendes:doc:test1, kind=opendes:testindexer1:well:1.0.0, operationType=update, status==PARTIAL_SUCCESS, message=Indexed Successfully)"));
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -280,7 +306,7 @@ public class IndexerServiceImplTest {
             List<String> configurationIds = configurationIdArgumentCaptor.getValue();
             assertEquals(1, configurationIds.size());
             assertEquals(recordId4, configurationIds.get(0));
-            verify(this.indexSchemaService, times(relatedKinds.size())).processSchemaUpsertEvent(any(), anyString());
+            verify(this.schemaService, times(relatedKinds.size())).processSchemaUpsertEvent(any(), anyString());
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -327,39 +353,79 @@ public class IndexerServiceImplTest {
         indexerMappedPayload.put("id", "keyword");
         when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any(), any())).thenReturn(indexerMappedPayload);
 
-        BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(), prepareSuccessfulResponse_Record2(), prepareSuccessfulResponse_Record4(), prepare400Response()};
+        BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(recordId1), prepareSuccessfulResponse(recordId2),
+                prepareSuccessfulResponse(recordId4), prepareFailed400Response(recordId3)};
         when(this.bulkResponse.getItems()).thenReturn(responses);
     }
 
-    private BulkItemResponse prepareFailedResponse() {
+    private void preparePartiallyValidTestData(String pubsubMsg) throws IOException, URISyntaxException {
+
+        // setup headers
+        this.dpsHeaders = new DpsHeaders();
+        this.dpsHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
+
+        // setup message
+        Type listType = new TypeToken<List<RecordInfo>>() {}.getType();
+        this.recordInfos = (new Gson()).fromJson(pubsubMsg, listType);
+        Map<String, String> messageAttributes = new HashMap<>();
+        messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, "opendes");
+        this.recordChangedMessages = RecordChangedMessages.builder().attributes(messageAttributes).messageId("xxxx").publishTime("2000-01-02T10:10:44+0000").data("{}").build();
+
+        // setup schema
+        Map<String, Object> schema = createSchema();
+        indexSchemaServiceMock(kind3, schema);
+        indexSchemaServiceMock(kind2, schema);
+        indexSchemaServiceMock(kind1, null);
+
+        // setup storage records
+        Map<String, Object> storageData = new HashMap<>();
+        storageData.put("schema1", "test-value");
+        List<Records.Entity> validRecords = new ArrayList<>();
+        validRecords.add(Records.Entity.builder().id(recordId2).kind(kind2).data(storageData).build());
+        validRecords.add(Records.Entity.builder().id(recordId3).kind(kind2).data(storageData).build());
+        validRecords.add(Records.Entity.builder().id(recordId4).kind(kind3).data(storageData).build());
+        List<ConversionStatus> conversionStatus = new LinkedList<>();
+        Records storageRecords = Records.builder().records(validRecords).conversionStatuses(conversionStatus).build();
+        when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
+
+        // setup elastic, index and mapped document
+        when(this.indicesService.createIndex(any(), any(), any(), any(), any())).thenReturn(true);
+        when(this.mappingService.getIndexMappingFromRecordSchema(any())).thenReturn(new HashMap<>());
+
+        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.restHighLevelClient.bulk(any(), any(RequestOptions.class))).thenReturn(this.bulkResponse);
+
+        Map<String, Object> indexerMappedPayload = new HashMap<>();
+        indexerMappedPayload.put("id", "keyword");
+        when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any(), any())).thenReturn(indexerMappedPayload);
+
+        BulkItemResponse[] responses = new BulkItemResponse[]{prepareSuccessfulResponse(recordId1), prepareSuccessfulResponse(recordId2),
+                prepareSuccessfulResponse(recordId4), prepareFailed400Response(recordId3)};
+        when(this.bulkResponse.getItems()).thenReturn(responses);
+    }
+
+    private BulkItemResponse prepareFailedResponse(String recordId) {
         BulkItemResponse responseFail = mock(BulkItemResponse.class);
         when(responseFail.isFailed()).thenReturn(true);
         when(responseFail.getFailureMessage()).thenReturn(failureMassage);
-        when(responseFail.getId()).thenReturn(recordId1);
+        when(responseFail.getId()).thenReturn(recordId);
         when(responseFail.getFailure()).thenReturn(new BulkItemResponse.Failure("failure index", "failure type", "failure id", new Exception("test failure")));
         return responseFail;
     }
 
-    private BulkItemResponse prepare400Response() {
+    private BulkItemResponse prepareFailed400Response(String recordId) {
         BulkItemResponse responseFail = mock(BulkItemResponse.class);
         when(responseFail.isFailed()).thenReturn(true);
-        when(responseFail.getId()).thenReturn(recordId3);
+        when(responseFail.getId()).thenReturn(recordId);
         when(responseFail.getFailure()).thenReturn(new BulkItemResponse.Failure("failure index", "failure type", "failure id", new Exception(badRequestMessage), RestStatus.BAD_REQUEST));
         return responseFail;
     }
 
-    private BulkItemResponse prepareSuccessfulResponse_Record2() {
+    private BulkItemResponse prepareSuccessfulResponse(String recordId) {
         BulkItemResponse responseSuccess = mock(BulkItemResponse.class);
-        when(responseSuccess.getId()).thenReturn(recordId2);
+        when(responseSuccess.getId()).thenReturn(recordId);
         return responseSuccess;
     }
-
-    private BulkItemResponse prepareSuccessfulResponse_Record4() {
-        BulkItemResponse responseSuccess = mock(BulkItemResponse.class);
-        when(responseSuccess.getId()).thenReturn(recordId4);
-        return responseSuccess;
-    }
-
 
     private void indexSchemaServiceMock(String kind, Map<String, Object> schema) throws UnsupportedEncodingException, URISyntaxException {
         IndexSchema indexSchema = schema == null
