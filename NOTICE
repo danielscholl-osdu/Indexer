@@ -608,7 +608,7 @@ The following software have components provided under the terms of this license:
 - Spring Expression Language (SpEL) (from https://github.com/SpringSource/spring-framework, https://github.com/spring-projects/spring-framework, https://repo1.maven.org/maven2/org/springframework/spring-expression)
 - Spring JMS (from http://www.springframework.org, https://github.com/SpringSource/spring-framework, https://github.com/spring-projects/spring-framework, https://repo1.maven.org/maven2/org/springframework/spring-jms)
 - Spring Messaging (from https://github.com/spring-projects/spring-framework)
-- Spring Plugin - Metadata Extension (from https://repo1.maven.org/maven2/org/springframework/plugin/spring-plugin-metadata)
+- Spring Plugin - Metadata Extension (from https://github.com/spring-projects/spring-plugin/spring-plugin-metadata, https://repo1.maven.org/maven2/org/springframework/plugin/spring-plugin-metadata)
 - Spring Plugin Core (from https://github.com/spring-projects/spring-plugin/spring-plugin-core, https://repo1.maven.org/maven2/org/springframework/plugin/spring-plugin-core)
 - Spring Security - Core (from http://spring.io/spring-security, https://repo1.maven.org/maven2/org/springframework/security/spring-security-core, https://spring.io/projects/spring-security, https://spring.io/spring-security)
 - Spring Security - Namespace Configuration Module (from http://spring.io/spring-security, https://repo1.maven.org/maven2/org/springframework/security/spring-security-config, https://spring.io/projects/spring-security, https://spring.io/spring-security)
@@ -733,7 +733,6 @@ BSD-3-Clause
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- ${project.groupId}:${project.artifactId} (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 - API Common (from https://github.com/googleapis, https://github.com/googleapis/api-common-java, https://repo1.maven.org/maven2/com/google/api/api-common)
 - ASM Analysis (from http://asm.ow2.io/)
 - ASM Commons (from http://asm.ow2.io/, https://repo1.maven.org/maven2/org/ow2/asm/asm-commons)
@@ -793,7 +792,8 @@ The following software have components provided under the terms of this license:
 - jersey-core-server (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-server)
 - jersey-ext-bean-validation (from https://repo1.maven.org/maven2/org/glassfish/jersey/ext/jersey-bean-validation)
 - jersey-media-json-jackson (from https://repo1.maven.org/maven2/org/glassfish/jersey/media/jersey-media-json-jackson)
-- org.locationtech.jts:jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
+- jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
+- org.locationtech.jts.io:jts-io-common (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 
 ========================================================================
 BSL-1.0
@@ -910,7 +910,6 @@ EPL-1.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- ${project.groupId}:${project.artifactId} (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 - AspectJ Weaver (from http://www.aspectj.org, https://www.eclipse.org/aspectj/)
 - JUnit Jupiter (Aggregator) (from https://junit.org/junit5/)
 - JUnit Jupiter API (from http://junit.org/junit5/, https://junit.org/junit5/)
@@ -931,7 +930,8 @@ The following software have components provided under the terms of this license:
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
 - jersey-core-server (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-server)
 - jersey-media-json-jackson (from https://repo1.maven.org/maven2/org/glassfish/jersey/media/jersey-media-json-jackson)
-- org.locationtech.jts:jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
+- jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
+- org.locationtech.jts.io:jts-io-common (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
 
 ========================================================================
 EPL-2.0
@@ -1118,7 +1118,6 @@ The following software have components provided under the terms of this license:
 
 - AWS Java SDK for AWS Lambda (from https://aws.amazon.com/sdkforjava)
 - Animal Sniffer Annotations (from https://repo1.maven.org/maven2/org/codehaus/mojo/animal-sniffer-annotations)
-- Apache HttpClient Cache (from http://hc.apache.org/httpcomponents-client, http://hc.apache.org/httpcomponents-client-ga)
 - Apache Log4j API (from https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api)
 - Apache Log4j to SLF4J Adapter (from https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-to-slf4j)
 - Apache Lucene (module: memory) (from https://lucene.apache.org/)
