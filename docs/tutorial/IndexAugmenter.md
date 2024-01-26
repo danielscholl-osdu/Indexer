@@ -29,6 +29,7 @@ is IndexPropertyPathConfiguration. The diagram below shows the decomposition int
   IndexPropertyPathConfiguration record id for all the `schema osdu:wks:master-data--Wellbore:1.*.*` kinds is set
   to `partition-id:reference-data--IndexPropertyPathConfiguration:osdu:wks:master-data--Wellbore:1`. Code, Name and
   Descriptions are filled with meaningful data as usual for all reference-data types.
+* The value of `data.Code` in the record refers to a major schema version kind which must be ended with version major and dot. For example, `"osdu:wks:master-data--Well:1."`.
 * The additional index properties are added with one JSON object each in the `Configurations[]` array. The Name defined
   the name of the index 'column', or the name of the property one can search for. The Policy decides, in the current
   usage, whether the resulting value is a single value or an array containing the aggregated, derived values.
@@ -330,10 +331,10 @@ It is not permitted to
 
 ## Accepted Limitations <a name="limitation"></a>
 
-* A change in the configurations requires re-indexing of all the records of a major schema version kind. It is the same
-  limitation as an in-place schema change for any kind. You don't need to use 'force_clean' option anymore. Users can
-  still search the data during the re-index process. Please be aware that the search result could mix the non-updated
-  and updated records before the re-index is fully completed.
+* To make the change of the IndexPropertyPathConfiguration to take effect, 
+  * Before `M23`, it requires re-indexing of all the records of a major schema version kind.
+  * From `M23`, it does not require re-indexing for new records or updated records. To update all the existing records, it still requries re-indexing.
+  * For re-indexing, you don't need to use 'force_clean' option anymore. Users can still search the data during the re-index process. Please be aware that the search result could mix the non-updated and updated records before the re-index is fully completed.
 
 * One IndexPropertyPathConfiguration record corresponds to one schema kind's major version. Given the deployment of the 
   IndexPropertyPathConfiguration record is via the `Storage Service API`, it can't prevent users from deploying multiple records
@@ -384,9 +385,6 @@ Like the reference data, the deployment and un-deployment of the IndexPropertyPa
 After an IndexPropertyPathConfiguration record to a major schema version kind is created or updated and 
 all the records of the major schema version kind have been re-indexed. If the extended properties fail to be created in all 
 the records from the `OSDU search` results, any one of the following mistakes can contribute to the failure:
-
-* The extended properties are listed in the search results, but they are not searchable. In this case, re-indexing is missed.
-  The re-indexing is required for the extended kind(s).
 
 * The feature flag `index-augmenter-enabled` for `Index Augmenter` is not enabled in the given data partition. Please check 
   with the service provider.

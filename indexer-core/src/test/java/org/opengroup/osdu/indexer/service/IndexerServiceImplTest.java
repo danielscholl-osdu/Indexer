@@ -55,7 +55,7 @@ import java.util.*;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
@@ -100,7 +100,7 @@ public class IndexerServiceImplTest {
     @Mock
     private IPublisher progressPublisher;
     @Mock
-    private AugmenterConfigurationService propertyConfigurationsService;
+    private AugmenterConfigurationService augmenterConfigurationService;
     @Mock
     private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
     @Mock
@@ -111,15 +111,21 @@ public class IndexerServiceImplTest {
     private List<RecordInfo> recordInfos = new ArrayList<>();
 
     private final String pubsubMsg = "[{\"id\":\"opendes:doc:test1\",\"kind\":\"opendes:testindexer1:well:1.0.0\",\"op\":\"update\"}," +
-            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"create\"}, {\"id\":\"opendes:doc:test3\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"create\"}]";
+            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"create\"}," +
+            " {\"id\":\"opendes:doc:test3\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"create\"}," +
+            " {\"id\":\"opendes:doc:test4\",\"kind\":\"osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0\",\"op\":\"create\"}]";
     private final String pubsubMsgForDeletion = "[{\"id\":\"opendes:doc:test1\",\"kind\":\"opendes:testindexer1:well:1.0.0\",\"op\":\"delete\"}," +
-            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"delete\"}, {\"id\":\"opendes:doc:test3\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"delete\"}]";
+            "{\"id\":\"opendes:doc:test2\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"delete\"}, " +
+            "{\"id\":\"opendes:doc:test3\",\"kind\":\"opendes:testindexer2:well:1.0.0\",\"op\":\"delete\"}," +
+            "{\"id\":\"opendes:doc:test4\",\"kind\":\"osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0\",\"op\":\"delete\"}]";
 
     private final String kind1 = "opendes:testindexer1:well:1.0.0";
     private final String kind2 = "opendes:testindexer2:well:1.0.0";
+    private final String kind3 = "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0";
     private final String recordId1 = "opendes:doc:test1";
     private final String recordId2 = "opendes:doc:test2";
     private final String recordId3 = "opendes:doc:test3";
+    private final String recordId4 = "opendes:doc:test4";
     private final String failureMassage = "test failure";
     private final String badRequestMessage = "Elasticsearch exception [type=mapper_parsing_exception, reason=failed to parse field [data.SpatialLocation.Wgs84Coordinates] of type [geo_shape]]";
 
@@ -165,12 +171,13 @@ public class IndexerServiceImplTest {
             JobStatus jobStatus = this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            assertEquals(3, jobStatus.getStatusesList().size());
+            assertEquals(4, jobStatus.getStatusesList().size());
             assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
-            assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
+            assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
 
             verify(restHighLevelClient, times(2)).bulk(any(), any());
-            verify(this.auditLogger).indexCreateRecordSuccess(singletonList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)"));
+            verify(this.auditLogger).indexCreateRecordSuccess(Arrays.asList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)",
+                    "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
             verify(this.auditLogger).indexUpdateRecordFail(singletonList("RecordStatus(id=opendes:doc:test1, kind=opendes:testindexer1:well:1.0.0, operationType=update, status=FAIL, message=test failure)"));
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
@@ -187,14 +194,16 @@ public class IndexerServiceImplTest {
             JobStatus jobStatus = this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            assertEquals(3, jobStatus.getStatusesList().size());
+            assertEquals(4, jobStatus.getStatusesList().size());
             assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.WARN).size());
             assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
-            assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
+            assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
 
             verify(restHighLevelClient, times(2)).bulk(any(), any());
-            verify(this.auditLogger).indexStarted(Arrays.asList("id=opendes:doc:test1 kind=opendes:testindexer1:well:1.0.0 operationType=update", "id=opendes:doc:test2 kind=opendes:testindexer2:well:1.0.0 operationType=create", "id=opendes:doc:test3 kind=opendes:testindexer2:well:1.0.0 operationType=create"));
-            verify(this.auditLogger).indexCreateRecordSuccess(singletonList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)"));
+            verify(this.auditLogger).indexStarted(Arrays.asList("id=opendes:doc:test1 kind=opendes:testindexer1:well:1.0.0 operationType=update", "id=opendes:doc:test2 kind=opendes:testindexer2:well:1.0.0 operationType=create",
+                    "id=opendes:doc:test3 kind=opendes:testindexer2:well:1.0.0 operationType=create", "id=opendes:doc:test4 kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0 operationType=create"));
+            verify(this.auditLogger).indexCreateRecordSuccess(Arrays.asList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)",
+                    "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
             verify(this.auditLogger).indexCreateRecordFail(singletonList("RecordStatus(id=opendes:doc:test3, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=FAIL, message=null)"));
             verify(this.auditLogger).indexUpdateRecordPartialSuccess(singletonList("RecordStatus(id=opendes:doc:test1, kind=opendes:testindexer1:well:1.0.0, operationType=update, status==PARTIAL_SUCCESS, message=Indexed Successfully)"));
         } catch (Exception e) {
@@ -208,7 +217,9 @@ public class IndexerServiceImplTest {
             prepareTestDataAndEnv(this.pubsubMsg);
 
             // setup property configuration
-            when(this.propertyConfigurationsService.isConfigurationEnabled(any())).thenReturn(true);
+            when(this.augmenterConfigurationService.isConfigurationEnabled(eq(kind1))).thenReturn(true);
+            when(this.augmenterConfigurationService.isConfigurationEnabled(eq(kind2))).thenReturn(true);
+            when(this.augmenterConfigurationService.getRelatedKindsOfConfigurations(any())).thenReturn(new ArrayList<>());
             ArgumentCaptor<Map<String, List<String>>> upsertArgumentCaptor = ArgumentCaptor.forClass(Map.class);
             ArgumentCaptor<Map<String, List<String>>> deleteArgumentCaptor = ArgumentCaptor.forClass(Map.class);
 
@@ -216,7 +227,7 @@ public class IndexerServiceImplTest {
             this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            verify(this.propertyConfigurationsService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
+            verify(this.augmenterConfigurationService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
             Map<String, List<String>> upsertKindIds = upsertArgumentCaptor.getValue();
             Map<String, List<String>> deleteKindIds = deleteArgumentCaptor.getValue();
             assertEquals(2, upsertKindIds.size());
@@ -234,7 +245,7 @@ public class IndexerServiceImplTest {
             prepareTestDataAndEnv(this.pubsubMsgForDeletion);
 
             // setup property configuration
-            when(this.propertyConfigurationsService.isConfigurationEnabled(any())).thenReturn(true);
+            when(this.augmenterConfigurationService.isConfigurationEnabled(any())).thenReturn(true);
             ArgumentCaptor<Map<String, List<String>>> upsertArgumentCaptor = ArgumentCaptor.forClass(Map.class);
             ArgumentCaptor<Map<String, List<String>>> deleteArgumentCaptor = ArgumentCaptor.forClass(Map.class);
 
@@ -242,13 +253,14 @@ public class IndexerServiceImplTest {
             this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            verify(this.propertyConfigurationsService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
+            verify(this.augmenterConfigurationService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
             Map<String, List<String>> upsertKindIds = upsertArgumentCaptor.getValue();
             Map<String, List<String>> deleteKindIds = deleteArgumentCaptor.getValue();
             assertEquals(0, upsertKindIds.size());
-            assertEquals(2, deleteKindIds.size());
+            assertEquals(3, deleteKindIds.size());
             assertEquals(1, deleteKindIds.get(kind1).size());
             assertEquals(2, deleteKindIds.get(kind2).size());
+            assertEquals(1, deleteKindIds.get(kind3).size());
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -260,16 +272,41 @@ public class IndexerServiceImplTest {
             prepareTestDataAndEnv(this.pubsubMsg);
 
             // setup property configuration
-            when(this.propertyConfigurationsService.isConfigurationEnabled(any())).thenReturn(true);
-            when(this.propertyConfigurationsService.getConfiguration(any())).thenReturn(new AugmenterConfiguration());
+            when(this.augmenterConfigurationService.isConfigurationEnabled(eq(kind1))).thenReturn(true);
+            when(this.augmenterConfigurationService.isConfigurationEnabled(eq(kind2))).thenReturn(true);
+            when(this.augmenterConfigurationService.getRelatedKindsOfConfigurations(any())).thenReturn(new ArrayList<>());
+            when(this.augmenterConfigurationService.getConfiguration(any())).thenReturn(new AugmenterConfiguration());
 
             // test
             this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            verify(this.propertyConfigurationsService, times(2)).getConfiguration(any());
-            verify(this.propertyConfigurationsService, times(2)).getExtendedProperties(any(), any(), any());
-            verify(this.propertyConfigurationsService, times(2)).cacheDataRecord(any(), any(), any());
+            verify(this.augmenterConfigurationService, times(2)).getConfiguration(any());
+            verify(this.augmenterConfigurationService, times(2)).getExtendedProperties(any(), any(), any());
+            verify(this.augmenterConfigurationService, times(3)).cacheDataRecord(any(), any(), any());
+        } catch (Exception e) {
+            fail("Should not throw this exception" + e.getMessage());
+        }
+    }
+
+    @Test
+    public void should_updateSchemaMappingOfRelatedKinds_givenValidCreateAndUpdateRecords() {
+        try {
+            prepareTestDataAndEnv(this.pubsubMsg);
+
+            // setup property configuration
+            List<String> relatedKinds = Arrays.asList("related_kind:1.0.0", "related_kind:1.1.0", "related_kind:1.2.0");
+            ArgumentCaptor<List<String>> configurationIdArgumentCaptor = ArgumentCaptor.forClass(List.class);
+            when(this.augmenterConfigurationService.getRelatedKindsOfConfigurations(configurationIdArgumentCaptor.capture())).thenReturn(relatedKinds);
+
+            // test
+            this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
+
+            // validate
+            List<String> configurationIds = configurationIdArgumentCaptor.getValue();
+            assertEquals(1, configurationIds.size());
+            assertEquals(recordId4, configurationIds.get(0));
+            verify(this.schemaService, times(relatedKinds.size())).processSchemaUpsertEvent(any(), anyString());
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
         }
@@ -290,6 +327,7 @@ public class IndexerServiceImplTest {
 
         // setup schema
         Map<String, Object> schema = createSchema();
+        indexSchemaServiceMock(kind3, schema);
         indexSchemaServiceMock(kind2, schema);
         indexSchemaServiceMock(kind1, null);
 
@@ -299,6 +337,7 @@ public class IndexerServiceImplTest {
         List<Records.Entity> validRecords = new ArrayList<>();
         validRecords.add(Records.Entity.builder().id(recordId2).kind(kind2).data(storageData).build());
         validRecords.add(Records.Entity.builder().id(recordId3).kind(kind2).data(storageData).build());
+        validRecords.add(Records.Entity.builder().id(recordId4).kind(kind3).data(storageData).build());
         List<ConversionStatus> conversionStatus = new LinkedList<>();
         Records storageRecords = Records.builder().records(validRecords).conversionStatuses(conversionStatus).build();
         when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
@@ -314,7 +353,8 @@ public class IndexerServiceImplTest {
         indexerMappedPayload.put("id", "keyword");
         when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any(), any())).thenReturn(indexerMappedPayload);
 
-        BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(recordId1), prepareSuccessfulResponse(recordId2), prepareFailed400Response(recordId3)};
+        BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(recordId1), prepareSuccessfulResponse(recordId2),
+                prepareSuccessfulResponse(recordId4), prepareFailed400Response(recordId3)};
         when(this.bulkResponse.getItems()).thenReturn(responses);
     }
 
@@ -333,6 +373,7 @@ public class IndexerServiceImplTest {
 
         // setup schema
         Map<String, Object> schema = createSchema();
+        indexSchemaServiceMock(kind3, schema);
         indexSchemaServiceMock(kind2, schema);
         indexSchemaServiceMock(kind1, null);
 
@@ -342,6 +383,7 @@ public class IndexerServiceImplTest {
         List<Records.Entity> validRecords = new ArrayList<>();
         validRecords.add(Records.Entity.builder().id(recordId2).kind(kind2).data(storageData).build());
         validRecords.add(Records.Entity.builder().id(recordId3).kind(kind2).data(storageData).build());
+        validRecords.add(Records.Entity.builder().id(recordId4).kind(kind3).data(storageData).build());
         List<ConversionStatus> conversionStatus = new LinkedList<>();
         Records storageRecords = Records.builder().records(validRecords).conversionStatuses(conversionStatus).build();
         when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
@@ -357,7 +399,8 @@ public class IndexerServiceImplTest {
         indexerMappedPayload.put("id", "keyword");
         when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any(), any())).thenReturn(indexerMappedPayload);
 
-        BulkItemResponse[] responses = new BulkItemResponse[]{prepareSuccessfulResponse(recordId1), prepareSuccessfulResponse(recordId2), prepareFailed400Response(recordId3)};
+        BulkItemResponse[] responses = new BulkItemResponse[]{prepareSuccessfulResponse(recordId1), prepareSuccessfulResponse(recordId2),
+                prepareSuccessfulResponse(recordId4), prepareFailed400Response(recordId3)};
         when(this.bulkResponse.getItems()).thenReturn(responses);
     }
 

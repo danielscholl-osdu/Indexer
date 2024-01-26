@@ -22,7 +22,6 @@ Feature: Indexing of the documents
   Scenario Outline: Prepare the index property configuration records and clean up index of the extended kinds in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
     Then I should get the <number> documents for the <index> in the Elastic Search
-    Then I clean up the index of the extended kinds <extendedKinds> in the Elastic Search
     Then I set starting stateful scenarios
 
     Examples:
