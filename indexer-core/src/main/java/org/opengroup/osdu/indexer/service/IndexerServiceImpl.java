@@ -56,13 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -83,6 +77,8 @@ public class IndexerServiceImpl implements IndexerService {
     // we index a normalized kind (authority + source + entity type + major version) as a tags attribute for all records
     private static final String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
     private static final String VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID = "VerticalCoordinateReferenceSystemID";
+
+    private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0";
 
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
@@ -172,6 +168,11 @@ public class IndexerServiceImpl implements IndexerService {
                     if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
                         augmenterConfigurationService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
                     }
+                    if(upsertRecordMap.containsKey(INDEX_PROPERTY_PATH_CONFIGURATION_KIND)) {
+                        List<String> configurationIds = upsertRecordMap.get(INDEX_PROPERTY_PATH_CONFIGURATION_KIND).
+                                keySet().stream().filter(id -> !retryRecordIds.contains(id)).toList();
+                        updateSchemaMappingOfRelatedKinds(configurationIds);
+                    }
                 }
                 catch(Exception ex) {
                     jaxRsDpsLog.error("Augmenter: Failed to update associated records", ex);
@@ -239,6 +240,26 @@ public class IndexerServiceImpl implements IndexerService {
         return deletedRecordKindIdsMap;
     }
 
+    private void updateSchemaMappingOfRelatedKinds(List<String> configurationIds) {
+        List<String> relatedKinds = augmenterConfigurationService.getRelatedKindsOfConfigurations(configurationIds);
+        if(!relatedKinds.isEmpty()) {
+            try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+                for (String kind : relatedKinds) {
+                    try {
+                        this.schemaService.processSchemaUpsertEvent(restClient, kind);
+                    }
+                    catch(Exception e) {
+                        jaxRsDpsLog.error(String.format("Augmenter: Failed to update schema mapping for kind %s", kind), e);
+                    }
+                }
+            }
+            catch(Exception ex) {
+                jaxRsDpsLog.error(String.format("Augmenter: Failed to update schema mapping for related kinds of configurations: %s",
+                                String.join(",", configurationIds)), ex);
+            }
+        }
+    }
+
     private void processSchemaEvents(RestHighLevelClient restClient,
                                      Map.Entry<String, OperationType> msg) throws IOException, ElasticsearchStatusException {
         String kind = msg.getKey();
@@ -287,10 +308,12 @@ public class IndexerServiceImpl implements IndexerService {
                 String kind = entry.getKey();
                 List<String> errors = new ArrayList<>();
                 IndexSchema schemaObj = this.schemaService.getIndexerInputSchema(kind, errors);
-                if (!errors.isEmpty()) {
-                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, String.join("|", errors), String.format("error  | kind: %s", kind));
-                } else if (schemaObj.isDataSchemaMissing()) {
-                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, "schema not found", String.format("schema not found | kind: %s", kind));
+                String error = errors.isEmpty() ? "" : String.join("|", errors);
+                String debugInfo = errors.isEmpty() ? String.format("kind: %s", kind) : String.format("kind: %s | errors: %s", kind, error);
+                if (schemaObj.isDataSchemaMissing()) {
+                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, errors.isEmpty() ? "schema not found" : String.format("schema not found | %s", error), String.format("schema not found | %s", debugInfo));
+                } else if (!errors.isEmpty()) {
+                    this.jobStatus.addOrUpdateRecordStatus(entry.getValue().keySet(), IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, error, debugInfo);
                 }
 
                 schemas.put(kind, schemaObj);
@@ -409,6 +432,10 @@ public class IndexerServiceImpl implements IndexerService {
                                 dataMap = mergeDataFromPropertyConfiguration(storageRecord.getId(), dataMap, augmenterConfiguration);
                             }
                             // We cache the dataMap in case the update of this object will trigger update of the related objects.
+                            augmenterConfigurationService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
+                        }
+                        else if(INDEX_PROPERTY_PATH_CONFIGURATION_KIND.equals(storageRecord.getKind())) {
+                            // We cache the dataMap that will be used to update the schema mapping of the related kinds
                             augmenterConfigurationService.cacheDataRecord(storageRecord.getId(), storageRecord.getKind(), dataMap);
                         }
                     }
@@ -711,16 +738,20 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
     private void updateAuditLog() {
-        logAuditEvents(OperationType.create, this.auditLogger::indexCreateRecordSuccess, this.auditLogger::indexCreateRecordFail);
-        logAuditEvents(OperationType.update, this.auditLogger::indexUpdateRecordSuccess, this.auditLogger::indexUpdateRecordFail);
-        logAuditEvents(OperationType.purge, this.auditLogger::indexPurgeRecordSuccess, this.auditLogger::indexPurgeRecordFail);
-        logAuditEvents(OperationType.delete, this.auditLogger::indexDeleteRecordSuccess, this.auditLogger::indexDeleteRecordFail);
+        logAuditEvents(OperationType.create, this.auditLogger::indexCreateRecordSuccess, this.auditLogger::indexCreateRecordPartialSuccess, this.auditLogger::indexCreateRecordFail);
+        logAuditEvents(OperationType.update, this.auditLogger::indexUpdateRecordSuccess, this.auditLogger::indexUpdateRecordPartialSuccess, this.auditLogger::indexUpdateRecordFail);
+        logAuditEvents(OperationType.purge, this.auditLogger::indexPurgeRecordSuccess, null, this.auditLogger::indexPurgeRecordFail);
+        logAuditEvents(OperationType.delete, this.auditLogger::indexDeleteRecordSuccess, null, this.auditLogger::indexDeleteRecordFail);
     }
 
-    private void logAuditEvents(OperationType operationType, Consumer<List<String>> successEvent, Consumer<List<String>> failedEvent) {
+    private void logAuditEvents(OperationType operationType, Consumer<List<String>> successEvent, Consumer<List<String>> partialSuccessEvent, Consumer<List<String>> failedEvent) {
         List<RecordStatus> succeededRecords = this.jobStatus.getRecordStatuses(IndexingStatus.SUCCESS, operationType);
         if (!succeededRecords.isEmpty()) {
             successEvent.accept(succeededRecords.stream().map(RecordStatus::succeededAuditLogMessage).collect(Collectors.toList()));
+        }
+        List<RecordStatus> partiallySuccessfulRecords = this.jobStatus.getRecordStatuses(IndexingStatus.WARN, operationType);
+        if (!partiallySuccessfulRecords.isEmpty() && partialSuccessEvent != null) {
+            partialSuccessEvent.accept(partiallySuccessfulRecords.stream().map(RecordStatus::partiallySucceededAuditLogMessage).collect(Collectors.toList()));
         }
         List<RecordStatus> skippedRecords = this.jobStatus.getRecordStatuses(IndexingStatus.SKIP, operationType);
         List<RecordStatus> failedRecords = this.jobStatus.getRecordStatuses(IndexingStatus.FAIL, operationType);

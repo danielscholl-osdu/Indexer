@@ -114,11 +114,13 @@ public class StorageIndexerPayloadMapper {
 
             switch (elasticType) {
                 case KEYWORD:
-                case KEYWORD_ARRAY:
                 case TEXT:
-                case TEXT_ARRAY:
                     this.attributeParsingService.tryParseString(recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
                     break;
+                case KEYWORD_ARRAY:
+                case TEXT_ARRAY:
+                    this.attributeParsingService.tryParseValueArray(String.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
+                    break;    
                 case INTEGER_ARRAY:
                     this.attributeParsingService.tryParseValueArray(Integer.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
                     break;
@@ -229,6 +231,10 @@ public class StorageIndexerPayloadMapper {
         String originalGeoShapeProperty = null;
         if(this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) != null) {
             VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
+            if (virtualProperties == null) {
+                this.log.warning(String.format("record-id: %s | error fetching virtual property from cache for the kind: %s", recordId, storageSchema.getKind()));
+                return;
+            }
             for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
                 if (entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
                     continue;

@@ -365,6 +365,48 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         }
     }
 
+    @Override
+    public List<String> getRelatedKindsOfConfigurations(List<String> configurationIds) {
+        if(CollectionUtils.isEmpty(configurationIds)) {
+            return new ArrayList<>();
+        }
+
+        Set<String> codes = new HashSet<>();
+        for(String configurationId: configurationIds) {
+            // We should only get it from cache to avoid getting an old version of the configuration from index
+            // as there is a few second delay to have the new record searchable
+            // The implementation is a bit subtle as set and get from the cache are separated in two different places (classes)
+            RecordData recordData = relatedObjectCache.get(configurationId);
+            if(recordData != null) {
+                try {
+                    String data = objectMapper.writeValueAsString(recordData.getData());
+                    AugmenterConfiguration augmenterConfiguration = objectMapper.readValue(data, AugmenterConfiguration.class);
+                    if(augmenterConfiguration.isValid()) {
+                        // The code must be a kind with major version format if the configuration is valid
+                        String code = augmenterConfiguration.getCode();
+                        codes.add(code);
+
+                        // Same here to use cache to
+                        // cache configuration used by method getConfiguration(String kind)
+                        augmenterConfigurationCache.put(code, augmenterConfiguration);
+                    }
+                    else {
+                        jaxRsDpsLog.warning(String.format("resolveKindsForSchemaUpdate: configuration with id %s is invalid", configurationId));
+                    }
+                } catch (JsonProcessingException e) {
+                    jaxRsDpsLog.error(String.format("resolveKindsForSchemaUpdate: failed to deserialize PropertyConfigurations object with id %s", configurationId), e);
+                }
+            }
+        }
+
+        List<String> relatedKinds = new ArrayList<>();
+        for(String code: codes) {
+            List<String> kinds = getConcreteKinds(code, false);
+            relatedKinds.addAll(kinds);
+        }
+        return relatedKinds;
+    }
+
     /******************************************************** Private methods **************************************************************/
     private boolean isEmptyConfiguration(AugmenterConfiguration configuration) {
         return configuration == null || Strings.isNullOrEmpty(configuration.getCode());
@@ -918,28 +960,38 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     }
 
     private String getLatestVersionOfKind(String kindWithMajor) {
+        List<String> concreteKinds = getConcreteKinds(kindWithMajor, true);
+        if(concreteKinds.isEmpty())
+            return null;
+        else
+            return concreteKinds.get(0);
+    }
+
+    private List<String> getConcreteKinds(String kindWithMajor, boolean latestVersion) {
         Kind kind = new Kind(kindWithMajor);
         String version = kind.getVersion();
         String[] subVersions = version.split("\\.");
         String majorVersion = subVersions[0];
-        String latestKind = null;
+        List<String> concreteKinds = new ArrayList<>();
         try {
-            SchemaInfoResponse response = schemaService.getSchemaInfos(kind.getAuthority(), kind.getSource(), kind.getType(), majorVersion, null, null, true);
+            SchemaInfoResponse response = schemaService.getSchemaInfos(kind.getAuthority(), kind.getSource(), kind.getType(), majorVersion, null, null, latestVersion);
             if (response != null && !CollectionUtils.isEmpty(response.getSchemaInfos())) {
-                SchemaInfo schemaInfo = response.getSchemaInfos().get(0);
-                SchemaIdentity schemaIdentity = schemaInfo.getSchemaIdentity();
-                latestKind = schemaIdentity.getAuthority() + ":" +
-                        schemaIdentity.getSource() + ":" +
-                        schemaIdentity.getEntityType() + ":" +
-                        schemaIdentity.getSchemaVersionMajor() + "." +
-                        schemaIdentity.getSchemaVersionMinor() + "." +
-                        schemaIdentity.getSchemaVersionPatch();
+                for(SchemaInfo schemaInfo : response.getSchemaInfos()) {
+                    SchemaIdentity schemaIdentity = schemaInfo.getSchemaIdentity();
+                    String concreteKind = schemaIdentity.getAuthority() + ":" +
+                            schemaIdentity.getSource() + ":" +
+                            schemaIdentity.getEntityType() + ":" +
+                            schemaIdentity.getSchemaVersionMajor() + "." +
+                            schemaIdentity.getSchemaVersionMinor() + "." +
+                            schemaIdentity.getSchemaVersionPatch();
+                    concreteKinds.add(concreteKind);
+                }
             }
         } catch (Exception e) {
             jaxRsDpsLog.error("failed to get schema info", e);
         }
 
-        return latestKind;
+        return concreteKinds;
     }
 
     /****************************** search methods that use search service to get the data **************************************/

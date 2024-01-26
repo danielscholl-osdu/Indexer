@@ -37,4 +37,6 @@ public interface AugmenterConfigurationService {
     void cacheDataRecord(String recordId, String kind, Map<String, Object> dataMap);
 
     void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> upsertKindIds, Map<String, List<String>> deleteKindIds);
+
+    List<String> getRelatedKindsOfConfigurations(List<String> configurationIds);
 }

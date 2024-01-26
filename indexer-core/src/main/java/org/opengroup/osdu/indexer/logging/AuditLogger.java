@@ -45,12 +45,20 @@ public class AuditLogger {
         this.writeLog(this.getAuditEvents().getIndexCreateRecordSuccessEvent(resources));
     }
 
+    public void indexCreateRecordPartialSuccess(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getIndexCreateRecordPartialSuccessEvent(resources));
+    }
+
     public void indexCreateRecordFail(List<String> resources) {
         this.writeLog(this.getAuditEvents().getIndexCreateRecordFailEvent(resources));
     }
 
     public void indexUpdateRecordSuccess(List<String> resources) {
         this.writeLog(this.getAuditEvents().getIndexUpdateRecordSuccessEvent(resources));
+    }
+
+    public void indexUpdateRecordPartialSuccess(List<String> resources) {
+        this.writeLog(this.getAuditEvents().getIndexUpdateRecordPartialSuccessEvent(resources));
     }
 
     public void indexUpdateRecordFail(List<String> resources) {
