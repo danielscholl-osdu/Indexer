@@ -16,6 +16,7 @@
 package org.opengroup.osdu.indexer.schema.converter.interfaces;
 
 import org.opengroup.osdu.core.common.cache.ICache;
+import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 
-public interface IVirtualPropertiesSchemaCache<String, V> extends ICache<String, V> {
+public interface IVirtualPropertiesSchemaCache extends ICache<String, VirtualProperties> {
 }

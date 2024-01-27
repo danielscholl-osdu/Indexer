@@ -229,12 +229,8 @@ public class StorageIndexerPayloadMapper {
         }
 
         String originalGeoShapeProperty = null;
-        if(this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) != null) {
-            VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
-            if (virtualProperties == null) {
-                this.log.warning(String.format("record-id: %s | error fetching virtual property from cache for the kind: %s", recordId, storageSchema.getKind()));
-                return;
-            }
+        VirtualProperties virtualProperties = this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
+        if(virtualProperties != null) {
             for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
                 if (entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
                     continue;
