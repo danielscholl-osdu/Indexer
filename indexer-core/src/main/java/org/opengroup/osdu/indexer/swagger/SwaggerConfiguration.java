@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
-@Profile("!noswagger")
 public class SwaggerConfiguration {
 
         @Value("${api.title}")
