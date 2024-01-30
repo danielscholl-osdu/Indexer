@@ -50,7 +50,7 @@ import org.springframework.web.context.annotation.RequestScope;
             }),
         @ComponentScan.Filter(
             type = FilterType.REGEX,
-            pattern = {"org\\.opengroup\\.osdu\\.indexer\\.provider\\.gcp\\.indexing\\..*"}
+            pattern = {"org\\.opengroup\\.osdu\\.indexer\\.indexing\\..*"}
         )
     }
 )

@@ -2,16 +2,11 @@ variables:
   GC_SERVICE: indexer
   GC_VENDOR: gc
 
-gc-test:
-  variables:
-    CUCUMBER_OPTIONS: "--tags @default"
-    LEGAL_TAG: public-usa-dataset-1
 
 gc-baremetal-test:
   variables:
     GC_VENDOR: baremetal
     CUCUMBER_OPTIONS: "--tags @default"
-    LEGAL_TAG: public-usa-dataset-1
 
 gc-containerize-gitlab:core-plus:
   stage: containerize
