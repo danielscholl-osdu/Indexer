@@ -39,9 +39,9 @@ import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
 import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.VirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -58,21 +58,6 @@ import static java.util.Map.entry;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
@@ -99,7 +84,7 @@ public class IndexerSchemaServiceTest {
     @Mock
     private FlattenedSchemaCache flattenedSchemaCache;
     @Mock
-    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    private VirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Mock
     private AugmenterConfigurationService augmenterConfigurationService;
     @Mock

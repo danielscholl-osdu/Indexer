@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 
 @Component
-public class VirtualPropertiesSchemaCacheImpl implements IVirtualPropertiesSchemaCache<String, VirtualProperties> {
+public class VirtualPropertiesSchemaCacheImpl implements IVirtualPropertiesSchemaCache {
     private static final String VIRTUAL_PROPERTIES_SCHEMA = "_virtual_properties";
     private final Gson gson = new Gson();
 

@@ -21,7 +21,7 @@ import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import java.util.HashMap;
 import java.util.Map;
 
-public class VirtualPropertiesSchemaCacheMock implements IVirtualPropertiesSchemaCache<String, VirtualProperties> {
+public class VirtualPropertiesSchemaCacheMock implements IVirtualPropertiesSchemaCache {
     private Map<String, VirtualProperties> cache = new HashMap<>();
 
     @Override
