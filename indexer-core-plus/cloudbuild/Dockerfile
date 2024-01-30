@@ -9,7 +9,8 @@ ARG PORT
 ENV PORT $PORT
 
 # Copy plugins
-COPY tmp/os-osm-postgres-*.jar plugins/osm-postgres.jar
+COPY tmp/os-oqm-rabbitmq-*.jar plugins/oqm-rabbitmq.jar
+COPY tmp/apd-openid-*.jar plugins/apd-openid.jar
 
 # Copy the jar to the production image from the builder stage.
 COPY provider/indexer-${PROVIDER_NAME}/target/indexer-${PROVIDER_NAME}-*-spring-boot.jar indexer-${PROVIDER_NAME}.jar
@@ -29,4 +30,5 @@ CMD java  --add-opens java.base/java.lang=ALL-UNNAMED \
           -Dloader.path=plugins/ \
           -Dserver.port=${PORT} \
           -Dlog4j.formatMsgNoLookups=true \
+          -Dloader.main=org.opengroup.osdu.indexer.IndexerCorePlusApplication \
           -jar /app/indexer-${PROVIDER_NAME}.jar
