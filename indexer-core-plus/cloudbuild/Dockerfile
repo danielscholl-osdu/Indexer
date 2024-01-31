@@ -3,7 +3,7 @@ FROM azul/zulu-openjdk:17
 WORKDIR /app
 
 ARG PROVIDER_NAME
-ENV PROVIDER_NAME $PROVIDER_NAME
+ENV PROVIDER_NAME core-plus
 
 ARG PORT
 ENV PORT $PORT
@@ -13,7 +13,7 @@ COPY tmp/os-oqm-rabbitmq-*.jar plugins/oqm-rabbitmq.jar
 COPY tmp/apd-openid-*.jar plugins/apd-openid.jar
 
 # Copy the jar to the production image from the builder stage.
-COPY provider/indexer-${PROVIDER_NAME}/target/indexer-${PROVIDER_NAME}-*-spring-boot.jar indexer-${PROVIDER_NAME}.jar
+COPY indexer-${PROVIDER_NAME}/target/indexer-${PROVIDER_NAME}-*-spring-boot.jar indexer-${PROVIDER_NAME}.jar
 
 # Add a non-root user
 RUN groupadd -g 10001 -r nonroot \
