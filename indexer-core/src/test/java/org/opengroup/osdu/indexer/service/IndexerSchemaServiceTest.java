@@ -39,9 +39,9 @@ import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
 import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.VirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -84,7 +84,7 @@ public class IndexerSchemaServiceTest {
     @Mock
     private FlattenedSchemaCache flattenedSchemaCache;
     @Mock
-    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    private VirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Mock
     private AugmenterConfigurationService augmenterConfigurationService;
     @Mock
@@ -106,7 +106,7 @@ public class IndexerSchemaServiceTest {
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
-        Assert.assertNotNull(indexSchema);
+        assertNotNull(indexSchema);
     }
 
     @Test
@@ -115,7 +115,7 @@ public class IndexerSchemaServiceTest {
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
-        Assert.assertEquals(kind, indexSchema.getKind());
+        assertEquals(kind, indexSchema.getKind());
     }
 
     @Test
@@ -125,7 +125,21 @@ public class IndexerSchemaServiceTest {
 
         IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
 
-        Assert.assertEquals(kind, indexSchema.getKind());
+        assertEquals(kind, indexSchema.getKind());
+    }
+
+    @Test
+    public void should_retry_givenSchemaWithCacheHitAndFlattenedWithNoCacheHit_getIndexerInputSchemaTest() throws Exception {
+        when(schemaService.getSchema(any())).thenReturn(someSchema);
+        when(this.schemaCache.get(kind)).thenReturn(someSchema);
+        when(this.schemaCache.get(kind + "_flattened")).thenReturn(null);
+
+        IndexSchema indexSchema = this.sut.getIndexerInputSchema(kind, false);
+
+        assertNotNull(indexSchema);
+        assertEquals(kind, indexSchema.getKind());
+        verify(this.schemaCache).put(any(String.class), any(String.class));
+        verify(this.flattenedSchemaCache).put(any(String.class), any(String.class));
     }
 
     @Test
@@ -137,8 +151,8 @@ public class IndexerSchemaServiceTest {
             this.sut.getIndexerInputSchema(kind, false);
             fail("Should throw exception");
         } catch (AppException e) {
-            Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getError().getCode());
-            Assert.assertEquals("An error has occurred while normalizing the schema.", e.getError().getMessage());
+            assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getError().getCode());
+            assertEquals("An error has occurred while normalizing the schema.", e.getError().getMessage());
         } catch (Exception e) {
             fail("Should not throw exception" + e.getMessage());
         }

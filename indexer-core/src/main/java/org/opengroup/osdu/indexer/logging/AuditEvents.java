@@ -25,10 +25,12 @@ public class AuditEvents {
 
     private static final String INDEX_CREATE_RECORD_ACTION_ID = "IN001";
     private static final String INDEX_CREATE_RECORDS_SUCCESS = "Successfully created record in index";
+    private static final String INDEX_CREATE_RECORDS_PARTIAL_SUCCESS = "Partially successful in creating record in index";
     private static final String INDEX_CREATE_RECORDS_FAILURE = "Failed creating record in index";
 
     private static final String INDEX_UPDATE_RECORD_ACTION_ID = "IN002";
     private static final String INDEX_UPDATE_RECORDS_SUCCESS = "Successfully updated record in index";
+    private static final String INDEX_UPDATE_RECORDS_PARTIAL_SUCCESS = "Partially successful in updating record in index";
     private static final String INDEX_UPDATE_RECORDS_FAILURE = "Failed updating record in index";
 
     private static final String INDEX_DELETE_RECORD_ACTION_ID = "IN003";
@@ -86,6 +88,17 @@ public class AuditEvents {
                 .build();
     }
 
+    public AuditPayload getIndexCreateRecordPartialSuccessEvent(List<String> resources) {
+        return AuditPayload.builder()
+                .action(AuditAction.CREATE)
+                .status(AuditStatus.PARTIAL_SUCCESS)
+                .actionId(INDEX_CREATE_RECORD_ACTION_ID)
+                .message(INDEX_CREATE_RECORDS_PARTIAL_SUCCESS)
+                .resources(resources)
+                .user(this.user)
+                .build();
+    }
+
     public AuditPayload getIndexCreateRecordFailEvent(List<String> resources) {
         return AuditPayload.builder()
                 .action(AuditAction.CREATE)
@@ -108,6 +121,16 @@ public class AuditEvents {
                 .build();
     }
 
+    public AuditPayload getIndexUpdateRecordPartialSuccessEvent(List<String> resources) {
+        return AuditPayload.builder()
+                .action(AuditAction.UPDATE)
+                .status(AuditStatus.PARTIAL_SUCCESS)
+                .actionId(INDEX_UPDATE_RECORD_ACTION_ID)
+                .message(INDEX_UPDATE_RECORDS_PARTIAL_SUCCESS)
+                .resources(resources)
+                .user(this.user)
+                .build();
+    }
     public AuditPayload getIndexUpdateRecordFailEvent(List<String> resources) {
         return AuditPayload.builder()
                 .action(AuditAction.UPDATE)

@@ -19,11 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.search.Preconditions;
+import org.opengroup.osdu.indexer.cache.partitionsafe.VirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.interfaces.SchemaToStorageFormat;
-import org.opengroup.osdu.indexer.schema.converter.tags.*;
+import org.opengroup.osdu.indexer.schema.converter.tags.Priority;
+import org.opengroup.osdu.indexer.schema.converter.tags.PropertiesData;
+import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
+import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +45,7 @@ public class SchemaToStorageFormatImpl implements SchemaToStorageFormat {
     private SchemaConverterConfig schemaConverterConfig;
 
     @Inject
-    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    private VirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
     @Inject
     public SchemaToStorageFormatImpl(ObjectMapper objectMapper, JaxRsDpsLog log, SchemaConverterConfig schemaConverterConfig) {

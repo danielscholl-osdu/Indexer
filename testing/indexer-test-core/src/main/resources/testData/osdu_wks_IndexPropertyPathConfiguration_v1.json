@@ -1,5 +1,5 @@
 [{
-        "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--WellLog:1.",
+        "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--WellLog:1",
         "data": {
             "Name": "WellLogIndex-PropertyPathConfiguration",
             "Description": "The index property list for WellLog:1., valid for all WellLog kinds for major version 1.",
@@ -39,7 +39,7 @@
             ]
         }
     }, {
-        "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1.",
+        "id": "tenant1:reference-data--IndexPropertyPathConfiguration:index-property--Wellbore:1",
         "data": {
             "Name": "Wellbore-IndexPropertyPathConfiguration",
             "Description": "The index property list for index-property--Wellbore:1., valid for all index-property--Wellbore kinds for major version 1.",

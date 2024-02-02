@@ -227,6 +227,21 @@ public class AttributeParsingServiceImplTest {
         assertEquals(dataMap.get("side"), "true");
     }
 
+        @Test
+    public void should_parseValidStringArray() {
+        Map<String, Object> dataMap = new HashMap<>();
+        final Map<Object, Object> inputs = new HashMap<Object, Object>() {
+            {
+                put("[]", new String[]{});
+                put("[test]", new String[]{"test"});
+                put("[aaa, bbb]", new String[]{"aaa", "bbb"});
+                put("[\"139.987\", \"20\"]", new String[]{"139.987", "20"});
+            }
+        };
+
+        this.validateInput(this.sut::tryParseValueArray, String.class, String.class, inputs, dataMap);
+    }
+
     @Test
     public void should_parseDate_tryParseDate() {
         Map<String, Object> dataMap = new HashMap<>();
