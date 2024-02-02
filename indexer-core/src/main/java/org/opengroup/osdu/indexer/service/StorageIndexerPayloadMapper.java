@@ -26,8 +26,8 @@ import org.opengroup.osdu.core.common.model.indexer.ElasticType;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.indexer.cache.partitionsafe.VirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterConfig;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.Priority;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperty;
@@ -35,8 +35,8 @@ import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.opengroup.osdu.indexer.util.geo.decimator.DecimatedResult;
 import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
 import org.opengroup.osdu.indexer.util.geo.extractor.PointExtractor;
-import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
@@ -60,7 +60,7 @@ public class StorageIndexerPayloadMapper {
     @Inject
     private SchemaConverterConfig schemaConfig;
     @Inject
-    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    private VirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
     private GeoShapeDecimator decimator;
     @Inject
@@ -229,12 +229,8 @@ public class StorageIndexerPayloadMapper {
         }
 
         String originalGeoShapeProperty = null;
-        if(this.virtualPropertiesSchemaCache.get(storageSchema.getKind()) != null) {
-            VirtualProperties virtualProperties = (VirtualProperties) this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
-            if (virtualProperties == null) {
-                this.log.warning(String.format("record-id: %s | error fetching virtual property from cache for the kind: %s", recordId, storageSchema.getKind()));
-                return;
-            }
+        VirtualProperties virtualProperties = this.virtualPropertiesSchemaCache.get(storageSchema.getKind());
+        if(virtualProperties != null) {
             for (Map.Entry<String, VirtualProperty> entry : virtualProperties.getProperties().entrySet()) {
                 if (entry.getValue().getPriorities() == null || entry.getValue().getPriorities().size() == 0) {
                     continue;

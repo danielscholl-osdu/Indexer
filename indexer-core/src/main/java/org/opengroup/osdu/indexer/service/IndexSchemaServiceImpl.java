@@ -32,10 +32,10 @@ import org.opengroup.osdu.core.common.model.storage.SchemaItem;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.FlattenedSchemaCache;
 import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.VirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
@@ -45,11 +45,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
@@ -73,7 +69,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Inject
     private FlattenedSchemaCache flattenedSchemaCache;
     @Inject
-    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    private VirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
     @Inject
     private AugmenterConfigurationService augmenterConfigurationService;
     @Inject

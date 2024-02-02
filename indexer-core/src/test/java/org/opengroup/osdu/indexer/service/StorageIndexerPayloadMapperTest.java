@@ -14,39 +14,32 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.indexer.cache.partitionsafe.FeatureFlagCache;
+import org.opengroup.osdu.indexer.cache.partitionsafe.VirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.config.SchemaConverterPropertiesConfig;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
-import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.schema.converter.tags.SchemaRoot;
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.opengroup.osdu.indexer.service.mock.RequestInfoMock;
 import org.opengroup.osdu.indexer.service.mock.ServiceAccountJwtClientMock;
 import org.opengroup.osdu.indexer.service.mock.VirtualPropertiesSchemaCacheMock;
-import org.opengroup.osdu.indexer.util.geo.decimator.*;
-import org.opengroup.osdu.indexer.util.geo.extractor.*;
-import org.opengroup.osdu.indexer.util.parser.BooleanParser;
-import org.opengroup.osdu.indexer.util.parser.DateTimeParser;
-import org.opengroup.osdu.indexer.util.parser.GeoShapeParser;
-import org.opengroup.osdu.indexer.util.parser.NumberParser;
-import org.opengroup.osdu.indexer.util.parser.StringParser;
+import org.opengroup.osdu.indexer.util.geo.decimator.DouglasPeuckerReducer;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeoShapeDecimator;
+import org.opengroup.osdu.indexer.util.geo.decimator.GeometryDecimator;
+import org.opengroup.osdu.indexer.util.geo.extractor.PointExtractor;
+import org.opengroup.osdu.indexer.util.parser.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
-
 import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @RunWith(SpringRunner.class)
@@ -54,7 +47,7 @@ import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES
         BooleanParser.class, DateTimeParser.class, GeoShapeParser.class, DouglasPeuckerReducer.class, GeoShapeDecimator.class,
         GeometryDecimator.class, PointExtractor.class, GeometryConversionService.class, FeatureFlagCache.class,
         DpsHeaders.class, JobStatus.class, SchemaConverterPropertiesConfig.class, JaxRsDpsLog.class,
-        ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, RequestInfoMock.class,
+        ServiceAccountJwtClientMock.class, VirtualPropertiesSchemaCacheMock.class, VirtualPropertiesSchemaCache.class, RequestInfoMock.class,
         IFeatureFlag.class, StringParser.class})
 public class StorageIndexerPayloadMapperTest {
 
@@ -85,7 +78,7 @@ public class StorageIndexerPayloadMapperTest {
     private StorageIndexerPayloadMapper payloadMapper;
 
     @Autowired
-    private IVirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
+    private VirtualPropertiesSchemaCache virtualPropertiesSchemaCache;
 
     @MockBean
     protected IFeatureFlag asIngestedCoordinatesFeatureFlag;
