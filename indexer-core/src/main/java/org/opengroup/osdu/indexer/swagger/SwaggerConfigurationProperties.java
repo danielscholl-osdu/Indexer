@@ -14,10 +14,10 @@ public class SwaggerConfigurationProperties {
     private String apiTitle;
     private String apiDescription;
     private String apiVersion;
-    private String contactName;
-    private String contactEmail;
-    private String licenseName;
-    private String licenseUrl;
+    private String apiContactName;
+    private String apiContactEmail;
+    private String apiLicenseName;
+    private String apiLicenseUrl;
     private String apiServerUrl;
     private boolean apiServerFullUrlEnabled;
 
