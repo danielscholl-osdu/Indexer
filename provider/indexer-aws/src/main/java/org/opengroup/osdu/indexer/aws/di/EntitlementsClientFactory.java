@@ -47,7 +47,7 @@ public class EntitlementsClientFactory extends AbstractFactoryBean<IEntitlements
 
 		return new EntitlementsFactory(EntitlementsAPIConfig
 				.builder()
-				.rootUrl(authorizeApiKey)
+				.rootUrl(authorizeApi)
 				.apiKey(authorizeApiKey)
 				.build(),
 				mapper);
