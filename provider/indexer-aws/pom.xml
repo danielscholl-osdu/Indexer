@@ -31,7 +31,7 @@
       <aws.version>1.12.261</aws.version>
       <deployment.environment>dev</deployment.environment>
       <netty.version>4.1.51.Final</netty.version>
-      <jackson-databind.version>2.13.2.2</jackson-databind.version>
+      <jackson-databind.version>2.13.5</jackson-databind.version>
       <jackson.version>2.13.2</jackson.version>
       <mockito.version>3.11.2</mockito.version>
       <spring-security-core.version>5.8.9</spring-security-core.version>
@@ -96,6 +96,11 @@
       <artifactId>aws-java-sdk</artifactId>
       <version>${aws.version}</version>
     </dependency>
+    <dependency>
+       <groupId>io.netty</groupId>
+       <artifactId>netty-codec</artifactId>
+       <version>4.1.104.Final</version>
+     </dependency>
 
     <!-- Third party Apache 2.0 license packages -->
     <dependency>
