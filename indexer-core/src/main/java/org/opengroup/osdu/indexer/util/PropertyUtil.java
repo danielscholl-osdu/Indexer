@@ -48,7 +48,9 @@ public class PropertyUtil {
 
         Map<String, Object> values = new HashMap<>();
         if(data.containsKey(propertyPath)) {
-            values.put(propertyPath, data.get(propertyPath));
+           if(data.get(propertyPath) != null) {
+               values.put(propertyPath, data.get(propertyPath));
+           }
         }
         else {
             for (String key : data.keySet()) {
@@ -62,7 +64,9 @@ public class PropertyUtil {
                         }
                     }
                 } else if (key.startsWith(propertyPath + PROPERTY_DELIMITER)) {
-                    values.put(key, data.get(key));
+                    if(data.get(key) != null) {
+                        values.put(key, data.get(key));
+                    }
                 }
             }
         }
