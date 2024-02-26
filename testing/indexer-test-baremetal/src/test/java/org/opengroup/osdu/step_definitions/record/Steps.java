@@ -149,4 +149,16 @@ public class Steps extends SchemaServiceRecordSteps {
             throws Throwable {
         super.i_should_get_string_array_in_search_response(index, field, fieldValue, arrayField, arrayValue);
     }
+
+    @Then("^I should get \"([^\"]*)\" in search response for the \"([^\"]*)\"$")
+    public void i_should_get_object_in_search_response(String innerField, String index)
+            throws Throwable {
+        super.i_should_get_object_in_search_response(innerField, index);
+    }
+
+    @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by bounding box query with points \\((-?\\d+), (-?\\d+)\\) on field \"([^\"]*)\" and points \\((-?\\d+), (-?\\d+)\\) on field \"([^\"]*)\"$")
+    public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_AsIngestedCoordinates (
+            int expectedCount, String index, Double topPointX, Double bottomPointX, String pointX, Double topPointY, Double bottomPointY, String pointY) throws Throwable {
+        super.i_should_get_the_documents_for_the_in_the_Elastic_Search_by_AsIngestedCoordinates(expectedCount, index, topPointX, bottomPointX, pointX, topPointY, bottomPointY, pointY);
+    }
 }
