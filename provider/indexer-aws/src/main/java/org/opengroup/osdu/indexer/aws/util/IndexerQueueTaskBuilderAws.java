@@ -30,6 +30,8 @@ import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -43,6 +45,7 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
     private static final String RETRY_STRING = "retry";
     private static final int INITIAL_RETRY_DELAY_SECONDS = 5;
     private static final int MAX_RETRY_DELAY_SECONDS = 900; // 15 minutes (900 seconds) is the hard limit SQS sets of message delays
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexerQueueTaskBuilderAws.class);
 
     private AmazonSQS sqsClient;
 
@@ -139,8 +142,8 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
             retryDelay = INITIAL_RETRY_DELAY_SECONDS;
         }
 
-        System.out.println("Re-queuing for retry attempt #: " + retryCount);
-        System.out.println("Delay (in seconds) before next retry: " + retryDelay);
+        LOGGER.info("Re-queuing for retry attempt #: {}", retryCount);
+        LOGGER.info("Delay (in seconds) before next retry: {}", retryDelay);
 
         // Append the retry count to the message attributes
         messageAttributes.put(RETRY_STRING, new MessageAttributeValue()

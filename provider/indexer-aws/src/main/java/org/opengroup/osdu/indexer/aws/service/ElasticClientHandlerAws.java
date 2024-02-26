@@ -18,9 +18,7 @@ package org.opengroup.osdu.indexer.aws.service;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.elasticsearch.client.RestClientBuilder;
@@ -31,10 +29,8 @@ import org.springframework.stereotype.Component;
 import lombok.extern.java.Log;
 
 import java.security.KeyManagementException;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 
-import javax.inject.Inject;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 // TODO: Elastic Client Handler should be designed to allow cloud providers to implement their own handler if not we have to inherited

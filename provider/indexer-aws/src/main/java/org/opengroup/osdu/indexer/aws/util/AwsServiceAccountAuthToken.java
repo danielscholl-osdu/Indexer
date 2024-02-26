@@ -28,6 +28,8 @@ import org.opengroup.osdu.core.common.http.HttpResponse;
 import org.opengroup.osdu.core.common.http.IHttpClient;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import java.util.Base64;
@@ -42,6 +44,7 @@ public class AwsServiceAccountAuthToken {
     private String oauthCustomScope;
     private String token= null;
     private long expirationTimeMillis;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AwsServiceAccountAuthToken.class);
 
     @PostConstruct
     private void init() {
@@ -73,7 +76,7 @@ public class AwsServiceAccountAuthToken {
                 int duration = Integer.parseInt(accessToken.getExpires_in());
                 this.expirationTimeMillis = System.currentTimeMillis()+duration*1000;
             }catch(Exception e) {
-                System.out.println("Could not parse AccessToken result");
+                LOGGER.error("Could not parse AccessToken result");
             }
         }
         return this.token; 
@@ -93,7 +96,7 @@ public class AwsServiceAccountAuthToken {
         return Base64.getEncoder().encodeToString((clientID+":"+ clientSecret).getBytes());
     }
 
-    private <T> T getResult(HttpResponse result, Class<T> type) throws Exception {
+    private <T> T getResult(HttpResponse result, Class<T> type) throws AppException {
         Gson gson = new Gson();
         if (result.isSuccessCode()) {
             try {
@@ -102,7 +105,7 @@ public class AwsServiceAccountAuthToken {
                 throw new IllegalArgumentException("array parsing error in getResult of HttpResonse, not a valid array");
             }
         } else {
-            throw new Exception("Invalid Response");
+            throw new AppException(result.getResponseCode(), "Invalid Response", result.getBody());
         }
     }
 }
