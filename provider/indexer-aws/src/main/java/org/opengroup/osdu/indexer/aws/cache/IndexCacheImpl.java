@@ -43,8 +43,8 @@ public class IndexCacheImpl implements IIndexCache<String, Boolean>, AutoCloseab
     @Value("${aws.elasticache.cluster.index.expiration}")
     String indexCacheExpiration;
     public IndexCacheImpl() throws K8sParameterNotFoundException, JsonProcessingException {
-        int expTimeSeconds = 60 * 60;
         K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
+        int expTimeSeconds = 60 * 60;
         local = provider.getLocalMode();
         if (local.booleanValue()){
             if (Boolean.parseBoolean(System.getenv("DISABLE_CACHE"))){
@@ -53,10 +53,11 @@ public class IndexCacheImpl implements IIndexCache<String, Boolean>, AutoCloseab
                 cache = new VmCache<>(expTimeSeconds, 10);
             }
         }else {
-            String host = provider.getParameterAsStringOrDefault("CACHE_CLUSTER_ENDPOINT", redisSearchHost);
-            int port = Integer.parseInt(provider.getParameterAsStringOrDefault("CACHE_CLUSTER_PORT", redisSearchPort));
-            Map<String, String > credential =provider.getCredentialsAsMap("CACHE_CLUSTER_KEY");
             String password;
+            Map<String, String > credential =provider.getCredentialsAsMap("CACHE_CLUSTER_KEY");
+            int port = Integer.parseInt(provider.getParameterAsStringOrDefault("CACHE_CLUSTER_PORT", redisSearchPort));
+            String host = provider.getParameterAsStringOrDefault("CACHE_CLUSTER_ENDPOINT", redisSearchHost);
+            
             if (credential !=null){
                 password = credential.get("token");
             }else{

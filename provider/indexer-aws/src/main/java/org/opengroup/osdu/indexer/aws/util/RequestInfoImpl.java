@@ -24,7 +24,6 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Map;
