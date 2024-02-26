@@ -16,6 +16,7 @@
 package org.opengroup.osdu.indexer.util;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.SneakyThrows;
 import org.junit.Assert;
@@ -77,6 +78,40 @@ public class PropertyUtilTest {
 
         value = PropertyUtil.getValueOfNoneNestedProperty("Curves[].CurveID", data);
         Assert.assertTrue(value.isEmpty());
+    }
+
+    @Test
+    public void getValueOfNoneNestedProperty_get_non_null_ids() {
+        String geoContextJson = "{\n" +
+                "            \"BasinID\": null,\n" +
+                "            \"FieldID\": null,\n" +
+                "            \"PlayID\": null,\n" +
+                "            \"GeoPoliticalEntityID\": \"opendes:master-data--GeoPoliticalEntity:123456789:\",\n" +
+                "            \"GeoTypeID\": \"opendes:reference-data--GeoPoliticalEntityType:LicenseBlock:\",\n" +
+                "            \"ProspectID\": null\n" +
+                "        }";
+
+        Gson gsonIncludeNull = new GsonBuilder().serializeNulls().create();
+        Map<String, Object> geoContext = gsonIncludeNull.fromJson(geoContextJson, new TypeToken<Map<String, Object>>(){}.getType());
+        Assert.assertEquals(6, geoContext.size());
+        //getValueOfNoneNestedProperty should not return null name/value pairs
+        Map<String, Object> map;
+        map = PropertyUtil.getValueOfNoneNestedProperty("BasinID", geoContext);
+        Assert.assertEquals(0, map.size());
+        map = PropertyUtil.getValueOfNoneNestedProperty("FieldID", geoContext);
+        Assert.assertEquals(0, map.size());
+        map = PropertyUtil.getValueOfNoneNestedProperty("PlayID", geoContext);
+        Assert.assertEquals(0, map.size());
+        map = PropertyUtil.getValueOfNoneNestedProperty("ProspectID", geoContext);
+        Assert.assertEquals(0, map.size());
+
+        map = PropertyUtil.getValueOfNoneNestedProperty("GeoPoliticalEntityID", geoContext);
+        Assert.assertEquals(1, map.size());
+        Assert.assertEquals("opendes:master-data--GeoPoliticalEntity:123456789:", map.get("GeoPoliticalEntityID"));
+
+        map = PropertyUtil.getValueOfNoneNestedProperty("GeoTypeID", geoContext);
+        Assert.assertEquals(1, map.size());
+        Assert.assertEquals("opendes:reference-data--GeoPoliticalEntityType:LicenseBlock:", map.get("GeoTypeID"));
     }
 
     @Test
