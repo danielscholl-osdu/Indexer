@@ -27,21 +27,23 @@ is IndexPropertyPathConfiguration. The diagram below shows the decomposition int
 
 * One IndexPropertyPathConfiguration record corresponds to one schema kind's major version, i.e., the
   IndexPropertyPathConfiguration record id for all the `schema osdu:wks:master-data--Wellbore:1.*.*` kinds is set
-  to `partition-id:reference-data--IndexPropertyPathConfiguration:osdu:wks:master-data--Wellbore:1`. Code, Name and
-  Descriptions are filled with meaningful data as usual for all reference-data types.
-* The value of `data.Code` in the record refers to a major schema version kind which must be ended with version major and dot. For example, `"osdu:wks:master-data--Well:1."`.
-* The additional index properties are added with one JSON object each in the `Configurations[]` array. The Name defined
-  the name of the index 'column', or the name of the property one can search for. The Policy decides, in the current
-  usage, whether the resulting value is a single value or an array containing the aggregated, derived values.
-* Each `Configurations[]` element has at least one element defined in `Paths[]`.
-* The `ValueExtraction` object has one mandatory property, `ValuePath`. The other optional two properties hold value
-  match conditions, i.e., the property containing the value to be matched and the value to match.
-* If no `RelatedObjectsSpec` is present, the value is derived from the object being indexed.
-* If `RelatedObjectsSpec` is provided, the value extraction is carried out in related objects - depending on
-  the `RelationshipDirection` indirection parent/related object or children. The property holding the record id to
-  follow is specified in `RelatedObjectID`, so is the expected target kind. As in `ValueExtraction`, the selection can
-  be filtered by a match condition (`RelatedConditionProperty` and `RelatedConditionMatches`)
-* The `RelatedConditionMatches` can be a list of strings or regular expressions.
+  to `partition-id:reference-data--IndexPropertyPathConfiguration:osdu:wks:master-data--Wellbore:1`.
+  Code, Name and Descriptions are filled with meaningful data as usual for all reference-data types.
+  * The value of `Code` in the record refers to a major schema version kind which must be ended with version major and dot. For example, `"osdu:wks:master-data--Well:1."`.
+  * The additional index properties are added with one JSON object each in the `Configurations[]` array. Each `Configurations[]` element has:
+    * The `Name` defined the name of the index 'column', or the name of the property one can search for. 
+    * The `Policy` decides, in the current usage, whether the resulting value is a single value or an array containing the aggregated, derived values. It can be either `ExtractFirstMatch` or `ExtractAllMatches`.
+    * At least one element defined in `Paths[]`. Each `Path` in `Paths[]` includes the mandatory object `ValueExtraction` and the optional object `RelatedObjectsSpec`
+      * `ValueExtraction`
+        * It has one mandatory property, `ValuePath`. 
+        * It has two optional properties, `RelatedConditionProperty` and `RelatedConditionMatches`. The value selection can be filtered by a match condition of these two properties.
+        * The `RelatedConditionMatches` can be a list of strings or regular expressions.
+      * `RelatedObjectsSpec`: 
+        * If no `RelatedObjectsSpec` is present, the value is derived from the object being indexed. 
+        * If `RelatedObjectsSpec` is provided, the value extraction is carried out in related objects. 
+          * `RelationshipDirection` is one of the mandatory property. It defines the relationship of the current object to the related object. It can be either `ChildToParent` or `ParentToChildren`
+          * `RelatedObjectKind` and `RelatedObjectID` are other two mandatory prperites to define the kind of the related object(s) and id as reference key for the related objects. 
+          * `RelatedConditionProperty` and `RelatedConditionMatches` are optional properties. The related object selection can be filtered by a match condition of these two properties.
 
 With this, the extension properties can be defined as if they were provided by a schema.
 
@@ -84,8 +86,8 @@ first value matching the condition `RelatedConditionProperty` is equal to one of
                 "^[\\w\\-\\.]+:reference-data--AliasNameType:PreferredName:$",
                 "^[\\w\\-\\.]+:reference-data--AliasNameType:CommonName:$"
               ],
-              "RelatedConditionProperty": "data.NameAliases[].AliasNameTypeID",
-              "ValuePath": "data.NameAliases[].AliasName"
+              "RelatedConditionProperty": "NameAliases[].AliasNameTypeID",
+              "ValuePath": "NameAliases[].AliasName"
             }
           }
         ],
@@ -109,7 +111,7 @@ boundaries._
 
 This configuration demonstrates the extraction from related index objects - here `RelatedObjectKind`
 being `osdu:wks:master-data--GeoPoliticalEntity:1.`, which are found via `RelatedObjectID` as
-in `data.GeoContexts[].GeoPoliticalEntityID`. The condition is constrained to be that GeoTypeID is
+in `GeoContexts[].GeoPoliticalEntityID`. The condition is constrained to be that GeoTypeID is
 GeoPoliticalEntityType:Country.
 
 <details><summary>Configuration for Well, extract CountryNames from GeoContexts[]</summary>
@@ -125,15 +127,16 @@ GeoPoliticalEntityType:Country.
         "Paths": [
           {
             "RelatedObjectsSpec": {
-              "RelatedObjectID": "data.GeoContexts[].GeoPoliticalEntityID",
+			  "RelationshipDirection": "ChildToParent",
+              "RelatedObjectID": "GeoContexts[].GeoPoliticalEntityID",
               "RelatedObjectKind": "osdu:wks:master-data--GeoPoliticalEntity:1.",
               "RelatedConditionMatches": [
                 "^[\\w\\-\\.]+:reference-data--GeoPoliticalEntityType:Country:$"
               ],
-              "RelatedConditionProperty": "data.GeoContexts[].GeoTypeID"
+              "RelatedConditionProperty": "GeoContexts[].GeoTypeID"
             },
             "ValueExtraction": {
-              "ValuePath": "data.GeoPoliticalEntityName"
+              "ValuePath": "GeoPoliticalEntityName"
             }
           }
         ],
@@ -172,20 +175,22 @@ This configuration demonstrates extractions from multiple `Paths[]`.
         "Paths": [
           {
             "RelatedObjectsSpec": {
+			  "RelationshipDirection": "ChildToParent",
               "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
-              "RelatedObjectID": "data.WellboreID"
+              "RelatedObjectID": "WellboreID"
             },
             "ValueExtraction": {
-              "ValuePath": "data.VirtualProperties.DefaultName"
+              "ValuePath": "VirtualProperties.DefaultName"
             }
           },
           {
             "RelatedObjectsSpec": {
+			  "RelationshipDirection": "ChildToParent",
               "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
-              "RelatedObjectID": "data.WellboreID"
+              "RelatedObjectID": "WellboreID"
             },
             "ValueExtraction": {
-              "ValuePath": "data.FacilityName"
+              "ValuePath": "FacilityName"
             }
           }
         ],
@@ -264,15 +269,15 @@ the parent entities are not well-defined in the document schema.
         "Paths": [{
           "RelatedObjectsSpec": {
             "RelationshipDirection": "ChildToParent",
-            "RelatedObjectID": "data.LineageAssertions[].ID",
+            "RelatedObjectID": "LineageAssertions[].ID",
             "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
             "RelatedConditionMatches": [
               "^[\\w\\-\\.]+:master-data\\-\\-Wellbore:[\\w\\-\\.\\:\\%]+$"
             ],
-            "RelatedConditionProperty": "data.LineageAssertions[].ID"
+            "RelatedConditionProperty": "LineageAssertions[].ID"
           },
           "ValueExtraction": {
-            "ValuePath": "data.FacilityName"
+            "ValuePath": "FacilityName"
           }
         }]
       }, {
@@ -281,15 +286,15 @@ the parent entities are not well-defined in the document schema.
         "Paths": [{
           "RelatedObjectsSpec": {
             "RelationshipDirection": "ChildToParent",
-            "RelatedObjectID": "data.LineageAssertions[].ID",
+            "RelatedObjectID": "LineageAssertions[].ID",
             "RelatedObjectKind": "osdu:wks:master-data--SeismicAcquisitionSurvey:1.",
             "RelatedConditionMatches": [
               "^[\\w\\-\\.]+:master-data\\-\\-SeismicAcquisitionSurvey:[\\w\\-\\.\\:\\%]+$"
             ],
-            "RelatedConditionProperty": "data.LineageAssertions[].ID"
+            "RelatedConditionProperty": "LineageAssertions[].ID"
           },
           "ValueExtraction": {
-            "ValuePath": "data.ProjectName"
+            "ValuePath": "ProjectName"
           }
         }]
       }
@@ -389,17 +394,17 @@ the records from the `OSDU search` results, any one of the following mistakes ca
 * The feature flag `index-augmenter-enabled` for `Index Augmenter` is not enabled in the given data partition. Please check 
   with the service provider.
 
-* Any one of the mandatory properties is missing, such as `data.Code`, `data.Configurations[].Name`, `data.Configurations[].Policy` 
-  or `data.Configurations[].Paths[].ValueExtraction.ValuePath` and etc. 
+* Any one of the mandatory properties is missing, such as `Code`, `Configurations[].Name`, `Configurations[].Policy` 
+  or `Configurations[].Paths[].ValueExtraction.ValuePath` and etc. 
 
-* The value of `data.Code` in the record is not a major schema version kind which is ended with version major and dot.
+* The value of `Code` in the record is not a major schema version kind which is ended with version major and dot.
 
 * Multiple IndexPropertyPathConfiguration records to a major schema version kind may exist. Using kind 
   `osdu:wks:work-product-component--WellLog:1.` as example to run OSDU query:
 ```
   { 
      "kind": "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0",
-     "query": "data.Code: \"osdu:wks:work-product-component--WellLog:1.\""
+     "query": "Code: \"osdu:wks:work-product-component--WellLog:1.\""
   }
 ```
 
