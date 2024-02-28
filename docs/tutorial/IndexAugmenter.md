@@ -35,15 +35,14 @@ is IndexPropertyPathConfiguration. The diagram below shows the decomposition int
     * The `Policy` decides, in the current usage, whether the resulting value is a single value or an array containing the aggregated, derived values. It can be either `ExtractFirstMatch` or `ExtractAllMatches`.
     * At least one element defined in `Paths[]`. Each `Path` in `Paths[]` includes the mandatory object `ValueExtraction` and the optional object `RelatedObjectsSpec`
       * `ValueExtraction`
-        * It has one mandatory property, `ValuePath`. 
-        * It has two optional properties, `RelatedConditionProperty` and `RelatedConditionMatches`. The value selection can be filtered by a match condition of these two properties.
-        * The `RelatedConditionMatches` can be a list of strings or regular expressions.
+        * It has one mandatory property, `ValuePath` which defines path of the source value. 
+        * It has two optional properties, `RelatedConditionProperty` and `RelatedConditionMatches`. The value selection can be filtered by a match condition of these two properties.The `RelatedConditionMatches` can be a list of strings or regular expressions.
       * `RelatedObjectsSpec`: 
         * If no `RelatedObjectsSpec` is present, the value is derived from the object being indexed. 
         * If `RelatedObjectsSpec` is provided, the value extraction is carried out in related objects. 
           * `RelationshipDirection` is one of the mandatory property. It defines the relationship of the current object to the related object. It can be either `ChildToParent` or `ParentToChildren`
           * `RelatedObjectKind` and `RelatedObjectID` are other two mandatory prperites to define the kind of the related object(s) and id as reference key for the related objects. 
-          * `RelatedConditionProperty` and `RelatedConditionMatches` are optional properties. The related object selection can be filtered by a match condition of these two properties.
+          * `RelatedConditionProperty` and `RelatedConditionMatches` are optional properties. The related object selection can be filtered by a match condition of these two properties. The `RelatedConditionMatches` can be a list of strings or regular expressions.
 
 With this, the extension properties can be defined as if they were provided by a schema.
 
