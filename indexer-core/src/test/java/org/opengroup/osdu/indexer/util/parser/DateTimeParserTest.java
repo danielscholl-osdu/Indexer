@@ -63,6 +63,13 @@ public class DateTimeParserTest {
 
         // parse "EEE MMM dd HH:mm:ss zzz yyyy"
         assertEquals("2018-07-18T10:10:44+0000", this.sut.convertDateObjectToUtc("Wed Jul 18 10:10:44 PST 2018"));
+
+        // parse string with offset: "yyyy-MM-dd'T'HH:mm:ssXXX"
+        assertEquals("2000-01-02T10:10:44-0830", this.sut.convertDateObjectToUtc("2000-01-02T10:10:44-08:30"));
+
+        // parse string in already in our output format "yyyy-MM-dd'T'HH:mm:ss(.SSS):<timezone without colon>"
+        assertEquals("2023-08-07T18:52:39+0000", this.sut.convertDateObjectToUtc("2023-08-07T18:52:39+0000"));
+        assertEquals("1968-11-01T00:00:45.56+0000", this.sut.convertDateObjectToUtc("1968-11-01T00:00:45.56+0000"));
     }
 
     @Test

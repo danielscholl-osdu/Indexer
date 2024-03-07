@@ -31,6 +31,17 @@ import java.util.List;
 @RequestScope
 public class DateTimeParser {
 
+    private final static DateTimeFormatter UTC_FORMATTER = new DateTimeFormatterBuilder()
+            .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            // optional offset - prints +0000 when it's zero (instead of Z)
+            .optionalStart().appendOffset("+HHMM", "+0000").optionalStart()
+            .optionalStart()
+            // optional zone id (so it parses "Z")
+            .appendZoneId()
+            // add default value for offset seconds when field is not present
+            .parseDefaulting(ChronoField.OFFSET_SECONDS, 0).optionalEnd()
+            .toFormatter();
+
     private final static List<DateTimeFormatter> KNOWN_FORMATTERS = new ArrayList<>();
     static {
         KNOWN_FORMATTERS.add(new DateTimeFormatterBuilder()
@@ -50,18 +61,8 @@ public class DateTimeParser {
                 .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
                 .parseDefaulting(ChronoField.OFFSET_SECONDS, 0)
                 .toFormatter());
+        KNOWN_FORMATTERS.add(UTC_FORMATTER);
     }
-
-    private final DateTimeFormatter UTC_FORMATTER = new DateTimeFormatterBuilder()
-            .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            // optional offset - prints +0000 when it's zero (instead of Z)
-            .optionalStart().appendOffset("+HHMM", "+0000").optionalStart()
-            .optionalStart()
-            // optional zone id (so it parses "Z")
-            .appendZoneId()
-            // add default value for offset seconds when field is not present
-            .parseDefaulting(ChronoField.OFFSET_SECONDS, 0).optionalEnd()
-            .toFormatter();
 
     public String convertDateObjectToUtc(String candidate) {
         if (Strings.isNullOrEmpty(candidate)) return null;
