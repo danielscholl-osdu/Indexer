@@ -85,7 +85,7 @@ first value matching the condition `RelatedConditionProperty` is equal to one of
                 "^[\\w\\-\\.]+:reference-data--AliasNameType:PreferredName:$",
                 "^[\\w\\-\\.]+:reference-data--AliasNameType:CommonName:$"
               ],
-              "RelatedConditionProperty": "NameAliases[].AliasNameTypeID",
+              "RelatedConditionProperty": "data.NameAliases[].AliasNameTypeID",
               "ValuePath": "NameAliases[].AliasName"
             }
           }
@@ -127,12 +127,12 @@ GeoPoliticalEntityType:Country.
           {
             "RelatedObjectsSpec": {
 			  "RelationshipDirection": "ChildToParent",
-              "RelatedObjectID": "GeoContexts[].GeoPoliticalEntityID",
+              "RelatedObjectID": "data.GeoContexts[].GeoPoliticalEntityID",
               "RelatedObjectKind": "osdu:wks:master-data--GeoPoliticalEntity:1.",
               "RelatedConditionMatches": [
                 "^[\\w\\-\\.]+:reference-data--GeoPoliticalEntityType:Country:$"
               ],
-              "RelatedConditionProperty": "GeoContexts[].GeoTypeID"
+              "RelatedConditionProperty": "data.GeoContexts[].GeoTypeID"
             },
             "ValueExtraction": {
               "ValuePath": "GeoPoliticalEntityName"
@@ -176,7 +176,7 @@ This configuration demonstrates extractions from multiple `Paths[]`.
             "RelatedObjectsSpec": {
 			  "RelationshipDirection": "ChildToParent",
               "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
-              "RelatedObjectID": "WellboreID"
+              "RelatedObjectID": "data.WellboreID"
             },
             "ValueExtraction": {
               "ValuePath": "VirtualProperties.DefaultName"
@@ -186,7 +186,7 @@ This configuration demonstrates extractions from multiple `Paths[]`.
             "RelatedObjectsSpec": {
 			  "RelationshipDirection": "ChildToParent",
               "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
-              "RelatedObjectID": "WellboreID"
+              "RelatedObjectID": "data.WellboreID"
             },
             "ValueExtraction": {
               "ValuePath": "FacilityName"
@@ -227,7 +227,7 @@ RelationshipDirection `ParentToChildren`, i.e., related objects referring the in
           {
             "RelatedObjectsSpec": {
               "RelationshipDirection": "ParentToChildren",
-              "RelatedObjectID": "WellboreID",
+              "RelatedObjectID": "data.WellboreID",
               "RelatedObjectKind": "osdu:wks:work-product-component--WellLog:1."
             },
             "ValueExtraction": {
@@ -268,12 +268,12 @@ the parent entities are not well-defined in the document schema.
         "Paths": [{
           "RelatedObjectsSpec": {
             "RelationshipDirection": "ChildToParent",
-            "RelatedObjectID": "LineageAssertions[].ID",
+            "RelatedObjectID": "data.LineageAssertions[].ID",
             "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
             "RelatedConditionMatches": [
               "^[\\w\\-\\.]+:master-data\\-\\-Wellbore:[\\w\\-\\.\\:\\%]+$"
             ],
-            "RelatedConditionProperty": "LineageAssertions[].ID"
+            "RelatedConditionProperty": "data.LineageAssertions[].ID"
           },
           "ValueExtraction": {
             "ValuePath": "FacilityName"
@@ -285,12 +285,12 @@ the parent entities are not well-defined in the document schema.
         "Paths": [{
           "RelatedObjectsSpec": {
             "RelationshipDirection": "ChildToParent",
-            "RelatedObjectID": "LineageAssertions[].ID",
+            "RelatedObjectID": "data.LineageAssertions[].ID",
             "RelatedObjectKind": "osdu:wks:master-data--SeismicAcquisitionSurvey:1.",
             "RelatedConditionMatches": [
               "^[\\w\\-\\.]+:master-data\\-\\-SeismicAcquisitionSurvey:[\\w\\-\\.\\:\\%]+$"
             ],
-            "RelatedConditionProperty": "LineageAssertions[].ID"
+            "RelatedConditionProperty": "data.LineageAssertions[].ID"
           },
           "ValueExtraction": {
             "ValuePath": "ProjectName"
@@ -349,10 +349,10 @@ It is not permitted to
   IndexPropertyPathConfiguration records should have ids defined with the naming pattern described in the [Introduction](#introduction)
 
 * All the extensions defined in the IndexPropertyPathConfiguration records refer to properties in the `data` block,
-  including `ValuePath`, `RelatedObjectID`, `RelatedConditionProperty`.
-
-* Only properties in the `data` block of records being indexed can be reached by the `ValuePath`; system properties are
-  out of reach. The prefix `data.` is therefore optional and can be omitted.
+  including `Name`, `ValuePath`, `RelatedObjectID`, `RelatedConditionProperty`. System properties are
+  out of reach.
+   * The prefix `data.` in `Name` and `ValuePath` are therefore optional and can be omitted.
+   * The prefix `data.` in  `RelatedObjectID` and `RelatedConditionProperty` are required.
 
 * The formats/values of the extended properties are extracted from the formats/values of the related index records. If
   the formats of the original properties are unknown in the related index records, the indexer will set the value type
