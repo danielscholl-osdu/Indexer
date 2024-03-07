@@ -29,7 +29,7 @@ is IndexPropertyPathConfiguration. The diagram below shows the decomposition int
   IndexPropertyPathConfiguration record id for all the `schema osdu:wks:master-data--Wellbore:1.*.*` kinds is set
   to `partition-id:reference-data--IndexPropertyPathConfiguration:osdu:wks:master-data--Wellbore:1`.
   Code, Name and Descriptions are filled with meaningful data as usual for all reference-data types.
-  * The value of `Code` in the record refers to a major schema version kind which must be ended with version major and dot. For example, `"osdu:wks:master-data--Well:1."`.
+  * The value of `data.Code` in the record refers to a major schema version kind which must be ended with version major and dot. For example, `"osdu:wks:master-data--Well:1."`.
   * The additional index properties are added with one JSON object each in the `Configurations[]` array. Each `Configurations[]` element has:
     * The `Name` defined the name of the index 'column', or the name of the property one can search for. 
     * The `Policy` decides, in the current usage, whether the resulting value is a single value or an array containing the aggregated, derived values. It can be either `ExtractFirstMatch` or `ExtractAllMatches`.
@@ -110,7 +110,7 @@ boundaries._
 
 This configuration demonstrates the extraction from related index objects - here `RelatedObjectKind`
 being `osdu:wks:master-data--GeoPoliticalEntity:1.`, which are found via `RelatedObjectID` as
-in `GeoContexts[].GeoPoliticalEntityID`. The condition is constrained to be that GeoTypeID is
+in `data.GeoContexts[].GeoPoliticalEntityID`. The condition is constrained to be that GeoTypeID is
 GeoPoliticalEntityType:Country.
 
 <details><summary>Configuration for Well, extract CountryNames from GeoContexts[]</summary>
@@ -393,17 +393,17 @@ the records from the `OSDU search` results, any one of the following mistakes ca
 * The feature flag `index-augmenter-enabled` for `Index Augmenter` is not enabled in the given data partition. Please check 
   with the service provider.
 
-* Any one of the mandatory properties is missing, such as `Code`, `Configurations[].Name`, `Configurations[].Policy` 
-  or `Configurations[].Paths[].ValueExtraction.ValuePath` and etc. 
+* Any one of the mandatory properties is missing, such as `data.Code`, `data.Configurations[].Name`, `data.Configurations[].Policy` 
+  or `data.Configurations[].Paths[].ValueExtraction.ValuePath` and etc. 
 
-* The value of `Code` in the record is not a major schema version kind which is ended with version major and dot.
+* The value of `data.Code` in the record is not a major schema version kind which is ended with version major and dot.
 
 * Multiple IndexPropertyPathConfiguration records to a major schema version kind may exist. Using kind 
   `osdu:wks:work-product-component--WellLog:1.` as example to run OSDU query:
 ```
   { 
      "kind": "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0",
-     "query": "Code: \"osdu:wks:work-product-component--WellLog:1.\""
+     "query": "data.Code: \"osdu:wks:work-product-component--WellLog:1.\""
   }
 ```
 
