@@ -27,21 +27,22 @@ is IndexPropertyPathConfiguration. The diagram below shows the decomposition int
 
 * One IndexPropertyPathConfiguration record corresponds to one schema kind's major version, i.e., the
   IndexPropertyPathConfiguration record id for all the `schema osdu:wks:master-data--Wellbore:1.*.*` kinds is set
-  to `partition-id:reference-data--IndexPropertyPathConfiguration:osdu:wks:master-data--Wellbore:1`. Code, Name and
-  Descriptions are filled with meaningful data as usual for all reference-data types.
-* The value of `data.Code` in the record refers to a major schema version kind which must be ended with version major and dot. For example, `"osdu:wks:master-data--Well:1."`.
-* The additional index properties are added with one JSON object each in the `Configurations[]` array. The Name defined
-  the name of the index 'column', or the name of the property one can search for. The Policy decides, in the current
-  usage, whether the resulting value is a single value or an array containing the aggregated, derived values.
-* Each `Configurations[]` element has at least one element defined in `Paths[]`.
-* The `ValueExtraction` object has one mandatory property, `ValuePath`. The other optional two properties hold value
-  match conditions, i.e., the property containing the value to be matched and the value to match.
-* If no `RelatedObjectsSpec` is present, the value is derived from the object being indexed.
-* If `RelatedObjectsSpec` is provided, the value extraction is carried out in related objects - depending on
-  the `RelationshipDirection` indirection parent/related object or children. The property holding the record id to
-  follow is specified in `RelatedObjectID`, so is the expected target kind. As in `ValueExtraction`, the selection can
-  be filtered by a match condition (`RelatedConditionProperty` and `RelatedConditionMatches`)
-* The `RelatedConditionMatches` can be a list of strings or regular expressions.
+  to `partition-id:reference-data--IndexPropertyPathConfiguration:osdu:wks:master-data--Wellbore:1`.
+  Code, Name and Descriptions are filled with meaningful data as usual for all reference-data types.
+  * The value of `data.Code` in the record refers to a major schema version kind which must be ended with version major and dot. For example, `"osdu:wks:master-data--Well:1."`.
+  * The additional index properties are added with one JSON object each in the `Configurations[]` array. Each `Configurations[]` element has:
+    * The `Name` defined the name of the index 'column', or the name of the property one can search for. 
+    * The `Policy` decides, in the current usage, whether the resulting value is a single value or an array containing the aggregated, derived values. It can be either `ExtractFirstMatch` or `ExtractAllMatches`.
+    * At least one element defined in `Paths[]`. Each `Path` in `Paths[]` includes the mandatory object `ValueExtraction` and the optional object `RelatedObjectsSpec`
+      * `ValueExtraction`
+        * It has one mandatory property, `ValuePath` which defines path of the source value. 
+        * It has two optional properties, `RelatedConditionProperty` and `RelatedConditionMatches`. The value selection can be filtered by a match condition of these two properties.The `RelatedConditionMatches` can be a list of strings or regular expressions.
+      * `RelatedObjectsSpec`: 
+        * If no `RelatedObjectsSpec` is present, the value is derived from the object being indexed. 
+        * If `RelatedObjectsSpec` is provided, the value extraction is carried out in related objects. 
+          * `RelationshipDirection` is one of the mandatory property. It defines the relationship of the current object to the related object. It can be either `ChildToParent` or `ParentToChildren`
+          * `RelatedObjectKind` and `RelatedObjectID` are other two mandatory prperites to define the kind of the related object(s) and id as reference key for the related objects. 
+          * `RelatedConditionProperty` and `RelatedConditionMatches` are optional properties. The related object selection can be filtered by a match condition of these two properties. The `RelatedConditionMatches` can be a list of strings or regular expressions.
 
 With this, the extension properties can be defined as if they were provided by a schema.
 
@@ -85,7 +86,7 @@ first value matching the condition `RelatedConditionProperty` is equal to one of
                 "^[\\w\\-\\.]+:reference-data--AliasNameType:CommonName:$"
               ],
               "RelatedConditionProperty": "data.NameAliases[].AliasNameTypeID",
-              "ValuePath": "data.NameAliases[].AliasName"
+              "ValuePath": "NameAliases[].AliasName"
             }
           }
         ],
@@ -125,6 +126,7 @@ GeoPoliticalEntityType:Country.
         "Paths": [
           {
             "RelatedObjectsSpec": {
+			  "RelationshipDirection": "ChildToParent",
               "RelatedObjectID": "data.GeoContexts[].GeoPoliticalEntityID",
               "RelatedObjectKind": "osdu:wks:master-data--GeoPoliticalEntity:1.",
               "RelatedConditionMatches": [
@@ -133,7 +135,7 @@ GeoPoliticalEntityType:Country.
               "RelatedConditionProperty": "data.GeoContexts[].GeoTypeID"
             },
             "ValueExtraction": {
-              "ValuePath": "data.GeoPoliticalEntityName"
+              "ValuePath": "GeoPoliticalEntityName"
             }
           }
         ],
@@ -172,20 +174,22 @@ This configuration demonstrates extractions from multiple `Paths[]`.
         "Paths": [
           {
             "RelatedObjectsSpec": {
+			  "RelationshipDirection": "ChildToParent",
               "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
               "RelatedObjectID": "data.WellboreID"
             },
             "ValueExtraction": {
-              "ValuePath": "data.VirtualProperties.DefaultName"
+              "ValuePath": "VirtualProperties.DefaultName"
             }
           },
           {
             "RelatedObjectsSpec": {
+			  "RelationshipDirection": "ChildToParent",
               "RelatedObjectKind": "osdu:wks:master-data--Wellbore:1.",
               "RelatedObjectID": "data.WellboreID"
             },
             "ValueExtraction": {
-              "ValuePath": "data.FacilityName"
+              "ValuePath": "FacilityName"
             }
           }
         ],
@@ -223,7 +227,7 @@ RelationshipDirection `ParentToChildren`, i.e., related objects referring the in
           {
             "RelatedObjectsSpec": {
               "RelationshipDirection": "ParentToChildren",
-              "RelatedObjectID": "WellboreID",
+              "RelatedObjectID": "data.WellboreID",
               "RelatedObjectKind": "osdu:wks:work-product-component--WellLog:1."
             },
             "ValueExtraction": {
@@ -272,7 +276,7 @@ the parent entities are not well-defined in the document schema.
             "RelatedConditionProperty": "data.LineageAssertions[].ID"
           },
           "ValueExtraction": {
-            "ValuePath": "data.FacilityName"
+            "ValuePath": "FacilityName"
           }
         }]
       }, {
@@ -289,7 +293,7 @@ the parent entities are not well-defined in the document schema.
             "RelatedConditionProperty": "data.LineageAssertions[].ID"
           },
           "ValueExtraction": {
-            "ValuePath": "data.ProjectName"
+            "ValuePath": "ProjectName"
           }
         }]
       }
@@ -345,10 +349,10 @@ It is not permitted to
   IndexPropertyPathConfiguration records should have ids defined with the naming pattern described in the [Introduction](#introduction)
 
 * All the extensions defined in the IndexPropertyPathConfiguration records refer to properties in the `data` block,
-  including `ValuePath`, `RelatedObjectID`, `RelatedConditionProperty`.
-
-* Only properties in the `data` block of records being indexed can be reached by the `ValuePath`; system properties are
-  out of reach. The prefix `data.` is therefore optional and can be omitted.
+  including `Name`, `ValuePath`, `RelatedObjectID`, `RelatedConditionProperty`. System properties are
+  out of reach.
+   * The prefix `data.` in `Name` and `ValuePath` are therefore optional and can be omitted.
+   * The prefix `data.` in  `RelatedObjectID` and `RelatedConditionProperty` are required.
 
 * The formats/values of the extended properties are extracted from the formats/values of the related index records. If
   the formats of the original properties are unknown in the related index records, the indexer will set the value type
