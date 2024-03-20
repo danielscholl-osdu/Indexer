@@ -14,7 +14,6 @@ data:
   partitionHost: "http://partition"
   schemaHost: "http://schema"
   securityHttpsCertificateTrust: "true"
-  springProfilesActive: "gcp"
   storageHost: "http://storage"
   searchHost: "http://search"
   # Deployment
