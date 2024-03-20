@@ -42,7 +42,6 @@ First you need to set variables in **values.yaml** file using any code editor. S
 **data.partitionHost** | partition host | string | "http://partition" | yes
 **data.schemaHost** | schema host | string | "http://schema" | yes
 **data.securityHttpsCertificateTrust** | whether https is enabled | boolean | true | yes
-**data.springProfilesActive** | active spring profile | string | gcp | yes
 **data.storageHost** | storage host | string | "http://storage" | yes
 **data.redisIndexerHost** | The host for redis instance. If empty (by default), helm installs an internal redis instance | string | - | yes
 **data.redisIndexerPort** | The port for redis instance | digit | 6379 | yes
