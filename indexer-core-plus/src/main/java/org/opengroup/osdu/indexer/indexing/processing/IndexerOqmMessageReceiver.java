@@ -31,6 +31,7 @@ import org.opengroup.osdu.indexer.indexing.thread.ThreadScopeContextHolder;
 
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
+import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,6 +40,13 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
     protected final ThreadDpsHeaders dpsHeaders;
     private final TokenProvider tokenProvider;
 
+  /**
+   * Receives and processes an OQM message, emulating the behavior of the previous IndexQueue service and message bus.
+   * Validates the input payload and handles exceptions appropriately for error processing precision.
+   *
+   * @param oqmMessage the OQM message to be processed
+   * @param oqmAckReplier the ack replier for acknowledging message receipt
+   */
     @Override
     public void receiveMessage(OqmMessage oqmMessage, OqmAckReplier oqmAckReplier) {
         log.info("OQM message: {} - {} - {}", oqmMessage.getId(), oqmMessage.getData(), oqmMessage.getAttributes());
@@ -55,8 +63,7 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
             sendMessage(oqmMessage);
             oqmAckReplier.ack();
         } catch (AppException appException) {
-            int statusCode = appException.getError().getCode();
-            if (statusCode > 199 && statusCode < 300) {
+            if (isExceptionToSkip(appException)) {
                 skipMessage(oqmMessage, dpsHeaders, oqmAckReplier, appException);
             } else {
                 rescheduleMessage(oqmMessage, dpsHeaders, oqmAckReplier, getException(appException));
@@ -73,6 +80,20 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
             // Cleaning thread context after processing is finished and the thread dies out.
             ThreadScopeContextHolder.currentThreadScopeAttributes().clear();
         }
+    }
+
+    /**
+     * Determines whether an exception should be skipped during processing or not.
+     * Exceptions within the specified range of status codes are considered skippable.
+     * Additionally, SchemaProcessingException is marked as skippable, as retrying it is ineffective.
+     *
+     * @param exception the exception thrown during processing
+     * @return true if the exception should be skipped, false otherwise
+     */
+    private static boolean isExceptionToSkip(AppException exception) {
+        int statusCode = exception.getError().getCode();
+        Exception originalException = getException(exception);
+        return statusCode > 199 && statusCode < 300 || originalException instanceof SchemaProcessingException;
     }
 
     private static void skipMessage(OqmMessage oqmMessage, DpsHeaders dpsHeaders,
@@ -92,7 +113,7 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
     }
 
     /**
-     * It is possible to get both AppException with wrapped in original Exception
+     * It is possible to get both AppException that wraps original Exception
      * or the original Exception without any wrapper.
      */
     @NotNull
@@ -113,6 +134,12 @@ public abstract class IndexerOqmMessageReceiver implements OqmMessageReceiver {
         return isValid;
     }
 
+  /**
+   * Sends a message to the respective API endpoint. This method is abstract and should be implemented
+   * according to the specific requirements of the endpoint.
+   *
+   * @param oqmMessage the message to be sent
+   */
     protected abstract void sendMessage(OqmMessage oqmMessage) throws Exception;
 
     @NotNull
