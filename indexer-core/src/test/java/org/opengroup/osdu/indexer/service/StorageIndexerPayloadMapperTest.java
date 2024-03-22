@@ -117,7 +117,8 @@ public class StorageIndexerPayloadMapperTest {
 
         storageRecordData.put(NESTED_PROPERTY, Arrays.asList(
                 ImmutableMap.of(FIRST_NESTED_INNER_PROPERTY, FIRST_NESTED_VALUE, SECOND_NESTED_INNER_PROPERTY, "0.1"),
-                ImmutableMap.of(FIRST_NESTED_INNER_PROPERTY, SECOND_NESTED_VALUE, SECOND_NESTED_INNER_PROPERTY, "0.2")
+                ImmutableMap.of(FIRST_NESTED_INNER_PROPERTY, SECOND_NESTED_VALUE, SECOND_NESTED_INNER_PROPERTY, "0.2"),
+                null
         ));
         storageRecordData.put("DateProperty", "2021-03-02T00:17:20.640Z");
     }
