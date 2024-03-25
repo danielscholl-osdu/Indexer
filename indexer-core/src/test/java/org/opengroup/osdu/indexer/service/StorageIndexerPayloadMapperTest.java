@@ -57,6 +57,7 @@ public class StorageIndexerPayloadMapperTest {
     public static final String SECOND_OBJECT_TEST_VALUE = "second-object-test-value";
     public static final String OBJECT_PROPERTY = "ObjectProperty";
     public static final String NESTED_PROPERTY = "NestedProperty";
+    public static final String EMPTY_NESTED_PROPERTY = "EmptyNestedProperty";
     public static final String FIRST_NESTED_INNER_PROPERTY = "FirstNestedInnerProperty";
     public static final String SECOND_NESTED_INNER_PROPERTY = "SecondNestedInnerProperty";
     public static final String FIRST_NESTED_VALUE = "first-nested-value";
@@ -97,6 +98,12 @@ public class StorageIndexerPayloadMapperTest {
                         FIRST_NESTED_INNER_PROPERTY, "text",
                         SECOND_NESTED_INNER_PROPERTY, "double")
         ));
+        dataMap.put(EMPTY_NESTED_PROPERTY, ImmutableMap.of(
+            Constants.TYPE, "nested",
+            Constants.PROPERTIES, ImmutableMap.of(
+                FIRST_NESTED_INNER_PROPERTY, "text",
+                SECOND_NESTED_INNER_PROPERTY, "double")
+        ));
         dataMap.put("DateProperty", "date");
         indexSchema = IndexSchema.builder().kind("kind").type(Constants.TYPE).dataSchema(dataMap).build();
 
@@ -120,6 +127,10 @@ public class StorageIndexerPayloadMapperTest {
                 ImmutableMap.of(FIRST_NESTED_INNER_PROPERTY, SECOND_NESTED_VALUE, SECOND_NESTED_INNER_PROPERTY, "0.2"),
                 null
         ));
+
+        List<Object> emptyList = new ArrayList<>();
+        emptyList.add(null);
+        storageRecordData.put(EMPTY_NESTED_PROPERTY, emptyList);
         storageRecordData.put("DateProperty", "2021-03-02T00:17:20.640Z");
     }
 
@@ -153,6 +164,17 @@ public class StorageIndexerPayloadMapperTest {
         assertEquals(FIRST_FLATTENED_TEST_VALUE, firstInnerProperty);
         Object secondInnerProperty = objectProperties.get(1).get(SECOND_FLATTENED_INNER_PROPERTY);
         assertEquals(SECOND_FLATTENED_TEST_VALUE, secondInnerProperty);
+    }
+
+    @Test
+    public void mapDataPayloadTestEmptyNested() {
+        Map<String, Object> stringObjectMap = payloadMapper.mapDataPayload(emptyAsIngestedCoordinatesPaths, indexSchema, storageRecordData,
+            RECORD_TEST_ID);
+        Object objectProperty = stringObjectMap.get(EMPTY_NESTED_PROPERTY);
+
+        assertTrue(objectProperty instanceof List);
+        List<Map<String, Object>> objectProperties = (List<Map<String, Object>>) objectProperty;
+        assertTrue(objectProperties.isEmpty());
     }
 
     @Test
