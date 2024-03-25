@@ -38,6 +38,6 @@ public class IndexerGcpApplication {
             .child(WebAppMainContextConfiguration.class)
             .web(WebApplicationType.SERVLET);
 
-        ConfigurableApplicationContext context = springApplicationBuilder.run(args);
+       springApplicationBuilder.run(args);
     }
 }
