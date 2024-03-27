@@ -399,7 +399,7 @@ The following software have components provided under the terms of this license:
 - Byte Buddy (without dependencies) (from https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy)
 - Byte Buddy Java agent (from https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent)
 - ClassMate (from http://github.com/cowtowncoder/java-classmate)
-- Cloud Key Management Service (KMS) API v1-rev20240131-2.0.0 (from https://repo1.maven.org/maven2/com/google/apis/google-api-services-cloudkms)
+- Cloud Key Management Service (KMS) API v1-rev20240219-2.0.0 (from https://repo1.maven.org/maven2/com/google/apis/google-api-services-cloudkms)
 - CloudWatch Metrics for AWS Java SDK (from https://aws.amazon.com/sdkforjava)
 - Cobertura (from http://cobertura.sourceforge.net)
 - Cobertura Limited Runtime (from http://cobertura.sourceforge.net)
@@ -911,10 +911,6 @@ EPL-1.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- AspectJ Weaver (from http://www.aspectj.org, https://www.eclipse.org/aspectj/)
-- JUnit Jupiter API (from http://junit.org/junit5/, https://junit.org/junit5/)
-- JUnit Jupiter Engine (from http://junit.org/junit5/, https://junit.org/junit5/)
-- JUnit Jupiter Params (from http://junit.org/junit5/, https://junit.org/junit5/)
 - Jetty :: Utilities (from http://jetty.mortbay.org, http://www.eclipse.org/jetty, https://repo1.maven.org/maven2/org/eclipse/jetty/jetty-util, https://repo1.maven.org/maven2/org/mortbay/jetty/jetty-util)
 - Jetty Server (from http://jetty.mortbay.org, https://repo1.maven.org/maven2/org/mortbay/jetty/jetty)
 - Logback Contrib :: JSON :: Classic (from https://repo1.maven.org/maven2/ch/qos/logback/contrib/logback-json-classic)
@@ -1282,7 +1278,6 @@ gpl-2.0-classpath
 The following software have components provided under the terms of this license:
 
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
-- Jakarta Validation API (from https://beanvalidation.org)
 
 ========================================================================
 proprietary-license
