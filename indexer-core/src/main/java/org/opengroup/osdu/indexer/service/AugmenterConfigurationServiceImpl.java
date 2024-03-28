@@ -42,6 +42,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -1141,6 +1142,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         searchRequest.setQuery(query);
         parentObjectIdPath = PropertyUtil.removeDataPrefix(parentObjectIdPath);
         List<SearchRecord> searchRecords = searchRecords(searchRequest);
+        Map<String, SearchRecord> idRecords = searchRecords.stream().collect(Collectors.toMap(SearchRecord::getId, record -> record));
         for(String childRecordId :  childRecordIds) {
             RecordData recordData = this.relatedObjectCache.get(childRecordId);
             Map<String, Object> data = null;
@@ -1148,8 +1150,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
                 data = recordData.getData();
             }
             else {
-                SearchRecord searchRecord = searchRecords.stream().
-                        filter(record -> record.getId().equals(childRecordId)).findFirst().orElse(null);
+                SearchRecord searchRecord = idRecords.getOrDefault(childRecordId, null);
                 if(searchRecord != null) {
                     data = searchRecord.getData();
                 }
