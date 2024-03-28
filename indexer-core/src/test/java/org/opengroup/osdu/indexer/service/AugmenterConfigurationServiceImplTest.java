@@ -552,7 +552,7 @@ public class AugmenterConfigurationServiceImplTest {
             upsertKindIds.put(childKind, Arrays.asList(childId));
         else
             deleteKindIds.put(childKind, Arrays.asList(childId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         ArgumentCaptor<String> payloadArgumentCaptor = ArgumentCaptor.forClass(String.class);
@@ -586,7 +586,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         Map<String, List<String>> deleteKindIds = new HashMap<>();
         upsertKindIds.put(childKind, Arrays.asList(childId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         ArgumentCaptor<String> payloadArgumentCaptor = ArgumentCaptor.forClass(String.class);
@@ -620,7 +620,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         Map<String, List<String>> deleteKindIds = new HashMap<>();
         upsertKindIds.put(childKind, Arrays.asList(childId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
@@ -638,7 +638,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         Map<String, List<String>> deleteKindIds = new HashMap<>();
         upsertKindIds.put(childKind, Arrays.asList(childId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
@@ -716,7 +716,7 @@ public class AugmenterConfigurationServiceImplTest {
             upsertKindIds.put(parentKind, Arrays.asList(parentId));
         else
             deleteKindIds.put(parentKind, Arrays.asList(parentId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         ArgumentCaptor<String> payloadArgumentCaptor = ArgumentCaptor.forClass(String.class);
@@ -750,7 +750,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         Map<String, List<String>> deleteKindIds = new HashMap<>();
         upsertKindIds.put(parentKind, Arrays.asList(parentId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         ArgumentCaptor<String> payloadArgumentCaptor = ArgumentCaptor.forClass(String.class);
@@ -785,7 +785,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         Map<String, List<String>> deleteKindIds = new HashMap<>();
         upsertKindIds.put(parentKind, Arrays.asList(parentId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
@@ -804,7 +804,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         Map<String, List<String>> deleteKindIds = new HashMap<>();
         upsertKindIds.put(parentKind, Arrays.asList(parentId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
@@ -879,7 +879,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         Map<String, List<String>> deleteKindIds = new HashMap<>();
         upsertKindIds.put(parentKind, Arrays.asList(parentId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         ArgumentCaptor<String> payloadArgumentCaptor = ArgumentCaptor.forClass(String.class);
@@ -915,7 +915,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, List<String>> upsertKindIds = new HashMap<>();
         Map<String, List<String>> deleteKindIds = new HashMap<>();
         upsertKindIds.put(parentKind, Arrays.asList(parentId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds);
+        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());

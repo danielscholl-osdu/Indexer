@@ -227,7 +227,7 @@ public class IndexerServiceImplTest {
             this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            verify(this.augmenterConfigurationService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
+            verify(this.augmenterConfigurationService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture(), any());
             Map<String, List<String>> upsertKindIds = upsertArgumentCaptor.getValue();
             Map<String, List<String>> deleteKindIds = deleteArgumentCaptor.getValue();
             assertEquals(2, upsertKindIds.size());
@@ -253,7 +253,7 @@ public class IndexerServiceImplTest {
             this.sut.processRecordChangedMessages(recordChangedMessages, recordInfos);
 
             // validate
-            verify(this.augmenterConfigurationService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture());
+            verify(this.augmenterConfigurationService, times(1)).updateAssociatedRecords(any(), upsertArgumentCaptor.capture(), deleteArgumentCaptor.capture(), any());
             Map<String, List<String>> upsertKindIds = upsertArgumentCaptor.getValue();
             Map<String, List<String>> deleteKindIds = deleteArgumentCaptor.getValue();
             assertEquals(0, upsertKindIds.size());

@@ -45,6 +45,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.model.BulkRequestResult;
+import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
@@ -145,6 +146,10 @@ public class IndexerServiceImpl implements IndexerService {
 
             // get delete records
             Map<String, List<String>> deleteRecordMap = RecordInfo.getDeleteRecordIds(recordInfos);
+            List<SearchRecord> deletedRecordsWithParentReferred = new ArrayList<>();
+            if (this.augmenterSetting.isEnabled()) {
+                deletedRecordsWithParentReferred = augmenterConfigurationService.getAllRecordsReferredByParentRecords(deleteRecordMap);
+            }
             if (deleteRecordMap != null && !deleteRecordMap.isEmpty()) {
                 List<String> deleteFailureRecordIds = processDeleteRecords(deleteRecordMap);
                 retryRecordIds.addAll(deleteFailureRecordIds);
@@ -166,7 +171,7 @@ public class IndexerServiceImpl implements IndexerService {
                     Map<String, List<String>> upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
                     Map<String, List<String>> deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
                     if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
-                        augmenterConfigurationService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds);
+                        augmenterConfigurationService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds, deletedRecordsWithParentReferred);
                     }
                     if(upsertRecordMap.containsKey(INDEX_PROPERTY_PATH_CONFIGURATION_KIND)) {
                         List<String> configurationIds = upsertRecordMap.get(INDEX_PROPERTY_PATH_CONFIGURATION_KIND).
@@ -760,4 +765,6 @@ public class IndexerServiceImpl implements IndexerService {
             failedEvent.accept(failedRecords.stream().map(RecordStatus::failedAuditLogMessage).collect(Collectors.toList()));
         }
     }
+
+
 }

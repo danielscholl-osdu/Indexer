@@ -18,6 +18,7 @@ package org.opengroup.osdu.indexer.model;
 public class Constants {
     // It should be moved to core common later
     public static final String ANCESTRY_KINDS = "ancestry_kinds";
+    public static final int CHASING_MESSAGE_DELAY_SECONDS = 30;
 
     // Specifications using kind as key is not partition safe if the specifications are per data partition
     public static final int SPEC_CACHE_EXPIRATION = 600;

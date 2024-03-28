@@ -131,19 +131,19 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
         RecordChangedMessages message = gson.fromJson(payload, RecordChangedMessages.class);
 
         int retryCount;
-        int retryDelay;
+        int delay;
         if (message.getAttributes().containsKey(RETRY_STRING)) {
             retryCount = Integer.parseInt(message.getAttributes().get(RETRY_STRING));
             retryCount++;
-            retryDelay = Math.min(getWaitTimeExp(retryCount), MAX_RETRY_DELAY_SECONDS);
+            delay = Math.min(getWaitTimeExp(retryCount), MAX_RETRY_DELAY_SECONDS);
         } else {
             // This will be the first retry; initialize the retry counter and set the delay to the initial constant value
             retryCount = 1;
-            retryDelay = INITIAL_RETRY_DELAY_SECONDS;
+            delay = INITIAL_RETRY_DELAY_SECONDS;
         }
 
         LOGGER.info("Re-queuing for retry attempt #: {}", retryCount);
-        LOGGER.info("Delay (in seconds) before next retry: {}", retryDelay);
+        LOGGER.info("Delay (in seconds) before next retry: {}", delay);
 
         // Append the retry count to the message attributes
         messageAttributes.put(RETRY_STRING, new MessageAttributeValue()
@@ -152,6 +152,7 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
         );
         // Append the ancestry kinds used to prevent circular chasing
         if(message.getAttributes().containsKey(Constants.ANCESTRY_KINDS)) {
+            delay = Math.max(delay, Constants.CHASING_MESSAGE_DELAY_SECONDS);
             messageAttributes.put(Constants.ANCESTRY_KINDS, new MessageAttributeValue()
                     .withDataType(TYPE_STRING)
                     .withStringValue(message.getAttributes().get(Constants.ANCESTRY_KINDS)));
@@ -164,7 +165,7 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
             sendMessageRequest = new SendMessageRequest()
                     .withQueueUrl(storageQueue)
                     .withMessageBody(message.getData())
-                    .withDelaySeconds(Integer.valueOf(retryDelay))
+                    .withDelaySeconds(Integer.valueOf(delay))
                     .withMessageAttributes(messageAttributes);
         }else{
             sendMessageRequest = new SendMessageRequest()
