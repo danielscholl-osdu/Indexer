@@ -194,7 +194,6 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
             else {
                 topicClient.send(message);
             }
-            topicClientFactory.getClient(headers.getPartitionId(), serviceBusReindexTopicName).send(message);
             long stopTime = System.currentTimeMillis();
             logger.info(String.format("Indexer publishes message to Service Bus, messageId: %s | time taken to send message: %d milliseconds ", message.getMessageId(), stopTime - startTime));
         } catch (Exception e) {

@@ -353,11 +353,6 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             deleteKindIds = new HashMap<>();
         }
 
-        Map<String, SearchRecord> mapOfDeletedRecordsWithParent = new HashMap<>();
-        for(SearchRecord searchRecord : deletedRecordsWithParentReferred) {
-            mapOfDeletedRecordsWithParent.put(searchRecord.getId(), searchRecord);
-        }
-
         Map<String, String> attributes = message.getAttributes();
         String ancestors = attributes.containsKey(Constants.ANCESTRY_KINDS) ? attributes.get(Constants.ANCESTRY_KINDS) : "";
         Map<String, List<RecordChangeInfo>> recordChangeInfoMap = createRecordChangeInfoMap(upsertKindIds, deleteKindIds);
