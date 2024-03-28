@@ -187,7 +187,9 @@ public class IndexerQueueTaskBuilderAwsTest {
 
         when(gson.fromJson(payload, RecordChangedMessages.class)).thenReturn(message);
 
-        SendMessageRequest sendMessageRequest = new SendMessageRequest().withQueueUrl(null).withMessageBody(message.getData()).withDelaySeconds(new Integer(INITIAL_RETRY_DELAY_SECONDS)).withMessageAttributes(messageAttributes);
+        int delay = Math.max(INITIAL_RETRY_DELAY_SECONDS, Constants.CHASING_MESSAGE_DELAY_SECONDS);
+
+        SendMessageRequest sendMessageRequest = new SendMessageRequest().withQueueUrl(null).withMessageBody(message.getData()).withDelaySeconds(new Integer(delay)).withMessageAttributes(messageAttributes);
 
         builder.createWorkerTask(payload, headers);
 
