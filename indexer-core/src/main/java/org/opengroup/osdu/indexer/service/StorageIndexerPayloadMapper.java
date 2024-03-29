@@ -120,7 +120,7 @@ public class StorageIndexerPayloadMapper {
                 case KEYWORD_ARRAY:
                 case TEXT_ARRAY:
                     this.attributeParsingService.tryParseValueArray(String.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
-                    break;    
+                    break;
                 case INTEGER_ARRAY:
                     this.attributeParsingService.tryParseValueArray(Integer.class, recordId, schemaPropertyName, storageRecordValue, dataCollectorMap);
                     break;
@@ -185,7 +185,9 @@ public class StorageIndexerPayloadMapper {
         Map schemaPropertyMap = (Map) schemaPropertyWithInnerProperties;
         Map innerProperties = (Map) schemaPropertyMap.get(Constants.PROPERTIES);
         ArrayList<Map> innerPropertiesMappingCollector = new ArrayList<>();
-        storageRecordValue.forEach(recordData -> innerPropertiesMappingCollector.add(mapDataPayload(innerProperties, recordData, recordId, new HashMap<>())));
+        storageRecordValue.stream()
+            .filter(Objects::nonNull)
+            .forEach(recordData -> innerPropertiesMappingCollector.add(mapDataPayload(innerProperties, recordData, recordId, new HashMap<>())));
         dataCollectorMap.put(name, innerPropertiesMappingCollector);
     }
 
