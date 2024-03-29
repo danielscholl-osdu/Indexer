@@ -1,3 +1,4 @@
+# Preview Features
 ## Geoshape Decimation
 
 In order to improve indexing and search performance for documents with large geometry, the geo-shape of the following
@@ -37,7 +38,8 @@ given data partition, the configurations defined as type IndexPropertyPathConfig
 
 ## Index AsIngestedCoordinates
 
-(Source: https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/95)
+Source: [issue 95](https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/95)
+
 When ingesting a record such as this Well with AsIngestedCoordinates:
 ```
 "data": {
