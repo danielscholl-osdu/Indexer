@@ -46,6 +46,14 @@
       "kind": "string"
     },
     {
+      "path": "RelatedRecordId",
+      "kind": "link"
+    },
+    {
+      "path": "ExternalIds",
+      "kind": "[]link"
+    },
+    {
       "path": "Rank",
       "kind": "int"
     },

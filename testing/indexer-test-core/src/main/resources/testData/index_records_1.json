@@ -19,6 +19,10 @@
       "WellName": "Data Platform Services",
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
+      "RelatedRecordId": "id1",
+      "ExternalIds": [
+        "ExternalId1"
+      ],
       "Rank": 1,
       "Score": 10,
       "Established": "2000-03-27T23:38:48Z",
@@ -54,6 +58,10 @@
       "WellName": "Data Platform Services",
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
+      "RelatedRecordId": "id2",
+      "ExternalIds": [
+        "ExternalId2"
+      ],
       "Rank": 1,
       "Score": 10,
       "Established": "2000-03-27T23:38:48Z",
@@ -88,6 +96,10 @@
       "WellName": "Data Platform Services",
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
+      "RelatedRecordId": "id3",
+      "ExternalIds": [
+        "ExternalId3"
+      ],
       "Rank": 1,
       "Score": 10,
       "Established": "2000-03-27T23:38:48Z",
@@ -95,7 +107,6 @@
         "Wgs84Coordinates",
         "Petroleum Field"
       ]
-
     }
   },
   {
@@ -118,6 +129,10 @@
       "WellName": "Data Platform Services",
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
+      "RelatedRecordId": "id4",
+      "ExternalIds": [
+        "ExternalId4"
+      ],
       "Rank": 1,
       "Score": 10,
       "Established": "2000-03-27T23:38:48Z"
@@ -143,6 +158,10 @@
       "WellName": "Data Platform Services",
       "WellType": "Data Lake Cloud",
       "EmptyAttribute": "",
+      "ExternalIds": [
+        "ExternalId5",
+        "ExternalId6"
+      ],
       "Rank": 1,
       "Score": 10,
       "Established": "2000-03-27T23:38:48Z"

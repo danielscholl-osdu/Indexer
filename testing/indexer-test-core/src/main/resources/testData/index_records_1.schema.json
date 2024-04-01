@@ -5,8 +5,8 @@
       "source": "indexer",
       "entityType": "test-data--Integration",
       "schemaVersionMajor": "1",
-      "schemaVersionMinor": "0",
-      "schemaVersionPatch": "2"
+      "schemaVersionMinor": "1",
+      "schemaVersionPatch": "0"
     },
     "status": "DEVELOPMENT"
   },
@@ -60,6 +60,13 @@
               },
               "EmptyAttribute": {
                 "type": "string"
+              },
+              "RelatedRecordId": {
+                "format": "link",
+                "type": "string"
+              },
+              "ExternalIds": {
+                "type": "[]link"
               }
             }
           }
