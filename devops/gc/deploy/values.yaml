@@ -27,7 +27,7 @@ data:
   # redis connection. Change it if you want to use external redis
   redisIndexerHost: ""
   redisIndexerPort: 6379
-  redisImage: "docker.io/library/redis:7"
+  redisImage: "docker.io/library/redis:7.2-alpine"
 
 conf:
   appName: "indexer"
