@@ -1,17 +1,6 @@
-## Index Augmenter/Index Extensions
+# Index Augmenter/Extensions
 
-### Table of contents <a name="TOC"></a>
-
-- [Introduction](#introduction)
-- [User Cases](#use_cases)
-- [Governance](#governance)
-- [Accepted Limitations](#limitation)
-- [Deployment](#deployment)
-- [Troubleshooting](#troubleshooting)
-
-
-
-## Introduction <a name="introduction"></a>
+## Introduction
 
 In this document, the terms `index augmenter` and `index extensions` are interchangeably used to describe this indexer feature.
 
@@ -55,10 +44,8 @@ array if the `Policy` is `ExtractAllMatches`, still supporting text search.
 
 For more information about the index augmenter, please check with the [ADR #81](https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/81) 
 
-[Back to table of contents](#TOC)
-
-## User Cases <a name="use_cases"></a>
-- Use Case 1: WellUWI
+## Use Cases
+###Use Case 1: WellUWI
 
 _As a user I want to discover and match Wells by their UWI. I am aware that this is not globally reliable, however, I am
 able to specify a prioritized AliasNameType list to look up value in the NameAliases array._
@@ -99,11 +86,9 @@ first value matching the condition `RelatedConditionProperty` is equal to one of
 
 </details>
 
-[Back to table of contents](#TOC)
-
 ---
 
-- Use Case 2: CountryNames
+### Use Case 2: CountryNames
 
 _As a user I want to find objects by a country name, with the understanding that an object may extend over country
 boundaries._
@@ -148,11 +133,9 @@ GeoPoliticalEntityType:Country.
 
 </details>
 
-[Back to table of contents](#TOC)
-
 ---
 
--Use Case 3: Wellbore Name on WellLog Children
+### Use Case 3: Wellbore Name on WellLog Children
 
 _As a user I want to discover WellLog instances by the wellbore's name value._
 
@@ -202,11 +185,9 @@ This configuration demonstrates extractions from multiple `Paths[]`.
 
 </details>
 
-[Back to table of contents](#TOC)
-
 ---
 
--Use Case 4: Wellbore index WellLogCurveMnemonics
+### Use Case 4: Wellbore index WellLogCurveMnemonics
 
 _As a user I want to find Wellbores by well log mnemonics._
 
@@ -244,11 +225,9 @@ RelationshipDirection `ParentToChildren`, i.e., related objects referring the in
 
 </details>
 
-[Back to table of contents](#TOC)
-
 ---
 
--Use Case 5: Entity Names on the Document
+### Use Case 5: Entity Names on the Document
 
 _When a document is ingested, it can associate with one or more parent entities. As a user I want to discover
 all the related instances, including the documents, by the entity's name value._
@@ -304,9 +283,7 @@ the parent entities are not well-defined in the document schema.
 
 </details>
 
-[Back to table of contents](#TOC)
-
-## Governance <a name="governance"></a>
+## Governance
 
 OSDU Data Definition ships reference value list content for all reference-data group-type entities. The type
 IndexPropertyPathConfiguration is classified as OPEN governance, which usually means that new records can be added by
@@ -331,9 +308,7 @@ It is not permitted to
 * change the meaning of existing, OSDU shipped index extensions.
 * remove OSDU shipped extension definitions in Configurations[].
 
-[Back to table of contents](#TOC)
-
-## Accepted Limitations <a name="limitation"></a>
+## Accepted Limitations
 
 * To make the change of the IndexPropertyPathConfiguration to take effect, 
   * Before `M23`, it requires re-indexing of all the records of a major schema version kind.
@@ -341,12 +316,12 @@ It is not permitted to
   * For re-indexing, you don't need to use 'force_clean' option anymore. Users can still search the data during the re-index process. Please be aware that the search result could mix the non-updated and updated records before the re-index is fully completed.
 
 * One IndexPropertyPathConfiguration record corresponds to one schema kind's major version. Given the deployment of the 
-  IndexPropertyPathConfiguration record is via the `Storage Service API`, it can't prevent users from deploying multiple records
+  IndexPropertyPathConfiguration record is via the [Storage Service](https://osdu.pages.opengroup.org/platform/system/storage/) API, it can't prevent users from deploying multiple records
   for one schema kind. `Indexer augmenter` engine does not merge the multiple records to one and only picks one randomly before M19. 
   After M20, the last modified record will be picked by the engine.
 
 * To prevent more than one IndexPropertyPathConfiguration record corresponds to one schema kind's major version, all 
-  IndexPropertyPathConfiguration records should have ids defined with the naming pattern described in the [Introduction](#introduction)
+  IndexPropertyPathConfiguration records should have ids defined with the naming pattern described in the [Introduction](#introduction).
 
 * All the extensions defined in the IndexPropertyPathConfiguration records refer to properties in the `data` block,
   including `Name`, `ValuePath`, `RelatedObjectID`, `RelatedConditionProperty`. System properties are
@@ -377,14 +352,12 @@ It is not permitted to
   implemented in the OSDU Data Definition pipeline to ensure that this reserved name does not appear as property in
   the `data` block.
 
-[Back to table of contents](#TOC)
 
+## Deployment
 
-## Deployment <a name="deployment"></a>
+Like the reference data, the deployment and un-deployment of the IndexPropertyPathConfiguration records can be through [Storage Service](https://osdu.pages.opengroup.org/platform/system/storage/) API
 
-Like the reference data, the deployment and un-deployment of the IndexPropertyPathConfiguration records can be through `Storege Service API`
-
-## Troubleshooting <a name="troubleshooting"></a>
+## Troubleshooting
 
 After an IndexPropertyPathConfiguration record to a major schema version kind is created or updated and 
 all the records of the major schema version kind have been re-indexed. If the extended properties fail to be created in all 
@@ -409,5 +382,3 @@ the records from the `OSDU search` results, any one of the following mistakes ca
 
 * If not all extended properties are missing, the `Configurations[]` of the missing extended properties could be invalid. 
   The `Index Augmenter` engine can do basic syntax check on each configuration and only ignore the invalid ones. 
-
-[Back to table of contents](#TOC)
