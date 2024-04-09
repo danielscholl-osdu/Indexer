@@ -42,6 +42,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -344,7 +345,8 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     }
 
     @Override
-    public void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> upsertKindIds, Map<String, List<String>> deleteKindIds) {
+    public void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> upsertKindIds,
+                                        Map<String, List<String>> deleteKindIds, List<SearchRecord> deletedRecordsWithParentReferred) {
         if (upsertKindIds == null) {
             upsertKindIds = new HashMap<>();
         }
@@ -360,7 +362,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             List<RecordChangeInfo> recordChangeInfoList = entry.getValue();
             String updatedAncestors = Strings.isNullOrEmpty(ancestors) ? kind : ancestors + ANCESTRY_KINDS_DELIMITER + kind;
 
-            updateAssociatedParentRecords(updatedAncestors, kind, recordChangeInfoList);
+            updateAssociatedParentRecords(updatedAncestors, kind, recordChangeInfoList, deletedRecordsWithParentReferred);
             updateAssociatedChildrenRecords(updatedAncestors, kind, recordChangeInfoList);
         }
     }
@@ -407,7 +409,36 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         return relatedKinds;
     }
 
+    @Override
+    public List<SearchRecord> getAllRecordsReferredByParentRecords(Map<String, List<String>> childRecordMap) {
+        if(childRecordMap == null || childRecordMap.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<String> kinds = new ArrayList<>();
+        List<String> ids = new ArrayList<>();
+        for(Map.Entry<String, List<String>> childRecordEntry : childRecordMap.entrySet()) {
+            String childKind = childRecordEntry.getKey();
+            if(hasParentChildRelationshipSpecs(childKind)) {
+                kinds.add(childKind);
+                ids.addAll(childRecordEntry.getValue());
+            }
+        }
+        if(!kinds.isEmpty()) {
+            return searchRelatedRecords(kinds, ids);
+        }
+        else {
+            return new ArrayList<>();
+        }
+    }
+
+
     /******************************************************** Private methods **************************************************************/
+    private boolean hasParentChildRelationshipSpecs(String childKind) {
+        ParentChildRelationshipSpecs specs = getParentChildRelatedObjectsSpecs(childKind);
+        return specs.getSpecList() != null && !specs.getSpecList().isEmpty();
+    }
+
     private boolean isEmptyConfiguration(AugmenterConfiguration configuration) {
         return configuration == null || Strings.isNullOrEmpty(configuration.getCode());
     }
@@ -446,7 +477,9 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
 
         RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(recordInfos)).attributes(attributes).build();
         String recordChangedMessagePayload = gson.toJson(recordChangedMessages);
-        this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, 0L, this.requestInfo.getHeadersWithDwdAuthZ());
+        // GC implementation of IndexerQueueTaskBuilder honors the delay (countdownMillis) while Azure/AWS don't
+        // In Azure/AWS implementation, we need to set the chasing delay separately.
+        this.indexerQueueTaskBuilder.createWorkerTask(recordChangedMessagePayload, Constants.CHASING_MESSAGE_DELAY_SECONDS * 1000L, this.requestInfo.getHeadersWithDwdAuthZ());
     }
 
     private Map<String, Object> getObjectData(String kind, String id) {
@@ -812,7 +845,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         return spec;
     }
 
-    private void updateAssociatedParentRecords(String ancestors, String childKind, List<RecordChangeInfo> childRecordChangeInfos) {
+    private void updateAssociatedParentRecords(String ancestors, String childKind, List<RecordChangeInfo> childRecordChangeInfos, List<SearchRecord> deletedRecordsWithParent) {
         ParentChildRelationshipSpecs specs = getParentChildRelatedObjectsSpecs(childKind);
         Set<String> ancestorSet = new HashSet<>(Arrays.asList(ancestors.split(ANCESTRY_KINDS_DELIMITER)));
         for (ParentChildRelationshipSpec spec : specs.getSpecList()) {
@@ -822,6 +855,8 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             if (!childRecordIds.isEmpty()) {
                 parentIds = searchUniqueParentIds(childKind, childRecordIds, spec.getParentObjectIdPath());
             }
+            List<String> parentIdsOfDeletedRecords = getUniqueParentIdsOfDeletedRecords(childKind, deletedRecordsWithParent, spec.getParentObjectIdPath());
+            parentIds.addAll(parentIdsOfDeletedRecords);
             if (parentIds.isEmpty())
                 continue;
 
@@ -994,6 +1029,20 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         return concreteKinds;
     }
 
+    private List<String> getUniqueParentIdsOfDeletedRecords(String childKind, List<SearchRecord> deletedRecords, String parentObjectIdPath) {
+        Set<String> parentIds = new HashSet<>();
+        parentObjectIdPath = PropertyUtil.removeDataPrefix(parentObjectIdPath);
+        for (SearchRecord searchRecord : deletedRecords) {
+            if (searchRecord.getKind().equals(childKind) && searchRecord.getData().containsKey(parentObjectIdPath)) {
+                Object id = searchRecord.getData().get(parentObjectIdPath);
+                if (id != null && !parentIds.contains(id)) {
+                    parentIds.add(id.toString());
+                }
+            }
+        }
+        return new ArrayList<>(parentIds);
+    }
+
     /****************************** search methods that use search service to get the data **************************************/
     private SearchRequest createSearchRequest(String kind, String query) {
         SearchRequest searchRequest = new SearchRequest();
@@ -1092,14 +1141,29 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         searchRequest.setReturnedFields(Arrays.asList(parentObjectIdPath));
         searchRequest.setQuery(query);
         parentObjectIdPath = PropertyUtil.removeDataPrefix(parentObjectIdPath);
-        for (SearchRecord searchRecord : searchRecords(searchRequest)) {
-            if (searchRecord.getData().containsKey(parentObjectIdPath)) {
-                Object id = searchRecord.getData().get(parentObjectIdPath);
+        List<SearchRecord> searchRecords = searchRecords(searchRequest);
+        Map<String, SearchRecord> idRecords = searchRecords.stream().collect(Collectors.toMap(SearchRecord::getId, record -> record));
+        for(String childRecordId :  childRecordIds) {
+            RecordData recordData = this.relatedObjectCache.get(childRecordId);
+            Map<String, Object> data = null;
+            if(recordData != null && recordData.getData() != null) {
+                data = recordData.getData();
+            }
+            else {
+                SearchRecord searchRecord = idRecords.getOrDefault(childRecordId, null);
+                if(searchRecord != null) {
+                    data = searchRecord.getData();
+                }
+            }
+
+            if(data != null && data.containsKey(parentObjectIdPath)) {
+                Object id = data.get(parentObjectIdPath);
                 if (id != null && !parentIds.contains(id)) {
                     parentIds.add(id.toString());
                 }
             }
         }
+
         return new ArrayList<>(parentIds);
     }
 

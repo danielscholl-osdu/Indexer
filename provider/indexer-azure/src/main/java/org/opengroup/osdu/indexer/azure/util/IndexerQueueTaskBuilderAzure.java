@@ -20,6 +20,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.microsoft.azure.servicebus.Message;
+import com.microsoft.azure.servicebus.TopicClient;
 import lombok.extern.java.Log;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.HttpStatus;
@@ -46,11 +47,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
 
 @Log
@@ -169,7 +173,9 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
         jo.addProperty(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         jo.addProperty(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
         // Append the ancestry kinds used to prevent circular chasing
+        boolean isChasingMessage = false;
         if(attributes.containsKey(Constants.ANCESTRY_KINDS)) {
+            isChasingMessage = true;
             jo.addProperty(Constants.ANCESTRY_KINDS, attributes.get(Constants.ANCESTRY_KINDS));
         }
         JsonObject jomsg = new JsonObject();
@@ -180,7 +186,14 @@ public class IndexerQueueTaskBuilderAzure extends IndexerQueueTaskBuilder {
 
         try {
             long startTime = System.currentTimeMillis();
-            topicClientFactory.getClient(headers.getPartitionId(), serviceBusReindexTopicName).send(message);
+            TopicClient topicClient = topicClientFactory.getClient(headers.getPartitionId(), serviceBusReindexTopicName);
+            if(isChasingMessage) {
+                Instant enqueueTimeUtc = Clock.systemUTC().instant().plus(Constants.CHASING_MESSAGE_DELAY_SECONDS, SECONDS);
+                topicClient.scheduleMessageAsync(message, enqueueTimeUtc);
+            }
+            else {
+                topicClient.send(message);
+            }
             long stopTime = System.currentTimeMillis();
             logger.info(String.format("Indexer publishes message to Service Bus, messageId: %s | time taken to send message: %d milliseconds ", message.getMessageId(), stopTime - startTime));
         } catch (Exception e) {

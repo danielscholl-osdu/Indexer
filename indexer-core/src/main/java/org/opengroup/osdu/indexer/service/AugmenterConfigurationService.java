@@ -18,6 +18,7 @@ package org.opengroup.osdu.indexer.service;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
+import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 
 import java.util.List;
@@ -36,7 +37,9 @@ public interface AugmenterConfigurationService {
 
     void cacheDataRecord(String recordId, String kind, Map<String, Object> dataMap);
 
-    void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> upsertKindIds, Map<String, List<String>> deleteKindIds);
+    void updateAssociatedRecords(RecordChangedMessages message, Map<String, List<String>> upsertKindIds, Map<String, List<String>> deleteKindIds, List<SearchRecord> deletedRecordsWithParentReferred);
 
     List<String> getRelatedKindsOfConfigurations(List<String> configurationIds);
+
+    List<SearchRecord> getAllRecordsReferredByParentRecords(Map<String, List<String>> childRecordMap);
 }
