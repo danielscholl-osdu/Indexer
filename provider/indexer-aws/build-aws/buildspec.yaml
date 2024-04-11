@@ -96,9 +96,6 @@ phases:
           --buildid ${CODEBUILD_BUILD_ID} --buildnumber ${CODEBUILD_BUILD_NUMBER} --reponame ${REPO_NAME} --outdir ${OUTPUT_DIR} \
           --artifact ${ECR_IMAGE}
 
-  post_build:
-    commands:
-      - cp provider/indexer-aws/target/dependency-check-report.html ${OUTPUT_DIR}
 reports:
   SurefireReports: # CodeBuild will create a report group called "SurefireReports".
     files: #Store all of the files
