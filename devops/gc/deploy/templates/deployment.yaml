@@ -23,6 +23,8 @@ spec:
         sidecar.istio.io/proxyMemory: {{ .Values.istio.proxyMemory | quote }}
         sidecar.istio.io/proxyCPULimit: {{ .Values.istio.proxyCPULimit | quote }}
         sidecar.istio.io/proxyMemoryLimit: {{ .Values.istio.proxyMemoryLimit | quote }}
+        ### FIXME traffic.sidecar.istio.io - This is strictly a temporary solution until the task GONRG-8825 is completed
+        traffic.sidecar.istio.io/excludeOutboundPorts: "80"
     spec:
     ### FIXME initContainers - This is strictly a temporary solution until the task GONRG-8825 is completed
       initContainers:
