@@ -30,6 +30,7 @@ import org.opengroup.osdu.util.ElasticUtilsAws;
 import org.opengroup.osdu.util.LegalTagUtilsAws;
 import org.opengroup.osdu.common.SchemaServiceRecordSteps;
 
+import java.util.concurrent.TimeUnit;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -140,12 +141,14 @@ public class Steps extends SchemaServiceRecordSteps {
     @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by bounding box query with points \\((-?\\d+), (-?\\d+)\\) and  \\((-?\\d+), (-?\\d+)\\) on field \"(.*?)\"$")
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery (
             int expectedCount, String index, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude, String field) throws Throwable {
+        TimeUnit.SECONDS.sleep(30);
         super.i_should_get_the_documents_for_the_in_the_Elastic_Search_by_geoQuery(expectedCount, index, topLatitude, topLongitude, bottomLatitude, bottomLongitude, field);
     }
 
     @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by bounding box query with points \\((-?\\d+), (-?\\d+)\\) on field \"([^\"]*)\" and points \\((-?\\d+), (-?\\d+)\\) on field \"([^\"]*)\"$")
     public void i_should_get_the_documents_for_the_in_the_Elastic_Search_by_AsIngestedCoordinates (
             int expectedCount, String index, Double topPointX, Double bottomPointX, String pointX, Double topPointY, Double bottomPointY, String pointY) throws Throwable {
+        TimeUnit.SECONDS.sleep(30);
         super.i_should_get_the_documents_for_the_in_the_Elastic_Search_by_AsIngestedCoordinates(expectedCount, index, topPointX, bottomPointX, pointX, topPointY, bottomPointY, pointY);
     }
 
@@ -160,6 +163,7 @@ public class Steps extends SchemaServiceRecordSteps {
     @Then("^I should be able search (\\d+) documents for the \"([^\"]*)\" by flattened inner properties \\(\"([^\"]*)\", \"([^\"]*)\"\\)$")
     public void i_should_be_able_search_documents_for_the_by_flattened_inner_properties(int expectedCount, String index, String flattenedField,
         String flattenedFieldValue) throws Throwable {
+        TimeUnit.SECONDS.sleep(30);
         super.i_should_be_able_search_documents_for_the_by_flattened_inner_properties(expectedCount, index, flattenedField, flattenedFieldValue);
     }
 
