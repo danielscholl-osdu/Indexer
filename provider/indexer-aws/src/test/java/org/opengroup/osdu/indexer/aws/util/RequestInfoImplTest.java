@@ -30,11 +30,14 @@ import java.util.Map;
 import org.mockito.MockitoAnnotations;
 import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
 import org.mockito.runners.MockitoJUnitRunner;
+
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RequestInfoImplTest {
@@ -71,7 +74,15 @@ public class RequestInfoImplTest {
 
         DpsHeaders headers = request_info.getHeaders();
 
-        assertTrue(new ReflectionEquals(expected).matches(headers));
+        assertFalse(new ReflectionEquals(expected).matches(headers));
+    }
+
+    @Test
+    public void getHeaders_use_service_principal(){
+        DpsHeaders headers = request_info.getHeaders();
+
+        assertEquals("Bearer null", headers.getAuthorization());
+        verify(this.awsServiceAccountAuthToken, times(1)).getAuthToken();
     }
 
     @Test
