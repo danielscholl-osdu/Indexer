@@ -52,6 +52,10 @@ public class RequestInfoImpl implements IRequestInfo {
      */
     @Override
     public DpsHeaders getHeaders() {
+        return  getHeadersWithDwdAuthZ();
+    }
+
+    private DpsHeaders getDpsHeaders() {
         if (headersMap == null) {
             log.warning("Headers Map DpsHeaders is null");
             // throw to prevent null reference exception below
@@ -66,7 +70,7 @@ public class RequestInfoImpl implements IRequestInfo {
      */
     @Override
     public String getPartitionId() {
-        return getHeaders().getPartitionIdWithFallbackToAccountId();
+        return getDpsHeaders().getPartitionIdWithFallbackToAccountId();
     }
 
     /**
@@ -75,19 +79,19 @@ public class RequestInfoImpl implements IRequestInfo {
      */
     @Override
     public Map<String, String> getHeadersMap() {
-        return getHeaders().getHeaders();
+        return getHeadersMapWithDwdAuthZ();
     }
 
     @Override
     public Map<String, String> getHeadersMapWithDwdAuthZ() {
-        Map<String, String> result = getHeadersMap();
+        Map<String, String> result = getDpsHeaders().getHeaders();
         result.put(AUTHORIZATION, this.checkOrGetAuthorizationHeader());
         return result;
     }
 
     @Override
     public DpsHeaders getHeadersWithDwdAuthZ() {
-        DpsHeaders ret = getHeaders();
+        DpsHeaders ret = getDpsHeaders();
         ret.put(AUTHORIZATION, this.checkOrGetAuthorizationHeader());
         return ret;
     }
