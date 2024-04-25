@@ -17,6 +17,7 @@ package org.opengroup.osdu.indexer.service;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.util.Objects;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.DocWriteRequest;
@@ -48,6 +49,7 @@ import org.opengroup.osdu.indexer.model.BulkRequestResult;
 import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
+import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
@@ -512,15 +514,13 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
     private List<String> processElasticMappingAndUpsertRecords(RecordIndexerPayload recordIndexerPayload) throws Exception {
+        if (recordIndexerPayload.getSchemas() == null || recordIndexerPayload.getSchemas().isEmpty()) {
+            return new LinkedList<>();
+        }
 
         try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            List<IndexSchema> schemas = recordIndexerPayload.getSchemas();
-            if (schemas == null || schemas.isEmpty()) {
-                return new LinkedList<>();
-            }
-
             // process the schema
-            this.cacheOrCreateElasticMapping(schemas, restClient);
+            this.cacheOrCreateElasticMapping(recordIndexerPayload, restClient);
 
             // process the records
             List<RecordIndexerPayload.Record> records = recordIndexerPayload.getRecords();
@@ -549,14 +549,26 @@ public class IndexerServiceImpl implements IndexerService {
         }
     }
 
-    private void cacheOrCreateElasticMapping(List<IndexSchema> schemas, RestHighLevelClient restClient) throws Exception {
+    private void cacheOrCreateElasticMapping(RecordIndexerPayload recordIndexerPayload, RestHighLevelClient restClient) throws Exception {
+        List<IndexSchema> schemas = recordIndexerPayload.getSchemas();
 
         for (IndexSchema schema : schemas) {
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
 
             // check if index exist and sync meta attribute schema if required
             if (this.indicesService.isIndexReady(restClient, index)) {
-                this.mappingService.syncIndexMappingIfRequired(restClient, schema);
+                try {
+                    this.mappingService.syncIndexMappingIfRequired(restClient, schema);
+                } catch (ElasticsearchMappingException e) {
+                    List<Record> schemaRecords = recordIndexerPayload.getRecords()
+                        .stream()
+                        .filter(record -> Objects.equals(record.getKind(), schema.getKind()))
+                        .toList();
+                    for (Record schemaRecord : schemaRecords) {
+                        this.jobStatus.addOrUpdateRecordStatus(schemaRecord.getId(), IndexingStatus.WARN, e.getStatus(), String.format("Error while mapping schema in elasticsearch: %s", e.getMessage()));
+                        schemaRecord.setData(null);
+                    }
+                }
                 continue;
             }
 
