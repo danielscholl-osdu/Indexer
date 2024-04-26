@@ -206,20 +206,23 @@ public class IndexerServiceImplTest {
 
             // validate
             assertEquals(5, jobStatus.getStatusesList().size());
-            assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.WARN).size());
-            assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
+            assertEquals(1, jobStatus.getIdsByIndexingStatus(IndexingStatus.WARN).size());
+            assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
             assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
 
             verify(restHighLevelClient, times(2)).bulk(any(), any());
-            verify(this.auditLogger).indexStarted(Arrays.asList("id=opendes:doc:test1 kind=opendes:testindexer1:well:1.0.0 operationType=update",
+            verify(this.auditLogger).indexStarted(Arrays.asList(
+                "id=opendes:doc:test1 kind=opendes:testindexer1:well:1.0.0 operationType=update",
                 "id=opendes:doc:test2 kind=opendes:testindexer2:well:1.0.0 operationType=create",
                 "id=opendes:doc:test3 kind=opendes:testindexer2:well:1.0.0 operationType=create",
                 "id=opendes:doc:test4 kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0 operationType=create",
                 "id=opendes:doc:test5 kind=opendes:testindexer4:well:1.0.0 operationType=create"));
-            verify(this.auditLogger).indexCreateRecordSuccess(Arrays.asList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)",
-                    "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
-            verify(this.auditLogger).indexCreateRecordFail(singletonList("RecordStatus(id=opendes:doc:test3, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=FAIL, message=null)"));
-            verify(this.auditLogger).indexCreateRecordPartialSuccess(singletonList("RecordStatus(id=opendes:doc:test5, kind=opendes:testindexer4:well:1.0.0, operationType=create, status==PARTIAL_SUCCESS, message=Indexed Successfully)"));
+            verify(this.auditLogger).indexCreateRecordSuccess(Arrays.asList(
+                "RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)",
+                "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
+            verify(this.auditLogger).indexCreateRecordFail(Arrays.asList(
+                "RecordStatus(id=opendes:doc:test3, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=FAIL, message=null)",
+                "RecordStatus(id=opendes:doc:test5, kind=opendes:testindexer4:well:1.0.0, operationType=create, status=FAIL, message=Indexed Successfully)"));
             verify(this.auditLogger).indexUpdateRecordPartialSuccess(singletonList("RecordStatus(id=opendes:doc:test1, kind=opendes:testindexer1:well:1.0.0, operationType=update, status==PARTIAL_SUCCESS, message=Indexed Successfully)"));
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());

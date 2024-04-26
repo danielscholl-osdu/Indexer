@@ -565,8 +565,8 @@ public class IndexerServiceImpl implements IndexerService {
                         .filter(record -> Objects.equals(record.getKind(), schema.getKind()))
                         .toList();
                     for (Record schemaRecord : schemaRecords) {
-                        this.jobStatus.addOrUpdateRecordStatus(schemaRecord.getId(), IndexingStatus.WARN, e.getStatus(), String.format("Error while mapping schema in elasticsearch: %s", e.getMessage()));
-                        schemaRecord.setData(null);
+                        this.jobStatus.addOrUpdateRecordStatus(schemaRecord.getId(), IndexingStatus.FAIL, e.getStatus(), String.format("Error reconciling index mapping with kind schema from schema-service: %s", e.getMessage()));
+                        schemaRecord.setData(Collections.emptyMap());
                     }
                 }
                 continue;
