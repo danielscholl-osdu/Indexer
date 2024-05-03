@@ -36,6 +36,7 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.opengroup.osdu.indexer.model.Kind;
+import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -301,12 +302,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
                 return response.isAcknowledged();
             }
         } catch (ElasticsearchException e) {
-            throw new AppException(
-                    e.status().getStatus(),
-                    e.getMessage(),
-                    String.format("Could not create type mapping %s/%s.", index, type),
-                    String.format("Failed creating mapping: %s", mapping),
-                    e);
+            throw new ElasticsearchMappingException(e.getMessage(), e.status().getStatus());
         }
         return false;
     }
