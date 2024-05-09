@@ -52,9 +52,18 @@ public class ElasticRepositoryImpl implements IElasticRepository {
     @Value("${aws.region}")
     private String amazonRegion;
 
+    K8sLocalParameterProvider provider;
+
+    public ElasticRepositoryImpl() {
+        this(new K8sLocalParameterProvider());
+    }
+
+    public ElasticRepositoryImpl(K8sLocalParameterProvider provider) {
+        this.provider = provider;
+    }
+
     @PostConstruct
-    private void postConstruct() throws K8sParameterNotFoundException, JsonProcessingException {
-        K8sLocalParameterProvider provider = new K8sLocalParameterProvider();
+    public void postConstruct() throws K8sParameterNotFoundException, JsonProcessingException {
         host = provider.getParameterAsStringOrDefault("ELASTICSEARCH_HOST", host);
         port = Integer.parseInt(provider.getParameterAsStringOrDefault("ELASTICSEARCH_PORT", String.valueOf(port)));
         Map<String, String> val = provider.getCredentialsAsMap("ELASTICSEARCH_CREDENTIALS");
