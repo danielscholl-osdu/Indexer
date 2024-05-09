@@ -17,6 +17,8 @@
 package org.opengroup.osdu.indexer.aws.persistence;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +27,7 @@ import org.mockito.Mockito;
 import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,6 +46,17 @@ public class ElasticRepositoryImplTest {
     private final String host = "host";
     private final String port = "6369";
 
+
+    @Test
+    public void test_PostConstruct() throws K8sParameterNotFoundException, JsonProcessingException {
+        K8sLocalParameterProvider provider = Mockito.mock(K8sLocalParameterProvider.class);
+        TenantInfo tenantInfo = Mockito.mock(TenantInfo.class);
+        when(provider.getParameterAsStringOrDefault("ELASTICSEARCH_HOST", null)).thenReturn(host);
+        when(provider.getParameterAsStringOrDefault("ELASTICSEARCH_PORT", "0")).thenReturn("12345");
+        ElasticRepositoryImpl elasticImpl = new ElasticRepositoryImpl(provider);
+        elasticImpl.postConstruct();
+        assertEquals(host, elasticImpl.getElasticClusterSettings(tenantInfo).getHost());
+    }
 
     @Test
     public void getElasticClusterSettings_Null_User_Test() {
