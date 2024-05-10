@@ -4,7 +4,7 @@ variables:
 
 gc-test:
   variables:
-    CUCUMBER_OPTIONS: "--tags @as-ingested-coordinates,@default,@bag-of-words,@keyword-lower"
+    CUCUMBER_OPTIONS: "--tags @as-ingested-coordinates,@default,@bag-of-words,@keyword-lower,@indexer-extended"
 
 gc-baremetal-test:
   variables:
