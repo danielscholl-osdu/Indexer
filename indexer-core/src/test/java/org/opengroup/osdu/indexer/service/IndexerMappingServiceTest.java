@@ -14,30 +14,7 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockingDetails;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.http.StatusLine;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -52,6 +29,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.invocation.Invocation;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;
@@ -66,8 +45,26 @@ import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
 import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
 
 @RunWith(SpringRunner.class)
@@ -98,7 +95,7 @@ public class IndexerMappingServiceTest {
     @Mock
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @MockBean
-    private IFeatureFlag keywordLowerFeatureFlag;
+    private IFeatureFlag featureFlag;
 
     @Spy
     @InjectMocks
@@ -152,7 +149,7 @@ public class IndexerMappingServiceTest {
 
     @Test
     public void should_returnValidMapping_givenFalseMerge_keywordLowerDisabled_createMappingTest() {
-        when(this.keywordLowerFeatureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(false);
+        when(this.featureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(false);
         try {
             String mapping = this.sut.createMapping(restHighLevelClient, indexSchema, index, false);
             assertEquals(validMapping, mapping);
@@ -163,7 +160,7 @@ public class IndexerMappingServiceTest {
 
     @Test
     public void should_returnValidMapping_givenFalseMerge_keywordLowerEnabled_createMappingTest() {
-        when(this.keywordLowerFeatureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(true);
+        when(this.featureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(true);
         try {
             String mapping = this.sut.createMapping(restHighLevelClient, indexSchema, index, false);
             assertEquals(validKeywordLowerMapping, mapping);
@@ -189,7 +186,7 @@ public class IndexerMappingServiceTest {
 
     @Test
     public void should_returnValidMapping_givenTrueMerge_keywordLowerEnabled_createMappingTest() {
-        when(this.keywordLowerFeatureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(true);
+        when(this.featureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(true);
         try {
             AcknowledgedResponse mappingResponse = new AcknowledgedResponse(true);
             doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
@@ -245,9 +242,9 @@ public class IndexerMappingServiceTest {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         when(this.indexCache.get(cacheKey)).thenReturn(true);
 
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema);
+        this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, indexSchema);
         Collection<Invocation> invocations = mockingDetails(this.sut).getInvocations();
-        assertEquals(1,invocations.size());
+        assertEquals(1, invocations.size());
     }
 
     @Test
@@ -255,7 +252,7 @@ public class IndexerMappingServiceTest {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"},\"bagOfWords\":{\"search_analyzer\":\"whitespace\",\"analyzer\":\"detailExtractor\",\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\",\"analyzer\":\"detailExtractor\",\"search_analyzer\":\"whitespace\",\"max_input_length\":256}}}}}";
         doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, noDataIndexSchema);
+        this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, noDataIndexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);
@@ -271,11 +268,27 @@ public class IndexerMappingServiceTest {
         doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
         doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
 
-        this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema);
+        this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, indexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);
         verify(this.indicesClient, times(1)).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
+    }
+
+    @Test
+    public void should_applyNoUpdate_onDataChange_givenMetaUpdate_onIndex() throws Exception {
+        final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
+        final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"},\"bagOfWords\":{\"search_analyzer\":\"whitespace\",\"analyzer\":\"detailExtractor\",\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\",\"analyzer\":\"detailExtractor\",\"search_analyzer\":\"whitespace\",\"max_input_length\":256}}}}}";
+        doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
+        when(this.featureFlag.isFeatureEnabled(BAG_OF_WORDS_FEATURE_NAME)).thenReturn(false);
+        this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, noDataIndexSchema);
+
+        verify(this.indexCache, times(1)).get(cacheKey);
+        verify(this.indexCache, times(1)).put(cacheKey, true);
+        verify(this.featureFlag, times(1)).isFeatureEnabled(BAG_OF_WORDS_FEATURE_NAME);
+        try (MockedStatic<TypeMapper> theMock = Mockito.mockStatic(TypeMapper.class)) {
+            theMock.verifyNoInteractions();
+        }
     }
 
     @Test
@@ -288,8 +301,8 @@ public class IndexerMappingServiceTest {
         doThrow(new ElasticsearchException(message)).when(this.indicesClient).putMapping(any(PutMappingRequest.class), any(RequestOptions.class));
 
         ElasticsearchMappingException exception = assertThrows(
-            ElasticsearchMappingException.class,
-            () -> this.sut.syncIndexMappingIfRequired(restHighLevelClient, indexSchema));
+                ElasticsearchMappingException.class,
+                () -> this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, indexSchema));
 
         assertEquals(message, exception.getMessage());
     }

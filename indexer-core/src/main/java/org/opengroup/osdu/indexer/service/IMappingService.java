@@ -30,5 +30,5 @@ public interface IMappingService {
 
     Map<String, Object> getIndexMappingFromRecordSchema(IndexSchema schema);
 
-    void syncIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception;
+    void syncMetaAttributeIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception;
 }

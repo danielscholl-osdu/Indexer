@@ -558,7 +558,7 @@ public class IndexerServiceImpl implements IndexerService {
             // check if index exist and sync meta attribute schema if required
             if (this.indicesService.isIndexReady(restClient, index)) {
                 try {
-                    this.mappingService.syncIndexMappingIfRequired(restClient, schema);
+                    this.mappingService.syncMetaAttributeIndexMappingIfRequired(restClient, schema);
                 } catch (ElasticsearchMappingException e) {
                     List<Record> schemaRecords = recordIndexerPayload.getRecords()
                         .stream()
