@@ -57,6 +57,9 @@ include:
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-global.yml"
 
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/core-global.yml"
+
   - local: "devops/gc/pipeline/override-stages.yml"
   - local: "devops/aws/pipeline/override-stages.yml"
   - local: "devops/core-plus/pipeline/override-stages.yml"
@@ -64,7 +67,7 @@ include:
 
 .maven:
   image: maven:3.9.3-eclipse-temurin-17
-  tags: ['osdu-medium']
+  tags: ["osdu-medium"]
   variables:
     MAVEN_REPO_PATH: "$CI_PROJECT_DIR/.m2/repository"
     MAVEN_CLI_OPTS: "--batch-mode --settings=$CI_PROJECT_DIR/.mvn/community-maven.settings.xml"
@@ -126,7 +129,6 @@ include:
               sys.stdout.write(dir + '\0')
       EOF
     - xargs -0rn 1 echo < $ALL_MAVEN_BUILD_DIRS_Z
-
     # This creates a script for running maven, capturing output to a file.
     # - First argument is the directory to build from
     # - Second argument is the name to use for the logfile
@@ -169,7 +171,6 @@ download_plugins:
     APD_PACKAGE_REGISTRY_URL: "https://community.opengroup.org/api/v4/projects/1445/packages/maven"
     APD_VERSION: "0.26.0-rc2"
 
-
   artifacts:
     paths:
       - ./tmp/*.jar
@@ -182,7 +183,7 @@ download_plugins:
 
   only:
     variables:
-      - $PROTECTED == '1'
+      - $CORE == '1'
 
 gemnasium-maven-dependency_scanning:
   variables:
@@ -197,7 +198,7 @@ azure_test:
 
 aws-test-java:
   image: $CI_REGISTRY/osdu/platform/deployment-and-operations/base-containers-aws/aws-maven/aws-maven:v2.1
-  tags: [ "aws-internal-test-ubuntu22.04" ]
+  tags: ["aws-internal-test-ubuntu22.04"]
 
 fossa-analyze:
   image: $CI_REGISTRY/divido/fossa-with-cache:v0.9-jdk17
