@@ -175,7 +175,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     }
 
     @Override
-    public void syncIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception {
+    public void syncMetaAttributeIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
 
@@ -215,16 +215,18 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
                 properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, null));
             }
         }
+        boolean bagOfWordsEnabled = this.featureFlagChecker.isFeatureEnabled(BAG_OF_WORDS_FEATURE_NAME);
+        if (bagOfWordsEnabled) {
+            // sync data-source attributes
+            Map<String, Object> dataMapping = this.getDataMapping(schema);
+            if (!dataMapping.isEmpty()) {
+                // inner properties.data.properties block
+                Map<String, Object> dataProperties = new HashMap<>();
+                dataProperties.put(Constants.PROPERTIES, dataMapping);
 
-        // sync data-source attributes
-        Map<String, Object> dataMapping = this.getDataMapping(schema);
-        if (!dataMapping.isEmpty()) {
-            // inner properties.data.properties block
-            Map<String, Object> dataProperties = new HashMap<>();
-            dataProperties.put(Constants.PROPERTIES, dataMapping);
-
-            // data & meta block
-            properties.put(Constants.DATA, dataProperties);
+                // data & meta block
+                properties.put(Constants.DATA, dataProperties);
+            }
         }
 
         if (properties.isEmpty()) {

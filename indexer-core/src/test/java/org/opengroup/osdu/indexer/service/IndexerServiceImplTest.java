@@ -413,7 +413,7 @@ public class IndexerServiceImplTest {
         when(this.indicesService.isIndexReady(any(), eq(kind4))).thenReturn(true);
         when(this.elasticIndexNameResolver.getIndexNameFromKind(eq(kind4))).thenReturn(kind4);
         when(this.mappingService.getIndexMappingFromRecordSchema(any())).thenReturn(new HashMap<>());
-        doThrow(new ElasticsearchMappingException("msg", 400)).when(mappingService).syncIndexMappingIfRequired(any(), eq(indexSchema4));
+        doThrow(new ElasticsearchMappingException("msg", 400)).when(mappingService).syncMetaAttributeIndexMappingIfRequired(any(), eq(indexSchema4));
 
         when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
         when(this.restHighLevelClient.bulk(any(), any(RequestOptions.class))).thenReturn(this.bulkResponse);

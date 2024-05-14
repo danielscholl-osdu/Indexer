@@ -245,8 +245,6 @@ public class TypeMapper {
     private static Object getKeywordIndexerMapping(Boolean bagOfWordsEnabled) {
         Map<String, Object> textMap = new HashMap<>();
         textMap.put("type", "keyword");
-        textMap.put("ignore_above", 256);
-        textMap.put("null_value", "null");
         if (bagOfWordsEnabled) {
             textMap.put("copy_to", BAG_OF_WORDS);
         }
