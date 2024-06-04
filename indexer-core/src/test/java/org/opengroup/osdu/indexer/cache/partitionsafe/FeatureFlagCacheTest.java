@@ -25,7 +25,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.cache.partitionsafe.FeatureFlagCache;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.mockito.Mockito.when;
 

@@ -32,8 +32,8 @@ import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;

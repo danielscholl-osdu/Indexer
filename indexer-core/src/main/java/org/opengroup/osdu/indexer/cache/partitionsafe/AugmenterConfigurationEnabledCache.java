@@ -18,7 +18,7 @@ package org.opengroup.osdu.indexer.cache.partitionsafe;
 import org.opengroup.osdu.indexer.cache.interfaces.IAugmenterConfigurationEnabledCache;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Component
 public class AugmenterConfigurationEnabledCache extends AbstractPartitionSafeCache<String,Boolean> {

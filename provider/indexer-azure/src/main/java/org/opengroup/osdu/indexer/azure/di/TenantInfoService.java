@@ -23,7 +23,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RequestScope
 @Component

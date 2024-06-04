@@ -18,8 +18,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.inject.Inject;
 
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 

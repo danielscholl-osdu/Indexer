@@ -39,7 +39,7 @@ import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;

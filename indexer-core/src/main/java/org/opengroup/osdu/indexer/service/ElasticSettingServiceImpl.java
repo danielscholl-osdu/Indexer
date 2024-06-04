@@ -28,7 +28,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.IElasticCredentialsCac
 import org.opengroup.osdu.core.common.model.indexer.IElasticSettingService;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.springframework.stereotype.Service;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Service
 public class ElasticSettingServiceImpl implements IElasticSettingService {
@@ -36,7 +36,7 @@ public class ElasticSettingServiceImpl implements IElasticSettingService {
     @Inject
     private TenantInfo tenantInfo;
     @Inject
-    private javax.inject.Provider<ITenantInfoService> tenantInfoServiceProvider;
+    private jakarta.inject.Provider<ITenantInfoService> tenantInfoServiceProvider;
     @Inject
     private IElasticRepository elasticRepository;
     @Inject

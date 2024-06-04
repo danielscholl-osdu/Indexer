@@ -18,7 +18,7 @@ package org.opengroup.osdu.indexer.cache.partitionsafe;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Component
 public class FlattenedSchemaCache extends AbstractPartitionSafeCache<String, String> {

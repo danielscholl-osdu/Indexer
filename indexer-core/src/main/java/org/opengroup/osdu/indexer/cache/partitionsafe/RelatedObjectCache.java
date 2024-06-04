@@ -19,7 +19,7 @@ import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.indexer.cache.interfaces.IRelatedObjectCache;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Component
 public class RelatedObjectCache extends AbstractPartitionSafeCache<String, RecordData> {

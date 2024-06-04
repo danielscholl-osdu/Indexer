@@ -12,22 +12,20 @@
         <java.version>17</java.version>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
-        <spring-cloud.version>Greenwich.SR2</spring-cloud.version>
-        <os-core-common.version>0.26.0-rc3</os-core-common.version>
-        <snakeyaml.version>2.0</snakeyaml.version>
-        <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
-        <jackson-databind.version>2.14.1</jackson-databind.version>
-        <jackson.version>2.14.1</jackson.version>
-        <tomcat-embed-core.version>9.0.70</tomcat-embed-core.version>
+        <os-core-common.version>0.26.0-rc2</os-core-common.version>
+        <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
         <common-codec.version>1.14</common-codec.version>
         <elasticsearch.version>7.8.1</elasticsearch.version>
         <netty.version>4.1.51.Final</netty.version>
         <reactor-netty.version>0.8.20.RELEASE</reactor-netty.version>
         <woodstox-core.version>6.4.0</woodstox-core.version>
-        <log4j2.version>2.17.1</log4j2.version>
-        <spring-boot-maven-plugin.version>2.7.6</spring-boot-maven-plugin.version>
+        <log4j2.version>2.21.1</log4j2.version>
+        <spring-boot-maven-plugin.version>3.2.5</spring-boot-maven-plugin.version>
         <json-smart.version>2.5.0</json-smart.version>
-        <openapi.version>1.6.14</openapi.version>
+        <openapi.version>2.3.0</openapi.version>
+        <spring.security.version>6.2.4</spring.security.version>
+        <spring.framework.version>6.1.6</spring.framework.version>
+        <spring.boot.version>3.2.5</spring.boot.version>
     </properties>
 
     <licenses>
@@ -41,53 +39,25 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.opengroup.osdu</groupId>
-                <artifactId>os-core-common</artifactId>
-                <version>${os-core-common.version}</version>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-bom</artifactId>
+                <version>${spring.security.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-to-slf4j</artifactId>
-                <version>${log4j2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-api</artifactId>
-                <version>${log4j2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-bom</artifactId>
-                <version>${netty.version}</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate.validator</groupId>
-                <artifactId>hibernate-validator</artifactId>
-                <version>${hibernate-validator.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson-databind.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>${tomcat-embed-core.version}</version>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-framework-bom</artifactId>
+                <version>${spring.framework.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
@@ -124,51 +94,44 @@
                 <artifactId>json-smart</artifactId>
                 <version>${json-smart.version}</version>
             </dependency>
-            <dependency>
-		        <groupId>org.springframework.security</groupId>
-		        <artifactId>spring-security-bom</artifactId>
-		        <version>5.7.11</version>
-		        <type>pom</type>
-		        <scope>import</scope>
-		    </dependency>
         </dependencies>
     </dependencyManagement>
 
-	<dependencies>
+    <dependencies>
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
-            <artifactId>os-core-common</artifactId>
+            <artifactId>os-core-common-spring6</artifactId>
             <version>${os-core-common.version}</version>
         </dependency>
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<version>1.18.16</version>
-			<scope>provided</scope>
-		</dependency>
-		<!--OpenApi -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.16</version>
+            <scope>provided</scope>
+        </dependency>
+        <!--OpenApi -->
         <dependency>
             <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-ui</artifactId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${openapi.version}</version>
         </dependency>
-		<dependency>
-			<groupId>org.springframework.plugin</groupId>
-			<artifactId>spring-plugin-core</artifactId>
-			<version>2.0.0.RELEASE</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.plugin</groupId>
-			<artifactId>spring-plugin-metadata</artifactId>
-			<version>2.0.0.RELEASE</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.springframework.plugin</groupId>
-					<artifactId>spring-plugin-core</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.springframework.plugin</groupId>
+            <artifactId>spring-plugin-core</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.plugin</groupId>
+            <artifactId>spring-plugin-metadata</artifactId>
+            <version>3.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.plugin</groupId>
+                    <artifactId>spring-plugin-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
 
     <modules>
         <module>indexer-core</module>

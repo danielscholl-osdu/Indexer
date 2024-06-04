@@ -29,7 +29,7 @@ import org.opengroup.osdu.oqm.core.model.OqmMessageReceiver;
 import org.opengroup.osdu.indexer.indexing.scope.ThreadDpsHeaders;
 import org.opengroup.osdu.indexer.indexing.thread.ThreadScopeContextHolder;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
 

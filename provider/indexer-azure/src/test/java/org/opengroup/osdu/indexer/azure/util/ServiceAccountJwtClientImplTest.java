@@ -16,7 +16,7 @@ import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.junit4.SpringRunner;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.*;
 import static junit.framework.TestCase.*;
 import static org.junit.jupiter.api.Assertions.*;

@@ -22,7 +22,7 @@ import lombok.ToString;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

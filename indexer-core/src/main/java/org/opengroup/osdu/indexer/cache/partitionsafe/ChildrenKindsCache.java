@@ -19,7 +19,7 @@ import org.opengroup.osdu.indexer.cache.interfaces.IChildrenKindsCache;
 import org.opengroup.osdu.indexer.model.indexproperty.ChildrenKinds;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 
 @Component

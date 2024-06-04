@@ -19,7 +19,7 @@ import org.opengroup.osdu.indexer.cache.interfaces.IAugmenterConfigurationCache;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Component
 public class AugmenterConfigurationCache extends AbstractPartitionSafeCache<String, AugmenterConfiguration> {

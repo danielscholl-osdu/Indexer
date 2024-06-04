@@ -29,14 +29,14 @@
     <name>indexer-ibm</name>
     <description>Indexer Service IBM</description>
     <packaging>jar</packaging>
-	
+
 	<properties>
-		<tomcat.embed.core.version>9.0.69</tomcat.embed.core.version>
-        <os-core-lib-ibm.version>0.25.1</os-core-lib-ibm.version>
+        <tomcat.embed.core.version>10.1.18</tomcat.embed.core.version>
+        <os-core-lib-ibm.version>0.26.0-rc8</os-core-lib-ibm.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
         <jackson.version>2.13.4</jackson.version>
     </properties>
-	
+
 	<profiles>
 		<profile>
 			<id>local</id>
@@ -49,10 +49,10 @@
 			</properties>
 		</profile>
 	</profiles>
-	
+
      <dependencies>
 
-        <!-- OSDU core service dependencies -->        
+        <!-- OSDU core service dependencies -->
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
             <artifactId>indexer-core</artifactId>
@@ -211,7 +211,7 @@
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-bom</artifactId>
-                <version>5.7.11</version>
+                <version>6.2.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

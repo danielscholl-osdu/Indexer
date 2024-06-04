@@ -20,7 +20,7 @@ import org.opengroup.osdu.indexer.model.GeoJsonObject;
 import org.opengroup.osdu.indexer.model.geojson.*;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 

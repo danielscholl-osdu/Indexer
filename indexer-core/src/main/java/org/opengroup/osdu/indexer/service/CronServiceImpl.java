@@ -25,7 +25,7 @@ import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

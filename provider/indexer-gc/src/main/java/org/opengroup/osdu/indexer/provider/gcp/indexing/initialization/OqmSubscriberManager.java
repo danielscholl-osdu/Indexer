@@ -17,7 +17,7 @@
 
 package org.opengroup.osdu.indexer.provider.gcp.indexing.initialization;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.http.AppException;

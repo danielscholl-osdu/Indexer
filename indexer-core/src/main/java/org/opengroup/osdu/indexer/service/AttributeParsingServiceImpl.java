@@ -30,7 +30,7 @@ import org.opengroup.osdu.indexer.util.parser.StringParser;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;

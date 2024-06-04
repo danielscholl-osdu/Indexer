@@ -18,7 +18,7 @@
 package org.opengroup.osdu.indexer.provider.gcp.common.cache;
 
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.core.common.provider.interfaces.IAttributesCache;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;

@@ -28,7 +28,7 @@ import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.net.URISyntaxException;
 
 @Component

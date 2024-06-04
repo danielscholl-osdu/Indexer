@@ -19,7 +19,7 @@ import org.opengroup.osdu.indexer.cache.interfaces.IRecordChangeInfoCache;
 import org.opengroup.osdu.indexer.model.RecordChangeInfo;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Component
 public class RecordChangeInfoCache extends AbstractPartitionSafeCache<String, RecordChangeInfo> {

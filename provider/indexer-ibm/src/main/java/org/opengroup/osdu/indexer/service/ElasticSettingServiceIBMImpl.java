@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Service
 public class ElasticSettingServiceIBMImpl implements IElasticSettingService {
@@ -35,7 +35,7 @@ public class ElasticSettingServiceIBMImpl implements IElasticSettingService {
     @Inject
     private JaxRsDpsLog logger;
     @Inject
-    private javax.inject.Provider<ITenantInfoService> tenantInfoServiceProvider;
+    private jakarta.inject.Provider<ITenantInfoService> tenantInfoServiceProvider;
     @Inject
     private IndexerConfigurationProperties configurationProperties;
 
