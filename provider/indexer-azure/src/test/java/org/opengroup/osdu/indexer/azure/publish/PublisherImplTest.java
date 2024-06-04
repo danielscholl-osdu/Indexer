@@ -13,8 +13,8 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.springframework.test.util.ReflectionTestUtils;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 

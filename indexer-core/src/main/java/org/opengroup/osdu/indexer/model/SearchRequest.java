@@ -19,7 +19,7 @@ import lombok.Data;
 import lombok.ToString;
 import org.opengroup.osdu.core.common.model.search.SortQuery;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 @Data

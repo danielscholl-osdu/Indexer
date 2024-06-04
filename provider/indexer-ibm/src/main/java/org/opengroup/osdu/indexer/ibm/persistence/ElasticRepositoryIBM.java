@@ -3,7 +3,7 @@
 
 package org.opengroup.osdu.indexer.ibm.persistence;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;

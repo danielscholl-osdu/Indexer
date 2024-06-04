@@ -22,7 +22,7 @@ import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION
 import com.google.common.base.Strings;
 import java.util.Map;
 import java.util.logging.Level;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import lombok.extern.java.Log;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.auth.TokenProvider;

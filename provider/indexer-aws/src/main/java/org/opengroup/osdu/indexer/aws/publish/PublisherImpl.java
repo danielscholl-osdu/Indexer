@@ -29,7 +29,7 @@ import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Component
 public class PublisherImpl implements IPublisher {

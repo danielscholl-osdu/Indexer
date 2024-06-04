@@ -17,7 +17,7 @@
 
 package org.opengroup.osdu.indexer.provider.gcp.indexing.initialization;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.auth.TokenProvider;

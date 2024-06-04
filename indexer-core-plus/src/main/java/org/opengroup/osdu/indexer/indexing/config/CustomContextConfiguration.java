@@ -18,7 +18,7 @@
 package org.opengroup.osdu.indexer.indexing.config;
 
 import java.util.Arrays;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.indexer.IndexerApplication;

@@ -37,7 +37,7 @@ import org.opengroup.osdu.indexer.model.IndexAliasesResult;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;

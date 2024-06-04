@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.opengroup.osdu.indexer.model.geojson.*;
 import org.opengroup.osdu.indexer.model.geojson.jackson.GeoJsonConstants;
 import org.springframework.stereotype.Component;
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 
 @Component

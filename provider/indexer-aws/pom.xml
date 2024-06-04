@@ -27,14 +27,13 @@
   <description>Indexer service on AWS</description>
   <packaging>jar</packaging>
   <version>0.27.0-SNAPSHOT</version>
+  
   <properties>
       <aws.version>1.12.261</aws.version>
       <deployment.environment>dev</deployment.environment>
       <netty.version>4.1.51.Final</netty.version>
-      <jackson-databind.version>2.13.5</jackson-databind.version>
-      <jackson.version>2.13.2</jackson.version>
       <mockito.version>3.11.2</mockito.version>
-      <spring-security-core.version>5.8.9</spring-security-core.version>
+      <spring-security-core.version>6.2.4</spring-security-core.version>
   </properties>
 
   <dependencyManagement>
@@ -47,16 +46,9 @@
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>com.fasterxml.jackson</groupId>
-        <artifactId>jackson-bom</artifactId>
-        <version>${jackson.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-core</artifactId>
-        <version>5.8.2</version>
+          <version>6.2.4</version>
     </dependency>
     </dependencies>
   </dependencyManagement>
@@ -65,7 +57,7 @@
     <!-- Internal packages -->
       <dependency>
           <groupId>org.opengroup.osdu</groupId>
-          <artifactId>os-core-common</artifactId>
+          <artifactId>os-core-common-spring6</artifactId>
           <version>${os-core-common.version}</version>
           <exclusions>
               <exclusion>
@@ -82,7 +74,7 @@
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
             <artifactId>os-core-lib-aws</artifactId>
-            <version>0.26.0-rc3</version>
+        <version>0.26.0-spring6-rc1</version>
     </dependency>
 
     <!-- AWS managed packages -->
@@ -155,10 +147,10 @@
       <artifactId>spring-webmvc</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-      <version>1</version>
-      <scope>compile</scope>
+        <groupId>jakarta.inject</groupId>
+        <artifactId>jakarta.inject-api</artifactId>
+        <version>2.0.1</version>
+        <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.elasticsearch</groupId>
@@ -175,17 +167,14 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>${jackson.version}</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>${jackson-databind.version}</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>${jackson.version}</version>
     </dependency>
 
     <!-- Testing packages -->
@@ -268,7 +257,7 @@
                     <argLine>
                         @{argLine} --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
-                        --add-opens java.base/javax.net.ssl=ALL-UNNAMED
+                        --add-opens java.base/jakarta.net.ssl=ALL-UNNAMED
                     </argLine>
                 </configuration>
             </plugin>

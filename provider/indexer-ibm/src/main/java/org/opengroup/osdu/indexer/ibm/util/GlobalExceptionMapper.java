@@ -3,7 +3,7 @@
 
 package org.opengroup.osdu.indexer.ibm.util;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import javassist.NotFoundException;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;

@@ -6,7 +6,7 @@ import org.opengroup.osdu.core.common.model.entitlements.AuthorizationResponse;
 import org.opengroup.osdu.core.common.provider.interfaces.IAuthorizationService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Log
 @Component("authorizationFilter")

@@ -18,7 +18,7 @@ package org.opengroup.osdu.indexer.cache.partitionsafe;
 import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public abstract class AbstractPartitionSafeCache<K, V> implements ICache<K, V> {
     @Inject

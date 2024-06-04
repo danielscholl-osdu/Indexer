@@ -19,7 +19,7 @@ import org.opengroup.osdu.indexer.cache.interfaces.IParentChildRelationshipSpecs
 import org.opengroup.osdu.indexer.model.indexproperty.ParentChildRelationshipSpecs;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Component
 public class ChildRelationshipSpecsCache extends AbstractPartitionSafeCache<String, ParentChildRelationshipSpecs> {

@@ -36,7 +36,7 @@ package org.opengroup.osdu.indexer.ibm.service;
 //import org.springframework.context.annotation.Lazy;
 //import org.springframework.test.context.junit4.SpringRunner;
 //
-//import javax.inject.Inject;
+//import jakarta.inject.Inject;
 //import java.io.IOException;
 //import java.lang.reflect.Type;
 //import java.util.*;

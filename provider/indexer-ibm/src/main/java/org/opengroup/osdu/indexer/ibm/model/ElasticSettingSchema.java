@@ -3,7 +3,7 @@
 
 package org.opengroup.osdu.indexer.ibm.model;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

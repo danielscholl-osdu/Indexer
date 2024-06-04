@@ -4,7 +4,7 @@ import org.opengroup.osdu.indexer.schema.converter.interfaces.IVirtualProperties
 import org.opengroup.osdu.indexer.schema.converter.tags.VirtualProperties;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Component
 public class VirtualPropertiesSchemaCache extends AbstractPartitionSafeCache<String, VirtualProperties> {

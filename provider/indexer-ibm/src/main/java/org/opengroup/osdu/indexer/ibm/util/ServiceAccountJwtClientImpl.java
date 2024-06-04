@@ -2,7 +2,7 @@
 /* (c) Copyright IBM Corp. 2020. All Rights Reserved.*/
 package org.opengroup.osdu.indexer.ibm.util;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import com.google.common.base.Strings;
 import org.apache.http.HttpStatus;

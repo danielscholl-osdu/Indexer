@@ -20,7 +20,7 @@ import org.opengroup.osdu.core.common.logging.audit.AuditPayload;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 
 @Component

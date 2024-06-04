@@ -14,7 +14,7 @@
 
 package org.opengroup.osdu.indexer.error;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import javassist.NotFoundException;
 import org.apache.commons.lang3.StringUtils;

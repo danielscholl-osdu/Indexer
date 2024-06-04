@@ -30,7 +30,7 @@ import org.mockito.stubbing.Answer;
 import org.opengroup.osdu.indexer.model.geojson.*;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;

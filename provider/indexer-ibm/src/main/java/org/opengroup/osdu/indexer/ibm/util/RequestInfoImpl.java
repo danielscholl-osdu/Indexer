@@ -7,7 +7,7 @@ import static org.opengroup.osdu.core.common.model.http.DpsHeaders.AUTHORIZATION
 
 import java.util.Map;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.model.http.AppException;

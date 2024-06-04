@@ -20,7 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import com.google.api.client.util.Strings;
 import com.google.gson.Gson;

@@ -30,7 +30,7 @@ import org.springframework.web.context.annotation.RequestScope;
 
 import java.net.URISyntaxException;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.opengroup.osdu.core.common.Constants.REINDEX_RELATIVE_URL;
 import static org.opengroup.osdu.core.common.Constants.WORKER_RELATIVE_URL;
