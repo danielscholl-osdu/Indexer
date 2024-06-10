@@ -12,7 +12,7 @@
         <java.version>17</java.version>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
-        <os-core-common.version>0.26.0-rc2</os-core-common.version>
+        <os-core-common-spring6.version>0.26.0-rc2</os-core-common-spring6.version>
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
         <common-codec.version>1.14</common-codec.version>
         <elasticsearch.version>7.8.1</elasticsearch.version>
@@ -101,7 +101,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>os-core-common-spring6</artifactId>
-            <version>${os-core-common.version}</version>
+            <version>${os-core-common-spring6.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

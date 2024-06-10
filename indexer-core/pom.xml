@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>org.opengroup.osdu</groupId>
 			<artifactId>os-core-common-spring6</artifactId>
-			<version>${os-core-common.version}</version>
+			<version>${os-core-common-spring6.version}</version>
 		</dependency>
 
 		<!-- spring boot dependencies -->
@@ -101,7 +101,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>27.1-jre</version>
+			<version>33.2.1-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -190,7 +190,7 @@
 		<dependency>
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-utils</artifactId>
-			<version>3.0.16</version>
+			<version>4.0.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

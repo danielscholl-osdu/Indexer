@@ -15,25 +15,13 @@ Apache-1.1
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Apache Maven Invoker (from https://repo1.maven.org/maven2/org/apache/maven/shared/maven-invoker)
-- Apache Maven Reporting API (from https://repo1.maven.org/maven2/org/apache/maven/reporting/maven-reporting-api)
-- Apache Maven Reporting Implementation (from https://repo1.maven.org/maven2/org/apache/maven/reporting/maven-reporting-impl)
-- Apache Maven Wagon :: API (from https://repo1.maven.org/maven2/org/apache/maven/wagon/wagon-provider-api)
 - AspectJ Weaver (from http://www.aspectj.org, https://www.eclipse.org/aspectj/)
-- Cobertura (from http://cobertura.sourceforge.net)
-- Default Plexus Container (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-container-default)
-- Doxia :: APT Module (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-module-apt)
-- Doxia :: Core (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-core)
-- Doxia :: FML Module (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-module-fml)
-- Doxia :: Sink API (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-sink-api)
-- Doxia :: XDoc Module (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-module-xdoc)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Plexus Common Utilities (from http://plexus.codehaus.org/plexus-utils, https://codehaus-plexus.github.io/plexus-utils/, https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils)
 - Proton-J (from https://repo1.maven.org/maven2/org/apache/qpid/proton-j)
-- oro (from https://repo1.maven.org/maven2/oro/oro)
 
 ========================================================================
 Apache-2.0
@@ -354,9 +342,6 @@ The following software have components provided under the terms of this license:
 - AWS SDK for Java - Models (from https://aws.amazon.com/sdkforjava)
 - Adapter: RxJava (from https://github.com/square/retrofit)
 - Animal Sniffer Annotations (from https://repo1.maven.org/maven2/org/codehaus/mojo/animal-sniffer-annotations)
-- Apache Ant + JUnit (from http://ant.apache.org/, https://ant.apache.org/)
-- Apache Ant Core
-- Apache Ant Launcher (from https://ant.apache.org/)
 - Apache Commons BeanUtils (from http://commons.apache.org/proper/commons-beanutils/, https://commons.apache.org/proper/commons-beanutils/, https://repo1.maven.org/maven2/commons-beanutils/commons-beanutils)
 - Apache Commons Codec (from http://commons.apache.org/proper/commons-codec/, https://commons.apache.org/proper/commons-codec/)
 - Apache Commons IO (from http://commons.apache.org/io/, https://commons.apache.org/proper/commons-io/, https://repo1.maven.org/maven2/commons-io/commons-io)
@@ -381,11 +366,6 @@ The following software have components provided under the terms of this license:
 - Apache Lucene (module: misc) (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-misc)
 - Apache Lucene (module: spatial-extras) (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-spatial-extras)
 - Apache Lucene (module: suggest) (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-suggest)
-- Apache Maven Invoker (from https://repo1.maven.org/maven2/org/apache/maven/shared/maven-invoker)
-- Apache Maven Reporting API (from https://repo1.maven.org/maven2/org/apache/maven/reporting/maven-reporting-api)
-- Apache Maven Reporting Implementation (from https://repo1.maven.org/maven2/org/apache/maven/reporting/maven-reporting-impl)
-- Apache Maven Wagon :: API (from https://repo1.maven.org/maven2/org/apache/maven/wagon/wagon-provider-api)
-- Apache Velocity (from http://velocity.apache.org/engine/devel/, http://velocity.apache.org/engine/releases/velocity-1.6.1/, http://velocity.apache.org/engine/releases/velocity-1.6.2/)
 - AssertJ Core (from https://assertj.github.io/doc/#assertj-core)
 - Asynchronous Http Client (from https://repo1.maven.org/maven2/org/asynchttpclient/async-http-client)
 - Asynchronous Http Client Netty Utils (from https://repo1.maven.org/maven2/org/asynchttpclient/async-http-client-netty-utils)
@@ -399,22 +379,10 @@ The following software have components provided under the terms of this license:
 - ClassMate (from http://github.com/cowtowncoder/java-classmate)
 - Cloud Key Management Service (KMS) API v1-rev20240502-2.0.0 (from https://repo1.maven.org/maven2/com/google/apis/google-api-services-cloudkms)
 - CloudWatch Metrics for AWS Java SDK (from https://aws.amazon.com/sdkforjava)
-- Cobertura (from http://cobertura.sourceforge.net)
-- Cobertura Limited Runtime (from http://cobertura.sourceforge.net)
 - Collections (from https://repo1.maven.org/maven2/commons-collections/commons-collections)
 - Commons Digester (from http://commons.apache.org/digester/)
-- Commons Lang (from http://commons.apache.org/lang/)
 - Converter: Jackson (from https://github.com/square/retrofit, https://repo1.maven.org/maven2/com/squareup/retrofit2/converter-jackson)
 - Core functionality for the Reactor Netty library (from https://github.com/reactor/reactor-netty)
-- Default Plexus Container (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-container-default)
-- Doxia :: APT Module (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-module-apt)
-- Doxia :: Core (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-core)
-- Doxia :: FML Module (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-module-fml)
-- Doxia :: Sink API (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-sink-api)
-- Doxia :: XDoc Module (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-module-xdoc)
-- Doxia :: XHTML Module (from https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-module-xhtml)
-- Doxia Sitetools :: Decoration Model (from http://maven.apache.org/doxia/doxia-sitetools/doxia-decoration-model/, https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-decoration-model)
-- Doxia Sitetools :: Site Renderer (from http://maven.apache.org/doxia/doxia-sitetools/doxia-site-renderer/, https://repo1.maven.org/maven2/org/apache/maven/doxia/doxia-site-renderer)
 - Elastic JNA Distribution (from https://github.com/java-native-access/jna)
 - FindBugs-jsr305 (from http://findbugs.sourceforge.net/)
 - GAX (Google Api eXtensions) for Java (Core) (from https://github.com/googleapis, https://github.com/googleapis/gax-java, https://repo1.maven.org/maven2/com/google/api/gax)
@@ -448,7 +416,6 @@ The following software have components provided under the terms of this license:
 - JBoss Marshalling API (from https://repo1.maven.org/maven2/org/jboss/marshalling/jboss-marshalling)
 - JBoss Marshalling River (from https://repo1.maven.org/maven2/org/jboss/marshalling/jboss-marshalling-river)
 - JCIP Annotations under Apache License (from http://stephenc.github.com/jcip-annotations)
-- JDOM
 - JJWT :: Legacy Transitive Dependency Jar (from https://repo1.maven.org/maven2/io/jsonwebtoken/jjwt)
 - JMES Path Query library (from https://aws.amazon.com/sdkforjava)
 - JOpt Simple (from http://jopt-simple.github.io/jopt-simple, http://pholser.github.io/jopt-simple)
@@ -497,15 +464,6 @@ The following software have components provided under the terms of this license:
 - Lucene QueryParsers (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-queryparser)
 - Lucene Sandbox (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-sandbox)
 - Lucene Spatial 3D (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-spatial3d)
-- Maven Artifact (from https://repo1.maven.org/maven2/org/apache/maven/maven-artifact)
-- Maven Artifact Manager (from https://repo1.maven.org/maven2/org/apache/maven/maven-artifact-manager)
-- Maven Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-model)
-- Maven Plugin API (from https://repo1.maven.org/maven2/org/apache/maven/maven-plugin-api)
-- Maven Plugin Registry Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-plugin-registry)
-- Maven Profile Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-profile)
-- Maven Project (from https://repo1.maven.org/maven2/org/apache/maven/maven-project)
-- Maven Repository Metadata Model (from https://repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata)
-- Maven Settings (from https://repo1.maven.org/maven2/org/apache/maven/maven-settings)
 - Metrics Core (from https://repo1.maven.org/maven2/io/dropwizard/metrics/metrics-core)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
@@ -516,7 +474,6 @@ The following software have components provided under the terms of this license:
 - Microsoft Azure SDK for SQL API of Azure Cosmos DB Service (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure client library for Identity (from https://github.com/Azure/azure-sdk-for-java)
 - Mockito (from http://mockito.org, https://github.com/mockito/mockito)
-- Mojo's Maven plugin for Cobertura (from http://mojo.codehaus.org/cobertura-maven-plugin/)
 - MongoDB Driver (from https://www.mongodb.com/)
 - MongoDB Java Driver (from http://mongodb.org/, http://www.mongodb.org, https://www.mongodb.com/)
 - Netty Reactive Streams Implementation (from https://repo1.maven.org/maven2/com/typesafe/netty/netty-reactive-streams)
@@ -554,8 +511,6 @@ The following software have components provided under the terms of this license:
 - OpenTelemetry Java (from https://github.com/open-telemetry/opentelemetry-java)
 - OpenTelemetry Semantic Conventions Java (from https://github.com/open-telemetry/semantic-conventions-java)
 - Plexus Common Utilities (from http://plexus.codehaus.org/plexus-utils, https://codehaus-plexus.github.io/plexus-utils/, https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils)
-- Plexus I18N Component (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-i18n)
-- Plexus Velocity Component (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-velocity)
 - Prometheus Java Simpleclient (from <https://repo1.maven.org/maven2/io/prometheus/simpleclient>, https://repo1.maven.org/maven2/io/prometheus/simpleclient)
 - Prometheus Java Simpleclient Common (from <https://repo1.maven.org/maven2/io/prometheus/simpleclient_common>, https://repo1.maven.org/maven2/io/prometheus/simpleclient_common)
 - Prometheus Java Span Context Supplier - Common (from <https://repo1.maven.org/maven2/io/prometheus/simpleclient_tracer_common>, https://repo1.maven.org/maven2/io/prometheus/simpleclient_tracer_common)
@@ -570,7 +525,6 @@ The following software have components provided under the terms of this license:
 - Retrofit (from https://github.com/square/retrofit, https://repo1.maven.org/maven2/com/squareup/retrofit2/retrofit)
 - RxJava (from https://github.com/ReactiveX/RxJava)
 - Servlet API (from https://repo1.maven.org/maven2/org/mortbay/jetty/servlet-api)
-- Servlet Specification 2.5 API (from http://jetty.mortbay.org, https://repo1.maven.org/maven2/org/mortbay/jetty/servlet-api-2.5)
 - SnakeYAML (from http://code.google.com/p/snakeyaml/, http://www.snakeyaml.org, https://bitbucket.org/snakeyaml/snakeyaml)
 - Spatial4J (from https://projects.eclipse.org/projects/locationtech.spatial4j)
 - Spring AOP (from http://www.springframework.org, https://github.com/spring-projects/spring-framework, https://repo1.maven.org/maven2/org/springframework/spring-aop)
@@ -769,6 +723,7 @@ The following software have components provided under the terms of this license:
 - HK2 core module (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-core)
 - Hamcrest (from http://hamcrest.org/JavaHamcrest/)
 - Hamcrest Core (from http://hamcrest.org/, http://hamcrest.org/JavaHamcrest/, https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core)
+- Jackson module: Afterburner (from http://wiki.fasterxml.com/JacksonHome, https://github.com/FasterXML/jackson-modules-base)
 - Jakarta Activation API (from https://github.com/eclipse-ee4j/jaf, https://github.com/jakartaee/jaf-api, https://repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api)
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
 - Jakarta Messaging API (from https://projects.eclipse.org/projects/ee4j.jms)
@@ -798,7 +753,6 @@ The following software have components provided under the terms of this license:
 - Spring Core (from http://www.springframework.org, https://github.com/spring-projects/spring-framework, https://repo1.maven.org/maven2/org/springframework/spring-core)
 - ThreeTen backport (from https://github.com/ThreeTen/threetenbp, https://www.threeten.org/threetenbp)
 - aopalliance-repackaged (from https://repo1.maven.org/maven2/org/glassfish/hk2/external/aopalliance-repackaged)
-- jaxen (from http://jaxen.codehaus.org/, https://repo1.maven.org/maven2/jaxen/jaxen)
 - jersey-container-servlet (from https://repo1.maven.org/maven2/org/glassfish/jersey/containers/jersey-container-servlet)
 - jersey-container-servlet-core (from https://repo1.maven.org/maven2/org/glassfish/jersey/containers/jersey-container-servlet-core)
 - jersey-core-client (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-client)
@@ -811,13 +765,6 @@ The following software have components provided under the terms of this license:
 - jersey-spring6 (from https://repo1.maven.org/maven2/org/glassfish/jersey/ext/jersey-spring6)
 - jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 - org.locationtech.jts.io:jts-io-common (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
-
-========================================================================
-BSL-1.0
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Jackson-core (from http://wiki.fasterxml.com/JacksonHome, https://github.com/FasterXML/jackson-core)
 
 ========================================================================
 Beerware
@@ -887,7 +834,6 @@ The following software have components provided under the terms of this license:
 
 - Apache Log4j Core (from https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core)
 - JavaBeans Activation Framework (from <http://java.sun.com/javase/technologies/desktop/javabeans/jaf/index.jsp>, http://java.sun.com/javase/technologies/desktop/javabeans/jaf/index.jsp, https://repo1.maven.org/maven2/com/sun/activation/javax.activation)
-- Servlet Specification 2.5 API (from http://jetty.mortbay.org, https://repo1.maven.org/maven2/org/mortbay/jetty/servlet-api-2.5)
 - javax.annotation API (from http://jcp.org/en/jsr/detail?id=250)
 
 ========================================================================
@@ -975,27 +921,12 @@ The following software have components provided under the terms of this license:
 - jersey-spring6 (from https://repo1.maven.org/maven2/org/glassfish/jersey/ext/jersey-spring6)
 
 ========================================================================
-GPL-1.0-or-later
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Cobertura (from http://cobertura.sourceforge.net)
-
-========================================================================
 GPL-2.0-only
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Cobertura (from http://cobertura.sourceforge.net)
 - javax.annotation API (from http://jcp.org/en/jsr/detail?id=250)
 - tomcat-embed-core (from http://tomcat.apache.org/)
-
-========================================================================
-GPL-2.0-or-later
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Cobertura (from http://cobertura.sourceforge.net)
 
 ========================================================================
 GPL-2.0-with-classpath-exception
@@ -1031,13 +962,6 @@ The following software have components provided under the terms of this license:
 - tomcat-embed-core (from http://tomcat.apache.org/)
 
 ========================================================================
-GPL-3.0-or-later
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Cobertura (from http://cobertura.sourceforge.net)
-
-========================================================================
 IPA
 ========================================================================
 The following software have components provided under the terms of this license:
@@ -1052,18 +976,10 @@ The following software have components provided under the terms of this license:
 - Spring Security - Core (from http://spring.io/spring-security, https://repo1.maven.org/maven2/org/springframework/security/spring-security-core, https://spring.io/projects/spring-security, https://spring.io/spring-security)
 
 ========================================================================
-LGPL-2.0-only
-========================================================================
-The following software have components provided under the terms of this license:
-
-- java-getopt (from https://repo1.maven.org/maven2/urbanophile/java-getopt)
-
-========================================================================
 LGPL-2.1-only
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Cobertura (from http://cobertura.sourceforge.net)
 - Logback Classic Module (from http://logback.qos.ch, https://repo1.maven.org/maven2/ch/qos/logback/logback-classic)
 - Logback Contrib :: JSON :: Classic (from https://repo1.maven.org/maven2/ch/qos/logback/contrib/logback-json-classic)
 - Logback Contrib :: JSON :: Core (from https://repo1.maven.org/maven2/ch/qos/logback/contrib/logback-json-core)
@@ -1101,7 +1017,6 @@ The following software have components provided under the terms of this license:
 - Azure Java Client Runtime for AutoRest (from https://github.com/Azure/autorest-clientruntime-for-java)
 - Bouncy Castle Provider (from http://www.bouncycastle.org/java.html, https://www.bouncycastle.org/java.html)
 - Checker Qual (from https://checkerframework.org)
-- Default Plexus Container (from https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-container-default)
 - JOpt Simple (from http://jopt-simple.github.io/jopt-simple, http://pholser.github.io/jopt-simple)
 - JUL to SLF4J bridge (from http://www.slf4j.org)
 - Jackson-core (from http://wiki.fasterxml.com/JacksonHome, https://github.com/FasterXML/jackson-core)
@@ -1184,7 +1099,6 @@ MPL-1.1
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Cobertura (from http://cobertura.sourceforge.net)
 - Javassist (from http://www.javassist.org/, https://www.javassist.org/)
 
 ========================================================================
@@ -1202,18 +1116,10 @@ The following software have components provided under the terms of this license:
 - Jetty Server (from http://jetty.mortbay.org, https://repo1.maven.org/maven2/org/mortbay/jetty/jetty)
 
 ========================================================================
-Plexus
-========================================================================
-The following software have components provided under the terms of this license:
-
-- classworlds (from http://classworlds.codehaus.org/, https://repo1.maven.org/maven2/classworlds/classworlds)
-
-========================================================================
 SAX-PD
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Apache Ant Core
 - xml-apis (from https://repo1.maven.org/maven2/xml-apis/xml-apis)
 
 ========================================================================
@@ -1229,7 +1135,6 @@ W3C
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Apache Ant Core
 - jersey-container-servlet (from https://repo1.maven.org/maven2/org/glassfish/jersey/containers/jersey-container-servlet)
 - jersey-container-servlet-core (from https://repo1.maven.org/maven2/org/glassfish/jersey/containers/jersey-container-servlet-core)
 - jersey-core-client (from https://repo1.maven.org/maven2/org/glassfish/jersey/core/jersey-client)
@@ -1294,15 +1199,7 @@ gpl-2.0-classpath
 The following software have components provided under the terms of this license:
 
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
-- Jakarta Validation API (from https://beanvalidation.org)
 - ServiceLocator Default Implementation (from https://repo1.maven.org/maven2/org/glassfish/hk2/hk2-locator)
-
-========================================================================
-proprietary-license
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Servlet Specification 2.5 API (from http://jetty.mortbay.org, https://repo1.maven.org/maven2/org/mortbay/jetty/servlet-api-2.5)
 
 ========================================================================
 public-domain
@@ -1310,6 +1207,7 @@ public-domain
 The following software have components provided under the terms of this license:
 
 - HdrHistogram (from http://hdrhistogram.github.io/HdrHistogram/)
+- JBoss Logging 3 (from http://www.jboss.org)
 - JSON in Java (from https://github.com/douglascrockford/JSON-java)
 - jersey-container-servlet (from https://repo1.maven.org/maven2/org/glassfish/jersey/containers/jersey-container-servlet)
 - jersey-container-servlet-core (from https://repo1.maven.org/maven2/org/glassfish/jersey/containers/jersey-container-servlet-core)
@@ -1327,10 +1225,3 @@ The following software have components provided under the terms of this license:
 
 - System Rules (from http://stefanbirkner.github.com/system-rules/, http://stefanbirkner.github.io/system-rules/)
 - xml-apis (from https://repo1.maven.org/maven2/xml-apis/xml-apis)
-
-========================================================================
-xpp
-========================================================================
-The following software have components provided under the terms of this license:
-
-- Plexus Common Utilities (from http://plexus.codehaus.org/plexus-utils, https://codehaus-plexus.github.io/plexus-utils/, https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils)
