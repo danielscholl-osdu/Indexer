@@ -37,49 +37,37 @@
         <azure.appservice.plan />
         <azure.appservice.appname />
         <azure.appservice.subscription />
-        <log4j.version>2.22.0</log4j.version>
         <nimbus-jose-jwt.version>8.20.2</nimbus-jose-jwt.version>
         <indexer-core.version>0.27.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
-        <osdu.corelibazure.version>0.26.0-rc7</osdu.corelibazure.version>
+        <core-lib-azure-spring6.version>0.26.0-rc7</core-lib-azure-spring6.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
         <java-jwt.version>3.8.1</java-jwt.version>
         <mockito.version>3.11.2</mockito.version>
-        <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
-        <spring-security-oauth2.version>2.3.6.RELEASE</spring-security-oauth2.version>
-        <netty.version>4.1.101.Final</netty.version>
         <reactor-netty.version>1.1.14</reactor-netty.version>
         <reactor-core.version>3.4.24</reactor-core.version>
         <oauth2-oidc-sdk.version>6.5</oauth2-oidc-sdk.version>
         <azure-core.version>1.46.0</azure-core.version>
         <azure-security-keyvault-keys.version>4.7.3</azure-security-keyvault-keys.version>
         <azure-security-keyvault-secrets.version>4.7.3</azure-security-keyvault-secrets.version>
-        <guava.version>32.1.2-jre</guava.version>
         <jackson-bom.version>2.14.1</jackson-bom.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- netty-bom dependency to be declared before spring-boot-dependencies,
-            to pull all netty-transitive dependencies with same version -->
             <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-bom</artifactId>
-                <version>${netty.version}</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.opengroup.osdu</groupId>
                 <artifactId>core-lib-azure-spring6</artifactId>
-                <version>${osdu.corelibazure.version}</version>
+                <version>${core-lib-azure-spring6.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.opengroup.osdu</groupId>
-                <artifactId>os-core-common-spring6</artifactId>
-                <version>${os-core-common.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -93,27 +81,6 @@
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-jul</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${log4j.version}</version>
         </dependency>
 
         <dependency>
@@ -149,18 +116,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.springframework.security.oauth</groupId>
-            <artifactId>spring-security-oauth2</artifactId>
-            <version>${spring-security-oauth2.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.codehaus.jackson</groupId>
-                    <artifactId>jackson-mapper-asl</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-jwt</artifactId>
             <version>${spring-security-jwt.version}</version>
@@ -181,7 +136,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-lib-azure-spring6</artifactId>
-            <version>${osdu.corelibazure.version}</version>
+            <version>${core-lib-azure-spring6.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>azure-security-keyvault-keys</artifactId>
@@ -242,11 +197,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-cbor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
         <!-- Resilience4j Dependencies-->
         <dependency>
@@ -310,30 +260,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>cobertura-maven-plugin</artifactId>
-            <version>${cobertura-maven-plugin.version}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.sun</groupId>
-                    <artifactId>tools</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.maven</groupId>
-                    <artifactId>maven-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.26</version>
@@ -348,7 +274,7 @@
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-utils</artifactId>
-            <version>3.0.16</version>
+            <version>4.0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -375,10 +301,7 @@
             <artifactId>oauth2-oidc-sdk</artifactId>
             <version>${oauth2-oidc-sdk.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-webmvc</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-core</artifactId>
