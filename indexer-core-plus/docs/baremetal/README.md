@@ -31,20 +31,22 @@ Must have:
 
 Defined in default application property file but possible to override:
 
-| name                               | value                                                                     | description                                                               | sensitive? | source                              |
-|------------------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------|------------|-------------------------------------|
-| `LOG_PREFIX`                       | `service`                                                                 | Logging prefix                                                            | no         | -                                   |
-| `LOG_LEVEL`                        | `****`                                                                    | Logging level                                                             | no         | -                                   |
-| `SECURITY_HTTPS_CERTIFICATE_TRUST` | ex `false`                                                                | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false      | output of infrastructure deployment |
-| `REDIS_SEARCH_HOST`                | ex `127.0.0.1`                                                            | Redis host                                                                | no         |                                     |
-| `REDIS_SEARCH_PORT`                | ex `6379`                                                                 | Redis host port                                                           | no         |                                     |
-| `REDIS_SEARCH_PASSWORD`            | ex `*****`                                                                | Redis host password                                                       | yes        |                                     |
-| `REDIS_SEARCH_WITH_SSL`            | ex `true` or `false`                                                      | Redis host ssl config                                                     | no         |                                     |
-| `REDIS_SEARCH_EXPIRATION`          | ex `30`                                                                   | Redis cache expiration in seconds                                         | no         |                                     |
-| `PARTITION_HOST`                   | ex `https://partition.com`                                                | Partition host                                                            | no         | output of infrastructure deployment |
-| `ENTITLEMENTS_HOST`                | ex `https://entitlements.com`                                             | Entitlements host                                                         | no         | output of infrastructure deployment |
-| `STORAGE_HOST`                     | ex `https://storage.com`                                                  | Storage host                                                              | no         | output of infrastructure deployment |
-| `SCHEMA_BASE_HOST`                 | ex `https://schema.com`                                                   | Schema service host                                                       | no         | output of infrastructure deployment |
+| name                               | value                               | description                                                               | sensitive? | source                              |
+|------------------------------------|-------------------------------------|---------------------------------------------------------------------------|------------|-------------------------------------|
+| `LOG_PREFIX`                       | `service`                           | Logging prefix                                                            | no         | -                                   |
+| `LOG_LEVEL`                        | `****`                              | Logging level                                                             | no         | -                                   |
+| `SECURITY_HTTPS_CERTIFICATE_TRUST` | ex `false`                          | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true' | false      | output of infrastructure deployment |
+| `REDIS_SEARCH_HOST`                | ex `127.0.0.1`                      | Redis host                                                                | no         |                                     |
+| `REDIS_SEARCH_PORT`                | ex `6379`                           | Redis host port                                                           | no         |                                     |
+| `REDIS_SEARCH_PASSWORD`            | ex `*****`                          | Redis host password                                                       | yes        |                                     |
+| `REDIS_SEARCH_WITH_SSL`            | ex `true` or `false`                | Redis host ssl config                                                     | no         |                                     |
+| `REDIS_SEARCH_EXPIRATION`          | ex `30`                             | Redis cache expiration in seconds                                         | no         |                                     |
+| `PARTITION_HOST`                   | ex `https://partition.com`          | Partition host                                                            | no         | output of infrastructure deployment |
+| `ENTITLEMENTS_HOST`                | ex `https://entitlements.com`       | Entitlements host                                                         | no         | output of infrastructure deployment |
+| `STORAGE_HOST`                     | ex `https://storage.com`            | Storage host                                                              | no         | output of infrastructure deployment |
+| `SCHEMA_BASE_HOST`                 | ex `https://schema.com`             | Schema service host                                                       | no         | output of infrastructure deployment |
+| `MANAGEMENT_ENDPOINTS_WEB_BASE`    | ex `/`                              | Web base for Actuator                                                     | no         | -                                   |
+| `MANAGEMENT_SERVER_PORT`           | ex `8081`                           | Port for Actuator                                                         | no         | -                                   |
 
 These variables define service behavior, and are used to switch between `baremetal` or `gcp` environments, their overriding and usage in mixed mode was not tested.
 Usage of spring profiles is preferred.
