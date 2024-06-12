@@ -20,18 +20,21 @@ import lombok.ToString;
 import lombok.extern.java.Log;
 
 import java.io.IOException;
+import java.time.Instant;
 
 @Log
 @ToString
 public class AWSHTTPClient extends HTTPClient {
 
     private static String token = null;
+    private static Instant acquiredTime = null;
 
     @Override
     public synchronized String getAccessToken() {
-        if(token == null) {
+        if (token == null || acquiredTime.isBefore(Instant.now().minusSeconds(15*60))) {
             try {
                 token = "Bearer " + JwtTokenUtil.getAccessToken();
+                acquiredTime = Instant.now();
             } catch (Exception e) {
                 e.printStackTrace();
             }
