@@ -44,6 +44,8 @@ Defined in default application property file but possible to override:
 | `SCHEMA_BASE_HOST`                 | ex `https://schema.com`                  | Schema service host                                                                                                 | no         | output of infrastructure deployment                          |
 | `GOOGLE_APPLICATION_CREDENTIALS`   | ex `/path/to/directory/service-key.json` | Service account credentials, you only need this if running locally                                                  | yes        | <https://console.cloud.google.com/iam-admin/serviceaccounts> |
 | `DEAD_LETTERING_ENABLED`           | ex `true` or `false`                     | Dead lettering configuration validation, if enabled, then service will require configured dead lettering in Pubsub. | no         | <https://console.cloud.google.com/cloudpubsub/topic/list>    |
+| `MANAGEMENT_ENDPOINTS_WEB_BASE`    | ex `/`                                   | Web base for Actuator                                                                                               | no         | -                                                            |
+| `MANAGEMENT_SERVER_PORT`           | ex `8081`                                | Port for Actuator                                                                                                   | no         | -                                                            |
 
 These variables define service behavior, and are used to switch between `Reference` or `Google Cloud` environments, their overriding and usage in mixed mode was not tested.
 Usage of spring profiles is preferred.
