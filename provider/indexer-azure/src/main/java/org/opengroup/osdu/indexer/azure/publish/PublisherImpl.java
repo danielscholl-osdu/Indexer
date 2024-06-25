@@ -15,6 +15,7 @@
 package org.opengroup.osdu.indexer.azure.publish;
 
 
+import com.azure.cosmos.implementation.Strings;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,7 +23,6 @@ import com.google.gson.JsonElement;
 
 import com.microsoft.azure.servicebus.Message;
 import org.opengroup.osdu.azure.servicebus.ITopicClientFactory;
-import org.elasticsearch.common.Strings;
 
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;
@@ -62,7 +62,6 @@ public class PublisherImpl implements IPublisher {
 
     @Override
     public void publishStatusChangedTagsToTopic(DpsHeaders headers, JobStatus indexerBatchStatus) throws Exception {
-
         String tenant = headers.getPartitionId();
         if (Strings.isNullOrEmpty(tenant))
             tenant = headers.getAccountId();

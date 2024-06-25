@@ -14,23 +14,32 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES_FEATURE_NAME;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.elasticsearch.core.bulk.DeleteOperation;
+import co.elastic.clients.elasticsearch.core.bulk.IndexOperation;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import jakarta.inject.Inject;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.apache.http.HttpStatus;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.action.DocWriteRequest;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.rest.RestStatus;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -38,8 +47,15 @@ import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
-import org.opengroup.osdu.core.common.model.indexer.*;
+import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
+import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
+import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.core.common.model.indexer.OperationType;
+import org.opengroup.osdu.core.common.model.indexer.RecordIndexerPayload;
 import org.opengroup.osdu.core.common.model.indexer.RecordIndexerPayload.Record;
+import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
+import org.opengroup.osdu.core.common.model.indexer.RecordStatus;
+import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
@@ -53,25 +69,22 @@ import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingExceptio
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import jakarta.inject.Inject;
-import java.io.IOException;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @Service
 @Primary
 public class IndexerServiceImpl implements IndexerService {
 
-    private static final TimeValue BULK_REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
+    private Time BULK_REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
 
-    private static final List<RestStatus> RETRY_ELASTIC_EXCEPTION = new ArrayList<>(Arrays.asList(RestStatus.TOO_MANY_REQUESTS, RestStatus.BAD_GATEWAY, RestStatus.SERVICE_UNAVAILABLE, RestStatus.FORBIDDEN));
+    private static final List<Integer> RETRY_ELASTIC_EXCEPTION = List.of(
+        HttpStatus.SC_TOO_MANY_REQUESTS,
+        HttpStatus.SC_BAD_GATEWAY,
+        HttpStatus.SC_SERVICE_UNAVAILABLE,
+        HttpStatus.SC_FORBIDDEN
+    );
 
     private static final String MAPPER_PARSING_EXCEPTION_TYPE = "type=mapper_parsing_exception";
 
@@ -80,7 +93,6 @@ public class IndexerServiceImpl implements IndexerService {
     // we index a normalized kind (authority + source + entity type + major version) as a tags attribute for all records
     private static final String NORMALIZATION_KIND_TAG_ATTRIBUTE_NAME = "normalizedKind";
     private static final String VERTICAL_COORDINATE_REFERENCE_SYSTEM_ID = "VerticalCoordinateReferenceSystemID";
-
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0";
 
     @Inject
@@ -206,16 +218,17 @@ public class IndexerServiceImpl implements IndexerService {
     @Override
     public void processSchemaMessages(List<RecordInfo> recordInfos) throws IOException {
         Map<String, OperationType> schemaMsgs = RecordInfo.getSchemaMsgs(recordInfos);
-        if (schemaMsgs != null && !schemaMsgs.isEmpty()) {
-            try (RestHighLevelClient restClient = elasticClientHandler.createRestClient()) {
-                schemaMsgs.entrySet().forEach(msg -> {
-                    try {
-                        processSchemaEvents(restClient, msg);
-                    } catch (IOException | ElasticsearchStatusException e) {
-                        throw new AppException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR.value(), "unable to process schema delete", e.getMessage());
-                    }
-                });
-            }
+        if (!schemaMsgs.isEmpty()) {
+            ElasticsearchClient restClient = elasticClientHandler.createRestClient();
+            schemaMsgs.entrySet().forEach(msg -> {
+                try {
+                    processSchemaEvents(restClient, msg);
+                } catch (IOException | ElasticsearchException e) {
+                    throw new AppException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        "unable to process schema delete", e.getMessage());
+                }
+            });
+
         }
     }
 
@@ -250,7 +263,8 @@ public class IndexerServiceImpl implements IndexerService {
     private void updateSchemaMappingOfRelatedKinds(List<String> configurationIds) {
         List<String> relatedKinds = augmenterConfigurationService.getRelatedKindsOfConfigurations(configurationIds);
         if(!relatedKinds.isEmpty()) {
-            try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+            try{
+                ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
                 for (String kind : relatedKinds) {
                     try {
                         this.schemaService.processSchemaUpsertEvent(restClient, kind);
@@ -259,16 +273,15 @@ public class IndexerServiceImpl implements IndexerService {
                         jaxRsDpsLog.error(String.format("Augmenter: Failed to update schema mapping for kind %s", kind), e);
                     }
                 }
-            }
-            catch(Exception ex) {
+            } catch(Exception ex) {
                 jaxRsDpsLog.error(String.format("Augmenter: Failed to update schema mapping for related kinds of configurations: %s",
                                 String.join(",", configurationIds)), ex);
             }
         }
     }
 
-    private void processSchemaEvents(RestHighLevelClient restClient,
-                                     Map.Entry<String, OperationType> msg) throws IOException, ElasticsearchStatusException {
+    private void processSchemaEvents(ElasticsearchClient restClient, Map.Entry<String, OperationType> msg)
+        throws IOException, ElasticsearchException {
         String kind = msg.getKey();
         String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
 
@@ -513,43 +526,44 @@ public class IndexerServiceImpl implements IndexerService {
         return originalDataMap;
     }
 
-    private List<String> processElasticMappingAndUpsertRecords(RecordIndexerPayload recordIndexerPayload) throws Exception {
+    private List<String> processElasticMappingAndUpsertRecords(RecordIndexerPayload recordIndexerPayload)
+        throws Exception {
         if (recordIndexerPayload.getSchemas() == null || recordIndexerPayload.getSchemas().isEmpty()) {
             return new LinkedList<>();
         }
 
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            // process the schema
-            this.cacheOrCreateElasticMapping(recordIndexerPayload, restClient);
+        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        // process the schema
+        this.cacheOrCreateElasticMapping(recordIndexerPayload, restClient);
 
-            // process the records
-            List<RecordIndexerPayload.Record> records = recordIndexerPayload.getRecords();
-            BulkRequestResult bulkRequestResult = this.upsertRecords(records, restClient);
-            List<String> failedRecordIds = bulkRequestResult.getFailureRecordIds();
+        // process the records
+        List<RecordIndexerPayload.Record> records = recordIndexerPayload.getRecords();
+        BulkRequestResult bulkRequestResult = this.upsertRecords(records, restClient);
+        List<String> failedRecordIds = bulkRequestResult.getFailureRecordIds();
 
-            processRetryUpsertRecords(restClient, records, bulkRequestResult, failedRecordIds);
+        processRetryUpsertRecords(restClient, records, bulkRequestResult, failedRecordIds);
 
-            return failedRecordIds;
-        }
+        return failedRecordIds;
+
     }
 
-    private void processRetryUpsertRecords(RestHighLevelClient restClient, List<Record> records,
+    private void processRetryUpsertRecords(ElasticsearchClient restClient, List<Record> records,
         BulkRequestResult bulkRequestResult, List<String> failedRecordIds) {
         List<String> retryUpsertRecordIds = bulkRequestResult.getRetryUpsertRecordIds();
         if (!retryUpsertRecordIds.isEmpty()) {
             List<Record> retryUpsertRecords = records.stream()
-                .filter(record -> retryUpsertRecordIds.contains(record.getId()))
-                .collect(Collectors.toList());
-            retryUpsertRecords.forEach(record -> {
-                record.setData(Collections.emptyMap());
-                record.setTags(Collections.emptyMap());
+                .filter(retryRecord -> retryUpsertRecordIds.contains(retryRecord.getId()))
+                .toList();
+            retryUpsertRecords.forEach(retryRecord -> {
+                retryRecord.setData(Collections.emptyMap());
+                retryRecord.setTags(Collections.emptyMap());
             });
             bulkRequestResult = upsertRecords(retryUpsertRecords, restClient);
             failedRecordIds.addAll(bulkRequestResult.getFailureRecordIds());
         }
     }
 
-    private void cacheOrCreateElasticMapping(RecordIndexerPayload recordIndexerPayload, RestHighLevelClient restClient) throws Exception {
+    private void cacheOrCreateElasticMapping(RecordIndexerPayload recordIndexerPayload, ElasticsearchClient restClient) throws Exception {
         List<IndexSchema> schemas = recordIndexerPayload.getSchemas();
 
         for (IndexSchema schema : schemas) {
@@ -562,7 +576,7 @@ public class IndexerServiceImpl implements IndexerService {
                 } catch (ElasticsearchMappingException e) {
                     List<Record> schemaRecords = recordIndexerPayload.getRecords()
                         .stream()
-                        .filter(record -> Objects.equals(record.getKind(), schema.getKind()))
+                        .filter(schemaRecord -> Objects.equals(schemaRecord.getKind(), schema.getKind()))
                         .toList();
                     for (Record schemaRecord : schemaRecords) {
                         this.jobStatus.addOrUpdateRecordStatus(schemaRecord.getId(), IndexingStatus.FAIL, e.getStatus(), String.format("Error reconciling index mapping with kind schema from schema-service: %s", e.getMessage()));
@@ -574,56 +588,62 @@ public class IndexerServiceImpl implements IndexerService {
 
             // create index
             Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schema);
-            if (!this.indicesService.createIndex(restClient, index, null, schema.getType(), mapping)) {
+            if (!this.indicesService.createIndex(restClient, index, null, mapping)) {
                 throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error", "Error creating index.", String.format("Failed to get confirmation from elastic server for index: %s", index));
             }
         }
     }
 
-    private BulkRequestResult upsertRecords(List<RecordIndexerPayload.Record> records, RestHighLevelClient restClient) throws AppException {
+    private BulkRequestResult upsertRecords(List<RecordIndexerPayload.Record> records, ElasticsearchClient client) throws AppException {
         if (records == null || records.isEmpty()) return new BulkRequestResult(Collections.emptyList(), Collections.emptyList());
 
-        BulkRequest bulkRequest = new BulkRequest();
-        bulkRequest.timeout(BULK_REQUEST_TIMEOUT);
+        BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+        bulkRequestBuilder.timeout(BULK_REQUEST_TIMEOUT);
 
-        for (RecordIndexerPayload.Record record : records) {
-            if ((record.getData() == null || record.getData().isEmpty()) && !record.skippedDataIndexing()) {
+        for (RecordIndexerPayload.Record payloadRecord : records) {
+            if ((payloadRecord.getData() == null || payloadRecord.getData().isEmpty()) && !payloadRecord.skippedDataIndexing()) {
                 // it will come here when schema is missing
-                // TODO: rollback once we know what is causing the problem
-                jaxRsDpsLog.warning(String.format("data not found for record: %s", record));
+                jaxRsDpsLog.warning(String.format("data not found for record: %s", payloadRecord));
             }
 
-            Map<String, Object> sourceMap = getSourceMap(record);
-            String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKind());
-            IndexRequest indexRequest = new IndexRequest(index).id(record.getId()).source(this.gson.toJson(sourceMap), XContentType.JSON);
-            bulkRequest.add(indexRequest);
+            Map<String, Object> sourceMap = getSourceMap(payloadRecord);
+            String index = this.elasticIndexNameResolver.getIndexNameFromKind(payloadRecord.getKind());
+
+            IndexOperation<Map<String, Object>> indexOperation = new IndexOperation.Builder<Map<String, Object>>()
+                .index(index)
+                .id(payloadRecord.getId())
+                .document(sourceMap)
+                .build();
+
+            bulkRequestBuilder.operations(new BulkOperation.Builder().index(indexOperation).build());
         }
 
-        return processBulkRequest(restClient, bulkRequest);
+        return processBulkRequest(client, bulkRequestBuilder.build());
     }
 
     private List<String> processDeleteRecords(Map<String, List<String>> deleteRecordMap) throws Exception {
-        BulkRequest bulkRequest = new BulkRequest();
-        bulkRequest.timeout(BULK_REQUEST_TIMEOUT);
+        BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+        bulkRequestBuilder.timeout(BULK_REQUEST_TIMEOUT);
+        for (Map.Entry<String, List<String>> deleteRecord : deleteRecordMap.entrySet()) {
 
-        for (Map.Entry<String, List<String>> record : deleteRecordMap.entrySet()) {
+            String index = this.elasticIndexNameResolver.getIndexNameFromKind(deleteRecord.getKey());
 
-            String index = this.elasticIndexNameResolver.getIndexNameFromKind(record.getKey());
-
-            for (String id : record.getValue()) {
-                DeleteRequest deleteRequest = new DeleteRequest(index, id);
-                bulkRequest.add(deleteRequest);
+            for (String id : deleteRecord.getValue()) {
+                DeleteOperation deleteOperation = DeleteOperation.of(builder -> builder.index(index).id(id));
+                bulkRequestBuilder.operations(new BulkOperation.Builder().delete(deleteOperation).build());
             }
         }
 
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            return processBulkRequest(restClient, bulkRequest).getFailureRecordIds();
-        }
+        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        return processBulkRequest(restClient, bulkRequestBuilder.build()).getFailureRecordIds();
     }
 
-    private BulkRequestResult processBulkRequest(RestHighLevelClient restClient, BulkRequest bulkRequest) throws AppException {
+    private BulkRequestResult processBulkRequest(ElasticsearchClient client, BulkRequest bulkRequest) throws AppException {
 
-        if (bulkRequest.numberOfActions() == 0) return new BulkRequestResult(Collections.emptyList(), Collections.emptyList());
+        if (bulkRequest.operations().isEmpty()) {
+            return new BulkRequestResult(Collections.emptyList(), Collections.emptyList());
+        }
+
         List<String> failureRecordIds = new LinkedList<>();
         List<String> retryUpsertRecordIds = new LinkedList<>();
         int failedRequestStatus = 500;
@@ -631,48 +651,59 @@ public class IndexerServiceImpl implements IndexerService {
 
         try {
             long startTime = System.currentTimeMillis();
-            BulkResponse bulkResponse = restClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+            BulkResponse bulkResponse = client.bulk(bulkRequest);
             long stopTime = System.currentTimeMillis();
 
             // log failed bulk requests
             ArrayList<String> bulkFailures = new ArrayList<>();
             int succeededResponses = 0;
             int failedResponses = 0;
+            for (BulkResponseItem bulkItemResponse : bulkResponse.items()) {
+                if (bulkItemResponse.error() != null) {
+                    String failureMessage = String.format("elasticsearch bulk service status: %s | id: %s | message: %s",
+                        bulkItemResponse.status(),
+                        bulkItemResponse.id(),
+                        bulkItemResponse.error().reason());
+                    bulkFailures.add(failureMessage);
+                    this.jobStatus.addOrUpdateRecordStatus(bulkItemResponse.id(), IndexingStatus.FAIL, bulkItemResponse.status(), bulkItemResponse.error().reason());
 
-            for (BulkItemResponse bulkItemResponse : bulkResponse.getItems()) {
-                if (bulkItemResponse.isFailed()) {
-                    BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
-                    bulkFailures.add(String.format("elasticsearch bulk service status: %s | id: %s | message: %s", failure.getStatus(), failure.getId(), failure.getMessage()));
-                    this.jobStatus.addOrUpdateRecordStatus(bulkItemResponse.getId(), IndexingStatus.FAIL, failure.getStatus().getStatus(), bulkItemResponse.getFailureMessage());
-
-                    if (RestStatus.BAD_REQUEST.equals(failure.getStatus()) && failure.getCause() != null && failure.getCause().getMessage().contains(MAPPER_PARSING_EXCEPTION_TYPE)) {
-                        retryUpsertRecordIds.add(bulkItemResponse.getId());
+                    if (bulkItemResponse.status() == HttpStatus.SC_BAD_REQUEST && bulkItemResponse.error().reason().contains(MAPPER_PARSING_EXCEPTION_TYPE)) {
+                        retryUpsertRecordIds.add(bulkItemResponse.id());
                     } else if (canIndexerRetry(bulkItemResponse)) {
-                        failureRecordIds.add(bulkItemResponse.getId());
+                        failureRecordIds.add(bulkItemResponse.id());
 
                         if (failedRequestCause == null) {
-                            failedRequestCause = failure.getCause();
-                            failedRequestStatus = failure.getStatus().getStatus();
+                            failedRequestCause = new Exception(bulkItemResponse.error().reason());
+                            failedRequestStatus = bulkItemResponse.status();
                         }
                     }
 
                     failedResponses++;
                 } else {
                     succeededResponses++;
-                    this.jobStatus.addOrUpdateRecordStatus(bulkItemResponse.getId(), IndexingStatus.SUCCESS, HttpStatus.SC_OK, "Indexed Successfully");
+                    this.jobStatus.addOrUpdateRecordStatus(bulkItemResponse.id(), IndexingStatus.SUCCESS, HttpStatus.SC_OK, "Indexed Successfully");
                 }
             }
-            if (!bulkFailures.isEmpty()) this.jaxRsDpsLog.warning(bulkFailures);
+            if (!bulkFailures.isEmpty()) {
+                this.jaxRsDpsLog.warning(bulkFailures);
+            }
 
-            jaxRsDpsLog.info(String.format("records in elasticsearch service bulk request: %s | successful: %s | failed: %s | time taken for bulk request: %d milliseconds", bulkRequest.numberOfActions(), succeededResponses, failedResponses, stopTime-startTime));
+            jaxRsDpsLog.info(String.format("records in elasticsearch service bulk request: %s | successful: %s | failed: %s | time taken for bulk request: %d milliseconds",
+                bulkRequest.operations().size(), succeededResponses, failedResponses, stopTime - startTime));
 
             // retry entire message if all records are failing
-            if (bulkRequest.numberOfActions() == failureRecordIds.size()) throw new AppException(failedRequestStatus,  "Elastic error", failedRequestCause.getMessage(), failedRequestCause);
+            if (bulkRequest.operations().size() == failureRecordIds.size()) {
+                throw new AppException(
+                    failedRequestStatus,
+                    "Elastic error",
+                    failedRequestCause == null ? "Unknown error" : failedRequestCause.getMessage(),
+                    failedRequestCause);
+            }
         } catch (IOException e) {
             // throw explicit 504 for IOException
             throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, "Elastic error", "Request cannot be completed in specified time.", e);
-        } catch (ElasticsearchStatusException e) {
-            throw new AppException(e.status().getStatus(), "Elastic error", e.getMessage(), e);
+        } catch (ElasticsearchException e) {
+            throw new AppException(e.status(), "Elastic error", e.getMessage(), e);
         } catch (Exception e) {
             if (e instanceof AppException) {
                 throw e;
@@ -682,54 +713,53 @@ public class IndexerServiceImpl implements IndexerService {
         return new BulkRequestResult(failureRecordIds, retryUpsertRecordIds);
     }
 
-    private Map<String, Object> getSourceMap(RecordIndexerPayload.Record record) {
+    private Map<String, Object> getSourceMap(RecordIndexerPayload.Record payloadRecord) {
 
         Map<String, Object> indexerPayload = new HashMap<>();
 
         // get the key and get the corresponding object from the individualRecord object
-        if (record.getData() != null) {
+        if (payloadRecord.getData() != null) {
             Map<String, Object> data = new HashMap<>();
-            for (Map.Entry<String, Object> entry : record.getData().entrySet()) {
+            for (Map.Entry<String, Object> entry : payloadRecord.getData().entrySet()) {
                 data.put(entry.getKey(), entry.getValue());
             }
             indexerPayload.put(Constants.DATA, data);
         }
 
-        indexerPayload.put(RecordMetaAttribute.ID.getValue(), record.getId());
-        indexerPayload.put(RecordMetaAttribute.KIND.getValue(), record.getKind());
-        indexerPayload.put(RecordMetaAttribute.AUTHORITY.getValue(), record.getAuthority());
-        indexerPayload.put(RecordMetaAttribute.SOURCE.getValue(), record.getSource());
-        indexerPayload.put(RecordMetaAttribute.NAMESPACE.getValue(), record.getNamespace());
-        indexerPayload.put(RecordMetaAttribute.TYPE.getValue(), record.getType());
-        indexerPayload.put(RecordMetaAttribute.VERSION.getValue(), record.getVersion());
-        indexerPayload.put(RecordMetaAttribute.ACL.getValue(), record.getAcl());
-        indexerPayload.put(RecordMetaAttribute.TAGS.getValue(), record.getTags());
-        indexerPayload.put(RecordMetaAttribute.X_ACL.getValue(), Acl.flattenAcl(record.getAcl()));
-        indexerPayload.put(RecordMetaAttribute.LEGAL.getValue(), record.getLegal());
-        indexerPayload.put(RecordMetaAttribute.INDEX_STATUS.getValue(), record.getIndexProgress());
-        if (record.getAncestry() != null) {
-            indexerPayload.put(RecordMetaAttribute.ANCESTRY.getValue(), record.getAncestry());
+        indexerPayload.put(RecordMetaAttribute.ID.getValue(), payloadRecord.getId());
+        indexerPayload.put(RecordMetaAttribute.KIND.getValue(), payloadRecord.getKind());
+        indexerPayload.put(RecordMetaAttribute.AUTHORITY.getValue(), payloadRecord.getAuthority());
+        indexerPayload.put(RecordMetaAttribute.SOURCE.getValue(), payloadRecord.getSource());
+        indexerPayload.put(RecordMetaAttribute.NAMESPACE.getValue(), payloadRecord.getNamespace());
+        indexerPayload.put(RecordMetaAttribute.TYPE.getValue(), payloadRecord.getType());
+        indexerPayload.put(RecordMetaAttribute.VERSION.getValue(), payloadRecord.getVersion());
+        indexerPayload.put(RecordMetaAttribute.ACL.getValue(), payloadRecord.getAcl());
+        indexerPayload.put(RecordMetaAttribute.TAGS.getValue(), payloadRecord.getTags());
+        indexerPayload.put(RecordMetaAttribute.X_ACL.getValue(), Acl.flattenAcl(payloadRecord.getAcl()));
+        indexerPayload.put(RecordMetaAttribute.LEGAL.getValue(), payloadRecord.getLegal());
+        indexerPayload.put(RecordMetaAttribute.INDEX_STATUS.getValue(), payloadRecord.getIndexProgress());
+        if (payloadRecord.getAncestry() != null) {
+            indexerPayload.put(RecordMetaAttribute.ANCESTRY.getValue(), payloadRecord.getAncestry());
         }
-        indexerPayload.put(RecordMetaAttribute.CREATE_USER.getValue(), record.getCreateUser());
-        indexerPayload.put(RecordMetaAttribute.CREATE_TIME.getValue(), record.getCreateTime());
-        if (!Strings.isNullOrEmpty(record.getModifyUser())) {
-            indexerPayload.put(RecordMetaAttribute.MODIFY_USER.getValue(), record.getModifyUser());
+        indexerPayload.put(RecordMetaAttribute.CREATE_USER.getValue(), payloadRecord.getCreateUser());
+        indexerPayload.put(RecordMetaAttribute.CREATE_TIME.getValue(), payloadRecord.getCreateTime());
+        if (!Strings.isNullOrEmpty(payloadRecord.getModifyUser())) {
+            indexerPayload.put(RecordMetaAttribute.MODIFY_USER.getValue(), payloadRecord.getModifyUser());
         }
-        if (!Strings.isNullOrEmpty(record.getModifyTime())) {
-            indexerPayload.put(RecordMetaAttribute.MODIFY_TIME.getValue(), record.getModifyTime());
+        if (!Strings.isNullOrEmpty(payloadRecord.getModifyTime())) {
+            indexerPayload.put(RecordMetaAttribute.MODIFY_TIME.getValue(), payloadRecord.getModifyTime());
         }
         return indexerPayload;
     }
 
-    private boolean canIndexerRetry(BulkItemResponse bulkItemResponse) {
-        if (RETRY_ELASTIC_EXCEPTION.contains(bulkItemResponse.status())) return true;
-
-        if ((bulkItemResponse.getOpType() == DocWriteRequest.OpType.CREATE || bulkItemResponse.getOpType() == DocWriteRequest.OpType.UPDATE)
-                && bulkItemResponse.status() == RestStatus.NOT_FOUND) {
+    private boolean canIndexerRetry(BulkResponseItem bulkItemResponse) {
+        if (RETRY_ELASTIC_EXCEPTION.contains(bulkItemResponse.status())) {
             return true;
         }
 
-        return false;
+        return (bulkItemResponse.operationType() == co.elastic.clients.elasticsearch.core.bulk.OperationType.Create ||
+            bulkItemResponse.operationType() == co.elastic.clients.elasticsearch.core.bulk.OperationType.Update) &&
+            bulkItemResponse.status() == HttpStatus.SC_NOT_FOUND;
     }
 
     private void retryAndEnqueueFailedRecords(List<RecordInfo> recordInfos, List<String> failuresRecordIds, RecordChangedMessages message) throws IOException {

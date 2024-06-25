@@ -14,18 +14,16 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
-import org.opengroup.osdu.core.common.model.indexer.OperationType;
-
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
+import org.opengroup.osdu.core.common.model.indexer.OperationType;
 
 public interface IndexSchemaService {
 
@@ -37,7 +35,7 @@ public interface IndexSchemaService {
 
     void processSchemaUpsert(String kind) throws AppException;
 
-    void processSchemaUpsertEvent(RestHighLevelClient restClient, String kind) throws IOException, ElasticsearchStatusException, URISyntaxException;
+    void processSchemaUpsertEvent(ElasticsearchClient restClient, String kind) throws IOException, ElasticsearchException, URISyntaxException;
 
     void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException, URISyntaxException;
 

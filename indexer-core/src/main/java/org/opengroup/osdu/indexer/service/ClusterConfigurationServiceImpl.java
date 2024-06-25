@@ -14,17 +14,17 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.elasticsearch.action.admin.cluster.settings.ClusterUpdateSettingsRequest;
-import org.elasticsearch.action.admin.cluster.settings.ClusterUpdateSettingsResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.TimeValue;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch.cluster.PutClusterSettingsRequest;
+import co.elastic.clients.elasticsearch.cluster.PutClusterSettingsResponse;
+import co.elastic.clients.json.JsonData;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Map;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
 
 @Service
 public class ClusterConfigurationServiceImpl implements IClusterConfigurationService {
@@ -34,17 +34,13 @@ public class ClusterConfigurationServiceImpl implements IClusterConfigurationSer
 
     @Override
     public boolean updateClusterConfiguration() throws IOException {
-        ClusterUpdateSettingsRequest request = new ClusterUpdateSettingsRequest();
+        PutClusterSettingsRequest request = new PutClusterSettingsRequest.Builder()
+            .persistent(Map.of("action.auto_create_index", JsonData.from(new StringReader("\"false\""))))
+            .timeout(Time.of(builder -> builder.time("1m")))
+            .build();
 
-        Settings persistentSettings =
-                Settings.builder()
-                        .put("action.auto_create_index", "false")
-                        .build();
-        request.persistentSettings(persistentSettings);
-        request.timeout(TimeValue.timeValueMinutes(1));
-        try (RestHighLevelClient client = this.elasticClientHandler.createRestClient()) {
-            ClusterUpdateSettingsResponse response = client.cluster().putSettings(request, RequestOptions.DEFAULT);
-            return response.isAcknowledged();
+        ElasticsearchClient client = this.elasticClientHandler.createRestClient();
+        PutClusterSettingsResponse response = client.cluster().putSettings(request);
+        return response.acknowledged();
         }
     }
-}

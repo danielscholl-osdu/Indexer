@@ -14,22 +14,32 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static org.opengroup.osdu.core.common.model.search.RecordMetaAttribute.BAG_OF_WORDS;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
+import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
+import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
+import co.elastic.clients.elasticsearch.indices.PutMappingResponse;
+import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lambdaworks.redis.RedisException;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.PutMappingRequest;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentType;
+import jakarta.inject.Inject;
+import java.io.IOException;
+import java.io.StringReader;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
@@ -41,23 +51,10 @@ import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.inject.Inject;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.opengroup.osdu.core.common.model.search.RecordMetaAttribute.BAG_OF_WORDS;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
-
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMappingService {
 
-    private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
-
+    private Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
     @Inject
     private JaxRsDpsLog log;
     @Autowired
@@ -76,7 +73,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
      * @param merge  Try to merge mapping if type already exists
      * @throws IOException if cannot create mapping
      */
-    public String createMapping(RestHighLevelClient client, IndexSchema schema, String index, boolean merge) throws IOException {
+    public String createMapping(ElasticsearchClient client, IndexSchema schema, String index, boolean merge) throws IOException {
 
         Map<String, Object> mappingMap = this.getIndexMappingFromRecordSchema(schema);
         String mapping = new Gson().toJson(mappingMap, Map.class);
@@ -112,7 +109,6 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
      *  }
      * */
     public Map<String, Object> getIndexMappingFromRecordSchema(IndexSchema schema) {
-
         // entire property block
         Map<String, Object> properties = new HashMap<>();
 
@@ -175,7 +171,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     }
 
     @Override
-    public void syncMetaAttributeIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception {
+    public void syncMetaAttributeIndexMappingIfRequired(ElasticsearchClient restClient, IndexSchema schema) throws Exception {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
 
@@ -253,31 +249,41 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
      * @param merge   Try to merge mapping if type already exists
      * @throws IOException if cannot create index mapping with input json
      */
-    private void createMappingWithJson(RestHighLevelClient client, String index, String type, String mapping, boolean merge)
+    private void createMappingWithJson(ElasticsearchClient client, String index, String type, String mapping, boolean merge)
             throws IOException {
 
         boolean mappingExist = isTypeExist(client, index, type);
         if (merge || !mappingExist) {
-            createTypeWithMappingInElasticsearch(client, index, type, mapping);
+            createTypeWithMappingInElasticsearch(client, index, mapping);
         }
     }
 
-    
+
 
     /**
-     * Check if a type already exists
+     * Check if a type (mapping) already exists
      *
      * @param client Elasticsearch client
      * @param index  Index name
-     * @param type   Type name
-     * @return true if type already exists
+     * @param type   Type (mapping) name
+     * @return true if type (mapping) already exists
      * @throws IOException in case Elasticsearch responded with a status code that indicated an error
      */
-    public boolean isTypeExist(RestHighLevelClient client, String index, String type) throws IOException {
+    public boolean isTypeExist(ElasticsearchClient client, String index, String type) throws IOException {
+        GetMappingRequest request = new GetMappingRequest.Builder()
+            .index(index)
+            .build();
 
-        Request request = new Request("HEAD", "/" + index + "/_mapping/" + type);
-        Response response = client.getLowLevelClient().performRequest(request);
-        return response.getStatusLine().getStatusCode() == 200;
+        GetMappingResponse response = client.indices().getMapping(request);
+
+        Map<String, IndexMappingRecord> mappings = response.result();
+
+        if (mappings.containsKey(index)) {
+            IndexMappingRecord mappingRecord = mappings.get(index);
+            return mappingRecord.mappings().properties().containsKey(type);
+        }
+
+        return false;
     }
 
     /**
@@ -285,26 +291,24 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
      *
      * @param client  Elasticsearch client
      * @param index   Index name
-     * @param type    Type name
      * @param mapping Mapping if any, null if no specific mapping
      * @throws IOException if mapping cannot be created
      */
-    private Boolean createTypeWithMappingInElasticsearch(RestHighLevelClient client, String index, String type, String mapping) throws IOException {
-
+    private Boolean createTypeWithMappingInElasticsearch(ElasticsearchClient client, String index, String mapping) throws IOException {
         Preconditions.checkNotNull(client, "client cannot be null");
         Preconditions.checkNotNull(index, "index cannot be null");
-        Preconditions.checkNotNull(type, "type cannot be null");
 
         try {
             if (mapping != null) {
-                PutMappingRequest request = new PutMappingRequest(index);
-                request.source(mapping, XContentType.JSON);
-                request.setTimeout(REQUEST_TIMEOUT);
-                AcknowledgedResponse response = client.indices().putMapping(request, RequestOptions.DEFAULT);
-                return response.isAcknowledged();
+                PutMappingRequest request = PutMappingRequest.of(b -> b
+                    .index(index)
+                    .withJson(new StringReader(mapping))
+                );
+                PutMappingResponse response = client.indices().putMapping(request);
+                return response.acknowledged();
             }
         } catch (ElasticsearchException e) {
-            throw new ElasticsearchMappingException(e.getMessage(), e.status().getStatus());
+            throw new ElasticsearchMappingException("Failed to create mapping: " + e.getMessage(), e.status());
         }
         return false;
     }

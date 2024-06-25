@@ -15,10 +15,10 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.elasticsearch.client.RestHighLevelClient;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.opengroup.osdu.indexer.model.IndexAliasesResult;
 
 public interface IndexAliasService {
     IndexAliasesResult createIndexAliasesForAll();
-    boolean createIndexAlias(RestHighLevelClient restClient, String kind);
+    boolean createIndexAlias(ElasticsearchClient restClient, String kind);
 }

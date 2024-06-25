@@ -17,6 +17,7 @@
 
 package org.opengroup.osdu.indexer.util;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -24,8 +25,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.cache.RedisCache;
 import org.opengroup.osdu.core.common.info.ConnectedOuterServicesBuilder;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -90,10 +89,11 @@ public class CloudConnectedOuterServicesBuilder implements ConnectedOuterService
   }
 
   private ConnectedOuterService fetchElasticInfo(String partitionId, ClusterSettings settings) {
-    try (RestHighLevelClient client = elasticClient.createRestClient(settings)) {
+    try {
+      ElasticsearchClient client = elasticClient.createRestClient(settings);
       return ConnectedOuterService.builder()
           .name(NAME_PREFIX + partitionId)
-          .version(client.info(RequestOptions.DEFAULT).getVersion().getNumber())
+          .version(client.info().version().number())
           .build();
     } catch (AppException e) {
       log.error("Can't create elastic client", e.getOriginalException());

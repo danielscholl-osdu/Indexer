@@ -1,5 +1,8 @@
 package org.opengroup.osdu.indexer.util;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -11,12 +14,10 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IElasticSettingService;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
@@ -40,16 +41,16 @@ public class ElasticClientHandler {
   @Autowired
   private IElasticSettingService elasticSettingService;
 
-  public RestHighLevelClient createRestClient() {
+  public ElasticsearchClient createRestClient() {
     return getCloudRestClient(elasticSettingService.getElasticClusterInformation());
   }
 
   // TODO: Remove this temporary implementation when ECE CCS is utilized
-  public RestHighLevelClient createRestClient(final ClusterSettings clusterSettings) {
+  public ElasticsearchClient createRestClient(final ClusterSettings clusterSettings) {
     return getCloudRestClient(clusterSettings);
   }
 
-  private RestHighLevelClient getCloudRestClient(final ClusterSettings clusterSettings) {
+  private ElasticsearchClient getCloudRestClient(final ClusterSettings clusterSettings) {
 
     String cluster = null;
     String host = null;
@@ -75,7 +76,9 @@ public class ElasticClientHandler {
       RestClientBuilder builder = createClientBuilder(host, basicAuthenticationHeaderVal, port,
           protocolScheme, tls);
 
-      return new RestHighLevelClient(builder);
+      RestClientTransport transport = new RestClientTransport(builder.build(), new JacksonJsonpMapper());
+
+      return new ElasticsearchClient(transport);
     } catch (AppException e) {
       throw e;
     } catch (Exception e) {
@@ -114,12 +117,8 @@ public class ElasticClientHandler {
       log.warning("Elastic client connection uses TrustSelfSignedStrategy()");
       SSLContext sslContext = createSSLContext();
       builder.setHttpClientConfigCallback(httpClientBuilder ->
-      {
-        HttpAsyncClientBuilder httpAsyncClientBuilder = httpClientBuilder.setSSLContext(sslContext)
-            .setSSLHostnameVerifier(
-                NoopHostnameVerifier.INSTANCE);
-        return httpAsyncClientBuilder;
-      });
+          httpClientBuilder.setSSLContext(sslContext)
+              .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE));
     }
 
     builder.setDefaultHeaders(defaultHeaders);

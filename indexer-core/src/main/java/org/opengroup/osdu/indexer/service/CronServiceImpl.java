@@ -14,22 +14,20 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.elasticsearch.client.ResponseException;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.search.IndexInfo;
-import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.elasticsearch.client.ResponseException;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.search.IndexInfo;
+import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.springframework.stereotype.Service;
 
 @Service
 public class CronServiceImpl implements CronService{
@@ -47,48 +45,54 @@ public class CronServiceImpl implements CronService{
 
         @Override
         public boolean cleanupIndices(String indexPattern) throws IOException {
-            long threshHoldTime = Instant.now().minus(configurationProperties.getCronIndexCleanupThresholdDays(), ChronoUnit.DAYS).toEpochMilli();
+          long threshHoldTime = Instant.now()
+              .minus(configurationProperties.getCronIndexCleanupThresholdDays(), ChronoUnit.DAYS)
+              .toEpochMilli();
 
-            try {
-                try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-                    final List<IndexInfo> indicesList = this.indicesService.getIndexInfo(restClient, indexPattern);
-                    for (IndexInfo settings : indicesList) {
-                        long indexCreateTime = Long.parseLong(settings.getCreationDate());
-                        if (indexCreateTime < threshHoldTime) {
-                            this.deleteIndex(restClient, settings);
-                        }
-                    }
-                }
-                return true;
-            } catch (ResponseException ex) {
-                throw new AppException(ex.getResponse().getStatusLine().getStatusCode(), ex.getResponse().getStatusLine().getReasonPhrase(), "Error deleting indices.", ex);
+          try {
+            ElasticsearchClient restClient = elasticClientHandler.createRestClient();
+            final List<IndexInfo> indicesList = this.indicesService.getIndexInfo(restClient, indexPattern);
+            for (IndexInfo settings : indicesList) {
+              long indexCreateTime = Long.parseLong(settings.getCreationDate());
+              if (indexCreateTime < threshHoldTime) {
+                this.deleteIndex(restClient, settings);
+              }
             }
+            return true;
+          } catch (ResponseException ex) {
+            throw new AppException(ex.getResponse().getStatusLine().getStatusCode(),
+                ex.getResponse().getStatusLine().getReasonPhrase(), "Error deleting indices.", ex);
+          }
         }
 
         @Override
         public boolean cleanupEmptyStaleIndices() throws IOException {
-            long threshHoldTime = Instant.now().minus(configurationProperties.getCronEmptyIndexCleanupThresholdDays(), ChronoUnit.DAYS).toEpochMilli();
+          long threshHoldTime = Instant.now()
+              .minus(configurationProperties.getCronEmptyIndexCleanupThresholdDays(), ChronoUnit.DAYS)
+              .toEpochMilli();
 
-            try {
-                try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-                    final List<IndexInfo> indicesList = this.indicesService.getIndexInfo(restClient, null);
-                    for (IndexInfo settings : indicesList) {
-                        long indexCreateTime = Long.parseLong(settings.getCreationDate());
-                        long documentCount = Long.parseLong(settings.getDocumentCount());
-                        if (documentCount > 0) break;
+          try {
+            ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+            final List<IndexInfo> indicesList = this.indicesService.getIndexInfo(restClient, null);
+            for (IndexInfo settings : indicesList) {
+              long indexCreateTime = Long.parseLong(settings.getCreationDate());
+              long documentCount = Long.parseLong(settings.getDocumentCount());
+              if (documentCount > 0) {
+                break;
+              }
 
-                        if (documentCount == 0 && indexCreateTime < threshHoldTime) {
-                            this.deleteIndex(restClient, settings);
-                        }
-                    }
-                }
-                return true;
-            } catch (ResponseException ex) {
-                throw new AppException(ex.getResponse().getStatusLine().getStatusCode(), ex.getResponse().getStatusLine().getReasonPhrase(), "Error deleting indices.", ex);
+              if (documentCount == 0 && indexCreateTime < threshHoldTime) {
+                this.deleteIndex(restClient, settings);
+              }
             }
+            return true;
+          } catch (ResponseException ex) {
+            throw new AppException(ex.getResponse().getStatusLine().getStatusCode(),
+                ex.getResponse().getStatusLine().getReasonPhrase(), "Error deleting indices.", ex);
+          }
         }
 
-        private void deleteIndex(RestHighLevelClient client, IndexInfo info) throws AppException {
+        private void deleteIndex(ElasticsearchClient client, IndexInfo info) throws AppException {
             String partitionId = this.requestInfo.getPartitionId();
             try {
                 this.log.info(String.format("Deleting index: %s | tenant: %s | created on: %s", info.getName(), partitionId, info.getCreationDate()));

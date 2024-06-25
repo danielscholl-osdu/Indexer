@@ -14,12 +14,20 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import jakarta.inject.Inject;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.http.HttpStatus;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.RequestStatus;
@@ -40,12 +48,6 @@ import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.stereotype.Service;
-
-import jakarta.inject.Inject;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.util.*;
 
 @Service
 public class IndexSchemaServiceImpl implements IndexSchemaService {
@@ -76,18 +78,17 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private AugmenterSetting augmenterSetting;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            schemaMsgs.entrySet().forEach(msg -> {
-                try {
-                    processSchemaEvents(restClient, msg);
-                } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
-                    throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
-                }
-            });
-        }
+        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        schemaMsgs.entrySet().forEach(msg -> {
+            try {
+                processSchemaEvents(restClient, msg);
+            } catch (IOException | ElasticsearchException | URISyntaxException e) {
+                throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
+            }
+        });
     }
 
-    private void processSchemaEvents(RestHighLevelClient restClient, Map.Entry<String, OperationType> msg) throws IOException, ElasticsearchStatusException, URISyntaxException {
+    private void processSchemaEvents(ElasticsearchClient restClient, Map.Entry<String, OperationType> msg) throws IOException, ElasticsearchException, URISyntaxException {
         String kind = msg.getKey();
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
 
@@ -108,15 +109,16 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     @Override
     public void processSchemaUpsert(String kind) throws AppException {
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+        try {
+            ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
             processSchemaUpsertEvent(restClient, kind);
-        } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
+        } catch (IOException | ElasticsearchException | URISyntaxException e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
         }
     }
 
     @Override
-    public void processSchemaUpsertEvent(RestHighLevelClient restClient, String kind) throws IOException, ElasticsearchStatusException, URISyntaxException {
+    public void processSchemaUpsertEvent(ElasticsearchClient restClient, String kind) throws IOException, ElasticsearchException, URISyntaxException {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
         boolean indexExist = this.indicesService.isIndexExist(restClient, index);
 
@@ -142,7 +144,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         } else {
             // create index with mapping
             Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schemaObj);
-            this.indicesService.createIndex(restClient, index, null, schemaObj.getType(), mapping);
+            this.indicesService.createIndex(restClient, index, null, mapping);
         }
     }
 
@@ -277,22 +279,21 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     public void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException, URISyntaxException {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            if (this.indicesService.isIndexExist(restClient, index)) {
+        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        if (this.indicesService.isIndexExist(restClient, index)) {
                 this.indicesService.deleteIndex(restClient, index);
                 this.log.info(String.format("deleted index: %s", index));
             }
             IndexSchema schemaObj = this.getIndexerInputSchema(kind, true);
-            this.indicesService.createIndex(restClient, index, null, schemaObj.getType(), this.mappingService.getIndexMappingFromRecordSchema(schemaObj));
-        }
+        Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schemaObj);
+        this.indicesService.createIndex(restClient, index, null, mapping);
     }
 
     public boolean isStorageSchemaSyncRequired(String kind, boolean forceClean) throws IOException {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            boolean indexExist = this.indicesService.isIndexExist(restClient, index);
-            return !indexExist || forceClean;
-        }
+        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        boolean indexExist = this.indicesService.isIndexExist(restClient, index);
+        return !indexExist || forceClean;
     }
 
     @Override
