@@ -35,10 +35,15 @@ import co.elastic.clients.elasticsearch._types.AcknowledgedResponse;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.ErrorResponse;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.ElasticsearchIndicesClient;
+import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
+import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
+import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
 import com.google.gson.Gson;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,7 +82,7 @@ public class IndexerMappingServiceTest {
     private final String validMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"keyword\"},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"bagOfWords\":{\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
     private final String validKeywordLowerMapping = "{\"dynamic\":false,\"properties\":{\"data\":{\"properties\":{\"Msg\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"Intervals\":{\"properties\":{\"StopMarkerID\":{\"type\":\"keyword\"},\"GeologicUnitInterpretationIDs\":{\"type\":\"text\",\"fields\":{\"keywordLower\":{\"normalizer\":\"lowercase\",\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"},\"keyword\":{\"null_value\":\"null\",\"ignore_above\":256,\"type\":\"keyword\"}}},\"StopMeasuredDepth\":{\"type\":\"double\"}}},\"Location\":{\"type\":\"geo_point\"}}},\"bagOfWords\":{\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"},\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}}}}";
     private final String emptyDataValidMapping = "{\"dynamic\":false,\"properties\":{\"id\":{\"type\":\"keyword\"},\"acl\":{\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}},\"bagOfWords\":{\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"tenant\"}}}";
-
+    private final String mapping = "{\"dynamic\":false,\"properties\":{\"ancestry\":{\"type\":\"object\",\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"data\":{\"type\":\"object\",\"properties\":{\"Address\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"ignore_above\":256,\"null_value\":\"null\"}}},\"Phone\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"ignore_above\":256,\"null_value\":\"null\"}}},\"Full Name\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"ignore_above\":256,\"null_value\":\"null\"}}}}},\"x-acl\":{\"type\":\"keyword\"},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"type\":\"object\",\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"namespace\":{\"type\":\"keyword\"},\"index\":{\"type\":\"object\",\"properties\":{\"trace\":{\"type\":\"text\"},\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"}}},\"acl\":{\"type\":\"object\",\"properties\":{\"viewers\":{\"type\":\"keyword\"},\"owners\":{\"type\":\"keyword\"}}},\"id\":{\"type\":\"keyword\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"tags\":{\"type\":\"flattened\"}}}";
     @Mock
     private RestClient restClient;
     @Mock
@@ -312,5 +317,20 @@ public class IndexerMappingServiceTest {
                 () -> this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, indexSchema));
 
         assertEquals(message, exception.getMessage());
+    }
+
+    @Test
+    public void testGetIndexMapping() throws Exception {
+        when(indicesService.isIndexExist(any(), any())).thenReturn(true);
+        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        TypeMapping typeMapping = TypeMapping.of(builder -> builder.withJson(new StringReader(mapping)));
+        GetMappingResponse getMappingResponse = GetMappingResponse.of(
+            responseBuilder -> responseBuilder.putResult(
+                "index", IndexMappingRecord.of(mappingRecordBuilder -> mappingRecordBuilder.mappings(typeMapping))
+            )
+        );
+        when(indicesClient.getMapping(any(GetMappingRequest.class))).thenReturn(getMappingResponse);
+        String actualMapping = this.sut.getIndexMapping(restHighLevelClient, "index");
+        assertEquals(mapping, actualMapping);
     }
 }

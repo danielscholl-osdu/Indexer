@@ -146,9 +146,9 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         }
 
         for (Map.Entry<String, Object> entry : schema.getMetaSchema().entrySet()) {
-            if (entry.getKey() == RecordMetaAttribute.AUTHORITY.getValue()) {
+            if (entry.getKey().equals(RecordMetaAttribute.AUTHORITY.getValue())) {
                 metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), kind.getAuthority()));
-            } else if (entry.getKey() == RecordMetaAttribute.SOURCE.getValue()) {
+            } else if (entry.getKey().equals(RecordMetaAttribute.SOURCE.getValue())) {
                 metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), kind.getSource()));
             } else {
                 metaMapping.put(entry.getKey(), TypeMapper.getMetaAttributeIndexerMapping(entry.getKey(), null));

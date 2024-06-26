@@ -16,6 +16,7 @@
 package org.opengroup.osdu.indexer.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.TermsAggregation;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -150,15 +151,32 @@ public class IndexAliasServiceImpl implements IndexAliasService{
         if (!isCompleteVersionKind(kind)) {
             return index;
         }
-
         GetAliasRequest request = new GetAliasRequest.Builder().name(index).build();
-        GetAliasResponse response = client.indices().getAlias(request);
 
-        if (response.result().isEmpty()) {
-            // index resolved from kind is actual concrete index
-            return index;
-        }else {
-            // index resolved from kind is NOT actual concrete index. It is just an alias
+        try {
+            GetAliasResponse response = client.indices().getAlias(request);
+            if(response.result().isEmpty()){
+                /* index resolved from kind is actual concrete index
+                 * Example:
+                 * {
+                 *   "opendes-wke-well-1.0.7": {
+                 *       "aliases": {}
+                 *   }
+                 * }
+                 */
+                return index;
+            }
+            /* index resolved from kind is NOT actual create index. It is just an alias
+             * The concrete index name in this example is "opendes-osdudemo-wellbore-1.0.0_1649167113090"
+             * Example:
+             * {
+             *   "opendes-osdudemo-wellbore-1.0.0_1649167113090": {
+             *       "aliases": {
+             *           "opendes-osdudemo-wellbore-1.0.0": {}
+             *       }
+             *    }
+             * }
+             */
             for (Map.Entry<String, IndexAliases> entry: response.result().entrySet()){
                 String actualIndex = entry.getKey();
                 List<String> aliaseNames = entry.getValue().aliases().keySet().stream().toList();
@@ -166,9 +184,15 @@ public class IndexAliasServiceImpl implements IndexAliasService{
                     return actualIndex;
                 }
             }
+            return index;
+        }catch (ElasticsearchException e){
+            if(e.status() == HttpStatus.SC_NOT_FOUND){
+                jaxRsDpsLog.debug("Alias not found.", e.getMessage());
+            }else {
+                jaxRsDpsLog.error("Unexpected error response from Elasticsearch.", e);
+            }
+            return index;
         }
-        return index;
-
     }
 
     private boolean isCompleteVersionKind(String kind) {

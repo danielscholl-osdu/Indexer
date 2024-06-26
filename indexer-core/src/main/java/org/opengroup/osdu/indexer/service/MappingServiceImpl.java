@@ -16,9 +16,11 @@ package org.opengroup.osdu.indexer.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
 import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
+import co.elastic.clients.json.JsonpUtils;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
@@ -86,8 +88,13 @@ public abstract class MappingServiceImpl implements IMappingService {
             if (mappingRecordMap.isEmpty()) {
                 throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)));
             }
-            Optional<IndexMappingRecord> first = mappingRecordMap.values().stream().findFirst();
-            return first.get().toString();
+            Optional<IndexMappingRecord> mappingRecord = mappingRecordMap.values().stream().findFirst();
+            StringBuilder collector = new StringBuilder();
+            mappingRecord.ifPresent(indexMappingRecord -> {
+                TypeMapping mappings = indexMappingRecord.mappings();
+                JsonpUtils.toString(mappings, collector);
+            });
+            return collector.toString();
         } catch (IOException e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)), e);
         }
