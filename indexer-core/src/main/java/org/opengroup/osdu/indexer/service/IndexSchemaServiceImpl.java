@@ -283,8 +283,8 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
         if (this.indicesService.isIndexExist(restClient, index)) {
                 this.indicesService.deleteIndex(restClient, index);
                 this.log.info(String.format("deleted index: %s", index));
-            }
-            IndexSchema schemaObj = this.getIndexerInputSchema(kind, true);
+        }
+        IndexSchema schemaObj = this.getIndexerInputSchema(kind, true);
         Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schemaObj);
         this.indicesService.createIndex(restClient, index, null, mapping);
     }

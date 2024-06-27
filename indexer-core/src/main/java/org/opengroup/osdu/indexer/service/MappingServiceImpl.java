@@ -47,6 +47,10 @@ public abstract class MappingServiceImpl implements IMappingService {
 
     private Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
 
+    static {
+        // default is 10k chars, which makes big mapping responses truncated
+        JsonpUtils.maxToStringLength(Integer.MAX_VALUE);
+    }
     /*
      * Get index schema
      *
