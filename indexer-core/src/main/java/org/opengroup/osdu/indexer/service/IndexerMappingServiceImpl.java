@@ -54,7 +54,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMappingService {
 
-    private Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
+    private static final Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
     @Inject
     private JaxRsDpsLog log;
     @Autowired
@@ -203,9 +203,9 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         Map<String, Object> properties = new HashMap<>();
         Kind kind = new Kind(schema.getKind());
         for (String attribute : missing) {
-            if (attribute == RecordMetaAttribute.AUTHORITY.getValue()) {
+            if (attribute.equals(RecordMetaAttribute.AUTHORITY.getValue())) {
                 properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, kind.getAuthority()));
-            } else if (attribute == RecordMetaAttribute.SOURCE.getValue()) {
+            } else if (attribute.equals(RecordMetaAttribute.SOURCE.getValue())) {
                 properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, kind.getSource()));
             } else {
                 properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, null));
@@ -302,6 +302,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
             if (mapping != null) {
                 PutMappingRequest request = PutMappingRequest.of(b -> b
                     .index(index)
+                    .timeout(REQUEST_TIMEOUT)
                     .withJson(new StringReader(mapping))
                 );
                 PutMappingResponse response = client.indices().putMapping(request);

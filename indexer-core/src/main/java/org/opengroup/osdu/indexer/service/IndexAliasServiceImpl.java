@@ -146,7 +146,7 @@ public class IndexAliasServiceImpl implements IndexAliasService{
         return null;
     }
 
-    public String resolveConcreteIndexName(ElasticsearchClient client, String kind) throws IOException {
+    private String resolveConcreteIndexName(ElasticsearchClient client, String kind) throws IOException {
         String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
         if (!isCompleteVersionKind(kind)) {
             return index;
@@ -199,7 +199,7 @@ public class IndexAliasServiceImpl implements IndexAliasService{
         return !Strings.isNullOrEmpty(kind) && kind.matches(KIND_COMPLETE_VERSION_PATTERN);
     }
 
-    public List<String> getAllKinds(ElasticsearchClient client) throws IOException {
+    private List<String> getAllKinds(ElasticsearchClient client) throws IOException {
         // Create a TermsAggregation
         TermsAggregation termsAggregation = TermsAggregation.of(t -> t.field("kind").size(10000));
 

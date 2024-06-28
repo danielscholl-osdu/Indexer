@@ -63,6 +63,13 @@ import org.springframework.web.context.annotation.RequestScope;
 @RequestScope
 public class IndicesServiceImpl implements IndicesService {
 
+    private static final String INDEX_DELETION_ERROR = "Index deletion error";
+    private static final String CLIENT_CANNOT_BE_NULL = "client cannot be null";
+    private static final String INDEX_CANNOT_BE_NULL = "index cannot be null";
+
+    private static final Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
+    private static final IndexSettings DEFAULT_INDEX_SETTINGS_V8;
+
     @Autowired
     private ElasticClientHandler elasticClientHandler;
     @Autowired
@@ -75,10 +82,6 @@ public class IndicesServiceImpl implements IndicesService {
     private JaxRsDpsLog log;
     @Autowired
     private ObjectMapper objectMapper;
-
-    private Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
-
-    private static final IndexSettings DEFAULT_INDEX_SETTINGS_V8;
 
     static {
         IndexSettings.Builder builder = new IndexSettings.Builder();
@@ -98,8 +101,8 @@ public class IndicesServiceImpl implements IndicesService {
      * @throws ElasticsearchException,IOException if it cannot create index
      */
     public boolean createIndex(ElasticsearchClient client, String index, IndexSettings settings, Map<String, Object> mapping) throws ElasticsearchException, IOException {
-        Preconditions.checkArgument(client, Objects::nonNull, "client cannot be null");
-        Preconditions.checkArgument(index, Objects::nonNull, "index cannot be null");
+        Preconditions.checkArgument(client, Objects::nonNull, CLIENT_CANNOT_BE_NULL);
+        Preconditions.checkArgument(index, Objects::nonNull, INDEX_CANNOT_BE_NULL);
         try {
             CreateIndexRequest.Builder createIndexBuilder = new Builder();
             createIndexBuilder.index(index);
@@ -205,7 +208,7 @@ public class IndicesServiceImpl implements IndicesService {
 
     private boolean indexExistInCache(String index) {
         try {
-            Boolean isIndexExist = (Boolean) this.indexCache.get(index);
+            Boolean isIndexExist = this.indexCache.get(index);
             if (isIndexExist != null && isIndexExist) return true;
         } catch (RedisException ex) {
             //In case the format of cache changes then clean the cache
@@ -250,8 +253,8 @@ public class IndicesServiceImpl implements IndicesService {
      * @throws Exception Throws {@link AppException} if index is not found or elastic cannot delete the index
      */
     private boolean removeIndexInElasticsearch(ElasticsearchClient client, String index) throws ElasticsearchException, IOException, AppException {
-        Preconditions.checkArgument(client, Objects::nonNull, "client cannot be null");
-        Preconditions.checkArgument(index, Objects::nonNull, "index cannot be null");
+        Preconditions.checkArgument(client, Objects::nonNull, CLIENT_CANNOT_BE_NULL);
+        Preconditions.checkArgument(index, Objects::nonNull, INDEX_CANNOT_BE_NULL);
 
         try {
             DeleteIndexRequest.Builder deleteRequestBuilder = new DeleteIndexRequest.Builder();
@@ -259,14 +262,14 @@ public class IndicesServiceImpl implements IndicesService {
             deleteRequestBuilder.timeout(REQUEST_TIMEOUT);
             DeleteIndexResponse deleteIndexResponse = client.indices().delete(deleteRequestBuilder.build());
             if (!deleteIndexResponse.acknowledged()) {
-                throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Index deletion error", String.format("Could not delete index %s", index));
+                throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, INDEX_DELETION_ERROR, String.format("Could not delete index %s", index));
             }
             return true;
         } catch (ElasticsearchException exception) {
             if (exception.status() == HttpStatus.SC_NOT_FOUND) {
-                throw new AppException(HttpStatus.SC_NOT_FOUND, "Index deletion error", notFoundErrorMessage(index), exception);
+                throw new AppException(HttpStatus.SC_NOT_FOUND, INDEX_DELETION_ERROR, notFoundErrorMessage(index), exception);
             } else if (exception.status() == HttpStatus.SC_BAD_REQUEST && exception.getMessage().contains("Cannot delete indices that are being snapshotted")) {
-                throw new AppException(HttpStatus.SC_CONFLICT, "Index deletion error", "Unable to delete the index because it is currently locked. Try again in few minutes.", exception);
+                throw new AppException(HttpStatus.SC_CONFLICT, INDEX_DELETION_ERROR, "Unable to delete the index because it is currently locked. Try again in few minutes.", exception);
             }
             throw exception;
         }
@@ -286,20 +289,20 @@ public class IndicesServiceImpl implements IndicesService {
      * @throws IOException Throws {@link IOException} if elastic cannot complete the request
      */
     public List<IndexInfo> getIndexInfo(ElasticsearchClient client, String indexPattern) throws IOException {
-        Objects.requireNonNull(client, "client cannot be null");
+        Objects.requireNonNull(client, CLIENT_CANNOT_BE_NULL);
 
         String requestUrl = (indexPattern == null || indexPattern.isEmpty())
             ? "/_cat/indices/*,-.*?h=index,docs.count,creation.date&s=docs.count:asc&format=json"
             : String.format("/_cat/indices/%s?h=index,docs.count,creation.date&format=json", indexPattern);
 
-        RestClientTransport clientTransport = (RestClientTransport)client._transport();
+        try (RestClientTransport clientTransport = (RestClientTransport)client._transport()){
+            Request request = new Request("GET", requestUrl);
+            Response response = clientTransport.restClient().performRequest(request);
+            String responseBody = EntityUtils.toString(response.getEntity());
 
-        Request request = new Request("GET", requestUrl);
-        Response response = clientTransport.restClient().performRequest(request);
-        String responseBody = EntityUtils.toString(response.getEntity());
-
-        Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
-        return new Gson().fromJson(responseBody, typeOf);
+            Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
+            return new Gson().fromJson(responseBody, typeOf);
+        }
     }
 
     private void clearCacheOnIndexDeletion(String index) {
@@ -310,8 +313,8 @@ public class IndicesServiceImpl implements IndicesService {
 
     public List<String> resolveIndex(ElasticsearchClient client, String index) throws IOException {
 
-        Preconditions.checkArgument(client, Objects::nonNull, "client cannot be null");
-        Preconditions.checkArgument(index, Objects::nonNull, "index cannot be null");
+        Preconditions.checkArgument(client, Objects::nonNull, CLIENT_CANNOT_BE_NULL);
+        Preconditions.checkArgument(index, Objects::nonNull, INDEX_CANNOT_BE_NULL);
 
         try {
             GetIndexRequest request = new GetIndexRequest.Builder().index(index).build();

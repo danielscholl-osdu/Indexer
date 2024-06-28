@@ -77,7 +77,7 @@ import org.springframework.stereotype.Service;
 @Primary
 public class IndexerServiceImpl implements IndexerService {
 
-    private Time BULK_REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
+    private static final Time BULK_REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
 
     private static final List<Integer> RETRY_ELASTIC_EXCEPTION = List.of(
         HttpStatus.SC_TOO_MANY_REQUESTS,
@@ -87,6 +87,8 @@ public class IndexerServiceImpl implements IndexerService {
     );
 
     private static final String MAPPER_PARSING_EXCEPTION_TYPE = "type=mapper_parsing_exception";
+    private static final String RECORD_ID_LOG = "record-id: %s | %s";
+    private static final String ELASTIC_ERROR = "Elastic error";
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
@@ -432,7 +434,8 @@ public class IndexerServiceImpl implements IndexerService {
             document = new RecordIndexerPayload.Record();
             if (storageRecordData == null || storageRecordData.isEmpty()) {
                 String message = "empty or null data block found in the storage record";
-                this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, message, String.format("record-id: %s | %s", storageRecord.getId(), message));
+                this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, message, String.format(
+                    RECORD_ID_LOG, storageRecord.getId(), message));
             } else if (schemaObj.isDataSchemaMissing()) {
                 document.setSchemaMissing(true);
             } else {
@@ -440,7 +443,8 @@ public class IndexerServiceImpl implements IndexerService {
                 if (dataMap.isEmpty()) {
                     document.setMappingMismatch(true);
                     String message = String.format("complete schema mismatch: none of the data attribute can be mapped | data: %s", storageRecordData);
-                    this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, message, String.format("record-id: %s | %s", storageRecord.getId(), message));
+                    this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_NOT_FOUND, message, String.format(
+                        RECORD_ID_LOG, storageRecord.getId(), message));
                 }
 
                 if(this.augmenterSetting.isEnabled()) {
@@ -468,7 +472,7 @@ public class IndexerServiceImpl implements IndexerService {
             }
         } catch (AppException e) {
             this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.FAIL, HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            jaxRsDpsLog.warning(String.format("record-id: %s | %s", storageRecord.getId(), e.getMessage()), e);
+            jaxRsDpsLog.warning(String.format(RECORD_ID_LOG, storageRecord.getId(), e.getMessage()), e);
         } catch (Exception e) {
             this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.FAIL, HttpStatus.SC_INTERNAL_SERVER_ERROR, String.format("error parsing records against schema, error-message: %s", e.getMessage()));
             jaxRsDpsLog.error(String.format("record-id: %s | error parsing records against schema, error-message: %s", storageRecord.getId(), e.getMessage()), e);
@@ -589,7 +593,7 @@ public class IndexerServiceImpl implements IndexerService {
             // create index
             Map<String, Object> mapping = this.mappingService.getIndexMappingFromRecordSchema(schema);
             if (!this.indicesService.createIndex(restClient, index, null, mapping)) {
-                throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error", "Error creating index.", String.format("Failed to get confirmation from elastic server for index: %s", index));
+                throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ELASTIC_ERROR, "Error creating index.", String.format("Failed to get confirmation from elastic server for index: %s", index));
             }
         }
     }
@@ -621,7 +625,7 @@ public class IndexerServiceImpl implements IndexerService {
         return processBulkRequest(client, bulkRequestBuilder.build());
     }
 
-    private List<String> processDeleteRecords(Map<String, List<String>> deleteRecordMap) throws Exception {
+    private List<String> processDeleteRecords(Map<String, List<String>> deleteRecordMap){
         BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
         bulkRequestBuilder.timeout(BULK_REQUEST_TIMEOUT);
         for (Map.Entry<String, List<String>> deleteRecord : deleteRecordMap.entrySet()) {
@@ -695,20 +699,19 @@ public class IndexerServiceImpl implements IndexerService {
             if (bulkRequest.operations().size() == failureRecordIds.size()) {
                 throw new AppException(
                     failedRequestStatus,
-                    "Elastic error",
+                    ELASTIC_ERROR,
                     failedRequestCause == null ? "Unknown error" : failedRequestCause.getMessage(),
                     failedRequestCause);
             }
         } catch (IOException e) {
             // throw explicit 504 for IOException
-            throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, "Elastic error", "Request cannot be completed in specified time.", e);
+            throw new AppException(HttpStatus.SC_GATEWAY_TIMEOUT, ELASTIC_ERROR, "Request cannot be completed in specified time.", e);
         } catch (ElasticsearchException e) {
-            throw new AppException(e.status(), "Elastic error", e.getMessage(), e);
+            throw new AppException(e.status(), ELASTIC_ERROR, e.getMessage(), e);
+        }catch (AppException e){
+            throw e;
         } catch (Exception e) {
-            if (e instanceof AppException) {
-                throw e;
-            }
-            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Elastic error", "Error indexing records.", e);
+            throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ELASTIC_ERROR, "Error indexing records.", e);
         }
         return new BulkRequestResult(failureRecordIds, retryUpsertRecordIds);
     }

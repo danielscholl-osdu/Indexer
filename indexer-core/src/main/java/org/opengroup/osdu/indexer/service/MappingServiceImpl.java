@@ -38,14 +38,14 @@ import org.springframework.web.context.annotation.RequestScope;
 @RequestScope
 public abstract class MappingServiceImpl implements IMappingService {
 
+    private static final Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
+
     @Autowired
     private IndicesService indicesService;
     @Autowired
     private ElasticClientHandler elasticClientHandler;
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
-
-    private Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
 
     static {
         // default is 10k chars, which makes big mapping responses truncated
