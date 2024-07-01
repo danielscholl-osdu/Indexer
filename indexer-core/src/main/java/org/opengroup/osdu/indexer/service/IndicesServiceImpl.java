@@ -68,7 +68,7 @@ public class IndicesServiceImpl implements IndicesService {
     private static final String INDEX_CANNOT_BE_NULL = "index cannot be null";
 
     private static final Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
-    private static final IndexSettings DEFAULT_INDEX_SETTINGS_V8;
+    private static final IndexSettings DEFAULT_INDEX_SETTINGS;
 
     @Autowired
     private ElasticClientHandler elasticClientHandler;
@@ -88,7 +88,7 @@ public class IndicesServiceImpl implements IndicesService {
         builder.refreshInterval(Time.of(timeBuilder -> timeBuilder.time("30s")));
         builder.numberOfShards("1");
         builder.numberOfReplicas("1");
-        DEFAULT_INDEX_SETTINGS_V8 = builder.build();
+        DEFAULT_INDEX_SETTINGS = builder.build();
     }
 
     /**
@@ -106,7 +106,7 @@ public class IndicesServiceImpl implements IndicesService {
         try {
             CreateIndexRequest.Builder createIndexBuilder = new Builder();
             createIndexBuilder.index(index);
-            createIndexBuilder.settings(settings != null ? settings : DEFAULT_INDEX_SETTINGS_V8);
+            createIndexBuilder.settings(settings != null ? settings : DEFAULT_INDEX_SETTINGS);
 
             if (mapping != null) {
                 Map<String, Map<String, Object>> mappings = Map.of("mappings", mapping);

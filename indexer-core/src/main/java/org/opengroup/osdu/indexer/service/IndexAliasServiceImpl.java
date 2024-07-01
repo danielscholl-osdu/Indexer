@@ -111,7 +111,8 @@ public class IndexAliasServiceImpl implements IndexAliasService{
                 putAliasRequest.index(entry.getKey());
                 putAliasRequest.name(entry.getValue());
                 PutAliasResponse putAliasResponse = restClient.indices().putAlias(putAliasRequest.build());
-                ok = putAliasResponse.acknowledged();
+                // Bitwise AND assignment is used to return ok status only if previous operations are ok
+                ok &= putAliasResponse.acknowledged();
             }
             return ok;
         }

@@ -17,6 +17,8 @@ package org.opengroup.osdu.indexer.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -199,5 +201,31 @@ public class IndexAliasServiceImplTest {
         Assert.assertEquals(index, result.getIndicesWithAliases().get(0));
         Assert.assertEquals(1, result.getIndicesWithoutAliases().size());
         Assert.assertEquals(unsupportedIndex, result.getIndicesWithoutAliases().get(0));
+    }
+
+    @Test
+    public void createIndexAlias_test_when_updateAliases_partiallyFails() throws IOException {
+        String unsupportedKind = "common:welldb:wellbore:1.*.*";
+        String unsupportedIndex = unsupportedKind.replace(":", "-");
+
+
+        when(elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(index);
+        when(elasticIndexNameResolver.getIndexAliasFromKind(kind)).thenReturn(alias);
+
+        when(elasticIndexNameResolver.getIndexNameFromKind(unsupportedKind)).thenReturn(unsupportedIndex);
+        when(elasticIndexNameResolver.getIndexAliasFromKind(unsupportedKind)).thenReturn(alias);
+
+        when(elasticIndexNameResolver.isIndexAliasSupported(any())).thenReturn(true);
+        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.getAlias(any(GetAliasRequest.class))).thenReturn(getAliasesNotFoundResponse);
+        when(getAliasesNotFoundResponse.result()).thenReturn(Collections.emptyMap());
+
+        PutAliasResponse okResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
+        PutAliasResponse failResponse = PutAliasResponse.of(builder -> builder.acknowledged(false));
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(okResponse, failResponse);
+
+        boolean ok = sut.createIndexAlias(restHighLevelClient, kind);
+        verify(log, never()).error(any(), any(Exception.class));
+        Assert.assertFalse(ok);
     }
 }
