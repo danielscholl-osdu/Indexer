@@ -7,6 +7,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Objects;
 import javax.net.ssl.SSLContext;
 import lombok.extern.java.Log;
 import org.apache.http.Header;
@@ -18,9 +19,11 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
+import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IElasticSettingService;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
+import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -40,9 +43,19 @@ public class ElasticClientHandler {
 
   @Autowired
   private IElasticSettingService elasticSettingService;
+  @Autowired
+  private ICache<String, ElasticsearchClient> clientCache;
+  @Autowired
+  private TenantInfo tenantInfo;
 
   public ElasticsearchClient createRestClient() {
-    return getCloudRestClient(elasticSettingService.getElasticClusterInformation());
+    String partitionId = tenantInfo.getDataPartitionId();
+    ElasticsearchClient client = clientCache.get(partitionId);
+    if (Objects.isNull(client)) {
+      client = getCloudRestClient(elasticSettingService.getElasticClusterInformation());
+      clientCache.put(partitionId, client);
+    }
+    return client;
   }
 
   // TODO: Remove this temporary implementation when ECE CCS is utilized
@@ -93,7 +106,7 @@ public class ElasticClientHandler {
     }
   }
 
-  public RestClientBuilder createClientBuilder(String host, String basicAuthenticationHeaderVal,
+  protected RestClientBuilder createClientBuilder(String host, String basicAuthenticationHeaderVal,
       int port, String protocolScheme, String tls) {
     RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, protocolScheme));
     builder.setRequestConfigCallback(

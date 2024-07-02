@@ -219,9 +219,10 @@ public class IndexAliasServiceImplTest {
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
         when(indicesClient.getAlias(any(GetAliasRequest.class))).thenReturn(getAliasesNotFoundResponse);
         when(getAliasesNotFoundResponse.result()).thenReturn(Collections.emptyMap());
-
-        PutAliasResponse okResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
+        // at least one not ok response should lead to a return of false
         PutAliasResponse failResponse = PutAliasResponse.of(builder -> builder.acknowledged(false));
+        PutAliasResponse okResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
+
         when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(okResponse, failResponse);
 
         boolean ok = sut.createIndexAlias(restHighLevelClient, kind);
