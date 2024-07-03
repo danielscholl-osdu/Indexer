@@ -260,6 +260,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>2.13.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.26</version>
@@ -348,6 +354,14 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.10</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/cache/*</exclude>
+                        <exclude>**/security/*</exclude>
+                        <exclude>**/config/*</exclude>
+                        <exclude>**/IndexerAzureApplication.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -400,16 +414,6 @@
                 <version>2.21.0</version>
                 <configuration>
                     <argLine>@{argLine} --add-opens java.base/java.lang=ALL_UNNAMED</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>**/cache/*</exclude>
-                        <exclude>**/security/*</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
