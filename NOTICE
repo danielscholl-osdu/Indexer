@@ -18,7 +18,6 @@ The following software have components provided under the terms of this license:
 - AspectJ Weaver (from http://www.aspectj.org, https://www.eclipse.org/aspectj/)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Plexus Common Utilities (from http://plexus.codehaus.org/plexus-utils, https://codehaus-plexus.github.io/plexus-utils/, https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils)
 - Proton-J (from https://repo1.maven.org/maven2/org/apache/qpid/proton-j)
@@ -82,7 +81,7 @@ The following software have components provided under the terms of this license:
 - Byte Buddy (without dependencies) (from https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy)
 - Byte Buddy Java agent (from https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent)
 - ClassMate (from http://github.com/cowtowncoder/java-classmate)
-- Cloud Key Management Service (KMS) API v1-rev20240502-2.0.0 (from https://repo1.maven.org/maven2/com/google/apis/google-api-services-cloudkms)
+- Cloud Key Management Service (KMS) API (from https://repo1.maven.org/maven2/com/google/apis/google-api-services-cloudkms)
 - Collections (from https://repo1.maven.org/maven2/commons-collections/commons-collections)
 - Commons Digester (from http://commons.apache.org/digester/)
 - Converter: Jackson (from https://github.com/square/retrofit, https://repo1.maven.org/maven2/com/squareup/retrofit2/converter-jackson)
@@ -142,7 +141,7 @@ The following software have components provided under the terms of this license:
 - Jackson-dataformat-YAML (from https://github.com/FasterXML/jackson, https://github.com/FasterXML/jackson-dataformats-text)
 - Jackson-module-parameter-names (from https://repo1.maven.org/maven2/com/fasterxml/jackson/module/jackson-module-parameter-names)
 - Jakarta Dependency Injection (from https://github.com/eclipse-ee4j/injection-api)
-- Jakarta RESTful WS API (from https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 - Jakarta Servlet (from https://projects.eclipse.org/projects/ee4j.servlet)
 - Jakarta Validation API (from https://beanvalidation.org)
 - Java Native Access (from https://github.com/java-native-access/jna, https://github.com/twall/jna)
@@ -170,7 +169,6 @@ The following software have components provided under the terms of this license:
 - Metrics Core (from https://repo1.maven.org/maven2/io/dropwizard/metrics/metrics-core)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Azure Java Core Library (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure Netty HTTP Client Library (from https://github.com/Azure/azure-sdk-for-java)
@@ -297,6 +295,7 @@ The following software have components provided under the terms of this license:
 - io.grpc:grpc-stub (from https://github.com/grpc/grpc-java)
 - io.grpc:grpc-util (from https://github.com/grpc/grpc-java)
 - io.grpc:grpc-xds (from https://github.com/grpc/grpc-java)
+- ion-java (from https://github.com/amzn/ion-java/, https://github.com/amznlabs/ion-java/)
 - jackson-databind (from http://github.com/FasterXML/jackson, http://wiki.fasterxml.com/JacksonHome, https://github.com/FasterXML/jackson)
 - java-cloudant (from https://cloudant.com)
 - javatuples (from http://www.javatuples.org)
@@ -336,7 +335,6 @@ The following software have components provided under the terms of this license:
 - resilience4j (from https://github.com/resilience4j/resilience4j, https://resilience4j.readme.io, ttps://resilience4j.readme.io)
 - rest (from https://github.com/elastic/elasticsearch, https://github.com/elastic/elasticsearch.git)
 - rest-high-level (from https://github.com/elastic/elasticsearch)
-- software.amazon.ion:ion-java (from https://github.com/amzn/ion-java/)
 - spring-boot-loader (from https://spring.io/projects/spring-boot)
 - spring-security-oauth2-client (from http://spring.io/spring-security, https://spring.io/projects/spring-security, https://spring.io/spring-security)
 - spring-security-oauth2-core (from http://spring.io/spring-security, https://spring.io/projects/spring-security, https://spring.io/spring-security)
@@ -429,7 +427,7 @@ The following software have components provided under the terms of this license:
 - Jakarta Activation API (from https://github.com/eclipse-ee4j/jaf, https://github.com/jakartaee/jaf-api, https://repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api)
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
 - Jakarta Messaging API (from https://projects.eclipse.org/projects/ee4j.jms)
-- Jakarta RESTful WS API (from https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api, https://repo1.maven.org/maven2/org/jboss/spec/javax/xml/bind/jboss-jaxb-api_2.3_spec)
 - Lucene Common Analyzers (from <https://repo1.maven.org/maven2/org/apache/lucene/lucene-analyzers-common>, https://repo1.maven.org/maven2/org/apache/lucene/lucene-analyzers-common)
 - Lucene Core (from https://repo1.maven.org/maven2/org/apache/lucene/lucene-core)
@@ -443,7 +441,6 @@ The following software have components provided under the terms of this license:
 - Lucene Spatial 3D (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-spatial3d)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Netty/Codec/HTTP (from https://repo1.maven.org/maven2/io/netty/netty-codec-http)
 - Plexus Common Utilities (from http://plexus.codehaus.org/plexus-utils, https://codehaus-plexus.github.io/plexus-utils/, https://repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils)
@@ -475,7 +472,6 @@ The following software have components provided under the terms of this license:
 
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 
 ========================================================================
@@ -502,7 +498,6 @@ The following software have components provided under the terms of this license:
 
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 
 ========================================================================
@@ -579,7 +574,6 @@ The following software have components provided under the terms of this license:
 - Logback Core Module (from http://logback.qos.ch, https://repo1.maven.org/maven2/ch/qos/logback/logback-core)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - jts-core (from https://repo1.maven.org/maven2/org/locationtech/jts/jts-core)
 - org.locationtech.jts.io:jts-io-common (from https://repo1.maven.org/maven2/org/locationtech/jts/io/jts-io-common)
@@ -604,7 +598,7 @@ The following software have components provided under the terms of this license:
 - Jakarta Activation API (from https://github.com/eclipse-ee4j/jaf, https://github.com/jakartaee/jaf-api, https://repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api)
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
 - Jakarta Messaging API (from https://projects.eclipse.org/projects/ee4j.jms)
-- Jakarta RESTful WS API (from https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 - Jakarta Servlet (from https://projects.eclipse.org/projects/ee4j.servlet)
 - Jakarta Validation API (from https://beanvalidation.org)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api, https://repo1.maven.org/maven2/org/jboss/spec/javax/xml/bind/jboss-jaxb-api_2.3_spec)
@@ -627,7 +621,6 @@ GPL-2.0-only
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- javax.annotation API (from http://jcp.org/en/jsr/detail?id=250)
 - tomcat-embed-core (from http://tomcat.apache.org/)
 
 ========================================================================
@@ -642,7 +635,7 @@ The following software have components provided under the terms of this license:
 - Jakarta Activation API (from https://github.com/eclipse-ee4j/jaf, https://github.com/jakartaee/jaf-api, https://repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api)
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
 - Jakarta Messaging API (from https://projects.eclipse.org/projects/ee4j.jms)
-- Jakarta RESTful WS API (from https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 - Jakarta Servlet (from https://projects.eclipse.org/projects/ee4j.servlet)
 - Jakarta Validation API (from https://beanvalidation.org)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api, https://repo1.maven.org/maven2/org/jboss/spec/javax/xml/bind/jboss-jaxb-api_2.3_spec)
@@ -689,7 +682,6 @@ The following software have components provided under the terms of this license:
 - Logback Core Module (from http://logback.qos.ch, https://repo1.maven.org/maven2/ch/qos/logback/logback-core)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 
 ========================================================================
@@ -736,7 +728,6 @@ The following software have components provided under the terms of this license:
 - Lucene Spatial 3D (from https://lucene.apache.org/, https://repo1.maven.org/maven2/org/apache/lucene/lucene-spatial3d)
 - Microsoft Application Insights Java Agent (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Java SDK Spring Boot starter (from https://github.com/Microsoft/ApplicationInsights-Java)
-- Microsoft Application Insights Java SDK Web Module (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Application Insights Log4j 2 Appender (from https://github.com/Microsoft/ApplicationInsights-Java)
 - Microsoft Azure Java Core AMQP Library (from https://github.com/Azure/azure-sdk-for-java)
 - Microsoft Azure Java Core Library (from https://github.com/Azure/azure-sdk-for-java)
@@ -891,7 +882,7 @@ efsl-1.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Jakarta RESTful WS API (from https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 
 ========================================================================
 gpl-2.0-classpath
