@@ -93,19 +93,14 @@ public class RedisConfigTest {
     @Test
     public void shouldReturnRedisPasswordFromKeyvault_when_redisHostIsCalled() {
         try (MockedStatic<KeyVaultFacade> keyVaultFacadeMockedStatic = mockStatic(KeyVaultFacade.class)) {
-            // Mock the SecretClient
             SecretClient mockedSecretClient = mock(SecretClient.class);
 
-            // Set up the static method call with arguments
             keyVaultFacadeMockedStatic.when(() -> KeyVaultFacade.getSecretWithValidation(mockedSecretClient, "redis-password"))
                     .thenReturn("password");
 
-
             String result = sut.redisPassword(mockedSecretClient);
 
-            // Verify the result
             assertEquals("password", result);
-            //check that keyvault facade was called with our secret client for redis-hostname
             keyVaultFacadeMockedStatic.verify(()->KeyVaultFacade.getSecretWithValidation(mockedSecretClient, "redis-password"));
         }
     }
