@@ -55,7 +55,7 @@ public class ClusterConfigurationServiceTest {
     @Test
     public void should_updateClusterConfiguration() throws IOException {
         PutClusterSettingsResponse clusterUpdateSettingsResponse = mock(PutClusterSettingsResponse.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         when(clusterUpdateSettingsResponse.acknowledged()).thenReturn(true);
         doReturn(clusterClient).when(restHighLevelClient).cluster();
         doReturn(clusterUpdateSettingsResponse).when(clusterClient).putSettings(any(PutClusterSettingsRequest.class));

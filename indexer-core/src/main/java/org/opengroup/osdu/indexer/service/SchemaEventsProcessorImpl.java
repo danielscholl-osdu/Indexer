@@ -70,7 +70,7 @@ public class SchemaEventsProcessorImpl implements SchemaEventsProcessor {
             return;
         }
 
-        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
         messages.forEach((key, value) -> {
             try {
                 this.indexSchemaService.processSchemaUpsertEvent(restClient, key);

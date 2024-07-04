@@ -48,7 +48,7 @@ public class ElasticClientHandler {
   @Autowired
   private TenantInfo tenantInfo;
 
-  public ElasticsearchClient createRestClient() {
+  public ElasticsearchClient getOrCreateRestClient() {
     String partitionId = tenantInfo.getDataPartitionId();
     ElasticsearchClient client = clientCache.get(partitionId);
     if (Objects.isNull(client)) {

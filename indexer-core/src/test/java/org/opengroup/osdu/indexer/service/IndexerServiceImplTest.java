@@ -179,7 +179,7 @@ public class IndexerServiceImplTest {
 
         this.sut.processSchemaMessages(recordInfos);
 
-        verify(this.elasticClientHandler, times(1)).createRestClient();
+        verify(this.elasticClientHandler, times(1)).getOrCreateRestClient();
         verify(this.elasticIndexNameResolver, times(1)).getIndexNameFromKind(any());
         verify(this.indicesService, times(1)).isIndexExist(any(), any());
     }
@@ -375,7 +375,7 @@ public class IndexerServiceImplTest {
         when(this.indicesService.createIndex(any(), any(), any(), any())).thenReturn(true);
         when(this.mappingService.getIndexMappingFromRecordSchema(any())).thenReturn(new HashMap<>());
 
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.restHighLevelClient.bulk(any(BulkRequest.class))).thenReturn(this.bulkResponse);
 
         Map<String, Object> indexerMappedPayload = new HashMap<>();
@@ -430,7 +430,7 @@ public class IndexerServiceImplTest {
         when(this.mappingService.getIndexMappingFromRecordSchema(any())).thenReturn(new HashMap<>());
         doThrow(new ElasticsearchMappingException("msg", 400)).when(mappingService).syncMetaAttributeIndexMappingIfRequired(any(), eq(indexSchema4));
 
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.restHighLevelClient.bulk(any(BulkRequest.class))).thenReturn(this.bulkResponse);
 
         Map<String, Object> indexerMappedPayload = new HashMap<>();

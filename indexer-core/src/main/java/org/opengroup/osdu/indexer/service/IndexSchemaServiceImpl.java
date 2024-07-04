@@ -78,7 +78,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     private AugmenterSetting augmenterSetting;
 
     public void processSchemaMessages(Map<String, OperationType> schemaMsgs) throws IOException {
-        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
         schemaMsgs.entrySet().forEach(msg -> {
             try {
                 processSchemaEvents(restClient, msg);
@@ -110,7 +110,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
     @Override
     public void processSchemaUpsert(String kind) throws AppException {
         try {
-            ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+            ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
             processSchemaUpsertEvent(restClient, kind);
         } catch (IOException | ElasticsearchException | URISyntaxException e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema update", e.getMessage());
@@ -279,7 +279,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     public void syncIndexMappingWithStorageSchema(String kind) throws ElasticsearchException, IOException, AppException, URISyntaxException {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
-        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
         if (this.indicesService.isIndexExist(restClient, index)) {
                 this.indicesService.deleteIndex(restClient, index);
                 this.log.info(String.format("deleted index: %s", index));
@@ -291,7 +291,7 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
 
     public boolean isStorageSchemaSyncRequired(String kind, boolean forceClean) throws IOException {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(kind);
-        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
         boolean indexExist = this.indicesService.isIndexExist(restClient, index);
         return !indexExist || forceClean;
     }

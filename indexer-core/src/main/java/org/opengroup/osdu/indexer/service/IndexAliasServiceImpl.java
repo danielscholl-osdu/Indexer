@@ -57,7 +57,7 @@ public class IndexAliasServiceImpl implements IndexAliasService{
     public IndexAliasesResult createIndexAliasesForAll() {
         IndexAliasesResult result = new IndexAliasesResult();
         try{
-            ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+            ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
             List<String> allKinds = getAllKinds(restClient);
             Set<String> allExistingAliases = getAllExistingAliases(restClient);
             for (String kind : allKinds) {

@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -79,7 +78,7 @@ public class CronServiceImplTest {
         IndexInfo info = IndexInfo.builder().name("tenant1-index-1.0.0").documentCount("10").creationDate(Long.toString(Instant.now().minus(4, ChronoUnit.DAYS).toEpochMilli())).build();
 
         when(this.requestInfo.getPartitionId()).thenReturn("tenant1");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, indexPattern)).thenReturn(Lists.newArrayList(info));
 
         this.sut.cleanupIndices(indexPattern);
@@ -91,7 +90,7 @@ public class CronServiceImplTest {
     @Test(expected = IOException.class)
     public void run_cleanup_when_cron_job_runs_with_wrong_pattern() throws Exception {
         IOException exception = new IOException("blah");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, "tenant1-test-*")).thenThrow(exception);
 
         this.sut.cleanupIndices("tenant1-test-*");
@@ -104,7 +103,7 @@ public class CronServiceImplTest {
         IndexInfo info = IndexInfo.builder().name("tenant1-index-1.0.0").documentCount("10").creationDate(Long.toString(Instant.now().minus(8, ChronoUnit.DAYS).toEpochMilli())).build();
 
         when(this.requestInfo.getPartitionId()).thenReturn("tenant1");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, null)).thenReturn(Lists.newArrayList(info));
 
         this.sut.cleanupEmptyStaleIndices();
@@ -118,7 +117,7 @@ public class CronServiceImplTest {
         IndexInfo info = IndexInfo.builder().name("tenant1-index-1.0.0").documentCount("0").creationDate(Long.toString(Instant.now().minus(8, ChronoUnit.DAYS).toEpochMilli())).build();
 
         when(this.requestInfo.getPartitionId()).thenReturn("tenant1");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, null)).thenReturn(Lists.newArrayList(info));
 
         this.sut.cleanupEmptyStaleIndices();
@@ -130,7 +129,7 @@ public class CronServiceImplTest {
     @Test(expected = IOException.class)
     public void run_cleanup_when_backend_throws_exception() throws Exception {
         IOException exception = new IOException("blah");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, null)).thenThrow(exception);
 
         this.sut.cleanupEmptyStaleIndices();

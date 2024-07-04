@@ -185,7 +185,7 @@ public class IndexAliasServiceImplTest {
                 String argument = invocation.getArgument(0);
                 return !unsupportedKind.equals(argument);
             });
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
         when(restHighLevelClient.search(any(SearchRequest.class), any(Class.class))).thenReturn(searchResponse);
         when(searchResponse.aggregations()).thenReturn(Map.of("kinds", aggregate));
@@ -223,7 +223,7 @@ public class IndexAliasServiceImplTest {
         PutAliasResponse failResponse = PutAliasResponse.of(builder -> builder.acknowledged(false));
         PutAliasResponse okResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
 
-        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(okResponse, failResponse);
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(failResponse, okResponse);
 
         boolean ok = sut.createIndexAlias(restHighLevelClient, kind);
         verify(log, never()).error(any(), any(Exception.class));

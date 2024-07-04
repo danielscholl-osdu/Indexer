@@ -82,7 +82,7 @@ public class ElasticClientHandlerTest {
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenAnswer(invocation -> builder);
         when(builder.build()).thenReturn(restClient);
 
-        ElasticsearchClient returned = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient returned = this.elasticClientHandler.getOrCreateRestClient();
         RestClientTransport clientTransport = (RestClientTransport) returned._transport();
         assertEquals(restClient, clientTransport.restClient());
     }
@@ -96,7 +96,7 @@ public class ElasticClientHandlerTest {
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenAnswer(invocation -> builder);
         when(builder.build()).thenReturn(null);
 
-        this.elasticClientHandler.createRestClient();
+        this.elasticClientHandler.getOrCreateRestClient();
     }
 
     @Test(expected = AppException.class)
@@ -104,6 +104,6 @@ public class ElasticClientHandlerTest {
         when(elasticSettingService.getElasticClusterInformation()).thenThrow(new AppException(1, "", ""));
         when(RestClient.builder(new HttpHost("H", 1, "https"))).thenAnswer(invocation -> builder);
 
-        this.elasticClientHandler.createRestClient();
+        this.elasticClientHandler.getOrCreateRestClient();
     }
 }

@@ -39,7 +39,7 @@ public class ClusterConfigurationServiceImpl implements IClusterConfigurationSer
             .timeout(Time.of(builder -> builder.time("1m")))
             .build();
 
-        ElasticsearchClient client = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient client = this.elasticClientHandler.getOrCreateRestClient();
         PutClusterSettingsResponse response = client.cluster().putSettings(request);
         return response.acknowledged();
         }

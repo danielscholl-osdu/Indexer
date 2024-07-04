@@ -75,7 +75,7 @@ public class SchemaEventsProcessorImplTest {
     public void should_process_validSchemaCreateEvent() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "create");
         this.restClient = mock(ElasticsearchClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restClient);
 
         this.sut.processSchemaMessages(singletonList(event1));
 
@@ -87,7 +87,7 @@ public class SchemaEventsProcessorImplTest {
     public void should_process_validSchemaUpdateEvent() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "update");
         this.restClient = mock(ElasticsearchClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restClient);
 
         this.sut.processSchemaMessages(singletonList(event1));
 
@@ -114,7 +114,7 @@ public class SchemaEventsProcessorImplTest {
     public void should_throwError_given_schemaUpsertFails() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "update");
         this.restClient = mock(ElasticsearchClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restClient);
 
         ErrorResponse errorResponse = ErrorResponse.of(
             responseBuilder -> responseBuilder.error(

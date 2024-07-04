@@ -221,7 +221,7 @@ public class IndexerServiceImpl implements IndexerService {
     public void processSchemaMessages(List<RecordInfo> recordInfos) throws IOException {
         Map<String, OperationType> schemaMsgs = RecordInfo.getSchemaMsgs(recordInfos);
         if (!schemaMsgs.isEmpty()) {
-            ElasticsearchClient restClient = elasticClientHandler.createRestClient();
+            ElasticsearchClient restClient = elasticClientHandler.getOrCreateRestClient();
             schemaMsgs.entrySet().forEach(msg -> {
                 try {
                     processSchemaEvents(restClient, msg);
@@ -266,7 +266,7 @@ public class IndexerServiceImpl implements IndexerService {
         List<String> relatedKinds = augmenterConfigurationService.getRelatedKindsOfConfigurations(configurationIds);
         if(!relatedKinds.isEmpty()) {
             try{
-                ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+                ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
                 for (String kind : relatedKinds) {
                     try {
                         this.schemaService.processSchemaUpsertEvent(restClient, kind);
@@ -536,7 +536,7 @@ public class IndexerServiceImpl implements IndexerService {
             return new LinkedList<>();
         }
 
-        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
         // process the schema
         this.cacheOrCreateElasticMapping(recordIndexerPayload, restClient);
 
@@ -638,7 +638,7 @@ public class IndexerServiceImpl implements IndexerService {
             }
         }
 
-        ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
         return processBulkRequest(restClient, bulkRequestBuilder.build()).getFailureRecordIds();
     }
 

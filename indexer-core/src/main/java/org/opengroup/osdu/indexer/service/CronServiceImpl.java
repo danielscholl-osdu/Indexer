@@ -50,7 +50,7 @@ public class CronServiceImpl implements CronService{
               .toEpochMilli();
 
           try {
-            ElasticsearchClient restClient = elasticClientHandler.createRestClient();
+            ElasticsearchClient restClient = elasticClientHandler.getOrCreateRestClient();
             final List<IndexInfo> indicesList = this.indicesService.getIndexInfo(restClient, indexPattern);
             for (IndexInfo settings : indicesList) {
               long indexCreateTime = Long.parseLong(settings.getCreationDate());
@@ -72,7 +72,7 @@ public class CronServiceImpl implements CronService{
               .toEpochMilli();
 
           try {
-            ElasticsearchClient restClient = this.elasticClientHandler.createRestClient();
+            ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
             final List<IndexInfo> indicesList = this.indicesService.getIndexInfo(restClient, null);
             for (IndexInfo settings : indicesList) {
               long indexCreateTime = Long.parseLong(settings.getCreationDate());

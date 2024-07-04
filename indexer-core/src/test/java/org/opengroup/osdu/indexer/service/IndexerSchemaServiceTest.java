@@ -112,7 +112,7 @@ public class IndexerSchemaServiceTest {
     public void setup() {
         initMocks(this);
         ElasticsearchClient restHighLevelClient = mock(ElasticsearchClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         when(augmenterSetting.isEnabled()).thenReturn(true);
     }
 

@@ -172,7 +172,7 @@ public class IndicesServiceTest {
         GetIndexResponse getIndexResponse = mock(GetIndexResponse.class);
         Map<String, IndexState> indices = Map.of("anyIndex", IndexState.of(builder -> builder));
 
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doReturn(deleteIndexResponse).when(indicesClient).delete(any(DeleteIndexRequest.class));
         doReturn(getIndexResponse).when(indicesClient).get(any(GetIndexRequest.class));
@@ -187,7 +187,7 @@ public class IndicesServiceTest {
         GetIndexResponse getIndexResponse = mock(GetIndexResponse.class);
         Map<String, IndexState> indices = Map.of("anyIndex", IndexState.of(builder -> builder));
 
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doReturn(deleteIndexResponse).when(indicesClient).delete(any(DeleteIndexRequest.class));
         doReturn(getIndexResponse).when(indicesClient).get(any(GetIndexRequest.class));
@@ -202,7 +202,7 @@ public class IndicesServiceTest {
         GetIndexResponse getIndexResponse = mock(GetIndexResponse.class);
         Map<String, IndexState> indices = Map.of("anyIndex", IndexState.of(builder -> builder));
 
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doReturn(deleteIndexResponse).when(indicesClient).delete(any(DeleteIndexRequest.class));
         doReturn(getIndexResponse).when(indicesClient).get(any(GetIndexRequest.class));
@@ -233,7 +233,7 @@ public class IndicesServiceTest {
         GetIndexResponse getIndexResponse = mock(GetIndexResponse.class);
         Map<String, IndexState> indices = Map.of("anyIndex", IndexState.of(builder -> builder));
 
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doThrow(exception).when(indicesClient).delete(any(DeleteIndexRequest.class));
         doReturn(getIndexResponse).when(indicesClient).get(any(GetIndexRequest.class));
@@ -260,7 +260,7 @@ public class IndicesServiceTest {
         );
 
         ElasticsearchException exception = new ElasticsearchException(null, errorResponse);
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         doReturn(indicesClient).when(restHighLevelClient).indices();
         doThrow(exception).when(indicesClient).get(any(GetIndexRequest.class));
 

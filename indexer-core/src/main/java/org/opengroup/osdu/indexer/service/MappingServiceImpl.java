@@ -60,7 +60,7 @@ public abstract class MappingServiceImpl implements IMappingService {
      * */
     @Override
     public String getIndexSchema(String index) throws Exception {
-        ElasticsearchClient client = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient client = this.elasticClientHandler.getOrCreateRestClient();
         return this.getIndexMapping(client, index);
     }
 

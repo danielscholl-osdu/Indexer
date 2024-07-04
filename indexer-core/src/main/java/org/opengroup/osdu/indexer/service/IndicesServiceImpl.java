@@ -241,7 +241,7 @@ public class IndicesServiceImpl implements IndicesService {
      * @param index Index name
      */
     public boolean deleteIndex(String index) throws ElasticsearchException, IOException, AppException {
-        ElasticsearchClient client = this.elasticClientHandler.createRestClient();
+        ElasticsearchClient client = this.elasticClientHandler.getOrCreateRestClient();
         return deleteIndex(client, index);
     }
 
