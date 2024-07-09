@@ -17,7 +17,7 @@ data:
   storageHost: "http://storage"
   searchHost: "http://search"
   # Deployment
-  requestsCpu: "35m"
+  requestsCpu: "100m"
   requestsMemory: "640Mi"
   limitsCpu: "1"
   limitsMemory: "1G"
