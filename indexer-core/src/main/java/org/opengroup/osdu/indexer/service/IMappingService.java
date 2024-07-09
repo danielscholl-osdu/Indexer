@@ -14,21 +14,20 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.elasticsearch.client.RestHighLevelClient;
-import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
-
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import java.io.IOException;
 import java.util.Map;
+import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 
 public interface IMappingService {
 
-    String getIndexMapping(RestHighLevelClient client, String index) throws Exception;
+    String getIndexMapping(ElasticsearchClient client, String index) throws Exception;
 
     String getIndexSchema(String index) throws Exception;
 
-    String createMapping(RestHighLevelClient client, IndexSchema schema, String index, boolean merge) throws IOException;
+    String createMapping(ElasticsearchClient client, IndexSchema schema, String index, boolean merge) throws IOException;
 
     Map<String, Object> getIndexMappingFromRecordSchema(IndexSchema schema);
 
-    void syncMetaAttributeIndexMappingIfRequired(RestHighLevelClient restClient, IndexSchema schema) throws Exception;
+    void syncMetaAttributeIndexMappingIfRequired(ElasticsearchClient restClient, IndexSchema schema) throws Exception;
 }

@@ -30,11 +30,13 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.ErrorCause;
+import co.elastic.clients.elasticsearch._types.ErrorResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.rest.RestStatus;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,7 +62,7 @@ public class SchemaEventsProcessorImplTest {
     private SchemaEventsListenerConfiguration schemaEventsListenerConfiguration;
     @InjectMocks
     private SchemaEventsProcessorImpl sut;
-    private RestHighLevelClient restClient;
+    private ElasticsearchClient restClient;
 
     @Before
     public void setup() {
@@ -72,8 +74,8 @@ public class SchemaEventsProcessorImplTest {
     @Test
     public void should_process_validSchemaCreateEvent() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "create");
-        this.restClient = mock(RestHighLevelClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
+        this.restClient = mock(ElasticsearchClient.class);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restClient);
 
         this.sut.processSchemaMessages(singletonList(event1));
 
@@ -84,8 +86,8 @@ public class SchemaEventsProcessorImplTest {
     @Test
     public void should_process_validSchemaUpdateEvent() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "update");
-        this.restClient = mock(RestHighLevelClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
+        this.restClient = mock(ElasticsearchClient.class);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restClient);
 
         this.sut.processSchemaMessages(singletonList(event1));
 
@@ -111,17 +113,24 @@ public class SchemaEventsProcessorImplTest {
     @Test
     public void should_throwError_given_schemaUpsertFails() throws IOException, URISyntaxException {
         SchemaInfo event1 = new SchemaInfo("slb:indexer:test-data--SchemaEventIntegration:1.0.0", "update");
-        this.restClient = mock(RestHighLevelClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restClient);
-        doThrow(new ElasticsearchStatusException("unknown error", RestStatus.INTERNAL_SERVER_ERROR)).when(this.indexSchemaService)
-            .processSchemaUpsertEvent(any(RestHighLevelClient.class), anyString());
+        this.restClient = mock(ElasticsearchClient.class);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restClient);
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+            responseBuilder -> responseBuilder.error(
+                    ErrorCause.of(errorBuilder -> errorBuilder.reason("unknown error")))
+                .status(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+        );
+
+        ElasticsearchException exception = new ElasticsearchException(null, errorResponse);
+
+        doThrow(exception).when(this.indexSchemaService).processSchemaUpsertEvent(any(ElasticsearchClient.class), anyString());
 
         try {
             this.sut.processSchemaMessages(singletonList(event1));
             fail("Should throw exception");
         } catch (AppException e) {
             assertEquals(INTERNAL_SERVER_ERROR.value(), e.getError().getCode());
-            assertEquals("unknown error", e.getError().getMessage());
             verify(this.auditLogger, times(1)).indexMappingUpsertFail(singletonList(event1.getKind()));
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());

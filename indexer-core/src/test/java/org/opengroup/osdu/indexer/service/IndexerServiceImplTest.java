@@ -15,13 +15,39 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ErrorCause;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.rest.RestStatus;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,11 +56,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.core.common.model.indexer.*;
+import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
+import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
+import org.opengroup.osdu.core.common.model.indexer.JobStatus;
+import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
+import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.storage.ConversionStatus;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
@@ -46,26 +77,6 @@ import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingExceptio
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
-import java.net.URISyntaxException;
-import java.util.*;
-
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IndexerServiceImplTest {
@@ -93,7 +104,7 @@ public class IndexerServiceImplTest {
     @Mock
     private IRequestInfo requestInfo;
     @Mock
-    private RestHighLevelClient restHighLevelClient;
+    private ElasticsearchClient restHighLevelClient;
     @Mock
     private IndexSchemaService schemaService;
     @Mock
@@ -168,7 +179,7 @@ public class IndexerServiceImplTest {
 
         this.sut.processSchemaMessages(recordInfos);
 
-        verify(this.elasticClientHandler, times(1)).createRestClient();
+        verify(this.elasticClientHandler, times(1)).getOrCreateRestClient();
         verify(this.elasticIndexNameResolver, times(1)).getIndexNameFromKind(any());
         verify(this.indicesService, times(1)).isIndexExist(any(), any());
     }
@@ -186,7 +197,7 @@ public class IndexerServiceImplTest {
             assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
             assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
 
-            verify(restHighLevelClient, times(2)).bulk(any(), any());
+            verify(restHighLevelClient, times(2)).bulk(any(BulkRequest.class));
             verify(this.auditLogger).indexCreateRecordSuccess(Arrays.asList("RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)",
                     "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
             verify(this.auditLogger).indexUpdateRecordFail(singletonList("RecordStatus(id=opendes:doc:test1, kind=opendes:testindexer1:well:1.0.0, operationType=update, status=FAIL, message=test failure)"));
@@ -210,7 +221,7 @@ public class IndexerServiceImplTest {
             assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.FAIL).size());
             assertEquals(2, jobStatus.getIdsByIndexingStatus(IndexingStatus.SUCCESS).size());
 
-            verify(restHighLevelClient, times(2)).bulk(any(), any());
+            verify(restHighLevelClient, times(2)).bulk(any(BulkRequest.class));
             verify(this.auditLogger).indexStarted(Arrays.asList(
                 "id=opendes:doc:test1 kind=opendes:testindexer1:well:1.0.0 operationType=update",
                 "id=opendes:doc:test2 kind=opendes:testindexer2:well:1.0.0 operationType=create",
@@ -221,7 +232,7 @@ public class IndexerServiceImplTest {
                 "RecordStatus(id=opendes:doc:test2, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=SUCCESS)",
                 "RecordStatus(id=opendes:doc:test4, kind=osdu:wks:reference-data--IndexPropertyPathConfiguration:1.0.0, operationType=create, status=SUCCESS)"));
             verify(this.auditLogger).indexCreateRecordFail(Arrays.asList(
-                "RecordStatus(id=opendes:doc:test3, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=FAIL, message=null)",
+                "RecordStatus(id=opendes:doc:test3, kind=opendes:testindexer2:well:1.0.0, operationType=create, status=FAIL, message=Elasticsearch exception [type=mapper_parsing_exception, reason=failed to parse field [data.SpatialLocation.Wgs84Coordinates] of type [geo_shape]])",
                 "RecordStatus(id=opendes:doc:test5, kind=opendes:testindexer4:well:1.0.0, operationType=create, status=FAIL, message=Indexed Successfully)"));
             verify(this.auditLogger).indexUpdateRecordPartialSuccess(singletonList("RecordStatus(id=opendes:doc:test1, kind=opendes:testindexer1:well:1.0.0, operationType=update, status==PARTIAL_SUCCESS, message=Indexed Successfully)"));
         } catch (Exception e) {
@@ -361,19 +372,23 @@ public class IndexerServiceImplTest {
         when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
 
         // setup elastic, index and mapped document
-        when(this.indicesService.createIndex(any(), any(), any(), any(), any())).thenReturn(true);
+        when(this.indicesService.createIndex(any(), any(), any(), any())).thenReturn(true);
         when(this.mappingService.getIndexMappingFromRecordSchema(any())).thenReturn(new HashMap<>());
 
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
-        when(this.restHighLevelClient.bulk(any(), any(RequestOptions.class))).thenReturn(this.bulkResponse);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.restHighLevelClient.bulk(any(BulkRequest.class))).thenReturn(this.bulkResponse);
 
         Map<String, Object> indexerMappedPayload = new HashMap<>();
         indexerMappedPayload.put("id", "keyword");
         when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any(), any())).thenReturn(indexerMappedPayload);
 
-        BulkItemResponse[] responses = new BulkItemResponse[]{prepareFailedResponse(recordId1), prepareSuccessfulResponse(recordId2),
-                prepareSuccessfulResponse(recordId4), prepareFailed400Response(recordId3)};
-        when(this.bulkResponse.getItems()).thenReturn(responses);
+        List<BulkResponseItem> items = List.of(
+            prepareFailedResponse(recordId1),
+            prepareSuccessfulResponse(recordId2),
+            prepareSuccessfulResponse(recordId4),
+            prepareFailed400Response(recordId3)
+        );
+        when(this.bulkResponse.items()).thenReturn(items);
     }
 
     private void preparePartiallyValidTestData(String pubsubMsg) throws Exception {
@@ -409,48 +424,47 @@ public class IndexerServiceImplTest {
         when(this.storageService.getStorageRecords(any(), any())).thenReturn(storageRecords);
 
         // setup elastic, index and mapped document
-        when(this.indicesService.createIndex(any(), any(), any(), any(), any())).thenReturn(true);
+        when(this.indicesService.createIndex(any(), any(), any(), any())).thenReturn(true);
         when(this.indicesService.isIndexReady(any(), eq(kind4))).thenReturn(true);
         when(this.elasticIndexNameResolver.getIndexNameFromKind(eq(kind4))).thenReturn(kind4);
         when(this.mappingService.getIndexMappingFromRecordSchema(any())).thenReturn(new HashMap<>());
         doThrow(new ElasticsearchMappingException("msg", 400)).when(mappingService).syncMetaAttributeIndexMappingIfRequired(any(), eq(indexSchema4));
 
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
-        when(this.restHighLevelClient.bulk(any(), any(RequestOptions.class))).thenReturn(this.bulkResponse);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.restHighLevelClient.bulk(any(BulkRequest.class))).thenReturn(this.bulkResponse);
 
         Map<String, Object> indexerMappedPayload = new HashMap<>();
         indexerMappedPayload.put("id", "keyword");
         when(this.storageIndexerPayloadMapper.mapDataPayload(any(), any(), any(), any())).thenReturn(indexerMappedPayload);
 
-        BulkItemResponse[] responses = new BulkItemResponse[]{
+        List<BulkResponseItem> items = List.of(
             prepareSuccessfulResponse(recordId1),
             prepareSuccessfulResponse(recordId2),
             prepareSuccessfulResponse(recordId4),
             prepareSuccessfulResponse(recordId5),
-            prepareFailed400Response(recordId3)};
-        when(this.bulkResponse.getItems()).thenReturn(responses);
+            prepareFailed400Response(recordId3)
+        );
+        when(this.bulkResponse.items()).thenReturn(items);
     }
 
-    private BulkItemResponse prepareFailedResponse(String recordId) {
-        BulkItemResponse responseFail = mock(BulkItemResponse.class);
-        when(responseFail.isFailed()).thenReturn(true);
-        when(responseFail.getFailureMessage()).thenReturn(failureMassage);
-        when(responseFail.getId()).thenReturn(recordId);
-        when(responseFail.getFailure()).thenReturn(new BulkItemResponse.Failure("failure index", "failure type", "failure id", new Exception("test failure")));
+    private BulkResponseItem prepareFailedResponse(String recordId) {
+        BulkResponseItem responseFail = mock(BulkResponseItem.class);
+        when(responseFail.error()).thenReturn(ErrorCause.of(builder -> builder.reason(failureMassage)));
+        when(responseFail.id()).thenReturn(recordId);
         return responseFail;
     }
 
-    private BulkItemResponse prepareFailed400Response(String recordId) {
-        BulkItemResponse responseFail = mock(BulkItemResponse.class);
-        when(responseFail.isFailed()).thenReturn(true);
-        when(responseFail.getId()).thenReturn(recordId);
-        when(responseFail.getFailure()).thenReturn(new BulkItemResponse.Failure("failure index", "failure type", "failure id", new Exception(badRequestMessage), RestStatus.BAD_REQUEST));
+    private BulkResponseItem prepareFailed400Response(String recordId) {
+        BulkResponseItem responseFail = mock(BulkResponseItem.class);
+        when(responseFail.error()).thenReturn(ErrorCause.of(builder -> builder.reason(badRequestMessage)));
+        when(responseFail.status()).thenReturn(HttpStatus.SC_BAD_REQUEST);
+        when(responseFail.id()).thenReturn(recordId);
         return responseFail;
     }
 
-    private BulkItemResponse prepareSuccessfulResponse(String recordId) {
-        BulkItemResponse responseSuccess = mock(BulkItemResponse.class);
-        when(responseSuccess.getId()).thenReturn(recordId);
+    private BulkResponseItem prepareSuccessfulResponse(String recordId) {
+        BulkResponseItem responseSuccess = mock(BulkResponseItem.class);
+        when(responseSuccess.id()).thenReturn(recordId);
         return responseSuccess;
     }
 

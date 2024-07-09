@@ -15,9 +15,8 @@
 package org.opengroup.osdu.indexer.util.parser;
 
 import com.google.common.base.Strings;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.lucene.util.BytesRef;
-import org.elasticsearch.common.Numbers;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -42,8 +41,8 @@ public class NumberParser {
             throw new IllegalArgumentException(String.format("number parsing error, integer out of range: attribute: %s | value: %s", attributeName, attributeVal));
         }
 
-        if (attributeVal instanceof Number) {
-            return ((Number) attributeVal).intValue();
+        if (attributeVal instanceof Number number) {
+            return number.intValue();
         }
 
         return (int) doubleValue;
@@ -61,8 +60,8 @@ public class NumberParser {
             throw new IllegalArgumentException(String.format("number parsing error: attribute: %s | value: %s", attributeName, attributeVal));
         }
 
-        if (attributeVal instanceof Long) {
-            return (Long) attributeVal;
+        if (attributeVal instanceof Long longVal) {
+            return longVal;
         }
 
         try {
@@ -77,8 +76,14 @@ public class NumberParser {
         }
 
         // longs need special handling so we don't lose precision while parsing
-        String stringValue = (attributeVal instanceof BytesRef) ? ((BytesRef) attributeVal).utf8ToString() : value.toString();
-        return Numbers.toLong(stringValue, false);
+        String stringValue;
+
+        if (attributeVal instanceof byte[] bytes) {
+            stringValue = new String(bytes, StandardCharsets.UTF_8);
+        } else {
+            stringValue = attributeVal.toString();
+        }
+        return Long.parseLong(stringValue);
     }
 
     public float parseFloat(String attributeName, Object attributeVal) {
@@ -94,11 +99,11 @@ public class NumberParser {
         }
 
         final float result;
-        if (attributeVal instanceof Number) {
-            result = ((Number) attributeVal).floatValue();
+        if (attributeVal instanceof Number number) {
+            result = number.floatValue();
         } else {
-            if (attributeVal instanceof BytesRef) {
-                attributeVal = ((BytesRef) attributeVal).utf8ToString();
+            if (attributeVal instanceof byte[] bytes) {
+                attributeVal = new String(bytes, StandardCharsets.UTF_8);
             }
             result = Float.parseFloat(attributeVal.toString());
         }
@@ -136,10 +141,10 @@ public class NumberParser {
     private static double objectToDouble(Object value) {
         double doubleValue;
 
-        if (value instanceof Number) {
-            doubleValue = ((Number) value).doubleValue();
-        } else if (value instanceof BytesRef) {
-            doubleValue = Double.parseDouble(((BytesRef) value).utf8ToString());
+        if (value instanceof Number number) {
+            doubleValue = number.doubleValue();
+        } else if (value instanceof byte[] bytes) {
+            doubleValue = Double.parseDouble(new String(bytes, StandardCharsets.UTF_8));
         } else {
             doubleValue = Double.parseDouble(value.toString());
         }

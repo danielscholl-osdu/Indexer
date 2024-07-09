@@ -14,15 +14,18 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
+import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
+import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
+import co.elastic.clients.json.JsonpUtils;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import org.apache.http.HttpStatus;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.GetMappingsRequest;
-import org.elasticsearch.client.indices.GetMappingsResponse;
-import org.elasticsearch.cluster.metadata.MappingMetadata;
-import org.elasticsearch.common.unit.TimeValue;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
@@ -31,15 +34,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-
 @Service
 @RequestScope
 public abstract class MappingServiceImpl implements IMappingService {
+
+    private static final Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
 
     @Autowired
     private IndicesService indicesService;
@@ -48,8 +47,10 @@ public abstract class MappingServiceImpl implements IMappingService {
     @Autowired
     private ElasticIndexNameResolver elasticIndexNameResolver;
 
-    private static TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
-
+    static {
+        // default is 10k chars, which makes big mapping responses truncated
+        JsonpUtils.maxToStringLength(Integer.MAX_VALUE);
+    }
     /*
      * Get index schema
      *
@@ -59,10 +60,8 @@ public abstract class MappingServiceImpl implements IMappingService {
      * */
     @Override
     public String getIndexSchema(String index) throws Exception {
-
-        try (RestHighLevelClient client = this.elasticClientHandler.createRestClient()) {
-            return this.getIndexMapping(client, index);
-        }
+        ElasticsearchClient client = this.elasticClientHandler.getOrCreateRestClient();
+        return this.getIndexMapping(client, index);
     }
 
     /**
@@ -73,7 +72,7 @@ public abstract class MappingServiceImpl implements IMappingService {
      * @return mapping Index mapping
      * @throws Exception Throws exception if elastic cannot find index.
      */
-    public String getIndexMapping(RestHighLevelClient client, String index) throws Exception {
+    public String getIndexMapping(ElasticsearchClient client, String index) throws Exception {
 
         Preconditions.checkArgument(client, Objects::nonNull, "client cannot be null");
         Preconditions.checkArgument(index, Objects::nonNull, "index cannot be null");
@@ -85,16 +84,21 @@ public abstract class MappingServiceImpl implements IMappingService {
         }
 
         try {
-            GetMappingsRequest request = new GetMappingsRequest();
-            request.indices(index);
-            request.setTimeout(REQUEST_TIMEOUT);
-            GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
-            if (response.mappings().isEmpty()) {
+            GetMappingRequest.Builder getMappingBuilder = new GetMappingRequest.Builder();
+            getMappingBuilder.index(index);
+            getMappingBuilder.masterTimeout(REQUEST_TIMEOUT);
+            GetMappingResponse mappingResponse = client.indices().getMapping(getMappingBuilder.build());
+            Map<String, IndexMappingRecord> mappingRecordMap = mappingResponse.result();
+            if (mappingRecordMap.isEmpty()) {
                 throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)));
             }
-            Type type = new TypeToken<Map<String, Object>>() {}.getType();
-            Optional<MappingMetadata> mapping = response.mappings().values().stream().findFirst();
-            return new Gson().toJson(mapping.get().getSourceAsMap(), type);
+            Optional<IndexMappingRecord> mappingRecord = mappingRecordMap.values().stream().findFirst();
+            StringBuilder collector = new StringBuilder();
+            mappingRecord.ifPresent(indexMappingRecord -> {
+                TypeMapping mappings = indexMappingRecord.mappings();
+                JsonpUtils.toString(mappings, collector);
+            });
+            return collector.toString();
         } catch (IOException e) {
             throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unknown error", String.format("Error retrieving mapping for kind %s", this.elasticIndexNameResolver.getKindFromIndexName(index)), e);
         }
