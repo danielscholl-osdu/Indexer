@@ -4,6 +4,7 @@
 package org.opengroup.osdu.indexer.ibm.publish;
 
 
+import com.google.common.base.Strings;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +12,6 @@ import java.util.Map;
 
 import jakarta.inject.Inject;
 
-import org.elasticsearch.common.Strings;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.indexer.JobStatus;

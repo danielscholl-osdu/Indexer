@@ -14,28 +14,26 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.settings.Settings;
-import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.core.common.model.search.IndexInfo;
-
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch.indices.IndexSettings;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.opengroup.osdu.core.common.model.http.AppException;
+import org.opengroup.osdu.core.common.model.search.IndexInfo;
 
 public interface IndicesService {
 
-    boolean createIndex(RestHighLevelClient client, String index, Settings settings, String type, Map<String, Object> mapping) throws ElasticsearchStatusException, IOException;
+    boolean createIndex(ElasticsearchClient client, String index, IndexSettings settings, Map<String, Object> mapping) throws ElasticsearchException, IOException;
 
-    boolean isIndexExist(RestHighLevelClient client, String index) throws IOException;
+    boolean isIndexExist(ElasticsearchClient client, String index) throws IOException;
 
-    boolean deleteIndex(RestHighLevelClient client, String index) throws ElasticsearchException, IOException, AppException;
+    boolean deleteIndex(ElasticsearchClient client, String index) throws ElasticsearchException, IOException, AppException;
 
     boolean deleteIndex(String index) throws ElasticsearchException, IOException, AppException;
 
-    List<IndexInfo> getIndexInfo(RestHighLevelClient client, String indexPattern) throws IOException;
+    List<IndexInfo> getIndexInfo(ElasticsearchClient client, String indexPattern) throws IOException;
 
-    boolean isIndexReady(RestHighLevelClient client, String index) throws IOException;
+    boolean isIndexReady(ElasticsearchClient client, String index) throws IOException;
 }

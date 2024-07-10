@@ -1,42 +1,53 @@
-/* Licensed Materials - Property of IBM              */		
-/* (c) Copyright IBM Corp. 2020. All Rights Reserved.*/
+/*
+ *  Copyright 2020-2024 Google LLC
+ *  Copyright 2020-2024 EPAM Systems, Inc
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 
-package org.opengroup.osdu.indexer.ibm.service;
+package org.opengroup.osdu.indexer.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.google.common.collect.Lists;
-import org.elasticsearch.client.RestHighLevelClient;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
-import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.opengroup.osdu.indexer.service.CronServiceImpl;
+import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
-import org.opengroup.osdu.indexer.service.IndicesService;
+import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-
-@Ignore
 @RunWith(SpringRunner.class)
 public class CronServiceImplTest {
 
     @Mock
     private IndexerConfigurationProperties configurationProperties;
+
     @Mock
-    private RestHighLevelClient restHighLevelClient;
+    private ElasticsearchClient restHighLevelClient;
     @Mock
     private IndicesService indicesService;
     @Mock
@@ -53,6 +64,7 @@ public class CronServiceImplTest {
 
     @Before
     public void setup() {
+
         when(this.requestInfo.getHeaders()).thenReturn(dpsHeaders);
 
         when(configurationProperties.getCronIndexCleanupThresholdDays()).thenReturn(3);
@@ -66,7 +78,7 @@ public class CronServiceImplTest {
         IndexInfo info = IndexInfo.builder().name("tenant1-index-1.0.0").documentCount("10").creationDate(Long.toString(Instant.now().minus(4, ChronoUnit.DAYS).toEpochMilli())).build();
 
         when(this.requestInfo.getPartitionId()).thenReturn("tenant1");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, indexPattern)).thenReturn(Lists.newArrayList(info));
 
         this.sut.cleanupIndices(indexPattern);
@@ -78,7 +90,7 @@ public class CronServiceImplTest {
     @Test(expected = IOException.class)
     public void run_cleanup_when_cron_job_runs_with_wrong_pattern() throws Exception {
         IOException exception = new IOException("blah");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, "tenant1-test-*")).thenThrow(exception);
 
         this.sut.cleanupIndices("tenant1-test-*");
@@ -91,7 +103,7 @@ public class CronServiceImplTest {
         IndexInfo info = IndexInfo.builder().name("tenant1-index-1.0.0").documentCount("10").creationDate(Long.toString(Instant.now().minus(8, ChronoUnit.DAYS).toEpochMilli())).build();
 
         when(this.requestInfo.getPartitionId()).thenReturn("tenant1");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, null)).thenReturn(Lists.newArrayList(info));
 
         this.sut.cleanupEmptyStaleIndices();
@@ -105,7 +117,7 @@ public class CronServiceImplTest {
         IndexInfo info = IndexInfo.builder().name("tenant1-index-1.0.0").documentCount("0").creationDate(Long.toString(Instant.now().minus(8, ChronoUnit.DAYS).toEpochMilli())).build();
 
         when(this.requestInfo.getPartitionId()).thenReturn("tenant1");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, null)).thenReturn(Lists.newArrayList(info));
 
         this.sut.cleanupEmptyStaleIndices();
@@ -117,7 +129,7 @@ public class CronServiceImplTest {
     @Test(expected = IOException.class)
     public void run_cleanup_when_backend_throws_exception() throws Exception {
         IOException exception = new IOException("blah");
-        when(this.elasticClientHandler.createRestClient()).thenReturn(this.restHighLevelClient);
+        when(this.elasticClientHandler.getOrCreateRestClient()).thenReturn(this.restHighLevelClient);
         when(this.indicesService.getIndexInfo(this.restHighLevelClient, null)).thenThrow(exception);
 
         this.sut.cleanupEmptyStaleIndices();

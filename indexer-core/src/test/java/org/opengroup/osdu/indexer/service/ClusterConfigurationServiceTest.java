@@ -14,27 +14,25 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.elasticsearch.action.admin.cluster.settings.ClusterUpdateSettingsRequest;
-import org.elasticsearch.action.admin.cluster.settings.ClusterUpdateSettingsResponse;
-import org.elasticsearch.client.ClusterClient;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.opengroup.osdu.indexer.util.ElasticClientHandler;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.io.IOException;
-
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.cluster.ElasticsearchClusterClient;
+import co.elastic.clients.elasticsearch.cluster.PutClusterSettingsRequest;
+import co.elastic.clients.elasticsearch.cluster.PutClusterSettingsResponse;
+import java.io.IOException;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterConfigurationServiceTest {
@@ -44,23 +42,23 @@ public class ClusterConfigurationServiceTest {
     @InjectMocks
     private ClusterConfigurationServiceImpl sut;
 
-    private RestHighLevelClient restHighLevelClient;
-    private ClusterClient clusterClient;
+    private ElasticsearchClient restHighLevelClient;
+    private ElasticsearchClusterClient clusterClient;
 
     @Before
     public void setup() {
         initMocks(this);
-        clusterClient = mock(ClusterClient.class);
-        restHighLevelClient = mock(RestHighLevelClient.class);
+        clusterClient = mock(ElasticsearchClusterClient.class);
+        restHighLevelClient = mock(ElasticsearchClient.class);
     }
 
     @Test
     public void should_updateClusterConfiguration() throws IOException {
-        ClusterUpdateSettingsResponse clusterUpdateSettingsResponse = mock(ClusterUpdateSettingsResponse.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
-        when(clusterUpdateSettingsResponse.isAcknowledged()).thenReturn(true);
+        PutClusterSettingsResponse clusterUpdateSettingsResponse = mock(PutClusterSettingsResponse.class);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
+        when(clusterUpdateSettingsResponse.acknowledged()).thenReturn(true);
         doReturn(clusterClient).when(restHighLevelClient).cluster();
-        doReturn(clusterUpdateSettingsResponse).when(clusterClient).putSettings(any(ClusterUpdateSettingsRequest.class), any(RequestOptions.class));
+        doReturn(clusterUpdateSettingsResponse).when(clusterClient).putSettings(any(PutClusterSettingsRequest.class));
 
         boolean result = this.sut.updateClusterConfiguration();
 

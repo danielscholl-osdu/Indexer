@@ -19,15 +19,15 @@ package org.opengroup.osdu.indexer.service;
 
 import static java.util.Collections.singletonList;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
 import org.apache.http.HttpStatus;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.SchemaInfo;
 import org.opengroup.osdu.core.common.model.indexer.SchemaOperationType;
@@ -70,16 +70,17 @@ public class SchemaEventsProcessorImpl implements SchemaEventsProcessor {
             return;
         }
 
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
-            messages.forEach((key, value) -> {
-                try {
-                    this.indexSchemaService.processSchemaUpsertEvent(restClient, key);
-                    this.auditLogger.indexMappingUpsertSuccess(singletonList(key));
-                } catch (IOException | ElasticsearchStatusException | URISyntaxException e) {
-                    this.auditLogger.indexMappingUpsertFail(singletonList(key));
-                    throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema upsert event", e.getMessage(), e);
-                }
-            });
-        }
+        ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
+        messages.forEach((key, value) -> {
+            try {
+                this.indexSchemaService.processSchemaUpsertEvent(restClient, key);
+                this.auditLogger.indexMappingUpsertSuccess(singletonList(key));
+            } catch (IOException | ElasticsearchException | URISyntaxException e) {
+                this.auditLogger.indexMappingUpsertFail(singletonList(key));
+                throw new AppException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "unable to process schema upsert event",
+                    e.getMessage(), e);
+            }
+        });
+
     }
 }

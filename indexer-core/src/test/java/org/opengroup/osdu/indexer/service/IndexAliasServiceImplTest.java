@@ -15,18 +15,31 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
-import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.GetAliasesResponse;
-import org.elasticsearch.client.IndicesClient;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.cluster.metadata.AliasMetadata;
-import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.aggregations.Aggregations;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.Buckets;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.indices.AliasDefinition;
+import co.elastic.clients.elasticsearch.indices.ElasticsearchIndicesClient;
+import co.elastic.clients.elasticsearch.indices.GetAliasRequest;
+import co.elastic.clients.elasticsearch.indices.GetAliasResponse;
+import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
+import co.elastic.clients.elasticsearch.indices.PutAliasResponse;
+import co.elastic.clients.elasticsearch.indices.get_alias.IndexAliases;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,19 +50,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.model.IndexAliasesResult;
-import org.opengroup.osdu.indexer.service.mock.BucketMock;
-import org.opengroup.osdu.indexer.service.mock.TermMock;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.context.annotation.Lazy;
-
-import java.io.IOException;
-import java.util.*;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IndexAliasServiceImplTest {
@@ -63,9 +65,9 @@ public class IndexAliasServiceImplTest {
     @InjectMocks
     private IndexAliasServiceImpl sut;
 
-    private RestHighLevelClient restHighLevelClient;
-    private IndicesClient indicesClient;
-    private GetAliasesResponse getAliasesResponse, getAliasesNotFoundResponse;
+    private ElasticsearchClient restHighLevelClient;
+    private ElasticsearchIndicesClient indicesClient;
+    private GetAliasResponse getAliasesResponse, getAliasesNotFoundResponse;
 
 
     private static String kind = "common:welldb:wellbore:1.2.0";
@@ -75,23 +77,23 @@ public class IndexAliasServiceImplTest {
     @Before
     public void setup() {
         initMocks(this);
-        indicesClient = mock(IndicesClient.class);
-        restHighLevelClient = mock(RestHighLevelClient.class);
-        getAliasesResponse = mock(GetAliasesResponse.class);
-        getAliasesNotFoundResponse = mock(GetAliasesResponse.class);
+        indicesClient = mock(ElasticsearchIndicesClient.class);
+        restHighLevelClient = mock(ElasticsearchClient.class);
+        getAliasesResponse = mock(GetAliasResponse.class);
+        getAliasesNotFoundResponse = mock(GetAliasResponse.class);
 
     }
 
     @Test
     public void createIndexAlias_test_when_index_name_is_not_alias() throws IOException {
-        AcknowledgedResponse updateAliasesResponse = new AcknowledgedResponse(true);
+        PutAliasResponse putAliasResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
         when(elasticIndexNameResolver.getIndexNameFromKind(any())).thenReturn(index);
         when(elasticIndexNameResolver.getIndexAliasFromKind(any())).thenReturn(alias);
         when(elasticIndexNameResolver.isIndexAliasSupported(any())).thenReturn(true);
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
-        when(indicesClient.getAlias(any(GetAliasesRequest.class), any(RequestOptions.class))).thenReturn(getAliasesNotFoundResponse);
-        when(getAliasesNotFoundResponse.status()).thenReturn(RestStatus.NOT_FOUND);
-        when(indicesClient.updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class))).thenReturn(updateAliasesResponse);
+        when(indicesClient.getAlias(any(GetAliasRequest.class))).thenReturn(getAliasesNotFoundResponse);
+        when(getAliasesNotFoundResponse.result()).thenReturn(Collections.emptyMap());
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(putAliasResponse);
 
         boolean ok = sut.createIndexAlias(restHighLevelClient, kind);
         Assert.assertTrue(ok);
@@ -99,35 +101,42 @@ public class IndexAliasServiceImplTest {
 
     @Test
     public void createIndexAlias_test_when_index_name_is_alias() throws IOException {
-        Map<String, Set<AliasMetadata>> aliases = new HashMap<>();
-        Set<AliasMetadata> aliasMetadataSet = new HashSet<>();
-        aliasMetadataSet.add(AliasMetadata.builder(index).build());
-        aliases.put(index + "_123456789", aliasMetadataSet);
+        Map<String, AliasDefinition> aliases = Map.of(index + "_123456789", AliasDefinition.of(builder -> builder));
 
-        AcknowledgedResponse updateAliasesResponse = new AcknowledgedResponse(true);
+        Map<String, IndexAliases> result = Map.of("some_alias", IndexAliases.of(builder -> builder.aliases(aliases)));
+
+        GetAliasResponse getAliasResponse = GetAliasResponse.of(g -> g.result(result));
+
+        // Mock UpdateAliasesResponse
+        PutAliasResponse putAliasResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
+
+        // Mock ElasticIndexNameResolver methods
         when(elasticIndexNameResolver.getIndexNameFromKind(any())).thenReturn(index);
         when(elasticIndexNameResolver.getIndexAliasFromKind(any())).thenReturn(alias);
         when(elasticIndexNameResolver.isIndexAliasSupported(any())).thenReturn(true);
-        when(restHighLevelClient.indices()).thenReturn(indicesClient);
-        when(indicesClient.getAlias(any(GetAliasesRequest.class), any(RequestOptions.class))).thenReturn(getAliasesResponse);
-        when(getAliasesResponse.status()).thenReturn(RestStatus.OK);
-        when(getAliasesResponse.getAliases()).thenReturn(aliases);
-        when(indicesClient.updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class))).thenReturn(updateAliasesResponse);
 
+        // Mock ElasticsearchClient methods
+        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.getAlias(any(GetAliasRequest.class))).thenReturn(getAliasResponse);
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(putAliasResponse);
+
+        // Call the method to test
         boolean ok = sut.createIndexAlias(restHighLevelClient, kind);
+
+        // Assert the result
         Assert.assertTrue(ok);
     }
 
     @Test
     public void createIndexAlias_test_when_updateAliases_fails() throws IOException {
-        AcknowledgedResponse updateAliasesResponse = new AcknowledgedResponse(false);
+        PutAliasResponse putAliasResponse = PutAliasResponse.of(builder -> builder.acknowledged(false));
         when(elasticIndexNameResolver.getIndexNameFromKind(any())).thenReturn(index);
         when(elasticIndexNameResolver.getIndexAliasFromKind(any())).thenReturn(alias);
         when(elasticIndexNameResolver.isIndexAliasSupported(any())).thenReturn(true);
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
-        when(indicesClient.getAlias(any(GetAliasesRequest.class), any(RequestOptions.class))).thenReturn(getAliasesNotFoundResponse);
-        when(getAliasesNotFoundResponse.status()).thenReturn(RestStatus.NOT_FOUND);
-        when(indicesClient.updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class))).thenReturn(updateAliasesResponse);
+        when(indicesClient.getAlias(any(GetAliasRequest.class))).thenReturn(getAliasesNotFoundResponse);
+        when(getAliasesNotFoundResponse.result()).thenReturn(Collections.emptyMap());
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(putAliasResponse);
 
         boolean ok = sut.createIndexAlias(restHighLevelClient, kind);
         Assert.assertFalse(ok);
@@ -139,9 +148,9 @@ public class IndexAliasServiceImplTest {
         when(elasticIndexNameResolver.getIndexAliasFromKind(any())).thenReturn(alias);
         when(elasticIndexNameResolver.isIndexAliasSupported(any())).thenReturn(true);
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
-        when(indicesClient.getAlias(any(GetAliasesRequest.class), any(RequestOptions.class))).thenReturn(getAliasesNotFoundResponse);
-        when(getAliasesNotFoundResponse.status()).thenReturn(RestStatus.NOT_FOUND);
-        when(indicesClient.updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class))).thenThrow(IOException.class);
+        when(indicesClient.getAlias(any(GetAliasRequest.class))).thenReturn(getAliasesNotFoundResponse);
+        when(getAliasesNotFoundResponse.result()).thenReturn(Collections.emptyMap());
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenThrow(IOException.class);
 
         boolean ok = sut.createIndexAlias(restHighLevelClient, kind);
         Assert.assertFalse(ok);
@@ -153,39 +162,71 @@ public class IndexAliasServiceImplTest {
         String unsupportedIndex = unsupportedKind.replace(":", "-");
 
         SearchResponse searchResponse = mock(SearchResponse.class);
-        Aggregations aggregations = mock(Aggregations.class);
-        TermMock terms = mock(TermMock.class);
-        BucketMock bucket = mock(BucketMock.class);
-        BucketMock bucket2 = mock(BucketMock.class);
-        List<BucketMock> bucketList = Arrays.asList(bucket, bucket, bucket2);
-        AcknowledgedResponse updateAliasesResponse = new AcknowledgedResponse(true);
+        Aggregate aggregate = mock(Aggregate.class);
+        StringTermsAggregate sterms = mock(StringTermsAggregate.class);
+
+        StringTermsBucket termsBucket = StringTermsBucket.of(builder -> builder.key(kind).docCount(2));
+        StringTermsBucket termsBucket2 = StringTermsBucket.of(builder -> builder.key(unsupportedKind).docCount(1));
+
+        Buckets<StringTermsBucket> stringTermsBuckets = Buckets.of(
+            builder -> builder.array(
+                List.of(termsBucket, termsBucket, termsBucket2))
+        );
+
+        PutAliasResponse putAliasResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
         when(elasticIndexNameResolver.getIndexNameFromKind(any()))
-                .thenAnswer(invocation ->{
-                    String argument = invocation.getArgument(0);
-                    return argument.replace(":", "-");
-                });
+            .thenAnswer(invocation -> {
+                String argument = invocation.getArgument(0);
+                return argument.replace(":", "-");
+            });
         when(elasticIndexNameResolver.getIndexAliasFromKind(any())).thenReturn(alias);
         when(elasticIndexNameResolver.isIndexAliasSupported(any()))
-                .thenAnswer(invocation ->{
-                    String argument = invocation.getArgument(0);
-                    return !unsupportedKind.equals(argument);
-                });
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+            .thenAnswer(invocation -> {
+                String argument = invocation.getArgument(0);
+                return !unsupportedKind.equals(argument);
+            });
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
-        when(restHighLevelClient.search(any(SearchRequest.class), any(RequestOptions.class))).thenReturn(searchResponse);
-        when(searchResponse.getAggregations()).thenReturn(aggregations);
-        when(aggregations.get(anyString())).thenReturn(terms);
-        when(terms.getBuckets()).thenReturn(bucketList);
-        when(bucket.getKey()).thenReturn(kind);
-        when(bucket2.getKey()).thenReturn(unsupportedKind);
-        when(indicesClient.getAlias(any(GetAliasesRequest.class), any(RequestOptions.class))).thenReturn(getAliasesNotFoundResponse);
-        when(getAliasesNotFoundResponse.status()).thenReturn(RestStatus.NOT_FOUND);
-        when(indicesClient.updateAliases(any(IndicesAliasesRequest.class), any(RequestOptions.class))).thenReturn(updateAliasesResponse);
+        when(restHighLevelClient.search(any(SearchRequest.class), any(Class.class))).thenReturn(searchResponse);
+        when(searchResponse.aggregations()).thenReturn(Map.of("kinds", aggregate));
+        when(aggregate.sterms()).thenReturn(sterms);
+        when(sterms.buckets()).thenReturn(stringTermsBuckets);
+
+        when(indicesClient.getAlias(any(GetAliasRequest.class))).thenReturn(getAliasesNotFoundResponse);
+        when(getAliasesNotFoundResponse.result()).thenReturn(Collections.emptyMap());
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(putAliasResponse);
 
         IndexAliasesResult result = sut.createIndexAliasesForAll();
-        Assert.assertEquals(2,result.getIndicesWithAliases().size());
+        Assert.assertEquals(2, result.getIndicesWithAliases().size());
         Assert.assertEquals(index, result.getIndicesWithAliases().get(0));
-        Assert.assertEquals(1,result.getIndicesWithoutAliases().size());
+        Assert.assertEquals(1, result.getIndicesWithoutAliases().size());
         Assert.assertEquals(unsupportedIndex, result.getIndicesWithoutAliases().get(0));
+    }
+
+    @Test
+    public void createIndexAlias_test_when_updateAliases_partiallyFails() throws IOException {
+        String unsupportedKind = "common:welldb:wellbore:1.*.*";
+        String unsupportedIndex = unsupportedKind.replace(":", "-");
+
+
+        when(elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(index);
+        when(elasticIndexNameResolver.getIndexAliasFromKind(kind)).thenReturn(alias);
+
+        when(elasticIndexNameResolver.getIndexNameFromKind(unsupportedKind)).thenReturn(unsupportedIndex);
+        when(elasticIndexNameResolver.getIndexAliasFromKind(unsupportedKind)).thenReturn(alias);
+
+        when(elasticIndexNameResolver.isIndexAliasSupported(any())).thenReturn(true);
+        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.getAlias(any(GetAliasRequest.class))).thenReturn(getAliasesNotFoundResponse);
+        when(getAliasesNotFoundResponse.result()).thenReturn(Collections.emptyMap());
+        // at least one not ok response should lead to a return of false
+        PutAliasResponse failResponse = PutAliasResponse.of(builder -> builder.acknowledged(false));
+        PutAliasResponse okResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
+
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(failResponse, okResponse);
+
+        boolean ok = sut.createIndexAlias(restHighLevelClient, kind);
+        verify(log, never()).error(any(), any(Exception.class));
+        Assert.assertFalse(ok);
     }
 }

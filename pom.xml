@@ -15,7 +15,6 @@
         <os-core-common-spring6.version>0.26.0-rc2</os-core-common-spring6.version>
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
         <common-codec.version>1.14</common-codec.version>
-        <elasticsearch.version>7.8.1</elasticsearch.version>
         <netty.version>4.1.51.Final</netty.version>
         <reactor-netty.version>0.8.20.RELEASE</reactor-netty.version>
         <woodstox-core.version>6.4.0</woodstox-core.version>
@@ -65,21 +64,6 @@
                 <version>${common-codec.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.elasticsearch</groupId>
-                <artifactId>elasticsearch</artifactId>
-                <version>${elasticsearch.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.elasticsearch.client</groupId>
-                <artifactId>elasticsearch-rest-client</artifactId>
-                <version>${elasticsearch.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.elasticsearch.client</groupId>
-                <artifactId>elasticsearch-rest-high-level-client</artifactId>
-                <version>${elasticsearch.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>io.projectreactor.netty</groupId>
                 <artifactId>reactor-netty</artifactId>
                 <version>${reactor-netty.version}</version>
@@ -102,6 +86,16 @@
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>os-core-common-spring6</artifactId>
             <version>${os-core-common-spring6.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>7.17.22</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>7.17.22</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

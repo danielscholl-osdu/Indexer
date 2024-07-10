@@ -14,13 +14,43 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static java.util.Map.entry;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.util.Strings;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,20 +75,6 @@ import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingExce
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.io.*;
-import java.lang.reflect.Type;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.Map.entry;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
 public class IndexerSchemaServiceTest {
@@ -95,8 +111,8 @@ public class IndexerSchemaServiceTest {
     @Before
     public void setup() {
         initMocks(this);
-        RestHighLevelClient restHighLevelClient = mock(RestHighLevelClient.class);
-        when(elasticClientHandler.createRestClient()).thenReturn(restHighLevelClient);
+        ElasticsearchClient restHighLevelClient = mock(ElasticsearchClient.class);
+        when(elasticClientHandler.getOrCreateRestClient()).thenReturn(restHighLevelClient);
         when(augmenterSetting.isEnabled()).thenReturn(true);
     }
 
@@ -138,8 +154,8 @@ public class IndexerSchemaServiceTest {
 
         assertNotNull(indexSchema);
         assertEquals(kind, indexSchema.getKind());
-        verify(this.schemaCache).put(any(String.class), any(String.class));
-        verify(this.flattenedSchemaCache).put(any(String.class), any(String.class));
+        verify(this.schemaCache, times(2)).put(any(String.class), any(String.class));
+        verify(this.flattenedSchemaCache, times(2)).put(any(String.class), any(String.class));
     }
 
     @Test
@@ -206,7 +222,7 @@ public class IndexerSchemaServiceTest {
         this.sut.processSchemaMessages(schemaMessages);
 
         verify(this.mappingService, times(1)).getIndexMappingFromRecordSchema(any());
-        verify(this.indicesService, times(1)).createIndex(any(), any(), any(), any(), any());
+        verify(this.indicesService, times(1)).createIndex(any(), any(), any(), any());
         verifyNoMoreInteractions(this.mappingService);
     }
 
@@ -236,7 +252,7 @@ public class IndexerSchemaServiceTest {
 
         this.sut.processSchemaMessages(schemaMessages);
 
-        verify(this.indicesService, times(0)).createIndex(any(), any(), any(), any(), any());
+        verify(this.indicesService, times(0)).createIndex(any(), any(), any(), any());
         verify(this.mappingService, times(1)).createMapping(any(), any(), any(), anyBoolean());
         verifyNoMoreInteractions(this.mappingService);
     }
@@ -525,7 +541,7 @@ public class IndexerSchemaServiceTest {
         verify(this.mappingService, times(1)).getIndexMappingFromRecordSchema(any());
         verify(this.indicesService, times(1)).isIndexExist(any(), any());
         verify(this.indicesService, times(1)).deleteIndex(any(), any());
-        verify(this.indicesService, times(1)).createIndex(any(), any(), any(), any(), any());
+        verify(this.indicesService, times(1)).createIndex(any(), any(), any(), any());
         verifyNoMoreInteractions(this.mappingService);
     }
 
@@ -720,7 +736,7 @@ public class IndexerSchemaServiceTest {
         verify(this.indicesService, times(1)).isIndexExist(any(), any());
         verify(this.indicesService, times(1)).deleteIndex(any(), any());
         verify(this.mappingService, never()).getIndexMappingFromRecordSchema(any());
-        verify(this.indicesService, never()).createIndex(any(), any(), any(), any(), any());
+        verify(this.indicesService, never()).createIndex(any(), any(), any(), any());
     }
 
     @Test

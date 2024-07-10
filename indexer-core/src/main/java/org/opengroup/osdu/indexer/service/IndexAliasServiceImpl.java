@@ -15,32 +15,32 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.TermsAggregation;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.indices.GetAliasRequest;
+import co.elastic.clients.elasticsearch.indices.GetAliasResponse;
+import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
+import co.elastic.clients.elasticsearch.indices.PutAliasResponse;
+import co.elastic.clients.elasticsearch.indices.get_alias.IndexAliases;
 import com.google.api.client.util.Strings;
+import jakarta.inject.Inject;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.http.HttpStatus;
-import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
-import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.GetAliasesResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.cluster.metadata.AliasMetadata;
-import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.model.IndexAliasesResult;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.stereotype.Component;
-
-import jakarta.inject.Inject;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class IndexAliasServiceImpl implements IndexAliasService{
@@ -56,7 +56,8 @@ public class IndexAliasServiceImpl implements IndexAliasService{
     @Override
     public IndexAliasesResult createIndexAliasesForAll() {
         IndexAliasesResult result = new IndexAliasesResult();
-        try (RestHighLevelClient restClient = this.elasticClientHandler.createRestClient()) {
+        try{
+            ElasticsearchClient restClient = this.elasticClientHandler.getOrCreateRestClient();
             List<String> allKinds = getAllKinds(restClient);
             Set<String> allExistingAliases = getAllExistingAliases(restClient);
             for (String kind : allKinds) {
@@ -84,7 +85,7 @@ public class IndexAliasServiceImpl implements IndexAliasService{
     }
 
     @Override
-    public boolean createIndexAlias(RestHighLevelClient restClient, String kind) {
+    public boolean createIndexAlias(ElasticsearchClient restClient, String kind) {
         if(!elasticIndexNameResolver.isIndexAliasSupported(kind)) {
             return false;
         }
@@ -106,13 +107,12 @@ public class IndexAliasServiceImpl implements IndexAliasService{
 
             boolean ok = true;
             for (Map.Entry<String, String> entry: indexAliasMap.entrySet()) {
-                IndicesAliasesRequest addRequest = new IndicesAliasesRequest();
-                IndicesAliasesRequest.AliasActions aliasActions = new IndicesAliasesRequest.AliasActions(IndicesAliasesRequest.AliasActions.Type.ADD)
-                        .index(entry.getKey())
-                        .alias(entry.getValue());
-                addRequest.addAliasAction(aliasActions);
-                AcknowledgedResponse response = restClient.indices().updateAliases(addRequest, RequestOptions.DEFAULT);
-                ok &= response.isAcknowledged();
+                PutAliasRequest.Builder putAliasRequest = new PutAliasRequest.Builder();
+                putAliasRequest.index(entry.getKey());
+                putAliasRequest.name(entry.getValue());
+                PutAliasResponse putAliasResponse = restClient.indices().putAlias(putAliasRequest.build());
+                // Bitwise AND assignment is used to return ok status only if previous operations are ok
+                ok &= putAliasResponse.acknowledged();
             }
             return ok;
         }
@@ -123,17 +123,15 @@ public class IndexAliasServiceImpl implements IndexAliasService{
         return false;
     }
 
-    private Set<String> getAllExistingAliases(RestHighLevelClient restClient) throws IOException {
-        GetAliasesRequest request = new GetAliasesRequest();
-        GetAliasesResponse response = restClient.indices().getAlias(request, RequestOptions.DEFAULT);
-        if(response.status() != RestStatus.OK)
-            return new HashSet<>();
+    private Set<String> getAllExistingAliases(ElasticsearchClient elasticsearchClient) throws IOException {
+        GetAliasRequest request = new GetAliasRequest.Builder().build();
+        GetAliasResponse response = elasticsearchClient.indices().getAlias(request);
 
         Set<String> allAliases = new HashSet<>();
-        for (Set<AliasMetadata> aliasSet: response.getAliases().values()) {
-            List<String> aliases = aliasSet.stream().map(a -> a.getAlias()).collect(Collectors.toList());
-            allAliases.addAll(aliases);
-        }
+        response.result().values().forEach(aliasMap ->
+            allAliases.addAll(aliasMap.aliases().keySet())
+        );
+
         return allAliases;
     }
 
@@ -149,26 +147,26 @@ public class IndexAliasServiceImpl implements IndexAliasService{
         return null;
     }
 
-    private String resolveConcreteIndexName(RestHighLevelClient restClient, String kind) throws IOException {
+    private String resolveConcreteIndexName(ElasticsearchClient client, String kind) throws IOException {
         String index = elasticIndexNameResolver.getIndexNameFromKind(kind);
-        if(!isCompleteVersionKind(kind)) {
+        if (!isCompleteVersionKind(kind)) {
             return index;
         }
+        GetAliasRequest request = new GetAliasRequest.Builder().name(index).build();
 
-        GetAliasesRequest request = new GetAliasesRequest(index);
-        GetAliasesResponse response = restClient.indices().getAlias(request, RequestOptions.DEFAULT);
-        if(response.status() == RestStatus.NOT_FOUND) {
-            /* index resolved from kind is actual concrete index
-             * Example:
-             * {
-             *   "opendes-wke-well-1.0.7": {
-             *       "aliases": {}
-             *   }
-             * }
-             */
-            return index;
-        }
-        if(response.status() == RestStatus.OK) {
+        try {
+            GetAliasResponse response = client.indices().getAlias(request);
+            if(response.result().isEmpty()){
+                /* index resolved from kind is actual concrete index
+                 * Example:
+                 * {
+                 *   "opendes-wke-well-1.0.7": {
+                 *       "aliases": {}
+                 *   }
+                 * }
+                 */
+                return index;
+            }
             /* index resolved from kind is NOT actual create index. It is just an alias
              * The concrete index name in this example is "opendes-osdudemo-wellbore-1.0.0_1649167113090"
              * Example:
@@ -180,33 +178,45 @@ public class IndexAliasServiceImpl implements IndexAliasService{
              *    }
              * }
              */
-            Map<String, Set<AliasMetadata>> aliases = response.getAliases();
-            for (Map.Entry<String, Set<AliasMetadata>> entry: aliases.entrySet()) {
+            for (Map.Entry<String, IndexAliases> entry: response.result().entrySet()){
                 String actualIndex = entry.getKey();
-                List<String> aliaseNames = entry.getValue().stream().map(a -> a.getAlias()).collect(Collectors.toList());
-                if(aliaseNames.contains(index))
+                List<String> aliaseNames = entry.getValue().aliases().keySet().stream().toList();
+                if(aliaseNames.contains(index)){
                     return actualIndex;
+                }
             }
+            return index;
+        }catch (ElasticsearchException e){
+            if(e.status() == HttpStatus.SC_NOT_FOUND){
+                jaxRsDpsLog.debug("Alias not found.", e.getMessage());
+            }else {
+                jaxRsDpsLog.error("Unexpected error response from Elasticsearch.", e);
+            }
+            return index;
         }
-        return index;
     }
 
     private boolean isCompleteVersionKind(String kind) {
         return !Strings.isNullOrEmpty(kind) && kind.matches(KIND_COMPLETE_VERSION_PATTERN);
     }
 
-    private List<String> getAllKinds(RestHighLevelClient client) throws IOException {
-        List<String> kinds;
-        SearchRequest elasticSearchRequest = new SearchRequest("_all");
-        TermsAggregationBuilder termsAggregationBuilder = new TermsAggregationBuilder("kinds");
-        termsAggregationBuilder.field("kind");
-        termsAggregationBuilder.size(10000);
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-        sourceBuilder.aggregation(termsAggregationBuilder);
-        elasticSearchRequest.source(sourceBuilder);
-        SearchResponse searchResponse = client.search(elasticSearchRequest, RequestOptions.DEFAULT);
-        Terms kindBuckets = searchResponse.getAggregations().get("kinds");
-        kinds = kindBuckets.getBuckets().stream().map(bucket -> bucket.getKey().toString()).collect(Collectors.toList());
-        return kinds;
+    private List<String> getAllKinds(ElasticsearchClient client) throws IOException {
+        // Create a TermsAggregation
+        TermsAggregation termsAggregation = TermsAggregation.of(t -> t.field("kind").size(10000));
+
+        // Create a SearchRequest with the aggregation
+        SearchRequest searchRequest = SearchRequest.of(s -> s
+            .index("_all")
+            .aggregations("kinds", a -> a.terms(termsAggregation))
+        );
+
+        // Execute the search request
+        SearchResponse<Void> searchResponse = client.search(searchRequest, Void.class);
+        // Extract the aggregation result
+        StringTermsAggregate kindsAggregation = searchResponse.aggregations().get("kinds").sterms();
+
+        return kindsAggregation.buckets().array().stream()
+            .map(bucket -> bucket.key().stringValue())
+            .toList();
     }
 }
