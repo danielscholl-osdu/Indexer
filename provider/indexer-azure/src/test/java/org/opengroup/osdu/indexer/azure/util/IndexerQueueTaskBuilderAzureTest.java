@@ -1,5 +1,6 @@
 package org.opengroup.osdu.indexer.azure.util;
 
+import com.microsoft.azure.servicebus.TopicClient;
 import com.microsoft.azure.servicebus.primitives.ServiceBusException;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,13 +17,16 @@ import org.opengroup.osdu.core.common.model.indexer.RecordQueryResponse;
 import org.opengroup.osdu.indexer.azure.di.PublisherConfig;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.service.StorageService;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.net.URISyntaxException;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,9 +38,12 @@ public class IndexerQueueTaskBuilderAzureTest {
     private String payload = "{\n" +
             "    \"data\": \"[{\\\"id\\\":\\\"opendes:work-product-component--WellLog:566edebc-1a9f-4f4d-9a30-ed458e959ac7\\\",\\\"kind\\\":\\\"osdu:wks:work-product-component--WellLog:1.2.0\\\",\\\"op\\\":\\\"create\\\"},{\\\"id\\\":\\\"opendes:work-product-component--WellLog:84958febe54e4908a1703778e1918dae\\\",\\\"kind\\\":\\\"osdu:wks:work-product-component--WellLog:1.2.0\\\",\\\"op\\\":\\\"create\\\"}]\",\n" +
             "    \"attributes\": {\n" +
-            "        \"data-partition-id\": \"opendes\"\n" +
+            "        \"data-partition-id\": \"opendes\",\n"+
+            "        \"ancestry_kinds\" : \"ancestry_kinds\"\n"+
             "    }\n" +
             "}";
+
+
     private static String partitionId = "opendes";
     private static String correlationId = "correlationId";
     private static String serviceBusReindexTopicNameField = "serviceBusReindexTopicName";
@@ -66,7 +73,8 @@ public class IndexerQueueTaskBuilderAzureTest {
 
     @InjectMocks
     IndexerQueueTaskBuilderAzure sut;
-
+    @MockBean
+    private Clock fixedClock;
     @Before
     public void setup() {
         when(this.publisherConfig.getPubSubBatchSize()).thenReturn(50);
@@ -77,6 +85,8 @@ public class IndexerQueueTaskBuilderAzureTest {
         when(dpsHeaders.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionId);
         when(dpsHeaders.getPartitionId()).thenReturn(partitionId);
         when(dpsHeaders.getCorrelationId()).thenReturn(correlationId);
+        TopicClient topicClient = mock(TopicClient.class);
+        when(topicClientFactory.getClient(partitionId, serviceBusReindexTopicNameValue)).thenReturn(topicClient);
         ReflectionTestUtils.setField(sut, serviceBusReindexTopicNameField, serviceBusReindexTopicNameValue);
 
         sut.createWorkerTask(payload, dpsHeaders);
@@ -85,6 +95,7 @@ public class IndexerQueueTaskBuilderAzureTest {
         verify(dpsHeaders, times(2)).getCorrelationId();
         verify(dpsHeaders, times(1)).addCorrelationIdIfMissing();
         verify(topicClientFactory, times(1)).getClient(partitionId, serviceBusReindexTopicNameValue);
+        verify(topicClient, times(1)).scheduleMessageAsync(any(), any());
     }
 
     @Test
