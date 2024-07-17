@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
@@ -47,6 +48,8 @@ import org.opengroup.osdu.core.common.model.storage.ConversionStatus;
 import org.opengroup.osdu.core.common.model.storage.RecordIds;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import jakarta.inject.Inject;
@@ -60,6 +63,7 @@ import java.util.stream.Collectors;
 import static org.opengroup.osdu.core.common.Constants.SLB_FRAME_OF_REFERENCE_VALUE;
 import static org.opengroup.osdu.core.common.model.http.DpsHeaders.FRAME_OF_REFERENCE;
 
+@Slf4j
 @Component
 public class StorageServiceImpl implements StorageService {
 
@@ -79,6 +83,8 @@ public class StorageServiceImpl implements StorageService {
     private JaxRsDpsLog jaxRsDpsLog;
     @Inject
     private IndexerConfigurationProperties configurationProperties;
+    @Autowired
+    private XcollaborationHolder xCollaborationHolder;
 
     @Override
     public Records getStorageRecords(List<String> ids, List<RecordInfo> recordChangedInfos) throws AppException, URISyntaxException {
@@ -123,6 +129,9 @@ public class StorageServiceImpl implements StorageService {
         String body = this.gson.toJson(RecordIds.builder().records(ids).build());
 
         DpsHeaders headers = this.requestInfo.getHeaders();
+        if (xCollaborationHolder.isFeatureEnabledAndHeaderExists()) {
+            headers.put(DpsHeaders.COLLABORATION, xCollaborationHolder.getXCollaborationHeader());
+        }
         headers.put(FRAME_OF_REFERENCE, SLB_FRAME_OF_REFERENCE_VALUE);
         FetchServiceHttpRequest request = FetchServiceHttpRequest
                 .builder()
@@ -131,6 +140,7 @@ public class StorageServiceImpl implements StorageService {
                 .headers(headers)
                 .body(body).build();
         HttpResponse response = this.urlFetchService.sendRequest(request);
+        log.debug("Is isFeatureEnabledAndHeaderExists: {}", xCollaborationHolder.isFeatureEnabledAndHeaderExists());
         return this.validateStorageResponse(response, ids, recordChangedMap, validRecordKindPatchMap);
     }
 

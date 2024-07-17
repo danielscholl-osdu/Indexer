@@ -8,8 +8,14 @@ import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.ClientResponse;
 import cucumber.api.DataTable;
 import lombok.extern.java.Log;
+import org.elasticsearch.action.DocWriteResponse.Result;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
+import org.opengroup.osdu.core.common.http.CollaborationContextFactory;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
+import org.opengroup.osdu.core.common.model.http.CollaborationContext;
+import org.opengroup.osdu.core.common.model.storage.UpsertRecords;
 import org.opengroup.osdu.models.Setup;
 import org.opengroup.osdu.models.TestIndex;
 import org.opengroup.osdu.models.record.RecordData;
@@ -40,6 +46,10 @@ public class RecordSteps extends TestsBase {
     private String timeStamp = String.valueOf(System.currentTimeMillis());
     private List<Map<String, Object>> records;
     private Map<String, String> headers = httpClient.getCommonHeader();
+
+    private UpsertRecords upsertedRecordsWithXcollab;
+    public static final String DpsHeaders_COLLABORATION = "x-collaboration";
+    public static final String X_COLLABORATION = "collaborationId";
 
     public RecordSteps(HTTPClient httpClient) {
         super(httpClient);
@@ -128,6 +138,7 @@ public class RecordSteps extends TestsBase {
             ClientResponse clientResponse = httpClient.send(HttpMethod.PUT, getStorageBaseURL() + "records", payLoad, headers, httpClient.getAccessToken());
             log.info(String.format("Response body: %s\n Correlation id: %s\nResponse Status code: %s", indentatedResponseBody(clientResponse.getEntity(String.class)), clientResponse.getHeaders().get("correlation-id"), clientResponse.getStatus()));
             assertEquals(201, clientResponse.getStatus());
+
         } catch (Exception ex) {
             throw new AssertionError(ex.getMessage());
         }
@@ -286,6 +297,114 @@ public class RecordSteps extends TestsBase {
         testIndex.addIndex();
     }
 
+    public void i_ingest_records_with_xcollab_value_included_with_the_with_for_a_given(String xCollab,
+                                                                                       String record,
+                                                                                       String dataGroup,
+                                                                                       String kind) {
+        String actualKind = generateActualName(kind, timeStamp);
+        try {
+            String fileContent = FileHandler.readFile(String.format("%s.%s", record, "json"));
+            records = new Gson().fromJson(fileContent, new TypeToken<List<Map<String, Object>>>() {
+            }.getType());
+            String createTime = java.time.Instant.now().toString();
+
+            for (Map<String, Object> testRecord : records) {
+                if (testRecord.containsKey("data")) {
+                    Map<String, Object> data = (Map<String, Object>) testRecord.get("data");
+                    if (data != null && data.size() > 0) {
+                        data = replaceValues(data, timeStamp);
+                        testRecord.put("data", data);
+                    }
+                }
+
+                testRecord.put("kind", actualKind);
+                testRecord.put("id", generateRecordId(testRecord));
+                testRecord.put("legal", generateLegalTag());
+                String[] x_acl = {generateActualName(dataGroup, timeStamp) + "." + getEntitlementsDomain()};
+                Acl acl = Acl.builder().viewers(x_acl).owners(x_acl).build();
+                testRecord.put("acl", acl);
+                String[] kindParts = kind.split(":");
+                String authority = tenantMap.get(kindParts[0]);
+                String source = kindParts[1];
+                testRecord.put("authority", authority);
+                testRecord.put("source", source);
+                testRecord.put("createUser", "TestUser");
+                testRecord.put("createTime", createTime);
+            }
+
+            // put record in WIP by the use of x-collaboration header
+            Map<String, String> headerXcollab = httpClient.getCommonHeader();
+            headerXcollab.put(DpsHeaders_COLLABORATION, xCollab);
+
+            String payLoad = new Gson().toJson(records);
+            log.log(Level.INFO, "Start ingesting records={0}", payLoad);
+            ClientResponse clientResponse = httpClient.send(HttpMethod.PUT,
+                getStorageBaseURL() + "records",
+                payLoad,
+                headerXcollab,
+                httpClient.getAccessToken());
+
+            String responseEntity = clientResponse.getEntity(String.class);
+            log.info(String.format("Response body with xcollab: %s\n Correlation id: %s\nResponse Status code: %s",
+                indentatedResponseBody(responseEntity),
+                clientResponse.getHeaders().get("correlation-id"),
+                clientResponse.getStatus()));
+            assertEquals(201, clientResponse.getStatus());
+
+            // remember record id for future tests
+            upsertedRecordsWithXcollab = mapper.readValue(responseEntity, UpsertRecords.class);
+            upsertedRecordsWithXcollab.getRecordIds()
+                .forEach(recordId -> log.info("Record ids with xcollab : " + recordId));
+
+            Optional<String> recordWithXcollab = upsertedRecordsWithXcollab.getRecordIds().stream().findAny();
+            assertTrue(recordWithXcollab.isPresent());
+
+        } catch (Exception ex) {
+            throw new AssertionError(ex.getMessage());
+        }
+    }
+
+    protected void i_should_get_the_documents_with_xcollab_value_included_for_the_in_the_Elastic_Search(int expectedNumber,
+                                                                                                        String xcollab,
+                                                                                                        String index)
+        throws Exception {
+
+        index = generateActualName(index, timeStamp);
+        // upsertedRecordsWithoutXcollab should have id received from previous steps
+        String id = upsertedRecordsWithXcollab.getRecordIds().stream().findAny().get();
+        log.log(Level.INFO, String.format("Try to find in Elastic a record with X collab with id : %s ", id));
+
+        SearchResponse searchResponse = null;
+        // should wait while Storage will publish Record into queue,
+        // then Index-queue should read message and pass it with http request to Indexer
+        // Indexer then will index the record into Elastic
+        CollaborationContextFactory collaborationContextFactory = new CollaborationContextFactory();
+        Optional<CollaborationContext> collaborationContext = collaborationContextFactory.create(xcollab);
+        String collaborationId = collaborationContext.orElseThrow().getId();
+
+        for (int i = 0; i < 20; i++) {
+            searchResponse = elasticUtils.fetchRecordsByIdAndMustHaveXcollab(index, id, collaborationId);
+            if (searchResponse.getHits().getTotalHits().value == 0) {
+                log.log(Level.INFO, String.format("No records found with in index: %s, id: %s, collaborationId: %s,"
+                    + " will try to wait up to 3 seconds.", index, id, collaborationId));
+                TimeUnit.SECONDS.sleep(3);
+            } else {
+                break;
+            }
+        }
+
+        log.log(Level.INFO,
+            String.format("xcollab feature: print searchResponse while being get a record by id and x-collab : %s",
+                searchResponse));
+        assertEquals(expectedNumber, searchResponse.getHits().getTotalHits().value);
+
+        // delete test record in namespace
+        String elasticId = Arrays.stream(searchResponse.getHits().getHits()).findAny().get().getId();
+        DeleteResponse deleteResponse = elasticUtils.deleteRecordsById(index, elasticId);
+        log.log(Level.INFO, String.format("Deleting record from Elasticsearch in index: %s with id: %s", index, elasticId));
+        assertEquals(deleteResponse.getResult(), Result.DELETED);
+    }
+
     private Map<String, Object> replaceValues(Map<String, Object> data, String timeStamp) {
         for(String key : data.keySet()) {
             Object value = data.get(key);
@@ -414,4 +533,5 @@ public class RecordSteps extends TestsBase {
             shutDownHookAdded = true;
         }
     }
+
 }

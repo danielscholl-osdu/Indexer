@@ -184,4 +184,16 @@ public class Steps extends SchemaServiceRecordSteps {
             throws Throwable {
         super.i_should_get_string_array_in_search_response(index, field, fieldValue, arrayField, arrayValue);
     }
+
+    @When("^I ingest records with xcollab value \"([^\"]*)\" included with the \"([^\"]*)\" with \"([^\"]*)\" for a given \"([^\"]*)\"$")
+    public void i_ingest_records_with_xcollab_value_included_with_the_with_for_a_given(String xcollab, String recordFile, String acl, String kind) {
+        super.i_ingest_records_with_xcollab_value_included_with_the_with_for_a_given(xcollab, recordFile, acl, kind);
+    }
+
+    @Then("^I should get the (\\d+) documents with xcollab value \"([^\"]*)\" included for the \"([^\"]*)\" in the Elastic Search$")
+    public void i_should_get_the_documents_with_xcollab_value_included_for_the_in_the_Elastic_Search(int number, String xcollab, String index)
+        throws Exception {
+        super.i_should_get_the_documents_with_xcollab_value_included_for_the_in_the_Elastic_Search(number, xcollab, index);
+    }
+
 }

@@ -26,6 +26,7 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
@@ -49,6 +50,8 @@ public class ReindexServiceImpl implements ReindexService {
     private IndexSchemaService indexSchemaService;
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
+    @Inject
+    private XcollaborationHolder xCollaborationHolder;
 
     @SneakyThrows
     @Override
@@ -133,6 +136,16 @@ public class ReindexServiceImpl implements ReindexService {
         attributes.put(DpsHeaders.ACCOUNT_ID, headers.getAccountId());
         attributes.put(DpsHeaders.DATA_PARTITION_ID, headers.getPartitionIdWithFallbackToAccountId());
         attributes.put(DpsHeaders.CORRELATION_ID, headers.getCorrelationId());
+
+        String xCollabValue = headers.getHeaders().get(DpsHeaders.COLLABORATION);
+        if (xCollabValue != null) {
+            xCollaborationHolder.setxCollaborationHeader(xCollabValue);
+            if (xCollaborationHolder.isFeatureEnabledAndHeaderExists()) {
+                attributes.put(XcollaborationHolder.X_COLLABORATION,
+                    xCollaborationHolder.getCollaborationContext().orElseThrow().getId());
+            }
+        }
+
         Gson gson = new Gson();
         RecordChangedMessages recordChangedMessages = RecordChangedMessages.builder().data(gson.toJson(msgs)).attributes(attributes).build();
         String recordChangedMessagePayload = gson.toJson(recordChangedMessages);

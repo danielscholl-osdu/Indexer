@@ -18,6 +18,15 @@ Feature: Indexing of the documents
       | test:indexer:index-property--Wellbore:1.0.0         | test-indexer-index-property--wellbore-1.0.0         | index-property-wellbore_v1     |
       | test:indexer:index-property--WellLog:1.0.0          | test-indexer-index-property--welllog-1.0.0          | index-property-welllog_v1      |
 
+  @collaboration-test
+  Scenario Outline: X Ingest the record with no xcollab value and Index in the Elastic Search with tags
+    When I ingest records with xcollab value <xcollab> included with the <recordFile> with <acl> for a given <kind>
+    Then I should get the <number> documents with xcollab value <xcollab> included for the <index> in the Elastic Search
+
+    Examples:
+      | kind                                          | recordFile                   | number | index                                         | acl                            | field                            | value          | xcollab                                                   |
+      | "test:indexer:index-property--Wellbore:1.0.0" | "index-property-wellbore_v2" | 1      | "test-indexer-index-property--wellbore-1.0.0" | "data.default.viewers@tenant1" | "data.FacilityName.keywordLower" | "facility_456" | "id=a99cef48-2ed6-4beb-8a43-002373431f92,application=pws" |
+
   @indexer-extended
   Scenario Outline: Prepare the index property configuration records and clean up index of the extended kinds in the Elastic Search
     When I ingest records with the <recordFile> with <acl> for a given <kind>
