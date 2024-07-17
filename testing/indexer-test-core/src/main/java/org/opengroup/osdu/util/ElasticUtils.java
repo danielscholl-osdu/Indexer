@@ -37,6 +37,8 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.client.indices.CloseIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
@@ -51,6 +53,7 @@ import org.elasticsearch.client.*;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.client.indices.GetMappingsResponse;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
@@ -74,6 +77,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import static org.elasticsearch.index.query.QueryBuilders.*;
+import static org.opengroup.osdu.common.RecordSteps.X_COLLABORATION;
+import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
 
 
 /**
@@ -254,11 +259,26 @@ public class ElasticUtils {
                     request.source(sourceBuilder);
                 }
                 SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
+                log.info(indentatedResponseBody(searchResponse.toString()));
                 return searchResponse.getHits().getTotalHits().value;
             }
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
+        }
+    }
+
+    public String[] fetchIndexList() throws IOException {
+        try {
+            try (RestHighLevelClient client = this.createClient(username, password, host)) {
+                // List all index names
+                GetIndexRequest request = new GetIndexRequest("*");
+                GetIndexResponse response = client.indices().get(request, RequestOptions.DEFAULT);
+                return response.getIndices();
+            }
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return new String[]{};
         }
     }
 
@@ -312,6 +332,35 @@ public class ElasticUtils {
         } catch (ElasticsearchStatusException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
+        }
+    }
+
+    public SearchResponse fetchRecordsByIdAndMustHaveXcollab(String index, String id, String xCollab) throws Exception {
+        try (RestHighLevelClient client = this.createClient(username, password, host)) {
+            SearchRequest searchRequest = new SearchRequest(index);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(boolQuery()
+                .must(QueryBuilders.termQuery("id", id))
+                .must(QueryBuilders.termQuery(X_COLLABORATION, xCollab)));
+            searchRequest.source(searchSourceBuilder);
+            log.log(Level.INFO,
+                String.format("xcollab feature: print searchRequest to get record by id and x-collab value: %s",
+                    searchRequest));
+
+            return client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            throw e;
+        }
+    }
+
+    public DeleteResponse deleteRecordsById(String index, String id) throws Exception {
+        try (RestHighLevelClient client = this.createClient(username, password, host)) {
+            DeleteRequest request = new DeleteRequest(index, id);
+            return client.delete(request, RequestOptions.DEFAULT);
+        } catch (ElasticsearchStatusException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            throw e;
         }
     }
 

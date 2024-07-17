@@ -17,6 +17,7 @@ package org.opengroup.osdu.indexer.service;
 import static org.opengroup.osdu.core.common.model.search.RecordMetaAttribute.BAG_OF_WORDS;
 import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
 import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.model.XcollaborationHolder.X_COLLABORATION;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
@@ -29,14 +30,16 @@ import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lambdaworks.redis.RedisException;
+import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -46,10 +49,23 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.opengroup.osdu.indexer.model.Kind;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import jakarta.inject.Inject;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.opengroup.osdu.core.common.model.search.RecordMetaAttribute.BAG_OF_WORDS;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.model.XcollaborationHolder.X_COLLABORATION;
 
 @Service
 public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMappingService {
@@ -63,6 +79,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @Autowired
     private IFeatureFlag featureFlagChecker;
+    @Autowired
+    private XcollaborationHolder xcollaborationHolder;
 
 
     /**
@@ -173,7 +191,14 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     @Override
     public void syncMetaAttributeIndexMappingIfRequired(ElasticsearchClient restClient, IndexSchema schema) throws Exception {
         String index = this.elasticIndexNameResolver.getIndexNameFromKind(schema.getKind());
-        final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
+
+        // want to distinguish two types of project: collaboration and not-collaboration
+        final String cacheKey;
+        if (xcollaborationHolder.isFeatureEnabledAndHeaderExists()) {
+            cacheKey = String.format("metaCollaborationAttributeMappingSynced-%s", index);
+        } else {
+            cacheKey = String.format("metaAttributeMappingSynced-%s", index);
+        }
 
         try {
             Boolean mappingSynced = this.indexCache.get(cacheKey);
@@ -183,6 +208,7 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
             this.indexCache.delete(cacheKey);
         }
 
+        // retrieve a mapping for a given index
         String jsonResponse = this.getIndexMapping(restClient, index);
         Type type = new TypeToken<Map<String, Object>>() {
         }.getType();
@@ -194,15 +220,14 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
 
         if (props == null || props.isEmpty()) return;
 
-        List<String> missing = new ArrayList<>();
-        for (String attribute : TypeMapper.getMetaAttributesKeys()) {
-            if (props.containsKey(attribute)) continue;
-            missing.add(attribute);
-        }
+        // Let's gather fields that are missingFields in mapping that came from elastic
+        List<String> missingFields = getMissingFields(props);
+        postProcessMissingFields(missingFields);
 
+        // put missingFields attributes into properties (which is a mapping for a given index)
         Map<String, Object> properties = new HashMap<>();
         Kind kind = new Kind(schema.getKind());
-        for (String attribute : missing) {
+        for (String attribute : missingFields) {
             if (attribute.equals(RecordMetaAttribute.AUTHORITY.getValue())) {
                 properties.put(attribute, TypeMapper.getMetaAttributeIndexerMapping(attribute, kind.getAuthority()));
             } else if (attribute.equals(RecordMetaAttribute.SOURCE.getValue())) {
@@ -239,6 +264,27 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         this.indexCache.put(cacheKey, true);
     }
 
+    private void postProcessMissingFields(List<String> missing) {
+        if (xcollaborationHolder.isFeatureEnabled() && xcollaborationHolder.getCollaborationContext().isEmpty()) {
+            removeXcollaborationField(missing);
+        }
+    }
+
+    private void removeXcollaborationField(List<String> missing) {
+        missing.remove(X_COLLABORATION);
+    }
+
+    /**
+     * Let's gather fields, that are missing in mapping that came from elastic,
+     * but present in hardcoded TypeMapper.class.
+     * Using TypeMapper.class as source of list for fields that should be presented in mapping on ES side.
+     */
+    private List<String> getMissingFields(Map<String, Object> props) {
+      return TypeMapper.getMetaAttributesKeys().stream()
+            .filter(attribute -> !props.containsKey(attribute))
+            .collect(Collectors.toList());
+    }
+
     /**
      * Create a new type in Elasticsearch
      *
@@ -257,8 +303,6 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
             createTypeWithMappingInElasticsearch(client, index, mapping);
         }
     }
-
-
 
     /**
      * Check if a type (mapping) already exists

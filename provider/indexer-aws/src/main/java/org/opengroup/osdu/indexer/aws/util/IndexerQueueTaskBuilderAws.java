@@ -17,6 +17,7 @@
 package org.opengroup.osdu.indexer.aws.util;
 
 import com.amazonaws.services.sqs.AmazonSQS;
+import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.aws.sqs.AmazonSQSConfig;
 import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -26,6 +27,7 @@ import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.model.Constants;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -37,6 +39,7 @@ import jakarta.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 //
+@Slf4j
 @Primary
 @Component
 public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
@@ -56,6 +59,9 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
 
     @Value("${aws.region}")
     private String region;
+
+    @Inject
+    private XcollaborationHolder xCollaborationHolder;
 
     @Inject
     public void init() throws K8sParameterNotFoundException {
@@ -128,6 +134,17 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
                 .withDataType(TYPE_STRING)
                 .withStringValue(headers.getAuthorization()));
 
+        log.debug("Is isFeatureEnabledAndHeaderExists: {}", xCollaborationHolder.isFeatureEnabledAndHeaderExists());
+        String xCollabValue = headers.getHeaders().get(DpsHeaders.COLLABORATION);
+        if (xCollabValue != null) {
+            xCollaborationHolder.setxCollaborationHeader(xCollabValue);
+            if (xCollaborationHolder.isFeatureEnabledAndHeaderExists()) {
+                messageAttributes.put(XcollaborationHolder.X_COLLABORATION, new MessageAttributeValue()
+                        .withDataType(TYPE_STRING)
+                        .withStringValue(xCollaborationHolder.getCollaborationContext().orElseThrow().getId()));
+            }
+        }
+
         RecordChangedMessages message = gson.fromJson(payload, RecordChangedMessages.class);
 
         int retryCount;
@@ -172,6 +189,7 @@ public class IndexerQueueTaskBuilderAws extends IndexerQueueTaskBuilder {
                     .withQueueUrl(dlq)
                     .withMessageBody(message.getData());
         }
+        log.debug("sendMessageRequest x-collab: {}", sendMessageRequest);
         sqsClient.sendMessage(sendMessageRequest);
     }
 

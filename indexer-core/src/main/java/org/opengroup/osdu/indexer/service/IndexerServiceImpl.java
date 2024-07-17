@@ -60,9 +60,11 @@ import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
+import org.opengroup.osdu.core.common.util.CollaborationContextUtil;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
 import org.opengroup.osdu.indexer.model.BulkRequestResult;
 import org.opengroup.osdu.indexer.model.SearchRecord;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
@@ -72,6 +74,15 @@ import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import jakarta.inject.Inject;
+import java.io.IOException;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import static org.opengroup.osdu.indexer.model.Constants.AS_INGESTED_COORDINATES_FEATURE_NAME;
 
 @Service
 @Primary
@@ -89,6 +100,7 @@ public class IndexerServiceImpl implements IndexerService {
     private static final String MAPPER_PARSING_EXCEPTION_TYPE = "type=mapper_parsing_exception";
     private static final String RECORD_ID_LOG = "record-id: %s | %s";
     private static final String ELASTIC_ERROR = "Elastic error";
+    public static final String X_COLLABORATION = "x-collaboration";
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
@@ -133,8 +145,15 @@ public class IndexerServiceImpl implements IndexerService {
 
     private DpsHeaders headers;
 
+    @Autowired
+    private XcollaborationHolder xcollaborationHolder;
+
     @Override
     public JobStatus processRecordChangedMessages(RecordChangedMessages message, List<RecordInfo> recordInfos) throws Exception {
+
+        // extract x-collaboration value to a request scoped special holder
+        String xCollaboration = message.getAttributes().get(DpsHeaders.COLLABORATION);
+        xcollaborationHolder.setxCollaborationHeader(xCollaboration);
 
         // this should not happen
         if (recordInfos.isEmpty()) return null;
@@ -428,7 +447,7 @@ public class IndexerServiceImpl implements IndexerService {
     private RecordIndexerPayload.Record prepareIndexerPayload(IndexSchema schemaObj, Records.Entity storageRecord, Map<String, OperationType> idToOperationMap, ArrayList<String> asIngestedCoordinatesPaths) {
 
         RecordIndexerPayload.Record document = null;
-        
+
         try {
             Map<String, Object> storageRecordData = storageRecord.getData();
             document = new RecordIndexerPayload.Record();
@@ -613,9 +632,19 @@ public class IndexerServiceImpl implements IndexerService {
             Map<String, Object> sourceMap = getSourceMap(payloadRecord);
             String index = this.elasticIndexNameResolver.getIndexNameFromKind(payloadRecord.getKind());
 
+            // For index to be indexed we are using id that record has (osdu version).
+            // If the id (which is of type string) is not set, then Elasticsearch will automatically generate it.
+            String indexId;
+            if (xcollaborationHolder.isFeatureEnabledAndHeaderExists()){
+                indexId = CollaborationContextUtil
+                    .composeIdWithNamespace(payloadRecord.getId(), xcollaborationHolder.getCollaborationContext());
+            }else {
+                indexId = payloadRecord.getId();
+            }
+
             IndexOperation<Map<String, Object>> indexOperation = new IndexOperation.Builder<Map<String, Object>>()
                 .index(index)
-                .id(payloadRecord.getId())
+                .id(indexId)
                 .document(sourceMap)
                 .build();
 
@@ -685,7 +714,18 @@ public class IndexerServiceImpl implements IndexerService {
                     failedResponses++;
                 } else {
                     succeededResponses++;
-                    this.jobStatus.addOrUpdateRecordStatus(bulkItemResponse.id(), IndexingStatus.SUCCESS, HttpStatus.SC_OK, "Indexed Successfully");
+
+                    String elasticSearchNativeId = bulkItemResponse.id();
+
+                    if (xcollaborationHolder.isFeatureEnabledAndHeaderExists()) {
+                        // need to strip x-collaboration header from Bulkresponse because
+                        // addOrUpdateRecordStatus() will do comparison if id of the project is the same as _id of Elasticsearch.
+                        // In case they are not the same then addOrUpdateRecordStatus() will create new RecordStatus
+                        // with operationType == null. Because of that null later log writer will fail with NPE.
+                        elasticSearchNativeId = xcollaborationHolder.removeXcollaborationValue(elasticSearchNativeId);
+                    }
+
+                    this.jobStatus.addOrUpdateRecordStatus(elasticSearchNativeId, IndexingStatus.SUCCESS, HttpStatus.SC_OK, "Indexed Successfully");
                 }
             }
             if (!bulkFailures.isEmpty()) {
@@ -751,6 +791,10 @@ public class IndexerServiceImpl implements IndexerService {
         }
         if (!Strings.isNullOrEmpty(payloadRecord.getModifyTime())) {
             indexerPayload.put(RecordMetaAttribute.MODIFY_TIME.getValue(), payloadRecord.getModifyTime());
+        }
+        if (xcollaborationHolder.isFeatureEnabledAndHeaderExists()) {
+            indexerPayload.computeIfAbsent(XcollaborationHolder.X_COLLABORATION,
+                k -> xcollaborationHolder.getCollaborationContext().orElseThrow().getId());
         }
         return indexerPayload;
     }

@@ -14,6 +14,8 @@
 
 package org.opengroup.osdu.indexer.util;
 
+import static org.opengroup.osdu.indexer.model.XcollaborationHolder.X_COLLABORATION;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -64,6 +66,7 @@ public class TypeMapper {
         metaAttributeIndexerType.put(RecordMetaAttribute.CREATE_TIME.getValue(), ElasticType.DATE.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.MODIFY_TIME.getValue(), ElasticType.DATE.getValue());
         metaAttributeIndexerType.put(RecordMetaAttribute.BAG_OF_WORDS.getValue(), getBagOfWordsMapping());
+        metaAttributeIndexerType.put(RecordMetaAttribute.COLLABORATION_ID.getValue(), ElasticType.KEYWORD.getValue());
 
         storageToIndexerType.put(StorageType.LINK.getValue(), ElasticType.KEYWORD.getValue());
         storageToIndexerType.put(StorageType.LINK_ARRAY.getValue(), ElasticType.KEYWORD_ARRAY.getValue());
@@ -288,4 +291,5 @@ public class TypeMapper {
         map.put("type", "constant_keyword");
         return map;
     }
+
 }

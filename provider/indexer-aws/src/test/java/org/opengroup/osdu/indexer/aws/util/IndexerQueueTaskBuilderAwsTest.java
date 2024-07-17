@@ -16,6 +16,8 @@
 
 package org.opengroup.osdu.indexer.aws.util;
 
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -26,6 +28,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.core.aws.sqs.AmazonSQSConfig;
 import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
 import org.opengroup.osdu.core.aws.ssm.K8sParameterNotFoundException;
+import org.opengroup.osdu.core.common.model.http.CollaborationContext;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.indexer.model.Constants;
@@ -39,9 +42,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
@@ -65,6 +68,12 @@ public class IndexerQueueTaskBuilderAwsTest {
 
     @Mock
     Gson gson;
+
+    @Mock
+    XcollaborationHolder xCollaborationHolder;
+
+    String xCollabHeaderValue = "id=96d5550e-2b5e-4b84-825c-646339ee5fc7,application=pws";
+    String xCollabFieldValue = "96d5550e-2b5e-4b84-825c-646339ee5fc7";
 
     @Test
     public void createWorkerTaskTest_with_out_retryString() throws K8sParameterNotFoundException{
@@ -285,6 +294,77 @@ public class IndexerQueueTaskBuilderAwsTest {
                 messageAttributes.put(retryString, new MessageAttributeValue()
                     .withDataType("String")
                     .withStringValue(String.valueOf(1)));
+
+                when(xCollaborationHolder.isFeatureEnabledAndHeaderExists()).thenReturn(false);
+
+                RecordChangedMessages message = realGson.fromJson(payload, RecordChangedMessages.class);
+
+                SendMessageRequest sendMessageRequest = new SendMessageRequest().withQueueUrl(storage_sqs_url).withMessageBody(message.getData()).withDelaySeconds(new Integer(INITIAL_RETRY_DELAY_SECONDS)).withMessageAttributes(messageAttributes);
+
+                builder.createWorkerTask(payload, headers);
+
+                builder.createWorkerTask(payload, countDownMillis, headers);
+
+                Mockito.verify(sqsClient, times(2)).sendMessage(Mockito.eq(sendMessageRequest));
+
+            }
+        }
+
+    }
+
+    @Test
+    public void go_through_init_StorageQueue_with_x_collab() throws Exception  {
+
+        try (MockedConstruction<K8sLocalParameterProvider> provider = Mockito.mockConstruction(K8sLocalParameterProvider.class, (mock, context) -> {
+            when(mock.getParameterAsString(eq("STORAGE_SQS_URL"))).thenReturn(storage_sqs_url);
+            when(mock.getParameterAsString("INDEXER_DEADLETTER_QUEUE_SQS_URL")).thenReturn(deadletter_queue_sqs_url);
+        })) {
+
+            try (MockedConstruction<AmazonSQSConfig> config = Mockito.mockConstruction(AmazonSQSConfig.class, (mock1, context) -> {
+                when(mock1.AmazonSQS()).thenReturn(sqsClient);
+            })) {
+
+                builder.init();
+
+                Gson realGson = new Gson();
+
+                DpsHeaders headers = new DpsHeaders();
+
+                Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
+                messageAttributes.put(DpsHeaders.ACCOUNT_ID, new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
+                messageAttributes.put(DpsHeaders.DATA_PARTITION_ID, new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(headers.getPartitionIdWithFallbackToAccountId()));
+                headers.addCorrelationIdIfMissing();
+                messageAttributes.put(DpsHeaders.CORRELATION_ID, new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(headers.getCorrelationId()));
+                messageAttributes.put(DpsHeaders.USER_EMAIL, new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(headers.getUserEmail()));
+                messageAttributes.put(DpsHeaders.AUTHORIZATION, new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(headers.getAuthorization()));
+                messageAttributes.put(retryString, new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(String.valueOf(1)));
+                messageAttributes.put(XcollaborationHolder.X_COLLABORATION, new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(xCollabFieldValue));
+
+                headers.getHeaders().put(DpsHeaders.COLLABORATION, xCollabHeaderValue);
+
+                xCollaborationHolder.setxCollaborationHeader(xCollabHeaderValue);
+                when(xCollaborationHolder.isFeatureEnabledAndHeaderExists()).thenReturn(true);
+                CollaborationContext build = CollaborationContext.builder()
+                    .id(UUID.fromString(xCollabFieldValue))
+                    .build();
+                Optional<CollaborationContext> collaborationContext = Optional.of(build);
+                when(xCollaborationHolder.getCollaborationContext()).thenReturn(collaborationContext);
+                XcollaborationHolder xcollaborationHolder = new XcollaborationHolder();
+                xcollaborationHolder.setCollaborationContext(collaborationContext);
 
                 RecordChangedMessages message = realGson.fromJson(payload, RecordChangedMessages.class);
 
