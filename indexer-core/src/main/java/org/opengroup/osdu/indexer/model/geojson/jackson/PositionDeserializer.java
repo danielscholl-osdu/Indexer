@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import org.opengroup.osdu.indexer.model.geojson.Position;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class PositionDeserializer extends JsonDeserializer<Position> {
         if (jsonParser.isExpectedStartArrayToken()) {
             return deserializeArray(jsonParser, context);
         }
-        throw context.mappingException(Position.class);
+        throw JsonMappingException.from(context, "Cannot deserialize instance of " + Position.class.getName());
     }
 
     protected Position deserializeArray(JsonParser jsonParser, DeserializationContext context) throws IOException {
@@ -46,21 +47,20 @@ public class PositionDeserializer extends JsonDeserializer<Position> {
             if (optional)
                 return Double.NaN;
             else
-                throw context.mappingException("Unexpected end-of-input when binding data into Position");
+                throw JsonMappingException.from(context, "Unexpected end-of-input when binding data into Position");
         } else {
             switch (token) {
                 case END_ARRAY:
                     if (optional)
                         return Double.NaN;
                     else
-                        throw context.mappingException("Unexpected end-of-input when binding data into Position");
+                        throw JsonMappingException.from(context, "Unexpected end-of-input when binding data into Position");
                 case VALUE_NUMBER_FLOAT:
                     return jsonParser.getDoubleValue();
                 case VALUE_NUMBER_INT:
                     return jsonParser.getLongValue();
                 default:
-                    throw context.mappingException(
-                            "Unexpected token (" + token.name() + ") when binding data into Position");
+                    throw JsonMappingException.from(context, "Unexpected token (" + token.name() + ") when binding data into Position");
             }
         }
     }
