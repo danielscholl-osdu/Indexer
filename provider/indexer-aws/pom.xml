@@ -32,7 +32,6 @@
       <deployment.environment>dev</deployment.environment>
       <netty.version>4.1.51.Final</netty.version>
       <mockito.version>3.11.2</mockito.version>
-      <spring-security-core.version>6.2.4</spring-security-core.version>
   </properties>
 
   <dependencyManagement>
@@ -44,11 +43,6 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <dependency>
-        <groupId>org.springframework.security</groupId>
-        <artifactId>spring-security-core</artifactId>
-          <version>6.2.4</version>
-    </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -202,11 +196,11 @@
     <artifactId>spring-data-commons</artifactId>
     <scope>compile</scope>
   </dependency>
-  <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-core</artifactId>
-      <version>${spring-security-core.version}</version>
-  </dependency>
+<!--  <dependency>-->
+<!--      <groupId>org.springframework.security</groupId>-->
+<!--      <artifactId>spring-security-core</artifactId>-->
+<!--      <version>${spring-security-core.version}</version>-->
+<!--  </dependency>-->
   </dependencies>
   <build>
       <plugins>
