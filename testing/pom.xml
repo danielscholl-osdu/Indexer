@@ -22,7 +22,7 @@
 	<description>Indexer Service Integration Test Root Project</description>
 	<properties>
 		<spring.version>5.3.30</spring.version>
-		<os-core-common.version>0.25.0</os-core-common.version>
+		<os-core-common.version>0.27.2</os-core-common.version>
 	</properties>
 	<packaging>pom</packaging>
 

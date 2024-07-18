@@ -33,7 +33,7 @@
 	<properties>
         <os-core-lib-ibm.version>0.26.0-rc8</os-core-lib-ibm.version>
         <jackson.version>2.13.4</jackson.version>
-        <os-core-common.version>0.26.0-rc2</os-core-common.version>
+        <os-core-common.version>0.27.0-rc3</os-core-common.version>
     </properties>
 
 	<profiles>
