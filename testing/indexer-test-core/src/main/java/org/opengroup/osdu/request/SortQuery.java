@@ -1,10 +1,9 @@
 package org.opengroup.osdu.request;
 
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.elasticsearch.search.sort.SortOrder;
-
-import java.util.List;
 
 @Data
 @NoArgsConstructor

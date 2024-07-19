@@ -17,68 +17,83 @@
 
 package org.opengroup.osdu.util;
 
+import static org.opengroup.osdu.common.RecordSteps.X_COLLABORATION;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.GeoShapeRelation;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.ChildScoreMode;
+import co.elastic.clients.elasticsearch._types.query_dsl.ExistsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.GeoShapeFieldQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.GeoShapeQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.NestedQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
+import co.elastic.clients.elasticsearch.core.DeleteResponse;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.bulk.IndexOperation;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
+import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
+import co.elastic.clients.elasticsearch.indices.CloseIndexResponse;
+import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
+import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
+import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
+import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
+import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
+import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
+import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
+import co.elastic.clients.elasticsearch.indices.IndexSettings;
+import co.elastic.clients.elasticsearch.indices.RefreshRequest;
+import co.elastic.clients.elasticsearch.indices.RefreshResponse;
+import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
+import co.elastic.clients.json.JsonData;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.client.util.Strings;
 import com.google.gson.Gson;
-
+import java.io.IOException;
+import java.io.StringReader;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import javax.net.ssl.SSLContext;
-
-import lombok.extern.java.Log;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.lucene.search.join.ScoreMode;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.client.indices.CloseIndexRequest;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.*;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.GetIndexResponse;
-import org.elasticsearch.client.indices.GetMappingsRequest;
-import org.elasticsearch.client.indices.GetMappingsResponse;
-import org.elasticsearch.cluster.metadata.MappingMetadata;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
-import org.locationtech.jts.geom.Coordinate;
-import org.elasticsearch.common.geo.builders.EnvelopeBuilder;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
-import static org.opengroup.osdu.common.RecordSteps.X_COLLABORATION;
-import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
+import javax.net.ssl.SSLContext;
+import lombok.extern.java.Log;
+import org.apache.http.Header;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpStatus;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.opengroup.osdu.core.common.model.storage.Record;
+import org.opengroup.osdu.models.record.RecordData;
 
 
 /**
@@ -90,14 +105,13 @@ public class ElasticUtils {
 
     private static final int REST_CLIENT_CONNECT_TIMEOUT = 5000;
     private static final int REST_CLIENT_SOCKET_TIMEOUT = 60000;
-    private static final int REST_CLIENT_RETRY_TIMEOUT = 60000;
 
-    private final TimeValue REQUEST_TIMEOUT = TimeValue.timeValueMinutes(1);
-
+    private final Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
     private final String username;
     private final String password;
     private final String host;
     private final boolean sslEnabled;
+    private ElasticsearchClient elasticsearchClient;
 
     public ElasticUtils() {
         this.username = Config.getUserName();
@@ -108,37 +122,44 @@ public class ElasticUtils {
 
     public void createIndex(String index, String mapping) {
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                Settings settings = Settings.builder()
-                        .put("index.number_of_shards", 1)
-                        .put("index.number_of_replicas", 1).build();
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
 
-                // creating index + add mapping to the index
-                log.info("Creating index with name: " + index);
-                CreateIndexRequest request = new CreateIndexRequest(index).settings(settings);
-                request.source("{\"mappings\":" + mapping + "}", XContentType.JSON);
-                request.setTimeout(REQUEST_TIMEOUT);
-                CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
+            IndexSettings indexSettings = IndexSettings.of(builder ->
+                builder.numberOfShards("1")
+                    .numberOfReplicas("1")
+            );
 
-                //wait for ack
-                for (int i = 0; ; i++) {
-                    if (response.isAcknowledged() && response.isShardsAcknowledged()) {
-                        break;
-                    } else {
-                        log.info("Failed to get confirmation from elastic server, will sleep for 15 seconds");
-                        Thread.sleep(15000);
-                        if (i > 3) {
-                            log.info("Failed to get confirmation from elastic server after 3 retries");
-                            throw new AssertionError("Failed to get confirmation from Elastic cluster");
-                        }
+            // creating index + add mapping to the index
+            log.info("Creating index with name: " + index);
+            CreateIndexRequest request = CreateIndexRequest.of(builder ->
+                builder.index(index)
+                    .settings(indexSettings)
+                    .mappings(TypeMapping.of(
+                        mappingBuilder -> mappingBuilder.withJson(new StringReader(mapping))))
+                    .timeout(REQUEST_TIMEOUT)
+            );
+
+            CreateIndexResponse createIndexResponse = client.indices().create(request);
+
+            //wait for ack
+            for (int i = 0; ; i++) {
+                if (createIndexResponse.acknowledged() && createIndexResponse.shardsAcknowledged()) {
+                    break;
+                } else {
+                    log.info("Failed to get confirmation from elastic server, will sleep for 15 seconds");
+                    Thread.sleep(15000);
+                    if (i > 3) {
+                        log.info("Failed to get confirmation from elastic server after 3 retries");
+                        throw new AssertionError("Failed to get confirmation from Elastic cluster");
                     }
                 }
-
-                log.info("Done creating index with name: " + index);
             }
-        } catch (ElasticsearchStatusException e) {
-            if (e.status() == RestStatus.BAD_REQUEST &&
-                    (e.getMessage().contains("resource_already_exists_exception") || e.getMessage().contains("IndexAlreadyExistsException"))) {
+
+            log.info("Done creating index with name: " + index);
+
+        } catch (ElasticsearchException e) {
+            if (e.status() == HttpStatus.SC_BAD_REQUEST &&
+                (e.getMessage().contains("resource_already_exists_exception") || e.getMessage().contains("IndexAlreadyExistsException"))) {
                 log.info("Index already exists. Ignoring error...");
             }
         } catch (Exception e) {
@@ -149,35 +170,38 @@ public class ElasticUtils {
     public int indexRecords(String index, String kind, List<Map<String, Object>> testRecords) {
         log.info("Creating records inside index with name: " + index);
 
-        BulkRequest bulkRequest = new BulkRequest();
-        bulkRequest.timeout(REQUEST_TIMEOUT);
+        BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+        bulkRequestBuilder.timeout(REQUEST_TIMEOUT);
 
-        List<IndexRequest> records = ElasticUtils.getIndexReqFromRecord(index, kind, testRecords);
-        for (IndexRequest record : records) {
-            bulkRequest.add(record);
+        List<IndexOperation<Map<String, Object>>> records = ElasticUtils.getIndexReqFromRecord(index, kind, testRecords);
+        for (IndexOperation<Map<String, Object>> operation : records) {
+            bulkRequestBuilder.operations(new BulkOperation.Builder().index(operation).build());
         }
 
         BulkResponse bulkResponse = null;
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
-                log.info("Done creating records inside index with name: " + index);
-            }
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+            bulkResponse = client.bulk(bulkRequestBuilder.build());
+            log.info("Done creating records inside index with name: " + index);
+
         } catch (IOException e) {
             log.log(Level.SEVERE, "bulk indexing failed", e);
         }
 
         // Double check failures
-        if (bulkResponse != null && bulkResponse.hasFailures()) {
+        if (bulkResponse != null && bulkResponse.errors()) {
             throw new AssertionError("setup failed in data post to Index");
         }
 
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                RefreshRequest request = new RefreshRequest(index);
-                RefreshResponse refreshResponse = client.indices().refresh(request, RequestOptions.DEFAULT);
-                log.info(String.format("refreshed index, acknowledged shards: %s | failed shards: %s | total shards: %s ", refreshResponse.getSuccessfulShards(), refreshResponse.getFailedShards(), refreshResponse.getTotalShards()));
-            }
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+
+            RefreshRequest request = RefreshRequest.of(builder -> builder.index(index));
+            RefreshResponse refreshResponse = client.indices().refresh(request);
+            log.info(String.format("refreshed index, acknowledged shards: %s | failed shards: %s | total shards: %s ",
+                refreshResponse.shards().successful(), refreshResponse.shards().failed(),
+                refreshResponse.shards().total()));
+
         } catch (IOException | ElasticsearchException e) {
             log.log(Level.SEVERE, "index refresh failed", e);
         }
@@ -186,17 +210,18 @@ public class ElasticUtils {
     }
 
     public void deleteIndex(String index) {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        try{
             //retry if the elastic cluster is snapshotting and we cant delete it
             for (int retries = 0; ; retries++) {
                 try {
                     log.info("Deleting index with name: " + index + ", retry count: " + retries);
-                    DeleteIndexRequest request = new DeleteIndexRequest(index);
-                    client.indices().delete(request, RequestOptions.DEFAULT);
+                    DeleteIndexRequest request =  DeleteIndexRequest.of(builder -> builder.index(index));
+                    client.indices().delete(request);
                     log.info("Done deleting index with name: " + index);
                     return;
                 } catch (ElasticsearchException e) {
-                    if (e.status() == RestStatus.NOT_FOUND) {
+                    if (e.status() == HttpStatus.SC_NOT_FOUND) {
                         return;
                     } else if (e.getMessage().contains("Cannot delete indices that are being snapshotted")) {
                         closeIndex(client, index);
@@ -222,12 +247,13 @@ public class ElasticUtils {
 
     public long fetchRecords(String index) throws IOException {
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                SearchRequest request = new SearchRequest(index);
-                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
-                return searchResponse.getHits().getTotalHits().value;
-            }
-        } catch (ElasticsearchStatusException e) {
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+
+            SearchRequest request = SearchRequest.of(builder -> builder.index(index));
+            SearchResponse<Void> searchResponse = client.search(request, Void.class);
+            return searchResponse.hits().total().value();
+
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
         }
@@ -235,15 +261,30 @@ public class ElasticUtils {
 
     public long fetchRecordsByTags(String index, String tagKey, String tagValue) throws IOException {
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                SearchRequest request = new SearchRequest(index);
-                SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-                sourceBuilder.query(boolQuery().must(termsQuery(String.format("tags.%s", tagKey), tagValue)));
-                request.source(sourceBuilder);
-                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
-                return searchResponse.getHits().getTotalHits().value;
-            }
-        } catch (ElasticsearchStatusException e) {
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+
+            TermsQueryField termsQueryField = new TermsQueryField.Builder()
+                .value(List.of(FieldValue.of(tagValue)))
+                .build();
+
+            TermsQuery termsQuery = new TermsQuery.Builder()
+                .field("tags.%s".formatted(tagKey))
+                .terms(termsQueryField)
+                .build();
+
+            BoolQuery boolQuery = new BoolQuery.Builder()
+                .must(termsQuery._toQuery())
+                .build();
+
+            SearchRequest searchRequest = new SearchRequest.Builder()
+                .index(index)
+                .query(boolQuery._toQuery())
+                .build();
+
+            SearchResponse<Void> searchResponse = client.search(searchRequest, Void.class);
+            return searchResponse.hits().total().value();
+
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
         }
@@ -251,18 +292,30 @@ public class ElasticUtils {
 
     public long fetchRecordsByFieldAndFieldValue(String index, String fieldKey, String fieldValue) throws IOException {
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                SearchRequest request = new SearchRequest(index);
-                if(!Strings.isNullOrEmpty(fieldKey)) {
-                    SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-                    sourceBuilder.query(boolQuery().must(matchQuery(fieldKey, fieldValue)));
-                    request.source(sourceBuilder);
-                }
-                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
-                log.info(indentatedResponseBody(searchResponse.toString()));
-                return searchResponse.getHits().getTotalHits().value;
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+
+            SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
+                .index(index);
+
+            if (!Strings.isNullOrEmpty(fieldKey)) {
+                FieldValue elkFieldValue = new FieldValue.Builder()
+                    .stringValue(fieldValue)
+                    .build();
+
+                MatchQuery matchQuery = new MatchQuery.Builder()
+                    .field(fieldKey)
+                    .query(elkFieldValue)
+                    .build();
+
+                BoolQuery boolQuery = new BoolQuery.Builder()
+                    .must(matchQuery._toQuery())
+                    .build();
+
+                searchRequestBuilder.query(Query.of(builder -> builder.bool(boolQuery)));
             }
-        } catch (ElasticsearchStatusException e) {
+            SearchResponse<Void> searchResponse = client.search(searchRequestBuilder.build(), Void.class);
+            return searchResponse.hits().total().value();
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
         }
@@ -270,13 +323,13 @@ public class ElasticUtils {
 
     public String[] fetchIndexList() throws IOException {
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                // List all index names
-                GetIndexRequest request = new GetIndexRequest("*");
-                GetIndexResponse response = client.indices().get(request, RequestOptions.DEFAULT);
-                return response.getIndices();
-            }
-        } catch (ElasticsearchStatusException e) {
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+            // List all index names
+            GetIndexRequest request = GetIndexRequest.of(builder -> builder.index("*"));
+            GetIndexResponse response = client.indices().get(request);
+            Set<String> keySet = response.result().keySet();
+            return keySet.toArray(new String[0]);
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return new String[]{};
         }
@@ -285,16 +338,35 @@ public class ElasticUtils {
     public List<Map<String, Object>> fetchRecordsByAttribute(String index, String attributeKey, String attributeValue) throws IOException {
         List<Map<String, Object>> out = new ArrayList<>();
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                SearchRequest request = new SearchRequest(index);
-                SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-                sourceBuilder.query(boolQuery().must(termsQuery(attributeKey, attributeValue)));
-                request.source(sourceBuilder);
-                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
-                for(SearchHit searchHit : searchResponse.getHits()) out.add(searchHit.getSourceAsMap());
-                return out;
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+
+            TermsQueryField termsQueryField = new TermsQueryField.Builder()
+                .value(List.of(FieldValue.of(attributeValue)))
+                .build();
+
+            TermsQuery termsQuery = new TermsQuery.Builder()
+                .field(attributeKey)
+                .terms(termsQueryField)
+                .build();
+
+            BoolQuery boolQuery = new BoolQuery.Builder()
+                .must(termsQuery._toQuery())
+                .build();
+
+            SearchRequest searchRequest = new SearchRequest.Builder()
+                .index(index)
+                .query(boolQuery._toQuery())
+                .build();
+
+            TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {};
+            Type type = typeReference.getType();
+            SearchResponse<Map<String, Object>> searchResponse = client.search(searchRequest, type);
+            for (Hit<Map<String, Object>> searchHit : searchResponse.hits().hits()) {
+                Map<String, Object> source = searchHit.source();
+                out.add(source);
             }
-        } catch (ElasticsearchStatusException e) {
+            return out;
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return out;
         }
@@ -303,162 +375,212 @@ public class ElasticUtils {
     public long fetchRecordsByExistQuery(String index, String attributeName) throws Exception {
         try {
             TimeUnit.SECONDS.sleep(40);
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                SearchRequest searchRequest = new SearchRequest(index);
-                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-                searchSourceBuilder.query(QueryBuilders.existsQuery(attributeName));
-                searchRequest.source(searchSourceBuilder);
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+            ExistsQuery existsQuery = new ExistsQuery.Builder()
+                .field(attributeName)
+                .build();
 
-                SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-                return searchResponse.getHits().getTotalHits().value;
-            }
-        } catch (ElasticsearchStatusException e) {
+            SearchRequest searchRequest = new SearchRequest.Builder()
+                .index(index)
+                .query(Query.of(builder -> builder.exists(existsQuery)))
+                .build();
+
+            SearchResponse searchResponse = client.search(searchRequest, Void.class);
+            return searchResponse.hits().total().value();
+        } catch (ElasticsearchException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        }
+    }
+    
+    public long fetchRecordsByGeoWithinQuery(String index, String field, Double topLatitude, Double topLongitude,
+        Double bottomLatitude, Double bottomLongitude) throws Exception {
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        try {
+
+            StringReader jsonData = new StringReader("""
+                {
+                    "type":"envelope",
+                    "coordinates": [[%f, %f], [%f, %f] ]
+                }
+                """.formatted(topLongitude, topLatitude, bottomLongitude, bottomLatitude));
+
+            GeoShapeFieldQuery geoShapeFieldQuery = GeoShapeFieldQuery.of(
+                geoShapeFieldQueryBuilder ->
+                    geoShapeFieldQueryBuilder.relation(GeoShapeRelation.Within)
+                        .shape(JsonData.from(jsonData))
+            );
+
+            GeoShapeQuery geoShapeQuery = GeoShapeQuery.of(geoShapeQueryBuilder ->
+                geoShapeQueryBuilder.field(field)
+                    .ignoreUnmapped(false)
+                    .boost(1.0f)
+                    .shape(geoShapeFieldQuery));
+
+            BoolQuery boolQuery = BoolQuery.of(boolQueryBuilder ->
+                boolQueryBuilder.must(queryBuilder -> queryBuilder
+                    .geoShape(geoShapeQuery)).boost(1.0f));
+
+            SearchRequest searchRequest = new SearchRequest.Builder()
+                .index(index)
+                .query(boolQuery._toQuery())
+                .build();
+
+            SearchResponse searchResponse = client.search(searchRequest, Void.class);
+            return searchResponse.hits().total().value();
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
         }
     }
 
-    public long fetchRecordsByBoundingBoxQuery(String index, String field, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude) throws Exception {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            SearchRequest searchRequest = new SearchRequest(index);
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            Coordinate topLeft = new Coordinate(topLongitude, topLatitude);
-            Coordinate bottomRight = new Coordinate(bottomLongitude, bottomLatitude);
-            searchSourceBuilder.query(boolQuery().must(geoWithinQuery(field, new EnvelopeBuilder(topLeft, bottomRight))));
-            searchRequest.source(searchSourceBuilder);
+    public long fetchRecordsByAsIngestedCoordinates(String index, String pointX, Double topPointX, Double bottomPointX,
+        String pointY, Double topPointY, Double bottomPointY) throws Exception {
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        try {
+            RangeQuery xRangeQuery = RangeQuery.of(
+                builder -> builder.field(pointX).lte(JsonData.of(topPointX)).gte(JsonData.of(bottomPointX)));
 
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            return searchResponse.getHits().getTotalHits().value;
-        } catch (ElasticsearchStatusException e) {
+            RangeQuery yRangeQuery = RangeQuery.of(
+                builder -> builder.field(pointY).lte(JsonData.of(topPointY)).gte(JsonData.of(bottomPointY)));
+
+            BoolQuery boolQuery = BoolQuery.of(
+                builder -> builder.must(xRangeQuery._toQuery()).must(yRangeQuery._toQuery()));
+
+            SearchRequest searchRequest = SearchRequest.of(builder -> builder.index(index).query(boolQuery._toQuery()));
+
+            SearchResponse searchResponse = client.search(searchRequest, Void.class);
+            return searchResponse.hits().total().value();
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return -1;
         }
     }
 
-    public SearchResponse fetchRecordsByIdAndMustHaveXcollab(String index, String id, String xCollab) throws Exception {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            SearchRequest searchRequest = new SearchRequest(index);
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(boolQuery()
-                .must(QueryBuilders.termQuery("id", id))
-                .must(QueryBuilders.termQuery(X_COLLABORATION, xCollab)));
-            searchRequest.source(searchSourceBuilder);
+    public SearchResponse<Record> fetchRecordsByIdAndMustHaveXcollab(String index, String id, String xCollab) throws Exception {
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        try{
+            TermQuery idTerm = TermQuery.of(builder -> builder.field("id").value(id));
+            TermQuery xCollabTerm = TermQuery.of(builder -> builder.field(X_COLLABORATION).value(xCollab));
+            BoolQuery of = BoolQuery.of(builder -> builder.must(idTerm._toQuery()).must(xCollabTerm._toQuery()));
+
+            SearchRequest searchRequest = SearchRequest.of(builder -> builder.index(index).query(of._toQuery()));
+
             log.log(Level.INFO,
                 String.format("xcollab feature: print searchRequest to get record by id and x-collab value: %s",
                     searchRequest));
 
-            return client.search(searchRequest, RequestOptions.DEFAULT);
-        } catch (ElasticsearchStatusException e) {
+            return client.search(searchRequest, Record.class);
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             throw e;
         }
     }
+
 
     public DeleteResponse deleteRecordsById(String index, String id) throws Exception {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            DeleteRequest request = new DeleteRequest(index, id);
-            return client.delete(request, RequestOptions.DEFAULT);
-        } catch (ElasticsearchStatusException e) {
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        try {
+            DeleteRequest request = DeleteRequest.of(builder -> builder.index(index).id(id));
+            return client.delete(request);
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             throw e;
         }
     }
 
-    public long fetchRecordsByAsIngestedCoordinates(String index, String pointX, Double topPointX, Double bottomPointX, String pointY, Double topPointY, Double bottomPointY) throws Exception {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            SearchRequest searchRequest = new SearchRequest(index);
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(boolQuery().must(rangeQuery(pointX).lte(topPointX).gte(bottomPointX)).must(rangeQuery(pointY).lte(topPointY).gte(bottomPointY)));
-            searchRequest.source(searchSourceBuilder);
-
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            return searchResponse.getHits().getTotalHits().value;
-        } catch (ElasticsearchStatusException e) {
-            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
-            return -1;
-        }
-    }
-
-    public long fetchRecordsByNestedQuery(String index, String path, String firstNestedField, String firstNestedValue, String secondNestedField, String secondNestedValue) throws Exception{
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            SearchRequest searchRequest = new SearchRequest(index);
-
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(nestedQuery(path,boolQuery().must(matchQuery(firstNestedField,firstNestedValue)).must(termQuery(secondNestedField + ".keyword",secondNestedValue)), ScoreMode.Avg));
-
-            searchRequest.source(searchSourceBuilder);
-
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            return searchResponse.getHits().getTotalHits().value;
-        } catch (ElasticsearchStatusException e) {
-            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
-            return -1;
-        }
-    }
-
-
-    public long fetchRecordsWithFlattenedFieldsQuery(String index, String flattenedField, String flattenedFieldValue) throws IOException {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            SearchRequest searchRequest = new SearchRequest(index);
-
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(boolQuery().must(matchQuery(flattenedField,flattenedFieldValue)));
-            searchRequest.source(searchSourceBuilder);
-
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            return searchResponse.getHits().getTotalHits().value;
-        } catch (ElasticsearchStatusException e) {
-            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
-            return -1;
-        }
-    }
-
-    public String fetchDataFromObjectsArrayRecords(String index) throws IOException {
+    public long fetchRecordsByNestedQuery(String index, String path, String firstNestedField, String firstNestedValue,
+        String secondNestedField, String secondNestedValue) throws Exception {
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
         try {
-            try (RestHighLevelClient client = this.createClient(username, password, host)) {
-                SearchRequest request = new SearchRequest(index);
-                SearchResponse searchResponse = client.search(request, RequestOptions.DEFAULT);
+            FieldValue firstFieldValue = FieldValue.of(firstNestedValue);
+            FieldValue secondFieldValue = FieldValue.of(secondNestedValue);
+            MatchQuery firstMatch = MatchQuery.of(
+                matchBuilder -> matchBuilder.field(firstNestedField).query(firstFieldValue));
+            MatchQuery secondMatch = MatchQuery.of(
+                matchBuilder -> matchBuilder.field(secondNestedField + ".keyword").query(secondFieldValue));
+            BoolQuery boolQuery = BoolQuery.of(
+                boolBuilder -> boolBuilder.must(firstMatch._toQuery()).must(secondMatch._toQuery()));
 
-                SearchHits searchHits = searchResponse.getHits();
-                if (searchHits.getHits().length != 0) {
-                    return searchHits.getHits()[0].getSourceAsString();
-                }
-                return null;
+            NestedQuery nestedQuery = NestedQuery.of(
+                builder -> builder.path(path).query(boolQuery._toQuery()).scoreMode(ChildScoreMode.Avg));
+
+            SearchRequest searchRequest = SearchRequest.of(
+                builder -> builder.index(index).query(nestedQuery._toQuery()));
+
+            SearchResponse searchResponse = client.search(searchRequest, Void.class);
+            return searchResponse.hits().total().value();
+        } catch (ElasticsearchException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        }
+    }
+
+
+    public long fetchRecordsWithFlattenedFieldsQuery(String index, String flattenedField, String flattenedFieldValue)
+        throws IOException {
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        try {
+            MatchQuery matchQuery = MatchQuery.of(
+                builder -> builder.field(flattenedField).query(FieldValue.of(flattenedFieldValue)));
+
+            BoolQuery boolQuery = BoolQuery.of(builder -> builder.must(matchQuery._toQuery()));
+
+            SearchRequest searchRequest = SearchRequest.of(builder -> builder.index(index).query(boolQuery._toQuery()));
+
+            SearchResponse searchResponse = client.search(searchRequest, Void.class);
+            return searchResponse.hits().total().value();
+        } catch (ElasticsearchException e) {
+            log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
+            return -1;
+        }
+    }
+
+    public RecordData fetchDataFromObjectsArrayRecords(String index) throws IOException {
+        try {
+            ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+
+            SearchRequest request = SearchRequest.of(builder -> builder.index(index));
+            SearchResponse<RecordData> searchResponse = client.search(request, RecordData.class);
+
+            HitsMetadata<RecordData> hits = searchResponse.hits();
+            if (hits.hits().size() != 0) {
+                return hits.hits().get(0).source();
             }
-        } catch (ElasticsearchStatusException e) {
+            return null;
+
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Elastic search threw exception: %s", e.getMessage()));
             return null;
         }
     }
 
-    public Map<String, MappingMetadata> getMapping(String index) throws IOException {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            GetMappingsRequest request = new GetMappingsRequest();
-            request.indices(index);
-            GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
-            Map<String, MappingMetadata> mappings = response.mappings();
-            return mappings;
-        }
+    public Map<String, IndexMappingRecord> getMapping(String index) throws IOException {
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        GetMappingRequest.Builder getMappingBuilder = new GetMappingRequest.Builder();
+        getMappingBuilder.index(index);
+        getMappingBuilder.masterTimeout(REQUEST_TIMEOUT);
+        GetMappingResponse mappingResponse = client.indices().getMapping(getMappingBuilder.build());
+        Map<String, IndexMappingRecord> result = mappingResponse.result();
+        return result;
     }
 
     public void refreshIndex(String index) throws IOException {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            try {
-                RefreshRequest request = new RefreshRequest(index);
-                client.indices().refresh(request, RequestOptions.DEFAULT);
-            } catch (ElasticsearchException exception) {
-                log.info(String.format("index: %s refresh failed. message: %s", index, exception.getDetailedMessage()));
-            }
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        try {
+            RefreshRequest refreshRequest = RefreshRequest.of(builder -> builder.index(index));
+            client.indices().refresh(refreshRequest);
+        } catch (ElasticsearchException exception) {
+            log.info(String.format("index: %s refresh failed. message: %s", index, exception.getMessage()));
         }
+
     }
 
-    private boolean closeIndex(RestHighLevelClient client, String index) {
+    private boolean closeIndex(ElasticsearchClient client, String index) {
         try {
-            CloseIndexRequest request = new CloseIndexRequest(index);
-            request.setTimeout(TimeValue.timeValueMinutes(1));
-            request.timeout();
-            AcknowledgedResponse closeIndexResponse = client.indices().close(request, RequestOptions.DEFAULT);
-            return closeIndexResponse.isAcknowledged();
+            CloseIndexRequest request = CloseIndexRequest.of(builder -> builder.index(index).timeout(Time.of(timeBuilder -> timeBuilder.time("1m"))));
+            CloseIndexResponse closeIndexResponse = client.indices().close(request);
+            return closeIndexResponse.acknowledged();
         } catch (ElasticsearchException | IOException exception) {
             log.info(String.format("index: %s close failed. message: %s", index, exception.getMessage()));
         }
@@ -466,15 +588,18 @@ public class ElasticUtils {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<IndexRequest> getIndexReqFromRecord(String index, String kind, List<Map<String, Object>> testRecords) {
-        List<IndexRequest> dataList = new ArrayList<>();
+    private static List<IndexOperation<Map<String, Object>>> getIndexReqFromRecord(String index, String kind, List<Map<String, Object>> testRecords) {
+        List<IndexOperation<Map<String, Object>>> dataList = new ArrayList<>();
         Gson gson = new Gson();
         try {
             for (Map<String, Object> record : testRecords) {
-                String id = (String) record.get("id");
-                Map<String, Object> mapData = gson.fromJson(gson.toJson(record), Map.class);
-                IndexRequest indexRequest = new IndexRequest(index).id(id).source(mapData);
-                dataList.add(indexRequest);
+                IndexOperation<Map<String, Object>> indexOperation = new IndexOperation.Builder<Map<String, Object>>()
+                    .index(index)
+                    .id((String) record.get("id"))
+                    .document(gson.fromJson(gson.toJson(record), Map.class))
+                    .build();
+
+                dataList.add(indexOperation);
             }
         } catch (Exception e) {
             throw new AssertionError(e.getMessage());
@@ -483,21 +608,23 @@ public class ElasticUtils {
     }
 
 
-    private RestHighLevelClient createClient(String username, String password, String host) {
+    private ElasticsearchClient getOrCreateClient(String username, String password, String host) {
+        if (this.elasticsearchClient == null) {
+            ElasticsearchClient restHighLevelClient;
+            int port = Config.getPort();
+            try {
+                String rawString = String.format("%s:%s", username, password);
 
-        RestHighLevelClient restHighLevelClient;
-        int port = Config.getPort();
-        try {
-            String rawString = String.format("%s:%s", username, password);
+                RestClientBuilder builder = createClientBuilder(host, rawString, port);
+                RestClientTransport transport = new RestClientTransport(builder.build(), new JacksonJsonpMapper());
+                restHighLevelClient = new ElasticsearchClient(transport);
 
-            RestClientBuilder builder = createClientBuilder(host,rawString, port);
-
-            restHighLevelClient = new RestHighLevelClient(builder);
-
-        } catch (Exception e) {
-            throw new AssertionError("Setup elastic error: %s" + e.getMessage());
+            } catch (Exception e) {
+                throw new AssertionError("Setup elastic error: %s" + e.getMessage());
+            }
+            this.elasticsearchClient = restHighLevelClient;
         }
-        return restHighLevelClient;
+        return this.elasticsearchClient;
     }
 
     public RestClientBuilder createClientBuilder(String url, String usernameAndPassword, int port) throws Exception {
@@ -534,12 +661,9 @@ public class ElasticUtils {
             log.warning("Elastic client connection uses TrustSelfSignedStrategy()");
             SSLContext sslContext = createSSLContext();
             builder.setHttpClientConfigCallback(httpClientBuilder ->
-            {
-                HttpAsyncClientBuilder httpAsyncClientBuilder = httpClientBuilder.setSSLContext(sslContext)
+                httpClientBuilder.setSSLContext(sslContext)
                     .setSSLHostnameVerifier(
-                        NoopHostnameVerifier.INSTANCE);
-                return httpAsyncClientBuilder;
-            });
+                        NoopHostnameVerifier.INSTANCE));
         }
 
             builder.setDefaultHeaders(defaultHeaders);
@@ -565,16 +689,17 @@ public class ElasticUtils {
         boolean exists = false;
         try {
             exists = createRestClientAndCheckIndexExist(index);
-        } catch (ElasticsearchStatusException e) {
+        } catch (ElasticsearchException e) {
             log.log(Level.INFO, String.format("Error getting index: %s %s", index, e.getMessage()));
         }
         return exists;
     }
 
     private boolean createRestClientAndCheckIndexExist(String index) {
-        try (RestHighLevelClient client = this.createClient(username, password, host)) {
-            GetIndexRequest request = new GetIndexRequest(index);
-            return client.indices().exists(request, RequestOptions.DEFAULT);
+        ElasticsearchClient client = this.getOrCreateClient(username, password, host);
+        try {
+            ExistsRequest request = ExistsRequest.of(builder -> builder.index(index));
+            return client.indices().exists(request).value();
         } catch (IOException e) {
             log.log(Level.INFO, String.format("Error getting index: %s %s", index, e.getMessage()));
         }
