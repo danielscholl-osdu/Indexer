@@ -1,5 +1,21 @@
 package org.opengroup.osdu.common;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.opengroup.osdu.util.Config.getEntitlementsDomain;
+import static org.opengroup.osdu.util.Config.getStorageBaseURL;
+import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
+import static org.opengroup.osdu.util.JsonPathMatcher.FindArrayInJson;
+
+import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch.core.DeleteResponse;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
+import co.elastic.clients.json.JsonpUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -7,14 +23,22 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.ClientResponse;
 import cucumber.api.DataTable;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import javax.ws.rs.HttpMethod;
 import lombok.extern.java.Log;
-import org.elasticsearch.action.DocWriteResponse.Result;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.cluster.metadata.MappingMetadata;
 import org.opengroup.osdu.core.common.http.CollaborationContextFactory;
 import org.opengroup.osdu.core.common.model.entitlements.Acl;
 import org.opengroup.osdu.core.common.model.http.CollaborationContext;
+import org.opengroup.osdu.core.common.model.storage.Record;
 import org.opengroup.osdu.core.common.model.storage.UpsertRecords;
 import org.opengroup.osdu.models.Setup;
 import org.opengroup.osdu.models.TestIndex;
@@ -23,19 +47,6 @@ import org.opengroup.osdu.util.ElasticUtils;
 import org.opengroup.osdu.util.FileHandler;
 import org.opengroup.osdu.util.HTTPClient;
 import org.springframework.util.CollectionUtils;
-
-import javax.ws.rs.HttpMethod;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-
-import static org.junit.Assert.*;
-import static org.opengroup.osdu.util.Config.getEntitlementsDomain;
-import static org.opengroup.osdu.util.Config.getStorageBaseURL;
-import static org.opengroup.osdu.util.HTTPClient.indentatedResponseBody;
-import static org.opengroup.osdu.util.JsonPathMatcher.FindArrayInJson;
 
 @Log
 public class RecordSteps extends TestsBase {
@@ -161,15 +172,21 @@ public class RecordSteps extends TestsBase {
 
     public void i_should_get_the_elastic_for_the_tenant_testindex_timestamp_well_in_the_Elastic_Search(String expectedMapping, String kind, String index) throws Throwable {
         index = generateActualName(index, timeStamp);
-        Map<String, MappingMetadata> elasticMapping = elasticUtils.getMapping(index);
+        Map<String, IndexMappingRecord> elasticMapping = elasticUtils.getMapping(index);
         assertNotNull(elasticMapping);
 
         String[] kindParts = kind.split(":");
         String authority = tenantMap.get(kindParts[0]);
         String source = kindParts[1];
         expectedMapping = expectedMapping.replaceAll("<authority-id>", authority).replaceAll("<source-id>", source);
-        MappingMetadata typeMapping = elasticMapping.get(index);
-        Map<String, Object> mapping = typeMapping.sourceAsMap();
+        IndexMappingRecord typeMapping = elasticMapping.get(index);
+
+        StringBuilder collector = new StringBuilder();
+        TypeMapping mappings = typeMapping.mappings();
+        JsonpUtils.toString(mappings, collector);
+        Type type = new TypeToken<Map<String, Object>>() {}.getType();
+        Map<String, Object> mapping = new Gson().fromJson(collector.toString(), type);
+
         assertNotNull(mapping);
         assertTrue(areJsonEqual(expectedMapping, mapping.toString()));
     }
@@ -224,7 +241,7 @@ public class RecordSteps extends TestsBase {
             int expectedNumber, String index, Double topLatitude, Double topLongitude, Double bottomLatitude, Double bottomLongitude, String field) throws Throwable {
         index = generateActualName(index, timeStamp);
         long numOfIndexedDocuments = createIndex(index);
-        long actualNumberOfRecords = elasticUtils.fetchRecordsByBoundingBoxQuery(index, field, topLatitude, topLongitude, bottomLatitude, bottomLongitude);
+        long actualNumberOfRecords = elasticUtils.fetchRecordsByGeoWithinQuery(index, field, topLatitude, topLongitude, bottomLatitude, bottomLongitude);
         assertEquals(expectedNumber, actualNumberOfRecords);
     }
 
@@ -256,14 +273,15 @@ public class RecordSteps extends TestsBase {
     public void i_should_get_object_in_search_response_without_hints_in_schema(String objectField, String index, String recordFile, String acl, String kind)
         throws Throwable {
         index = generateActualName(index, timeStamp);
-        long numOfIndexedDocuments = createIndex(index);
+
+        createIndex(index);
+
         String expectedRecord = FileHandler.readFile(String.format("%s.%s", recordFile, "json"));
 
         RecordData[] fileRecordData = mapper.readValue(expectedRecord, RecordData[].class);
         RecordData expectedRecordData = fileRecordData[0];
 
-        String elasticRecordData = elasticUtils.fetchDataFromObjectsArrayRecords(index);
-        RecordData actualRecordData = mapper.readValue(elasticRecordData, RecordData.class);
+        RecordData actualRecordData = elasticUtils.fetchDataFromObjectsArrayRecords(index);
 
         assertEquals(expectedRecordData.getData().get(objectField),actualRecordData.getData().get(objectField));
     }
@@ -271,10 +289,10 @@ public class RecordSteps extends TestsBase {
     public void i_should_get_object_in_search_response(String innerField, String index)
             throws Throwable {
         index = generateActualName(index, timeStamp);
-        long numOfIndexedDocuments = createIndex(index);
 
-        String elasticRecordData = elasticUtils.fetchDataFromObjectsArrayRecords(index);
-        RecordData actualRecordData = mapper.readValue(elasticRecordData, RecordData.class);
+        createIndex(index);
+
+        RecordData actualRecordData = elasticUtils.fetchDataFromObjectsArrayRecords(index);
 
         assertTrue(actualRecordData.getData().containsKey(innerField));
     }
@@ -364,17 +382,15 @@ public class RecordSteps extends TestsBase {
         }
     }
 
-    protected void i_should_get_the_documents_with_xcollab_value_included_for_the_in_the_Elastic_Search(int expectedNumber,
-                                                                                                        String xcollab,
-                                                                                                        String index)
-        throws Exception {
+    protected void i_should_get_the_documents_with_xcollab_value_included_for_the_in_the_Elastic_Search(
+        int expectedNumber, String xcollab, String index) throws Exception {
 
         index = generateActualName(index, timeStamp);
         // upsertedRecordsWithoutXcollab should have id received from previous steps
         String id = upsertedRecordsWithXcollab.getRecordIds().stream().findAny().get();
         log.log(Level.INFO, String.format("Try to find in Elastic a record with X collab with id : %s ", id));
 
-        SearchResponse searchResponse = null;
+        SearchResponse<Record> searchResponse = null;
         // should wait while Storage will publish Record into queue,
         // then Index-queue should read message and pass it with http request to Indexer
         // Indexer then will index the record into Elastic
@@ -384,7 +400,7 @@ public class RecordSteps extends TestsBase {
 
         for (int i = 0; i < 20; i++) {
             searchResponse = elasticUtils.fetchRecordsByIdAndMustHaveXcollab(index, id, collaborationId);
-            if (searchResponse.getHits().getTotalHits().value == 0) {
+            if (searchResponse.hits().total().value() == 0) {
                 log.log(Level.INFO, String.format("No records found with in index: %s, id: %s, collaborationId: %s,"
                     + " will try to wait up to 3 seconds.", index, id, collaborationId));
                 TimeUnit.SECONDS.sleep(3);
@@ -396,13 +412,15 @@ public class RecordSteps extends TestsBase {
         log.log(Level.INFO,
             String.format("xcollab feature: print searchResponse while being get a record by id and x-collab : %s",
                 searchResponse));
-        assertEquals(expectedNumber, searchResponse.getHits().getTotalHits().value);
+        assertEquals(expectedNumber, searchResponse.hits().total().value());
 
         // delete test record in namespace
-        String elasticId = Arrays.stream(searchResponse.getHits().getHits()).findAny().get().getId();
+        List<Hit<Record>> hits = searchResponse.hits().hits();
+
+        String elasticId = hits.stream().findAny().get().id();
         DeleteResponse deleteResponse = elasticUtils.deleteRecordsById(index, elasticId);
         log.log(Level.INFO, String.format("Deleting record from Elasticsearch in index: %s with id: %s", index, elasticId));
-        assertEquals(deleteResponse.getResult(), Result.DELETED);
+        assertEquals(deleteResponse.result(), Result.Deleted);
     }
 
     private Map<String, Object> replaceValues(Map<String, Object> data, String timeStamp) {
@@ -533,5 +551,4 @@ public class RecordSteps extends TestsBase {
             shutDownHookAdded = true;
         }
     }
-
 }

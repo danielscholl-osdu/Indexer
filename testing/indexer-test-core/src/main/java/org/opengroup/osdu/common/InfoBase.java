@@ -5,8 +5,8 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import joptsimple.internal.Strings;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.opengroup.osdu.response.InfoResponseMock;
 import org.opengroup.osdu.util.Config;
 import org.opengroup.osdu.util.ElasticUtils;
