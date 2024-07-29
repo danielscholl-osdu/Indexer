@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.opengroup.osdu.indexer</groupId>
         <artifactId>indexer-service</artifactId>
-        <version>0.27.0-SNAPSHOT</version>
+        <version>0.28.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>indexer-azure</artifactId>
-    <version>0.27.0-SNAPSHOT</version>
+    <version>0.28.0-SNAPSHOT</version>
     <name>indexer-azure</name>
     <description>Indexer Service Azure</description>
     <packaging>jar</packaging>
@@ -38,7 +38,7 @@
         <azure.appservice.appname />
         <azure.appservice.subscription />
         <nimbus-jose-jwt.version>8.20.2</nimbus-jose-jwt.version>
-        <indexer-core.version>0.27.0-SNAPSHOT</indexer-core.version>
+        <indexer-core.version>0.28.0-SNAPSHOT</indexer-core.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
         <core-lib-azure-spring6.version>0.27.0-rc3</core-lib-azure-spring6.version>
         <reactor-netty.version>0.9.12.RELEASE</reactor-netty.version>
