@@ -36,7 +36,7 @@ conf:
   keycloakSecretName: "indexer-keycloak-secret"
   rabbitmqSecretName: "rabbitmq-secret"
   indexerRedisSecretName: "indexer-redis-secret"
-  replicas: 1
+  replicas: 2
 
 istio:
   proxyCPU: "10m"
