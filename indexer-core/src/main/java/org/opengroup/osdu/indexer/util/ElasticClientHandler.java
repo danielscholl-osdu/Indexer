@@ -127,7 +127,7 @@ public class ElasticClientHandler {
             + "'security.https.certificate.trust' = %s",
         protocolScheme, isSecurityHttpsCertificateTrust));
     if ("https".equals(protocolScheme) && isSecurityHttpsCertificateTrust) {
-      log.warning("Elastic client connection uses TrustSelfSignedStrategy()");
+      log.fine( "Elastic client connection uses TrustSelfSignedStrategy()");
       SSLContext sslContext = createSSLContext();
       builder.setHttpClientConfigCallback(httpClientBuilder ->
           httpClientBuilder.setSSLContext(sslContext)
