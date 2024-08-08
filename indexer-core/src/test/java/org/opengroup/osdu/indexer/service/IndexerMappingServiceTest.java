@@ -14,22 +14,6 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockingDetails;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
-
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.AcknowledgedResponse;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
@@ -42,22 +26,13 @@ import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
 import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
 import com.google.gson.Gson;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.http.StatusLine;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.invocation.Invocation;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -66,11 +41,25 @@ import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
+import org.opengroup.osdu.indexer.util.CustomIndexAnalyzerSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {IFeatureFlag.class})
@@ -101,6 +90,8 @@ public class IndexerMappingServiceTest {
     private ElasticIndexNameResolver elasticIndexNameResolver;
     @MockBean
     private IFeatureFlag featureFlag;
+    @Mock
+    private CustomIndexAnalyzerSetting customIndexAnalyzerSetting;
 
     @Spy
     @InjectMocks
@@ -127,6 +118,7 @@ public class IndexerMappingServiceTest {
         when(this.restClient.performRequest(any())).thenReturn(response);
         when(this.response.getStatusLine()).thenReturn(statusLine);
         when(this.statusLine.getStatusCode()).thenReturn(200);
+        when(this.customIndexAnalyzerSetting.isEnabled()).thenReturn(false);
     }
 
     private Map<String, Object> getMetaAttributeMapping() {

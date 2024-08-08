@@ -14,49 +14,22 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.ErrorResponse;
 import co.elastic.clients.elasticsearch._types.HealthStatus;
+import co.elastic.clients.elasticsearch._types.analysis.Analyzer;
+import co.elastic.clients.elasticsearch._types.analysis.CharFilter;
 import co.elastic.clients.elasticsearch.cluster.ElasticsearchClusterClient;
 import co.elastic.clients.elasticsearch.cluster.HealthRequest;
 import co.elastic.clients.elasticsearch.cluster.HealthResponse;
-import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
-import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
-import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
-import co.elastic.clients.elasticsearch.indices.ElasticsearchIndicesClient;
-import co.elastic.clients.elasticsearch.indices.ExistsRequest;
-import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
-import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
-import co.elastic.clients.elasticsearch.indices.IndexState;
-import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
-import co.elastic.clients.elasticsearch.indices.PutAliasResponse;
+import co.elastic.clients.elasticsearch.indices.*;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
@@ -64,9 +37,11 @@ import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -75,9 +50,22 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
+import org.opengroup.osdu.indexer.util.CustomIndexAnalyzerSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
 public class IndicesServiceTest {
@@ -98,6 +86,8 @@ public class IndicesServiceTest {
     private HttpEntity httpEntity;
     @Mock
     private IndexAliasService indexAliasService;
+    @Mock
+    private CustomIndexAnalyzerSetting customIndexAnalyzerSetting;
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
     @InjectMocks
@@ -122,16 +112,131 @@ public class IndicesServiceTest {
         String index = "common-welldb-wellbore-1.2.0";
         CreateIndexResponse indexResponse = CreateIndexResponse.of(builder -> builder.index(index).acknowledged(true).shardsAcknowledged(true));
         PutAliasResponse putAliasResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
+        ArgumentCaptor<CreateIndexRequest> createIndexRequestArgumentCaptor = ArgumentCaptor.forClass(CreateIndexRequest.class);
 
         when(elasticIndexNameResolver.getIndexNameFromKind(any())).thenReturn(index);
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
         when(indicesClient.create(any(CreateIndexRequest.class))).thenReturn(indexResponse);
         when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(putAliasResponse);
+        when(customIndexAnalyzerSetting.isEnabled()).thenReturn(false);
 
         boolean response = this.sut.createIndex(restHighLevelClient, index, null,  new HashMap<>());
         assertTrue(response);
         when(this.indicesExistCache.get(index)).thenReturn(true);
         verify(this.indexAliasService, times(1)).createIndexAlias(any(), any());
+        verify(indicesClient).create(createIndexRequestArgumentCaptor.capture());
+
+        CreateIndexRequest request = createIndexRequestArgumentCaptor.getValue();
+        IndexSettingsAnalysis analysis =request.settings().analysis();
+        Assert.assertNull(analysis);
+    }
+
+    @Test
+    public void create_elasticIndex_with_custom_analyzer() throws Exception {
+        String index = "common-welldb-wellbore-1.2.0";
+        CreateIndexResponse indexResponse = CreateIndexResponse.of(builder -> builder.index(index).acknowledged(true).shardsAcknowledged(true));
+        PutAliasResponse putAliasResponse = PutAliasResponse.of(builder -> builder.acknowledged(true));
+        ArgumentCaptor<CreateIndexRequest> createIndexRequestArgumentCaptor = ArgumentCaptor.forClass(CreateIndexRequest.class);
+
+        when(elasticIndexNameResolver.getIndexNameFromKind(any())).thenReturn(index);
+        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.create(any(CreateIndexRequest.class))).thenReturn(indexResponse);
+        when(indicesClient.putAlias(any(PutAliasRequest.class))).thenReturn(putAliasResponse);
+        when(customIndexAnalyzerSetting.isEnabled()).thenReturn(true);
+
+        boolean response = this.sut.createIndex(restHighLevelClient, index, null,  new HashMap<>());
+        assertTrue(response);
+        when(this.indicesExistCache.get(index)).thenReturn(true);
+        verify(this.indexAliasService, times(1)).createIndexAlias(any(), any());
+        verify(indicesClient).create(createIndexRequestArgumentCaptor.capture());
+
+        CreateIndexRequest request = createIndexRequestArgumentCaptor.getValue();
+        IndexSettingsAnalysis analysis =request.settings().analysis();
+        Assert.assertNotNull(analysis);
+        /*
+        {
+            "analyzer": {
+                "osdu_custom_analyzer": {
+                    "type": "custom",
+                    "char_filter": ["osdu_mapping_charFilter_for_underscore", "osdu_patternReplace_charFilter_for_dot"],
+                    "filter": ["lowercase"],
+                    "tokenizer": "standard"
+                }
+            },
+            "char_filter": {
+                "osdu_mapping_charFilter_for_underscore": {
+                    "type": "mapping",
+                    "mappings": ["_=>\\\\u0020"]
+                },
+                "osdu_patternReplace_charFilter_for_dot": {
+                    "type": "pattern_replace",
+                    "pattern": "(\\\\D)\\\\.|\\\\.(?=\\\\D)",
+                    "replacement": "$1 "
+                }
+            }
+         }
+         */
+        Assert.assertTrue(analysis.analyzer().containsKey("osdu_custom_analyzer"));
+        Analyzer analyzer = analysis.analyzer().get("osdu_custom_analyzer");
+        Assert.assertTrue(analyzer.isCustom());
+        Assert.assertEquals("standard", analyzer.custom().tokenizer());
+        Assert.assertEquals(List.of("lowercase"), analyzer.custom().filter());
+        Assert.assertEquals(List.of("osdu_mapping_charFilter_for_underscore", "osdu_patternReplace_charFilter_for_dot"),
+                analyzer.custom().charFilter().stream().sorted().toList());
+
+        Assert.assertTrue(analysis.charFilter().containsKey("osdu_mapping_charFilter_for_underscore"));
+        CharFilter mappingCharFilter = analysis.charFilter().get("osdu_mapping_charFilter_for_underscore");
+        Assert.assertTrue(mappingCharFilter.definition().isMapping());
+        Assert.assertEquals(List.of("_=>\\u0020"), mappingCharFilter.definition().mapping().mappings());
+
+        Assert.assertTrue(analysis.charFilter().containsKey("osdu_patternReplace_charFilter_for_dot"));
+        CharFilter patternReplaceCharFilter = analysis.charFilter().get("osdu_patternReplace_charFilter_for_dot");
+        Assert.assertTrue(patternReplaceCharFilter.definition().isPatternReplace());
+        Assert.assertEquals("(\\D)\\.|\\.(?=\\D)", patternReplaceCharFilter.definition().patternReplace().pattern());
+        Assert.assertEquals("$1 ", patternReplaceCharFilter.definition().patternReplace().replacement());
+    }
+
+    @Test
+    public void custom_analyzer_char_filter_pattern_replace() {
+        String matchRegex = "(\\D)\\.|\\.(?=\\D)";
+        String replacement = "$1 ";
+
+        // No replacement for number string
+        String input = "100.12";
+        String output = input.replaceAll(matchRegex, replacement);
+        Assert.assertEquals(input, output);
+
+        // Replace dot with whitespace for non-number string
+        input = "AAA.BBB";
+        output = input.replaceAll(matchRegex, replacement);
+        Assert.assertEquals("AAA BBB", output);
+
+        input = "AAA.12";
+        output = input.replaceAll(matchRegex, replacement);
+        Assert.assertEquals("AAA 12", output);
+
+        input = "100.BBB";
+        output = input.replaceAll(matchRegex, replacement);
+        Assert.assertEquals("100 BBB", output);
+    }
+
+    @Test
+    public void custom_analyzer_char_filter_mapping_replace() {
+        String input = "dev_tools_console.pdf";
+        String output = input.replaceAll("_", " ");
+        Assert.assertEquals("dev tools console.pdf", output);
+    }
+
+    @Test
+    public void custom_analyzer_comprehensive_char_filters() {
+        String matchRegex = "(\\D)\\.|\\.(?=\\D)";
+        String replacement = "$1 ";
+        String input = "dev_tools_console.pdf";
+        String output = input.replaceAll("_", " ").replaceAll(matchRegex, replacement);
+        Assert.assertEquals("dev tools console pdf", output);
+
+        output = input.replaceAll(matchRegex, replacement).replaceAll("_", " ");
+        Assert.assertEquals("dev tools console pdf", output);
     }
 
     @Test
@@ -141,6 +246,7 @@ public class IndicesServiceTest {
 
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
         when(indicesClient.create(any(CreateIndexRequest.class))).thenReturn(indexResponse);
+        when(customIndexAnalyzerSetting.isEnabled()).thenReturn(false);
         boolean response = this.sut.createIndex(restHighLevelClient, index, null, new HashMap<>());
         assertFalse(response);
         verify(this.indicesExistCache, times(0)).put(any(), any());
@@ -160,6 +266,7 @@ public class IndicesServiceTest {
 
         when(restHighLevelClient.indices()).thenReturn(indicesClient);
         when(indicesClient.create(any(CreateIndexRequest.class))).thenThrow(existsException);
+        when(customIndexAnalyzerSetting.isEnabled()).thenReturn(false);
         boolean response = this.sut.createIndex(restHighLevelClient, index, null, new HashMap<>());
         assertTrue(response);
         verify(this.indicesExistCache, times(1)).put(any(), any());
@@ -388,4 +495,5 @@ public class IndicesServiceTest {
         verify(this.indicesExistCache, times(1)).get("anyIndex");
         verify(this.indicesExistCache, times(1)).put("anyIndex", true);
     }
+
 }

@@ -202,10 +202,7 @@ public class IndicesServiceImpl implements IndicesService {
         }
     }
 
-    /*
-     * Public accessor is for unit tests
-     */
-    public IndexSettings getDefaultIndexSettings() {
+    private IndexSettings getDefaultIndexSettings() {
         IndexSettings.Builder builder = new IndexSettings.Builder();
         builder.refreshInterval(Time.of(timeBuilder -> timeBuilder.time("30s")));
         builder.numberOfShards("1");
