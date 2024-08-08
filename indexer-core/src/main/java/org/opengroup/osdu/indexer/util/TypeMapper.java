@@ -14,8 +14,6 @@
 
 package org.opengroup.osdu.indexer.util;
 
-import static org.opengroup.osdu.indexer.model.XcollaborationHolder.X_COLLABORATION;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -45,6 +43,8 @@ public class TypeMapper {
     private static final String STORAGE_TYPE_FLATTENED = "flattened";
 
     private static final String BAG_OF_WORDS = "bagOfWords";
+
+    public static final String OSDU_CUSTOM_ANALYZER = "osdu_custom_analyzer";
 
     static {
 
@@ -122,9 +122,9 @@ public class TypeMapper {
         return Records.Type.builder().type(metaAttributeIndexerType.get(key).toString()).build();
     }
 
-    public static Object getDataAttributeIndexerMapping(Object indexerType, Boolean keywordLowerEnabled, Boolean bagOfWordsEnabled) {
+    public static Object getDataAttributeIndexerMapping(Object indexerType, Boolean keywordLowerEnabled, Boolean bagOfWordsEnabled, Boolean customIndexAnalyzerEnabled) {
         if (ElasticType.TEXT.getValue().equalsIgnoreCase(indexerType.toString())) {
-            return getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled);
+            return getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled, customIndexAnalyzerEnabled);
         }
 
         if (ElasticType.KEYWORD.getValue().equalsIgnoreCase(indexerType.toString())) {
@@ -134,7 +134,7 @@ public class TypeMapper {
         if (isArray(indexerType.toString())) {
             String memberType = getArrayMemberType(indexerType.toString());
             if (ElasticType.TEXT.getValue().equalsIgnoreCase(memberType)) {
-                return getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled);
+                return getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled, customIndexAnalyzerEnabled);
             }
             if (ElasticType.KEYWORD.getValue().equalsIgnoreCase(memberType)) {
                 return getKeywordIndexerMapping(bagOfWordsEnabled);
@@ -147,9 +147,9 @@ public class TypeMapper {
             Map<String, Object> propertiesMap = (Map<String, Object>) type.get(Constants.PROPERTIES);
             for (Map.Entry<String, Object> entry : propertiesMap.entrySet()) {
                 if (isMap(entry.getValue())) {
-                    entry.setValue(getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled, bagOfWordsEnabled));
+                    entry.setValue(getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled, bagOfWordsEnabled, customIndexAnalyzerEnabled));
                 } else if (ElasticType.TEXT.getValue().equalsIgnoreCase(String.valueOf(entry.getValue()))) {
-                    entry.setValue(getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled));
+                    entry.setValue(getTextIndexerMapping(keywordLowerEnabled, bagOfWordsEnabled, customIndexAnalyzerEnabled));
                 } else if (ElasticType.KEYWORD.getValue().equalsIgnoreCase(String.valueOf(entry.getValue()))) {
                     entry.setValue(getKeywordIndexerMapping(bagOfWordsEnabled));
                 } else if (isArray(String.valueOf(entry.getValue()))) {
@@ -228,7 +228,7 @@ public class TypeMapper {
         return indexStatusProperties;
     }
 
-    private static Object getTextIndexerMapping(Boolean keywordLowerEnabled, Boolean bagOfWordsEnabled) {
+    private static Object getTextIndexerMapping(Boolean keywordLowerEnabled, Boolean bagOfWordsEnabled, Boolean customIndexAnalyzerEnabled) {
         Map<String, Object> keywordMap = getKeywordMap();
         Map<String, Object> keywordLowerMap = getKeywordLowerMap();
         Map<String, Object> fieldIndexTypeMap = new HashMap<>();
@@ -241,6 +241,9 @@ public class TypeMapper {
         textMap.put("fields", fieldIndexTypeMap);
         if (bagOfWordsEnabled) {
             textMap.put("copy_to", BAG_OF_WORDS);
+        }
+        if(customIndexAnalyzerEnabled) {
+            textMap.put("analyzer", OSDU_CUSTOM_ANALYZER);
         }
         return textMap;
     }

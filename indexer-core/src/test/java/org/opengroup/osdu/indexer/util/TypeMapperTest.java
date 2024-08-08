@@ -13,8 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TypeMapperTest {
 
@@ -135,14 +134,21 @@ public class TypeMapperTest {
 
     @Test
     public void validate_dataAttribute_ofTextType_indexerMapping() {
-        Object textMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.TEXT.getValue(), false, false);
+        Object textMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.TEXT.getValue(), false, false, false);
         Map<String, Object> textAttributeIndexMapping = (Map<String, Object>) textMapping;
-        verifyTextIndexMapping(textAttributeIndexMapping);
+        verifyTextIndexMapping_without_customAnalyzer_enabled(textAttributeIndexMapping);
+    }
+
+    @Test
+    public void validate_dataAttribute_ofTextType_indexerMapping_with_customAnalyzer_enabled() {
+        Object textMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.TEXT.getValue(), false, false, true);
+        Map<String, Object> textAttributeIndexMapping = (Map<String, Object>) textMapping;
+        verifyTextIndexMapping_with_customAnalyzer_enabled(textAttributeIndexMapping);
     }
 
     @Test
     public void validate_dataAttribute_ofKeywordType_indexerMapping() {
-        Object keywordMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.KEYWORD.getValue(), false, false);
+        Object keywordMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.KEYWORD.getValue(), false, false, false);
         Map<String, Object> keywordIndexMapping = (Map<String, Object>) keywordMapping;
         assertEquals("keyword", keywordIndexMapping.get("type"));
     }
@@ -157,7 +163,7 @@ public class TypeMapperTest {
         facilityStateDataAttribute.put("type", "nested");
         facilityStateDataAttribute.put(Constants.PROPERTIES, nestedAttribute);
 
-        Object nestedDataAttributeMapping = TypeMapper.getDataAttributeIndexerMapping(facilityStateDataAttribute, false, false);
+        Object nestedDataAttributeMapping = TypeMapper.getDataAttributeIndexerMapping(facilityStateDataAttribute, false, false, false);
         Map<String, Object> nestedDataAttributeIndexMapping = (Map<String, Object>) nestedDataAttributeMapping;
         assertEquals("nested", nestedDataAttributeIndexMapping.get("type"));
         Map<String, Object> propertiesIndexMapping = (Map<String, Object>) nestedDataAttributeIndexMapping.get("properties");
@@ -166,7 +172,7 @@ public class TypeMapperTest {
         Records.Type effectiveDateTimeIndexType = (Records.Type) propertiesIndexMapping.get("EffectiveDateTime");
         assertEquals("date", effectiveDateTimeIndexType.getType());
         Map<String, Object> facilityStateIndexMapping = (Map<String, Object>) propertiesIndexMapping.get("FacilityStateTypeID");
-        verifyTextIndexMapping(facilityStateIndexMapping);
+        verifyTextIndexMapping_without_customAnalyzer_enabled(facilityStateIndexMapping);
     }
 
     @Test
@@ -184,7 +190,7 @@ public class TypeMapperTest {
                 ElasticType.DOUBLE,
                 ElasticType.BOOLEAN);
         for (ElasticType type : types) {
-            Object indexerMapping = TypeMapper.getDataAttributeIndexerMapping(type.getValue(), false, false);
+            Object indexerMapping = TypeMapper.getDataAttributeIndexerMapping(type.getValue(), false, false, false);
             Records.Type indexType = (Records.Type) indexerMapping;
             assertEquals(type.getValue(), indexType.getType());
         }
@@ -192,17 +198,17 @@ public class TypeMapperTest {
 
     @Test
     public void validate_dataAttribute_ofArrayType_indexerMapping() {
-        Object textArrayMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.TEXT_ARRAY.getValue(), false, false);
+        Object textArrayMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.TEXT_ARRAY.getValue(), false, false, false);
         Map<String, Object> textArrayIndexMapping = (Map<String, Object>) textArrayMapping;
-        verifyTextIndexMapping(textArrayIndexMapping);
+        verifyTextIndexMapping_without_customAnalyzer_enabled(textArrayIndexMapping);
 
-        Object keywordArrayMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.KEYWORD_ARRAY.getValue(), false, false);
+        Object keywordArrayMapping = TypeMapper.getDataAttributeIndexerMapping(ElasticType.KEYWORD_ARRAY.getValue(), false, false, false);
         Map<String, Object> keywordArrayIndexMapping = (Map<String, Object>) keywordArrayMapping;
         assertEquals("keyword", keywordArrayIndexMapping.get("type"));
 
         List<ElasticType> types = Arrays.asList(ElasticType.INTEGER_ARRAY, ElasticType.LONG_ARRAY, ElasticType.FLOAT_ARRAY, ElasticType.DOUBLE_ARRAY, ElasticType.BOOLEAN_ARRAY, ElasticType.DATE_ARRAY);
         for (ElasticType type : types) {
-            Object indexerMapping = TypeMapper.getDataAttributeIndexerMapping(type.getValue(), false, false);
+            Object indexerMapping = TypeMapper.getDataAttributeIndexerMapping(type.getValue(), false, false, false);
             Records.Type indexType = (Records.Type) indexerMapping;
             assertEquals(StringUtils.substringBefore(type.getValue(), "_"), indexType.getType());
         }
@@ -215,16 +221,16 @@ public class TypeMapperTest {
         textAttribute.put("name", "text");
         Map<String, Object> nestedTextDataAttribute = new HashMap<>();
         nestedTextDataAttribute.put(Constants.PROPERTIES, textAttribute);
-        Object textMapping = TypeMapper.getDataAttributeIndexerMapping(nestedTextDataAttribute, false, false);
+        Object textMapping = TypeMapper.getDataAttributeIndexerMapping(nestedTextDataAttribute, false, false, false);
         Map<String, Object> textPropertiesIndexMapping = (Map<String, Object>) ((Map<String, Object>) textMapping).get("properties");
-        verifyTextIndexMapping((Map<String, Object>) textPropertiesIndexMapping.get("name"));
+        verifyTextIndexMapping_without_customAnalyzer_enabled((Map<String, Object>) textPropertiesIndexMapping.get("name"));
 
         // keyword
         Map<String, Object> keywordAttribute = new HashMap<>();
         keywordAttribute.put("name", "keyword");
         Map<String, Object> nestedKeywordDataAttribute = new HashMap<>();
         nestedKeywordDataAttribute.put(Constants.PROPERTIES, keywordAttribute);
-        Object keywordMapping = TypeMapper.getDataAttributeIndexerMapping(nestedKeywordDataAttribute, false, false);
+        Object keywordMapping = TypeMapper.getDataAttributeIndexerMapping(nestedKeywordDataAttribute, false, false, false);
         Map<String, Object> keywordPropertiesIndexMapping = (Map<String, Object>) ((Map<String, Object>) keywordMapping).get("properties");
         Map<String, Object> keywordIndexMapping = (Map<String, Object>) keywordPropertiesIndexMapping.get("name");
         assertEquals("keyword", keywordIndexMapping.get("type"));
@@ -244,7 +250,7 @@ public class TypeMapperTest {
         objectAttribute.put("HistoricalInterests", "object");
         Map<String, Object> nestedObjectDataAttribute = new HashMap<>();
         nestedObjectDataAttribute.put(Constants.PROPERTIES, objectAttribute);
-        Object objectIndexMapping = TypeMapper.getDataAttributeIndexerMapping(nestedObjectDataAttribute, false, false);
+        Object objectIndexMapping = TypeMapper.getDataAttributeIndexerMapping(nestedObjectDataAttribute, false, false, false);
         Map<String, Object> objectPropertiesIndexMapping = (Map<String, Object>) ((Map<String, Object>) objectIndexMapping).get("properties");
         Records.Type historicalInterestsIndexMapping = (Records.Type) objectPropertiesIndexMapping.get("HistoricalInterests");
         assertEquals("object", historicalInterestsIndexMapping.getType());
@@ -254,7 +260,7 @@ public class TypeMapperTest {
         flattenedAttribute.put("FacilitySpecifications", "flattened");
         Map<String, Object> nestedFlattenedDataAttribute = new HashMap<>();
         nestedFlattenedDataAttribute.put(Constants.PROPERTIES, flattenedAttribute);
-        Object flattenedIndexMapping = TypeMapper.getDataAttributeIndexerMapping(nestedFlattenedDataAttribute, false, false);
+        Object flattenedIndexMapping = TypeMapper.getDataAttributeIndexerMapping(nestedFlattenedDataAttribute, false, false, false);
         Map<String, Object> flattenedPropertiesIndexMapping = (Map<String, Object>) ((Map<String, Object>) flattenedIndexMapping).get("properties");
         Records.Type facilitySpecificationsIndexMapping = (Records.Type) flattenedPropertiesIndexMapping.get("FacilitySpecifications");
         assertEquals("flattened", facilitySpecificationsIndexMapping.getType());
@@ -265,10 +271,20 @@ public class TypeMapperTest {
         textArrayAttribute.put("name", arrayType);
         Map<String, Object> nestedTextArrayDataAttribute = new HashMap<>();
         nestedTextArrayDataAttribute.put(Constants.PROPERTIES, textArrayAttribute);
-        Object textArrayMapping = TypeMapper.getDataAttributeIndexerMapping(nestedTextArrayDataAttribute, false, false);
+        Object textArrayMapping = TypeMapper.getDataAttributeIndexerMapping(nestedTextArrayDataAttribute, false, false, false);
         Map<String, Object> textArrayPropertiesIndexMapping = (Map<String, Object>) ((Map<String, Object>) textArrayMapping).get("properties");
         Records.Type textArrayType = (Records.Type) textArrayPropertiesIndexMapping.get("name");
         assertEquals(memberType, textArrayType.getType());
+    }
+
+    private static void verifyTextIndexMapping_without_customAnalyzer_enabled(Map<String, Object> textAttributeIndexMapping) {
+        verifyTextIndexMapping(textAttributeIndexMapping);
+        assertNull(textAttributeIndexMapping.getOrDefault("analyzer", null));
+    }
+
+    private static void verifyTextIndexMapping_with_customAnalyzer_enabled(Map<String, Object> textAttributeIndexMapping) {
+        verifyTextIndexMapping(textAttributeIndexMapping);
+        assertEquals("osdu_custom_analyzer", textAttributeIndexMapping.getOrDefault("analyzer", null));
     }
 
     private static void verifyTextIndexMapping(Map<String, Object> textAttributeIndexMapping) {

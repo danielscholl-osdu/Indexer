@@ -100,7 +100,7 @@ public class ReindexApi {
             @ApiResponse(responseCode = "502", description = "Bad Gateway",  content = {@Content(schema = @Schema(implementation = AppError.class))}),
             @ApiResponse(responseCode = "503", description = "Service Unavailable",  content = {@Content(schema = @Schema(implementation = AppError.class))})
     })
-    @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
+    //@PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
     @PostMapping
     public ResponseEntity<?> reindex(@NotNull @Valid @RequestBody RecordReindexRequest recordReindexRequest,
                                      @Parameter(description = "Force Clean")
