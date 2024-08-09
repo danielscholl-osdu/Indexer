@@ -36,6 +36,39 @@ the Partition Service is applied to the solution. Here is an example to enable t
 If the property "index-augmenter-enabled" is not created or the property value is set to "false" (String type) in the
 given data partition, the configurations defined as type IndexPropertyPathConfiguration will be ignored and index extension will be disabled. 
 
+## Search text with special characters '_' and '.'
+
+OSDU indexer and search use Elasticsearch default analyzer (or called standard analyzer) to analyzes the unstructured 
+text when they are indexed and searched. Due to the way Elasticsearch standard analzyer analyzes unstructured text, 
+it is very difficult if not impossible to perform certain high-value searches on unstructured content. For example, 
+users want to search for a file with file name `1-ABC_Seismic_Report.pdf`, it is impossible to use one or two keywords 
+in the file name like "abc", "seismic", "report" to search the file or pdf extension to find search all pdf files. 
+User can't even use wildcard like `*seismic*` to search the file as wildcard in prefix is not supported. The user would 
+have to search using exact match or at a minimum ABC_Seismic* if they want to use wildcards.
+
+In the [ADR](doc:https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/186), we propose a 
+change to extend the Elasticsearch Standard Analyzer to process two additional special characters as word delimiter:
+- underscore `_`
+- dot `.`. It will be handled like character `,`. Please note that Elasticsearch Standard Analyzer does not take the `,` 
+  as word delimiter if it is part of number string, e.g. `1,663m`. In this proposal, the `.` will be processed in the 
+  similar way, e.g. `-999.25` or `10.88` in which `.` won't be treated as word delimiter.
+
+In order to reduce risks (e.g. work interruption) on re-indexing, we will manage this solution with a feature flag that 
+is set by the Partition Service. Here is an example to enable this feature by setting the property
+"custom-index-analyzer-enabled" in a given data partition:
+```
+{
+   "custom-index-analyzer-enabled": {
+        "sensitive": false,
+        "value": "true"
+    }
+}
+``` 
+
+If the property "custom-index-analyzer-enabled" is not created or the property value is set to "false" (String type) in the
+given data partition, the default index analyzer will be applied to indexing and search.
+ 
+
 ## Index AsIngestedCoordinates
 
 Source: [issue 95](https://community.opengroup.org/osdu/platform/system/indexer-service/-/issues/95)
