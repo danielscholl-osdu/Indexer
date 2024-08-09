@@ -67,6 +67,8 @@ is set by the Partition Service. Here is an example to enable this feature by se
 
 If the property "custom-index-analyzer-enabled" is not created or the property value is set to "false" (String type) in the
 given data partition, the default index analyzer will be applied to indexing and search.
+
+After the feature is enabled, **it will require re-indexing kinds in the given partition in oder to adopt the custom analyzer.**
  
 
 ## Index AsIngestedCoordinates

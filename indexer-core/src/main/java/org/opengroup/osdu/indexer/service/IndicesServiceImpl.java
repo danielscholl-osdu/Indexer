@@ -215,8 +215,7 @@ public class IndicesServiceImpl implements IndicesService {
     }
 
     private IndexSettingsAnalysis getCustomAnalyzer() {
-        List<String> mappings = List.of("_=>\\u0020");
-        MappingCharFilter mappingCharFilter = new MappingCharFilter.Builder().mappings(mappings).build();
+        MappingCharFilter mappingCharFilter = new MappingCharFilter.Builder().mappings("_=>\\u0020").build();
         PatternReplaceCharFilter patternReplaceCharFilter = new PatternReplaceCharFilter.Builder().pattern("(\\D)\\.|\\.(?=\\D)").replacement("$1 ").build();
 
         Map<String, CharFilter> charFilterMap = new HashMap<>();
