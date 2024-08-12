@@ -38,9 +38,14 @@ public class Steps extends InfoSteps {
 
   /******************Inputs being set**************/
 
-  @When("^I send get request to version info endpoint")
+  @When("^I send get request to version info endpoint$")
   public void i_send_get_request_to_version_info_endpoint() {
     super.i_send_get_request_to_version_info_endpoint();
+  }
+
+  @When("^I send get request to version info endpoint with trailing slash$")
+  public void i_send_get_request_to_version_info_endpoint_with_trailing_slash() {
+    super.i_send_get_request_to_version_info_endpoint_with_trailing_slash();
   }
 
   /******************Assert final response**************/

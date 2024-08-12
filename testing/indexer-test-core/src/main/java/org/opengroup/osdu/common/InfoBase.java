@@ -43,12 +43,17 @@ public class InfoBase extends TestsBase {
     }
 
     response =
-        executeQuery(
-            this.getApi(),
-            Strings.EMPTY,
-            headers,
-            httpClient.getAccessToken(),
-            InfoResponseMock.class);
+            executeQuery(
+                this.getApi(),
+                Strings.EMPTY,
+                headers,
+                httpClient.getAccessToken(),
+                InfoResponseMock.class);
+  }
+
+  public void i_send_get_request_to_version_info_endpoint_with_trailing_slash() {
+    response =
+            executeQuery(getApi()+"/", Strings.EMPTY, headers, httpClient.getAccessToken(), InfoResponseMock.class);
   }
 
   public void i_should_get_version_info_in_response() {
