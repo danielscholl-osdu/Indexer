@@ -197,37 +197,6 @@ public class IndicesServiceTest {
     }
 
     @Test
-    public void custom_analyzer_char_filter_pattern_replace() {
-        String matchRegex = "(\\D)\\.|\\.(?=\\D)";
-        String replacement = "$1 ";
-
-        // No replacement for number string
-        String input = "100.12";
-        String output = input.replaceAll(matchRegex, replacement);
-        Assert.assertEquals(input, output);
-
-        // Replace dot with whitespace for non-number string
-        input = "AAA.BBB";
-        output = input.replaceAll(matchRegex, replacement);
-        Assert.assertEquals("AAA BBB", output);
-
-        input = "AAA.12";
-        output = input.replaceAll(matchRegex, replacement);
-        Assert.assertEquals("AAA 12", output);
-
-        input = "100.BBB";
-        output = input.replaceAll(matchRegex, replacement);
-        Assert.assertEquals("100 BBB", output);
-    }
-
-    @Test
-    public void custom_analyzer_char_filter_mapping_replace() {
-        String input = "dev_tools_console.pdf";
-        String output = input.replaceAll("_", " ");
-        Assert.assertEquals("dev tools console.pdf", output);
-    }
-
-    @Test
     public void custom_analyzer_comprehensive_char_filters() {
         String matchRegex = "(\\D)\\.|\\.(?=\\D)";
         String replacement = "$1 ";
@@ -235,8 +204,23 @@ public class IndicesServiceTest {
         String output = input.replaceAll("_", " ").replaceAll(matchRegex, replacement);
         Assert.assertEquals("dev tools console pdf", output);
 
-        output = input.replaceAll(matchRegex, replacement).replaceAll("_", " ");
-        Assert.assertEquals("dev tools console pdf", output);
+        // Replace dot with whitespace for non-number string
+        input = "AAA.BBB";
+        output = input.replaceAll("_", " ").replaceAll(matchRegex, replacement);
+        Assert.assertEquals("AAA BBB", output);
+
+        input = "AAA.12";
+        output = input.replaceAll("_", " ").replaceAll(matchRegex, replacement);
+        Assert.assertEquals("AAA 12", output);
+
+        input = "100.BBB";
+        output = input.replaceAll("_", " ").replaceAll(matchRegex, replacement);
+        Assert.assertEquals("100 BBB", output);
+
+        // No replacement for number string
+        input = "100.12";
+        output = input.replaceAll("_", " ").replaceAll(matchRegex, replacement);
+        Assert.assertEquals(input, output);
     }
 
     @Test
