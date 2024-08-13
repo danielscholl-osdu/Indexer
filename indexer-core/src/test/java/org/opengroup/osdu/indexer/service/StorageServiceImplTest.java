@@ -14,9 +14,27 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,22 +57,9 @@ import org.opengroup.osdu.core.common.model.indexer.RecordReindexRequest;
 import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.lang.reflect.Type;
-import java.net.URISyntaxException;
-import java.util.*;
-
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 public class StorageServiceImplTest {
@@ -70,6 +75,8 @@ public class StorageServiceImplTest {
     private IRequestInfo requestInfo;
     @Mock
     private IndexerConfigurationProperties configurationProperties;
+    @Mock
+    private XcollaborationHolder xcollaborationHolder;
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
     @InjectMocks
@@ -98,6 +105,7 @@ public class StorageServiceImplTest {
         ids = Arrays.asList(RECORD_ID1, RECORDS_ID2);
 
         when(configurationProperties.getStorageRecordsBatchSize()).thenReturn(20);
+        when(xcollaborationHolder.isFeatureEnabledAndHeaderExists()).thenReturn(false);
     }
 
     @Test
