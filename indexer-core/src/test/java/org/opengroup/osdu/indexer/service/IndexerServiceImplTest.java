@@ -71,6 +71,7 @@ import org.opengroup.osdu.core.common.model.storage.ConversionStatus;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.logging.AuditLogger;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.provider.interfaces.IPublisher;
 import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
@@ -121,6 +122,8 @@ public class IndexerServiceImplTest {
     private AugmenterSetting augmenterSetting;
     @Mock
     private IFeatureFlag asIngestedCoordinatesFeatureFlag;
+    @Mock
+    private XcollaborationHolder xcollaborationHolder;
 
     private List<RecordInfo> recordInfos = new ArrayList<>();
 
@@ -160,6 +163,7 @@ public class IndexerServiceImplTest {
         mockedAcls = mockStatic(Acl.class);
         initMocks(this);
         when(augmenterSetting.isEnabled()).thenReturn(true);
+        when(xcollaborationHolder.isFeatureEnabledAndHeaderExists()).thenReturn(false);
     }
 
     @After

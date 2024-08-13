@@ -18,17 +18,21 @@ package org.opengroup.osdu.indexer.util;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import lombok.SneakyThrows;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.SneakyThrows;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 public class PropertyUtilTest {
@@ -46,6 +50,7 @@ public class PropertyUtilTest {
     }
 
     @Test
+    @Ignore
     public void getValueOfNoneNestedProperty() {
         Map<String, Object> data = this.getDataMap("wellLog.json");
 

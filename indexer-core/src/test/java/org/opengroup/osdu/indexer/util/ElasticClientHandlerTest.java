@@ -33,10 +33,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.IElasticSettingService;
 import org.opengroup.osdu.core.common.model.search.ClusterSettings;
+import org.opengroup.osdu.core.common.model.tenant.TenantInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -49,14 +51,16 @@ public class ElasticClientHandlerTest {
     private IndexerConfigurationProperties configurationProperties;
     @Mock
     private IElasticSettingService elasticSettingService;
-
     @Mock
     private RestClientBuilder builder;
-
     @Mock
     private RestClient restClient;
     @Mock
     private JaxRsDpsLog log;
+    @Mock
+    private ICache<String, ElasticsearchClient> clientCache;
+    @Mock
+    private TenantInfo tenantInfo;
 
     @InjectMocks
     private ElasticClientHandler elasticClientHandler;

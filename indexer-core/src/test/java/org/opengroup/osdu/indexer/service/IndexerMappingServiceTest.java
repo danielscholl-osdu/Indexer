@@ -14,8 +14,23 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
+
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.AcknowledgedResponse;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.ErrorResponse;
@@ -24,15 +39,26 @@ import co.elastic.clients.elasticsearch.indices.ElasticsearchIndicesClient;
 import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
 import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
+import co.elastic.clients.elasticsearch.indices.PutMappingResponse;
 import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.invocation.Invocation;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -40,6 +66,7 @@ import org.opengroup.osdu.core.common.model.indexer.IndexSchema;
 import org.opengroup.osdu.core.common.model.search.RecordMetaAttribute;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
+import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
 import org.opengroup.osdu.indexer.util.CustomIndexAnalyzerSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
@@ -47,19 +74,6 @@ import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {IFeatureFlag.class})
@@ -88,6 +102,8 @@ public class IndexerMappingServiceTest {
     private IndicesService indicesService;
     @Mock
     private ElasticIndexNameResolver elasticIndexNameResolver;
+    @Mock
+    private XcollaborationHolder xcollaborationHolder;
     @MockBean
     private IFeatureFlag featureFlag;
     @Mock
@@ -101,7 +117,7 @@ public class IndexerMappingServiceTest {
     private IndexSchema noDataIndexSchema;
 
     private ElasticsearchIndicesClient indicesClient;
-    private ElasticsearchClient restHighLevelClient;
+    private ElasticsearchClient elasticsearchClient;
 
     @Before
     public void setup() throws IOException {
@@ -111,13 +127,18 @@ public class IndexerMappingServiceTest {
         this.noDataIndexSchema = IndexSchema.builder().kind(kind).type(type).dataSchema(null).metaSchema(getMetaAttributeMapping()).build();
 
         this.indicesClient = mock(ElasticsearchIndicesClient.class);
-        this.restHighLevelClient = mock(ElasticsearchClient.class);
+        this.elasticsearchClient = mock(ElasticsearchClient.class);
 
         when(this.elasticIndexNameResolver.getIndexNameFromKind(kind)).thenReturn(index);
 //        when(this.restHighLevelClient.getLowLevelClient()).thenReturn(restClient);
         when(this.restClient.performRequest(any())).thenReturn(response);
         when(this.response.getStatusLine()).thenReturn(statusLine);
         when(this.statusLine.getStatusCode()).thenReturn(200);
+        when(xcollaborationHolder.isFeatureEnabledAndHeaderExists()).thenReturn(false);
+
+        when(this.elasticsearchClient.indices()).thenReturn(this.indicesClient);
+        GetMappingResponse mappingResponse = mock(GetMappingResponse.class);
+        when(this.indicesClient.getMapping(any(GetMappingRequest.class))).thenReturn(mappingResponse);
         when(this.customIndexAnalyzerSetting.isEnabled()).thenReturn(false);
     }
 
@@ -136,7 +157,7 @@ public class IndexerMappingServiceTest {
         dataMapping.put("Msg", "text");
         Map<String, Object> intervalNestedAttribute = new HashMap<>();
         Map<String, Object> intervalProperties = new HashMap<>();
-        intervalProperties.put("StopMarkerID", "link");
+        intervalProperties.put("StopMarkerID", "keyword");
         intervalProperties.put("GeologicUnitInterpretationIDs", "text");
         intervalProperties.put("StopMeasuredDepth", "double");
         intervalNestedAttribute.put("properties", intervalProperties);
@@ -145,10 +166,14 @@ public class IndexerMappingServiceTest {
     }
 
     @Test
-    public void should_returnValidMapping_givenFalseMerge_keywordLowerDisabled_createMappingTest() {
+    public void should_returnValidMapping_givenFalseMerge_keywordLowerDisabled_createMappingTest() throws IOException {
         when(this.featureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(false);
+        PutMappingResponse putMappingResponse = mock(PutMappingResponse.class);
+        when(putMappingResponse.acknowledged()).thenReturn(true);
+        when(indicesClient.putMapping(any(PutMappingRequest.class))).thenReturn(putMappingResponse);
+
         try {
-            String mapping = this.sut.createMapping(restHighLevelClient, indexSchema, index, false);
+            String mapping = this.sut.createMapping(elasticsearchClient, indexSchema, index, false);
             assertEquals(validMapping, mapping);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
@@ -156,10 +181,15 @@ public class IndexerMappingServiceTest {
     }
 
     @Test
-    public void should_returnValidMapping_givenFalseMerge_keywordLowerEnabled_createMappingTest() {
+    public void should_returnValidMapping_givenFalseMerge_keywordLowerEnabled_createMappingTest() throws IOException {
         when(this.featureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(true);
+
+        PutMappingResponse putMappingResponse = mock(PutMappingResponse.class);
+        when(putMappingResponse.acknowledged()).thenReturn(true);
+        when(indicesClient.putMapping(any(PutMappingRequest.class))).thenReturn(putMappingResponse);
+
         try {
-            String mapping = this.sut.createMapping(restHighLevelClient, indexSchema, index, false);
+            String mapping = this.sut.createMapping(elasticsearchClient, indexSchema, index, false);
             assertEquals(validKeywordLowerMapping, mapping);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
@@ -170,12 +200,12 @@ public class IndexerMappingServiceTest {
     @Test
     public void should_returnValidMapping_givenTrueMerge_createMappingTest() {
         try {
-            AcknowledgedResponse mappingResponse = mock(AcknowledgedResponse.class);
+            PutMappingResponse mappingResponse = mock(PutMappingResponse.class);
             doReturn(true).when(mappingResponse).acknowledged();
-            doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
+            doReturn(this.indicesClient).when(this.elasticsearchClient).indices();
             doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class));
 
-            String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
+            String mapping = this.sut.createMapping(this.elasticsearchClient, this.indexSchema, this.index, true);
             assertEquals(this.validMapping, mapping);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
@@ -186,12 +216,12 @@ public class IndexerMappingServiceTest {
     public void should_returnValidMapping_givenTrueMerge_keywordLowerEnabled_createMappingTest() {
         when(this.featureFlag.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME)).thenReturn(true);
         try {
-            AcknowledgedResponse mappingResponse = mock(AcknowledgedResponse.class);
+            PutMappingResponse mappingResponse = mock(PutMappingResponse.class);
             doReturn(true).when(mappingResponse).acknowledged();
-            doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
+            doReturn(this.indicesClient).when(this.elasticsearchClient).indices();
             doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class));
 
-            String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
+            String mapping = this.sut.createMapping(this.elasticsearchClient, this.indexSchema, this.index, true);
             assertEquals(validKeywordLowerMapping, mapping);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
@@ -201,13 +231,13 @@ public class IndexerMappingServiceTest {
     @Test
     public void should_returnValidMapping_givenExistType_createMappingTest() {
         try {
-            AcknowledgedResponse mappingResponse = mock(AcknowledgedResponse.class);
+            PutMappingResponse mappingResponse = mock(PutMappingResponse.class);
             doReturn(true).when(mappingResponse).acknowledged();
-            doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
+            doReturn(this.indicesClient).when(this.elasticsearchClient).indices();
             doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class));
 
             IndexerMappingServiceImpl indexerMappingServiceLocal = spy(new IndexerMappingServiceImpl());
-            String mapping = this.sut.createMapping(this.restHighLevelClient, this.indexSchema, this.index, true);
+            String mapping = this.sut.createMapping(this.elasticsearchClient, this.indexSchema, this.index, true);
             assertEquals(validMapping, mapping);
         } catch (Exception e) {
             fail("Should not throw this exception" + e.getMessage());
@@ -242,7 +272,7 @@ public class IndexerMappingServiceTest {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         when(this.indexCache.get(cacheKey)).thenReturn(true);
 
-        this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, indexSchema);
+        this.sut.syncMetaAttributeIndexMappingIfRequired(elasticsearchClient, indexSchema);
         Collection<Invocation> invocations = mockingDetails(this.sut).getInvocations();
         assertEquals(1, invocations.size());
     }
@@ -251,8 +281,13 @@ public class IndexerMappingServiceTest {
     public void should_applyNoUpdate_givenUpdateIndex() throws Exception {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"},\"bagOfWords\":{\"search_analyzer\":\"whitespace\",\"analyzer\":\"detailExtractor\",\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\",\"analyzer\":\"detailExtractor\",\"search_analyzer\":\"whitespace\",\"max_input_length\":256}}}}}";
-        doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
-        this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, noDataIndexSchema);
+        doReturn(mapping).when(this.sut).getIndexMapping(elasticsearchClient, index);
+
+        PutMappingResponse putMappingResponse = mock(PutMappingResponse.class);
+        when(putMappingResponse.acknowledged()).thenReturn(true);
+        when(indicesClient.putMapping(any(PutMappingRequest.class))).thenReturn(putMappingResponse);
+
+        this.sut.syncMetaAttributeIndexMappingIfRequired(elasticsearchClient, noDataIndexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);
@@ -262,14 +297,14 @@ public class IndexerMappingServiceTest {
     public void should_applyUpdate_givenExistingIndex() throws Exception {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"namespace\":{\"type\":\"keyword\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
-        doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
+        doReturn(mapping).when(this.sut).getIndexMapping(elasticsearchClient, index);
 
-        AcknowledgedResponse mappingResponse = mock(AcknowledgedResponse.class);
+        PutMappingResponse mappingResponse = mock(PutMappingResponse.class);
         doReturn(true).when(mappingResponse).acknowledged();
-        doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
+        doReturn(this.indicesClient).when(this.elasticsearchClient).indices();
         doReturn(mappingResponse).when(this.indicesClient).putMapping(any(PutMappingRequest.class));
 
-        this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, indexSchema);
+        this.sut.syncMetaAttributeIndexMappingIfRequired(elasticsearchClient, indexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);
@@ -280,9 +315,18 @@ public class IndexerMappingServiceTest {
     public void should_applyNoUpdate_onDataChange_givenMetaUpdate_onIndex() throws Exception {
         final String cacheKey = String.format("metaAttributeMappingSynced-%s", index);
         final String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"authority\":{\"type\":\"constant_keyword\",\"value\":\"opendes\"},\"createTime\":{\"type\":\"date\"},\"createUser\":{\"type\":\"keyword\"},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"modifyTime\":{\"type\":\"date\"},\"modifyUser\":{\"type\":\"keyword\"},\"namespace\":{\"type\":\"keyword\"},\"source\":{\"type\":\"constant_keyword\",\"value\":\"test\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"},\"bagOfWords\":{\"search_analyzer\":\"whitespace\",\"analyzer\":\"detailExtractor\",\"store\":true,\"type\":\"text\",\"fields\":{\"autocomplete\":{\"type\":\"completion\",\"analyzer\":\"detailExtractor\",\"search_analyzer\":\"whitespace\",\"max_input_length\":256}}}}}";
-        doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
+        doReturn(mapping).when(this.sut).getIndexMapping(elasticsearchClient, index);
         when(this.featureFlag.isFeatureEnabled(BAG_OF_WORDS_FEATURE_NAME)).thenReturn(false);
-        this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, noDataIndexSchema);
+
+        when(this.elasticsearchClient.indices()).thenReturn(this.indicesClient);
+        GetMappingResponse mappingResponse = mock(GetMappingResponse.class);
+        when(this.indicesClient.getMapping(any(GetMappingRequest.class))).thenReturn(mappingResponse);
+
+        PutMappingResponse putMappingResponse = mock(PutMappingResponse.class);
+        when(putMappingResponse.acknowledged()).thenReturn(true);
+        when(indicesClient.putMapping(any(PutMappingRequest.class))).thenReturn(putMappingResponse);
+
+        this.sut.syncMetaAttributeIndexMappingIfRequired(elasticsearchClient, noDataIndexSchema);
 
         verify(this.indexCache, times(1)).get(cacheKey);
         verify(this.indexCache, times(1)).put(cacheKey, true);
@@ -297,24 +341,30 @@ public class IndexerMappingServiceTest {
         String mapping = "{\"dynamic\":\"false\",\"properties\":{\"acl\":{\"properties\":{\"owners\":{\"type\":\"keyword\"},\"viewers\":{\"type\":\"keyword\"}}},\"ancestry\":{\"properties\":{\"parents\":{\"type\":\"keyword\"}}},\"data\":{\"properties\":{\"message\":{\"type\":\"text\",\"fields\":{\"keyword\":{\"type\":\"keyword\",\"null_value\":\"null\",\"ignore_above\":256}}}}},\"id\":{\"type\":\"keyword\"},\"index\":{\"properties\":{\"lastUpdateTime\":{\"type\":\"date\"},\"statusCode\":{\"type\":\"integer\"},\"trace\":{\"type\":\"text\"}}},\"kind\":{\"type\":\"keyword\"},\"legal\":{\"properties\":{\"legaltags\":{\"type\":\"keyword\"},\"otherRelevantDataCountries\":{\"type\":\"keyword\"},\"status\":{\"type\":\"keyword\"}}},\"namespace\":{\"type\":\"keyword\"},\"tags\":{\"type\":\"flattened\"},\"type\":{\"type\":\"keyword\"},\"version\":{\"type\":\"long\"},\"x-acl\":{\"type\":\"keyword\"}}}";
         String message = "testExceptionMessage";
 
-        ErrorResponse errorResponse = ErrorResponse.of(errorRespBuilder -> errorRespBuilder.error(
-            ErrorCause.of(errorCauseBuilder -> errorCauseBuilder.reason(message))));
+        ErrorResponse errorResponse = ErrorResponse.of(errorRespBuilder -> errorRespBuilder
+            .error(ErrorCause.of(errorCauseBuilder -> errorCauseBuilder.reason(message)))
+            .status(HttpStatus.SC_BAD_REQUEST)
+        );
 
-        doReturn(mapping).when(this.sut).getIndexMapping(restHighLevelClient, index);
-        doReturn(this.indicesClient).when(this.restHighLevelClient).indices();
+        doReturn(mapping).when(this.sut).getIndexMapping(elasticsearchClient, index);
+        doReturn(this.indicesClient).when(this.elasticsearchClient).indices();
         doThrow(new ElasticsearchException(message, errorResponse)).when(this.indicesClient).putMapping(any(PutMappingRequest.class));
+
+        GetMappingResponse mappingResponse = mock(GetMappingResponse.class);
+        when(this.indicesClient.getMapping(any(GetMappingRequest.class))).thenReturn(mappingResponse);
 
         ElasticsearchMappingException exception = assertThrows(
                 ElasticsearchMappingException.class,
-                () -> this.sut.syncMetaAttributeIndexMappingIfRequired(restHighLevelClient, indexSchema));
+                () -> this.sut.syncMetaAttributeIndexMappingIfRequired(elasticsearchClient, indexSchema));
 
-        assertEquals(message, exception.getMessage());
+        String expectedMessage = "Failed to create mapping: [%s] failed: [null] %s".formatted(message, message);
+        assertEquals(expectedMessage, exception.getMessage());
     }
 
     @Test
     public void testGetIndexMapping() throws Exception {
         when(indicesService.isIndexExist(any(), any())).thenReturn(true);
-        when(restHighLevelClient.indices()).thenReturn(indicesClient);
+        when(elasticsearchClient.indices()).thenReturn(indicesClient);
         TypeMapping typeMapping = TypeMapping.of(builder -> builder.withJson(new StringReader(mapping)));
         GetMappingResponse getMappingResponse = GetMappingResponse.of(
             responseBuilder -> responseBuilder.putResult(
@@ -322,7 +372,7 @@ public class IndexerMappingServiceTest {
             )
         );
         when(indicesClient.getMapping(any(GetMappingRequest.class))).thenReturn(getMappingResponse);
-        String actualMapping = this.sut.getIndexMapping(restHighLevelClient, "index");
+        String actualMapping = this.sut.getIndexMapping(elasticsearchClient, "index");
         assertEquals(mapping, actualMapping);
     }
 }
