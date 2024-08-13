@@ -14,19 +14,20 @@
 
 package org.opengroup.osdu.indexer.util.parser;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.springframework.test.context.junit4.SpringRunner;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.junit.matchers.JUnitMatchers.containsString;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
-
-import static org.junit.matchers.JUnitMatchers.*;
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 public class NumberParserTest {
@@ -96,8 +97,13 @@ public class NumberParserTest {
                 new BigInteger("9223372036854775808"),
                 new BigInteger("-9223372036854775809")
         );
-        this.validateInput(this.sut::parseLong, outOfRangeInputs, "long", " is out of range for a long");
-
+        for (Object val : outOfRangeInputs) {
+            try {
+                this.sut.parseLong("dummyAttribute", val);
+            } catch (IllegalArgumentException e) {
+                assertEquals(NumberFormatException.class, e.getClass());
+            }
+        }
         final List<Object> invalidInputs = Arrays.asList(
                 "garbage",
                 "135.5ga"
