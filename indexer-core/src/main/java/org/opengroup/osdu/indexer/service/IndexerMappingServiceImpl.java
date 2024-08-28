@@ -14,11 +14,6 @@
 
 package org.opengroup.osdu.indexer.service;
 
-import static org.opengroup.osdu.core.common.model.search.RecordMetaAttribute.BAG_OF_WORDS;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
-import static org.opengroup.osdu.indexer.model.XcollaborationHolder.X_COLLABORATION;
-
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.Time;
@@ -30,16 +25,7 @@ import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lambdaworks.redis.RedisException;
-import java.util.stream.Collectors;
-import java.util.stream.Collectors;
 import jakarta.inject.Inject;
-import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -51,20 +37,22 @@ import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
+import org.opengroup.osdu.indexer.util.CustomIndexAnalyzerSetting;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.inject.Inject;
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.opengroup.osdu.core.common.model.search.RecordMetaAttribute.BAG_OF_WORDS;
-import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
 import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.BAG_OF_WORDS_FEATURE_NAME;
+import static org.opengroup.osdu.indexer.config.IndexerConfigurationProperties.KEYWORD_LOWER_FEATURE_NAME;
 import static org.opengroup.osdu.indexer.model.XcollaborationHolder.X_COLLABORATION;
 
 @Service
@@ -81,6 +69,8 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
     private IFeatureFlag featureFlagChecker;
     @Autowired
     private XcollaborationHolder xcollaborationHolder;
+    @Autowired
+    private CustomIndexAnalyzerSetting customIndexAnalyzerSetting;
 
 
     /**
@@ -179,11 +169,12 @@ public class IndexerMappingServiceImpl extends MappingServiceImpl implements IMa
         Map<String, Object> dataMapping = new HashMap<>();
         boolean keywordLowerEnabled = this.featureFlagChecker.isFeatureEnabled(KEYWORD_LOWER_FEATURE_NAME);
         boolean bagOfWordsEnabled = this.featureFlagChecker.isFeatureEnabled(BAG_OF_WORDS_FEATURE_NAME);
+        boolean customIndexAnalyzerEnabled = this.customIndexAnalyzerSetting.isEnabled();
 
         if (schema.getDataSchema() == null || schema.getDataSchema().isEmpty()) return dataMapping;
 
         for (Map.Entry<String, Object> entry : schema.getDataSchema().entrySet()) {
-            dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled, bagOfWordsEnabled));
+            dataMapping.put(entry.getKey(), TypeMapper.getDataAttributeIndexerMapping(entry.getValue(), keywordLowerEnabled, bagOfWordsEnabled, customIndexAnalyzerEnabled));
         }
         return dataMapping;
     }

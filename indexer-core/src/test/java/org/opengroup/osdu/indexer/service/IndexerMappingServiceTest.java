@@ -68,6 +68,7 @@ import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
 import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
+import org.opengroup.osdu.indexer.util.CustomIndexAnalyzerSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -105,6 +106,8 @@ public class IndexerMappingServiceTest {
     private XcollaborationHolder xcollaborationHolder;
     @MockBean
     private IFeatureFlag featureFlag;
+    @Mock
+    private CustomIndexAnalyzerSetting customIndexAnalyzerSetting;
 
     @Spy
     @InjectMocks
@@ -136,6 +139,7 @@ public class IndexerMappingServiceTest {
         when(this.elasticsearchClient.indices()).thenReturn(this.indicesClient);
         GetMappingResponse mappingResponse = mock(GetMappingResponse.class);
         when(this.indicesClient.getMapping(any(GetMappingRequest.class))).thenReturn(mappingResponse);
+        when(this.customIndexAnalyzerSetting.isEnabled()).thenReturn(false);
     }
 
     private Map<String, Object> getMetaAttributeMapping() {

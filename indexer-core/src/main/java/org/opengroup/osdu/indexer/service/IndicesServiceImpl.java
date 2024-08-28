@@ -18,6 +18,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.HealthStatus;
 import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch._types.analysis.*;
 import co.elastic.clients.elasticsearch.cluster.HealthRequest;
 import co.elastic.clients.elasticsearch.cluster.HealthResponse;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -28,6 +29,7 @@ import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
 import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
+import co.elastic.clients.elasticsearch.indices.IndexSettingsAnalysis;
 import co.elastic.clients.elasticsearch.indices.IndexSettings;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -37,13 +39,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lambdaworks.redis.RedisException;
 import jakarta.inject.Inject;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.client.Request;
@@ -54,10 +49,17 @@ import org.opengroup.osdu.core.common.model.search.IndexInfo;
 import org.opengroup.osdu.core.common.search.ElasticIndexNameResolver;
 import org.opengroup.osdu.core.common.search.Preconditions;
 import org.opengroup.osdu.indexer.cache.partitionsafe.IndexCache;
+import org.opengroup.osdu.indexer.util.CustomIndexAnalyzerSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
+import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.*;
 
 @Service
 @RequestScope
@@ -68,7 +70,6 @@ public class IndicesServiceImpl implements IndicesService {
     private static final String INDEX_CANNOT_BE_NULL = "index cannot be null";
 
     private static final Time REQUEST_TIMEOUT = Time.of(builder -> builder.time("1m"));
-    private static final IndexSettings DEFAULT_INDEX_SETTINGS;
 
     @Autowired
     private ElasticClientHandler elasticClientHandler;
@@ -82,14 +83,8 @@ public class IndicesServiceImpl implements IndicesService {
     private JaxRsDpsLog log;
     @Autowired
     private ObjectMapper objectMapper;
-
-    static {
-        IndexSettings.Builder builder = new IndexSettings.Builder();
-        builder.refreshInterval(Time.of(timeBuilder -> timeBuilder.time("30s")));
-        builder.numberOfShards("1");
-        builder.numberOfReplicas("1");
-        DEFAULT_INDEX_SETTINGS = builder.build();
-    }
+    @Autowired
+    private CustomIndexAnalyzerSetting customIndexAnalyzerSetting;
 
     /**
      * Create a new index in Elasticsearch
@@ -106,7 +101,7 @@ public class IndicesServiceImpl implements IndicesService {
         try {
             CreateIndexRequest.Builder createIndexBuilder = new Builder();
             createIndexBuilder.index(index);
-            createIndexBuilder.settings(settings != null ? settings : DEFAULT_INDEX_SETTINGS);
+            createIndexBuilder.settings(settings != null ? settings : getDefaultIndexSettings());
 
             if (mapping != null) {
                 Map<String, Map<String, Object>> mappings = Map.of("mappings", mapping);
@@ -115,6 +110,7 @@ public class IndicesServiceImpl implements IndicesService {
             }
             createIndexBuilder.timeout(REQUEST_TIMEOUT);
             long startTime = System.currentTimeMillis();
+
             CreateIndexResponse createIndexResponse = client.indices().create(createIndexBuilder.build());
             long stopTime = System.currentTimeMillis();
             // cache the index status
@@ -204,6 +200,42 @@ public class IndicesServiceImpl implements IndicesService {
                 String.format("Error getting index: %s status", index),
                 exception);
         }
+    }
+
+    private IndexSettings getDefaultIndexSettings() {
+        IndexSettings.Builder builder = new IndexSettings.Builder();
+        builder.refreshInterval(Time.of(timeBuilder -> timeBuilder.time("30s")));
+        builder.numberOfShards("1");
+        builder.numberOfReplicas("1");
+        if(customIndexAnalyzerSetting.isEnabled()) {
+            IndexSettingsAnalysis analysis = getCustomAnalyzer();
+            builder.analysis(analysis);
+        }
+        return builder.build();
+    }
+
+    private IndexSettingsAnalysis getCustomAnalyzer() {
+        MappingCharFilter mappingCharFilter = new MappingCharFilter.Builder().mappings("_=>\\u0020").build();
+        PatternReplaceCharFilter patternReplaceCharFilter = new PatternReplaceCharFilter.Builder().pattern("(\\D)\\.|\\.(?=\\D)").replacement("$1 ").build();
+
+        Map<String, CharFilter> charFilterMap = new HashMap<>();
+        charFilterMap.put("osdu_mapping_charFilter_for_underscore", new CharFilter.Builder()
+                .definition(new CharFilterDefinition.Builder().mapping(mappingCharFilter).build())
+                .build());
+        charFilterMap.put("osdu_patternReplace_charFilter_for_dot", new CharFilter.Builder()
+                .definition(new CharFilterDefinition.Builder().patternReplace(patternReplaceCharFilter).build())
+                .build());
+        Analyzer analyzer = new CustomAnalyzer.Builder()
+                .tokenizer("standard")
+                .filter("lowercase")
+                .charFilter(charFilterMap.keySet().stream().toList())
+                .build()
+                ._toAnalyzer();
+        IndexSettingsAnalysis analysis = new IndexSettingsAnalysis.Builder()
+                .charFilter(charFilterMap)
+                .analyzer(TypeMapper.OSDU_CUSTOM_ANALYZER, analyzer)
+                .build();
+        return analysis;
     }
 
     private boolean indexExistInCache(String index) {
