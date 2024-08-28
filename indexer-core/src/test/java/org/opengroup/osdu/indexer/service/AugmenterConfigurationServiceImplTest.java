@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -551,13 +550,11 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    @Ignore
     public void updateAssociatedRecords_updateAssociatedParentRecords_for_created_childRecord() throws URISyntaxException {
         updateAssociatedRecords_updateAssociatedParentRecords_for_created_delete(OperationType.create);
     }
 
     @Test
-    @Ignore
     public void updateAssociatedRecords_updateAssociatedParentRecords_for_deleted_childRecord() throws URISyntaxException {
         updateAssociatedRecords_updateAssociatedParentRecords_for_created_delete(OperationType.delete);
     }
@@ -590,7 +587,6 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    @Ignore
     public void updateAssociatedRecords_updateAssociatedParentRecords_for_updated_childRecord_with_extendedPropertyChanged() throws URISyntaxException {
         updateAssociatedRecords_updateAssociatedParentRecords_baseSetup();
 
@@ -695,6 +691,7 @@ public class AugmenterConfigurationServiceImplTest {
                     Map<String, Object> childDataMap = new HashMap<>();
                     childDataMap.put("WellboreID", parentId);
                     searchRecord.setKind(childKind);
+                    searchRecord.setId(childId);
                     searchRecord.setData(childDataMap);
                     searchResponse.setResults(Arrays.asList(searchRecord));
                 }
