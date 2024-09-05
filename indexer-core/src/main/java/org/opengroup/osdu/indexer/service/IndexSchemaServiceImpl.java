@@ -44,6 +44,7 @@ import org.opengroup.osdu.indexer.cache.partitionsafe.VirtualPropertiesSchemaCac
 import org.opengroup.osdu.indexer.model.Kind;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
@@ -134,10 +135,10 @@ public class IndexSchemaServiceImpl implements IndexSchemaService {
             try {
                 // merge the mapping
                 this.mappingService.createMapping(restClient, schemaObj, index, true);
-            } catch (AppException e) {
+            } catch (ElasticsearchMappingException e) {
                 // acknowledge for TaskQueue and not retry
-                if (e.getError().getCode() == HttpStatus.SC_BAD_REQUEST) {
-                    throw new AppException(RequestStatus.SCHEMA_CONFLICT, e.getError().getReason(), "error creating or merging index mapping");
+                if (e.getStatus() == HttpStatus.SC_BAD_REQUEST) {
+                    throw new AppException(RequestStatus.SCHEMA_CONFLICT, e.getMessage(), "error creating or merging index mapping");
                 }
                 throw e;
             }

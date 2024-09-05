@@ -72,6 +72,7 @@ import org.opengroup.osdu.indexer.cache.partitionsafe.SchemaCache;
 import org.opengroup.osdu.indexer.cache.partitionsafe.VirtualPropertiesSchemaCache;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.schema.converter.exeption.SchemaProcessingException;
+import org.opengroup.osdu.indexer.service.exception.ElasticsearchMappingException;
 import org.opengroup.osdu.indexer.util.AugmenterSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -422,7 +423,7 @@ public class IndexerSchemaServiceTest {
         when(this.schemaCache.get(kind)).thenReturn(null);
         when(this.indicesService.isIndexExist(any(), any())).thenReturn(true);
         when(this.schemaService.getSchema(kind)).thenReturn(storageSchema);
-        when(this.mappingService.createMapping(any(), any(), any(), anyBoolean())).thenThrow(new AppException(HttpStatus.SC_BAD_REQUEST, reason, ""));
+        when(this.mappingService.createMapping(any(), any(), any(), anyBoolean())).thenThrow(new ElasticsearchMappingException(reason, HttpStatus.SC_BAD_REQUEST));
 
         try {
             this.sut.processSchemaMessages(schemaMessages);
