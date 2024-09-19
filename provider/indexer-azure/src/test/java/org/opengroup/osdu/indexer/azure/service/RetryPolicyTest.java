@@ -223,4 +223,15 @@ public class RetryPolicyTest {
 
         assertTrue(value);
     }
+
+    @Test
+    public void shouldReturnTrue_when_429ResponseCode_for_batchRetryPolicy() {
+        HttpResponse response=new HttpResponse();
+        response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
+        response.setResponseCode(429);
+
+        boolean value=retryPolicy.batchRetryPolicy(response);
+
+        assertTrue(value);
+    }
 }
