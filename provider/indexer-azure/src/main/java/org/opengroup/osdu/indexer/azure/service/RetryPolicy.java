@@ -44,8 +44,8 @@ public class RetryPolicy {
     @Autowired
     private JaxRsDpsLog logger;
 
-    private static int MAX_ATTEMPTS = 5;
-    private static int INITIAL_DELAY = 1000;
+    private int MAX_ATTEMPTS;
+    private int INITIAL_DELAY = 1000;
     private final String RECORD_NOT_FOUND = "notFound";
 
     /**
