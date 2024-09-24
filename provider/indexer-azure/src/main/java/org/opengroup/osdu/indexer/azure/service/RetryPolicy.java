@@ -71,7 +71,7 @@ public class RetryPolicy {
         if (defaultResponseRetry(response)) return true;
 
         if (response.getResponseCode() == 429) {
-            log.info("Storage batch API 429 retry");
+            logger.debug("Storage batch API 429 retry");
             return true;
         }
 
