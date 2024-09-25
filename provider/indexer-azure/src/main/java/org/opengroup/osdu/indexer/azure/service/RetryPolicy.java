@@ -70,6 +70,11 @@ public class RetryPolicy {
 
         if (defaultResponseRetry(response)) return true;
 
+        if (response.getResponseCode() == 429) {
+            logger.debug("Storage batch API 429 retry");
+            return true;
+        }
+
         JsonObject jsonObject = new JsonParser().parse(response.getBody()).getAsJsonObject();
         JsonElement notFoundElement = (JsonArray) jsonObject.get(RECORD_NOT_FOUND);
         if (notFoundElement == null ||
