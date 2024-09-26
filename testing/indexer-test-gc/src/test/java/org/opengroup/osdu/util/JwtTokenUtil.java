@@ -8,6 +8,13 @@ import com.google.api.client.json.webtoken.JsonWebToken;
 import com.google.api.client.util.Clock;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 import lombok.Data;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -19,20 +26,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-
 class JwtTokenUtil {
 
+    private final static Predicate<String> contentAcceptanceTester = s -> s.trim().startsWith("{");
     private static String accessToken;
 
     static String getAccessToken() throws IOException {
-
         if (Strings.isNullOrEmpty(accessToken)) {
             accessToken = getServiceAccountAccessToken(getJwtForIntegrationTesterAccount());
         }
@@ -61,14 +60,14 @@ class JwtTokenUtil {
     }
 
     private static String getJwtForIntegrationTesterAccount() throws IOException {
-        String serviceAccountFile = Config.getKeyValue();
-        return getJwt(serviceAccountFile);
+        String serviceAccountValue = new DecodedContentExtractor(Config.getKeyValue(), contentAcceptanceTester).getContent();
+        return getJwt(serviceAccountValue);
     }
 
     private static String getJwt(String serviceAccountFile) throws IOException {
         long currentTime = Clock.SYSTEM.currentTimeMillis();
 
-        InputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(serviceAccountFile));
+        InputStream stream = new ByteArrayInputStream(serviceAccountFile.getBytes());
         GoogleCredential credential = GoogleCredential.fromStream(stream);
 
         JsonWebSignature.Header header = new JsonWebSignature.Header();

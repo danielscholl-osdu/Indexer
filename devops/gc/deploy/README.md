@@ -30,33 +30,34 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
 **global.domain** | your domain for the external endpoint, ex `example.com` | string | - | yes
-**global.onPremEnabled** | whether on-prem is enabled | boolean | false | yes
-**global.limitsEnabled** | whether CPU and memory limits are enabled | boolean | true | yes
+**global.onPremEnabled** | whether on-prem is enabled | boolean | `false` | yes
+**global.limitsEnabled** | whether CPU and memory limits are enabled | boolean | `true` | yes
+**global.logLevel** | severity of logging level | string | `ERROR` | yes
 
 ### Configmap variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**data.entitlementsHost** | entitlements host | string | "http://entitlements" | yes
-**data.logLevel** | logging level | string | INFO | yes
-**data.partitionHost** | partition host | string | "http://partition" | yes
-**data.schemaHost** | schema host | string | "http://schema" | yes
-**data.securityHttpsCertificateTrust** | whether https is enabled | boolean | true | yes
-**data.storageHost** | storage host | string | "http://storage" | yes
+**data.entitlementsHost** | entitlements host | string | `http://entitlements` | yes
+**data.logLevel** | logging severity level for this service only  | string | - | yes, only if differs from the `global.logLevel`
+**data.partitionHost** | partition host | string | `http://partition` | yes
+**data.schemaHost** | schema host | string | `http://schema` | yes
+**data.securityHttpsCertificateTrust** | whether https is enabled | boolean | `true` | yes
+**data.storageHost** | storage host | string | `http://storage` | yes
 **data.redisIndexerHost** | The host for redis instance. If empty (by default), helm installs an internal redis instance | string | - | yes
-**data.redisIndexerPort** | The port for redis instance | digit | 6379 | yes
+**data.redisIndexerPort** | The port for redis instance | digit | `6379` | yes
 
 ### Deploy variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**data.requestsCpu** | amount of requested CPU | string | 35m | yes
-**data.requestsMemory** | amount of requested memory| string | 640Mi | yes
-**data.limitsCpu** | CPU limit | string | 1 | only if `global.limitsEnabled` is true
-**data.limitsMemory** | memory limit | string | 1G | only if `global.limitsEnabled` is true
+**data.requestsCpu** | amount of requested CPU | string | `35m` | yes
+**data.requestsMemory** | amount of requested memory| string | `640Mi` | yes
+**data.limitsCpu** | CPU limit | string | `1` | only if `global.limitsEnabled` is true
+**data.limitsMemory** | memory limit | string | `1G` | only if `global.limitsEnabled` is true
 **data.image** | service image | string | - | yes
-**data.imagePullPolicy** | when to pull image | string | IfNotPresent | yes
-**data.serviceAccountName** | name of your service account | string | indexer | yes
+**data.imagePullPolicy** | when to pull image | string | `IfNotPresent` | yes
+**data.serviceAccountName** | name of your service account | string | `indexer` | yes
 **data.redisImage** | service image | string | `redis:7` | yes
 
 ### Config variables
@@ -74,11 +75,11 @@ First you need to set variables in **values.yaml** file using any code editor. S
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-**istio.proxyCPU** | CPU request for Envoy sidecars | string | 10m | yes
-**istio.proxyCPULimit** | CPU limit for Envoy sidecars | string | 200m | yes
-**istio.proxyMemory** | memory request for Envoy sidecars | string | 100Mi | yes
-**istio.proxyMemoryLimit** | memory limit for Envoy sidecars | string | 256Mi | yes
-**istio.sidecarInject** | whether Istio sidecar will be injected. Setting to "false" reduces security, because disables authorization policy. | boolean | true | yes
+**istio.proxyCPU** | CPU request for Envoy sidecars | string | `10m` | yes
+**istio.proxyCPULimit** | CPU limit for Envoy sidecars | string | `200m` | yes
+**istio.proxyMemory** | memory request for Envoy sidecars | string | `100Mi` | yes
+**istio.proxyMemoryLimit** | memory limit for Envoy sidecars | string | `256Mi` | yes
+**istio.sidecarInject** | whether Istio sidecar will be injected. Setting to `false` reduces security, because disables authorization policy. | boolean | `true` | yes
 
 ### Install the helm chart
 

@@ -6,11 +6,12 @@ global:
   domain: ""
   onPremEnabled: false
   limitsEnabled: true
+  logLevel: "ERROR"
 
 data:
   # Configmap
   entitlementsHost: "http://entitlements"
-  logLevel: "ERROR"
+  logLevel: ""
   partitionHost: "http://partition"
   schemaHost: "http://schema"
   securityHttpsCertificateTrust: "true"
