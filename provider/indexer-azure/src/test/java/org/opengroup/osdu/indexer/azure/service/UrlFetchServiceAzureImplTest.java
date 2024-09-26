@@ -23,6 +23,7 @@ import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
+import org.opengroup.osdu.indexer.azure.config.RetryPolicyConfig;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -43,6 +44,8 @@ public class UrlFetchServiceAzureImplTest {
     private RetryPolicy retryPolicy;
     @InjectMocks
     private UrlFetchServiceAzureImpl urlFetchServiceAzure;
+
+    private RetryPolicyConfig retryPolicyConfig = RetryPolicyConfig.builder().MAX_ATTEMPTS(3).INITIAL_DELAY(1000).build();
 
     private static final String JSON1 = "{\n" +
             "    \"records\": [\n" +
@@ -97,7 +100,7 @@ public class UrlFetchServiceAzureImplTest {
     public void shouldRetry_ForJSON1_when_storageQueryRecordCallIsMade() throws Exception {
         response.setBody(JSON1);
         httpRequest.setUrl(BATCH_API_URL);
-        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy().retryConfig(response -> this.retryPolicy.batchRetryPolicy(response)));
+        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy(this.logger,this.retryPolicyConfig).retryConfig(response -> this.retryPolicy.batchRetryPolicy(response)));
         when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
 
         urlFetchServiceAzure.sendRequest(httpRequest);
@@ -109,7 +112,7 @@ public class UrlFetchServiceAzureImplTest {
     public void shouldRetry_ForJSON1_when_schemaRecordCallIsMade() throws Exception {
         response.setBody(JSON1);
         httpRequest.setUrl(SCHEMA_API_URL);
-        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy().retryConfig(response -> this.retryPolicy.schemaRetryPolicy(response)));
+        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy(this.logger,this.retryPolicyConfig).retryConfig(response -> this.retryPolicy.schemaRetryPolicy(response)));
         when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
 
         urlFetchServiceAzure.sendRequest(httpRequest);
@@ -121,7 +124,7 @@ public class UrlFetchServiceAzureImplTest {
     public void shouldRetry_when_anyOtherCallIsMade() throws Exception {
         response.setBody(JSON2);
         httpRequest.setUrl(STORAGE_API_URL);
-        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy().retryConfig(response -> this.retryPolicy.defaultRetryPolicy(response)));
+        when(this.retryPolicy.retryConfig(any())).thenReturn(new RetryPolicy(this.logger,this.retryPolicyConfig).retryConfig(response -> this.retryPolicy.defaultRetryPolicy(response)));
         when(urlFetchService.sendRequest(httpRequest)).thenReturn(response);
 
         urlFetchServiceAzure.sendRequest(httpRequest);
