@@ -16,29 +16,28 @@
 
 package org.opengroup.osdu.indexer.aws.cache;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.opengroup.osdu.core.aws.cache.DummyCache;
-import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
-import org.opengroup.osdu.core.common.cache.RedisCache;
-import org.opengroup.osdu.core.common.cache.VmCache;
-import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
+import org.opengroup.osdu.core.aws.cache.CacheFactory;
+import org.opengroup.osdu.core.aws.cache.CacheParameters;
+import org.opengroup.osdu.core.aws.cache.NameSpacedCache;
+import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.indexer.aws.di.AWSCacheConfiguration;
-import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,67 +45,55 @@ public class CacheBuilderTest {
 
     @Mock
     AWSCacheConfiguration config;
+    @Mock
+    ICache cacheMock;
+    @Captor
+    ArgumentCaptor<CacheParameters<?, ?>> cacheParameterCaptor;
     private final String s = "s";
     private final String so = "o";
     private final boolean o = true;
+    private final int port = 1234;
+    private final String defaultEndpoint = "some-endpoint";
+    private final String defaultPassword = "some-password";
+    private final int expireTimeSeconds = 4321;
+    MockedConstruction<NameSpacedCache> nameSpacedCache;
 
-    @Test
-    public void test_indexDummyCache() throws Exception {
-        CacheBuilder cb = new CacheBuilder();
-        when(config.isLocalMode()).thenReturn(true);
-        DummyCache<String, Boolean> vmCache = cb.createIndexDummyCache();
-        IndexCacheImpl cacheImpl = cb.indexInitCache(vmCache, config);
-        cacheImpl.put(s, o);
-        // Dummy cache doesn't really cache, so should return null
-        assertNull(cacheImpl.get(s));
-        cacheImpl.delete(s);
-        assertNull(cacheImpl.get(s));
-        cacheImpl.clearAll();
-        cacheImpl.close();
+    @Before
+    public void setup() {
+        nameSpacedCache = Mockito.mockConstruction(NameSpacedCache.class, (mock, context) -> {
+            validateCacheParams((CacheParameters<String, Object>)context.arguments().get(0));
+        });
+        when(config.getCacheExpireTimeInSeconds()).thenReturn(expireTimeSeconds);
+        when(config.getRedisSearchKey()).thenReturn(defaultPassword);
+        when(config.getRedisSearchHost()).thenReturn(defaultEndpoint);
+        when(config.getRedisSearchPort()).thenReturn(Integer.toString(port));
     }
 
-    @Test
-    public void test_schemaDummyCache() throws Exception {
-        CacheBuilder cb = new CacheBuilder();
-        when(config.isLocalMode()).thenReturn(true);
-        DummyCache<String, String> vmCache = cb.createSchemaDummyCache();
-        SchemaCacheImpl cacheImpl = cb.schemaInitCache(vmCache, config);
-        cacheImpl.put(s, so);
-        // Dummy cache doesn't really cache, so should return null
-        assertNull(cacheImpl.get(s));
-        cacheImpl.delete(s);
-        assertNull(cacheImpl.get(s));
-        cacheImpl.clearAll();
-        cacheImpl.close();
+    @After
+    public void teardown() {
+        nameSpacedCache.close();
     }
 
-    @Test
-    public void test_indexVMCache() throws Exception {
-        CacheBuilder cb = new CacheBuilder();
-        when(config.isLocalMode()).thenReturn(true);
-        when(config.getCacheExpireTimeInSeconds()).thenReturn(3600);
-        VmCache<String, Boolean> vmCache = cb.createIndexVMCache(config);
-        IndexCacheImpl cacheImpl = cb.indexInitCache(vmCache, config);
-        cacheImpl.put(s, o);
-        assertEquals(o, cacheImpl.get(s));
-        cacheImpl.delete(s);
-        assertNull(cacheImpl.get(s));
-        cacheImpl.clearAll();
-        cacheImpl.close();
+    private <V> void validateCacheParams(CacheParameters<String, V> cacheParameters) {
+        assertEquals(defaultEndpoint, cacheParameters.getDefaultHost());
+        assertEquals(port, Integer.parseInt(cacheParameters.getDefaultPort()));
+        assertEquals(defaultPassword, cacheParameters.getDefaultPassword());
+        assertEquals(expireTimeSeconds, cacheParameters.getExpTimeSeconds());
     }
-
     @Test
-    public void test_schemaVMCache() throws Exception {
-        CacheBuilder cb = new CacheBuilder();
-        when(config.isLocalMode()).thenReturn(true);
-        when(config.getCacheExpireTimeInSeconds()).thenReturn(3600);
-        VmCache<String, String> vmCache = cb.createSchemaVMCache(config);
-        SchemaCacheImpl cacheImpl = cb.schemaInitCache(vmCache, config);
-        cacheImpl.put(s, so);
-        assertEquals(so, cacheImpl.get(s));
-        cacheImpl.delete(s);
-        assertNull(cacheImpl.get(s));
-        cacheImpl.clearAll();
-        cacheImpl.close();
+    public void shouldCreateIndexCache_with_ExpectedParameters() {
+        CacheBuilder cacheBuilder = new CacheBuilder();
+        IndexCacheImpl implCache = cacheBuilder.indexInitCache(config);
+        ICache<String, Boolean> cache = (ICache<String, Boolean>) ReflectionTestUtils.getField(implCache, "cache");
+        assertEquals(1, nameSpacedCache.constructed().size());
+        assertEquals(nameSpacedCache.constructed().get(0), cache);
+    }
+    @Test
+    public void shouldCreateSchemaCache_with_ExpectedParameters() {
+        CacheBuilder cacheBuilder = new CacheBuilder();
+        SchemaCacheImpl implCache = cacheBuilder.schemaInitCache(config);
+        ICache<String, String> cache = (ICache<String, String>) ReflectionTestUtils.getField(implCache, "cache");
+        assertEquals(1, nameSpacedCache.constructed().size());
+        assertEquals(nameSpacedCache.constructed().get(0), cache);
     }
 }

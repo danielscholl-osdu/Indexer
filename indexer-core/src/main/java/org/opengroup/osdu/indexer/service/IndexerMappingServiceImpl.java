@@ -24,7 +24,7 @@ import co.elastic.clients.elasticsearch.indices.PutMappingResponse;
 import co.elastic.clients.elasticsearch.indices.get_mapping.IndexMappingRecord;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.lambdaworks.redis.RedisException;
+import io.lettuce.core.RedisException;
 import jakarta.inject.Inject;
 import org.opengroup.osdu.core.common.Constants;
 import org.opengroup.osdu.core.common.feature.IFeatureFlag;

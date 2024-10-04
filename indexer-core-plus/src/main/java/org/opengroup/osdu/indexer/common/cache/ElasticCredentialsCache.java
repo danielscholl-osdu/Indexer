@@ -17,7 +17,7 @@
 
 package org.opengroup.osdu.indexer.common.cache;
 
-import com.lambdaworks.redis.RedisException;
+import io.lettuce.core.RedisException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.cache.RedisCache;
