@@ -16,27 +16,20 @@
 
 package org.opengroup.osdu.indexer.aws.cache;
 
-import lombok.RequiredArgsConstructor;
 import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.indexer.provider.interfaces.ISchemaCache;
 
-@RequiredArgsConstructor
 public class SchemaCacheImpl implements ISchemaCache<String, String>, AutoCloseable {
-    private ICache<String, String> cache;
-    private Boolean local = false;
+    private final ICache<String, String> cache;
 
-    public SchemaCacheImpl(ICache<String, String> cache, boolean local) {
+    public SchemaCacheImpl(ICache<String, String> cache) {
         this.cache = cache;
-        this.local = local;
     }
 
     @Override
     public void close() throws Exception {
-        if (Boolean.TRUE.equals(this.local)) {
-            // do nothing, this is using local dummy cache or vm cache
-        } else {
-            // cast to redis cache so it can be closed
-            ((AutoCloseable) this.cache).close();
+        if (this.cache instanceof AutoCloseable autoCloseable) {
+            autoCloseable.close();
         }
     }
 

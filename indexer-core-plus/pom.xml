@@ -18,13 +18,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-plus-common-lib</artifactId>
-            <version>0.24.0-rc4</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>os-core-common</artifactId>
-                    <groupId>org.opengroup.osdu</groupId>
-                </exclusion>
-            </exclusions>
+            <version>0.27.0-rc3</version>
         </dependency>
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>

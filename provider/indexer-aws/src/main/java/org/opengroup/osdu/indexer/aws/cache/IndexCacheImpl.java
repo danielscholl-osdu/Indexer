@@ -16,28 +16,21 @@
 
 package org.opengroup.osdu.indexer.aws.cache;
 
-import lombok.RequiredArgsConstructor;
 import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.provider.interfaces.IIndexCache;
 
-@RequiredArgsConstructor
 public class IndexCacheImpl implements IIndexCache<String, Boolean>, AutoCloseable {
 
-    private ICache<String, Boolean> cache;
-    private Boolean local;
+    private final ICache<String, Boolean> cache;
 
-    public IndexCacheImpl(ICache<String, Boolean> cache, boolean local) {
+    public IndexCacheImpl(ICache<String, Boolean> cache) {
         this.cache = cache;
-        this.local = local;
     }
 
     @Override
     public void close() throws Exception {
-        if (Boolean.TRUE.equals(this.local)) {
-            // do nothing, this is using local dummy cache or vm cache
-        } else {
-            // cast to redis cache so it can be closed
-            ((AutoCloseable) this.cache).close();
+        if (this.cache instanceof AutoCloseable autoCloseable) {
+            autoCloseable.close();
         }
     }
 
