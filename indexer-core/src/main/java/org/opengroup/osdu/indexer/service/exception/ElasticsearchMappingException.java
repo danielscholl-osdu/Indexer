@@ -22,7 +22,7 @@ public class ElasticsearchMappingException extends RuntimeException {
     private Integer status;
     public ElasticsearchMappingException(final String message, Integer status) {
         super(message);
-        this.status = status;
+        this.status = status != null ? status : 500;
     }
 
 }

@@ -75,7 +75,7 @@ import org.springframework.web.context.annotation.RequestScope;
 public class XcollaborationHolder {
 
   public static final String X_COLLABORATION = RecordMetaAttribute.COLLABORATION_ID.getValue();
-  private Optional<CollaborationContext> collaborationContext;
+  private Optional<CollaborationContext> collaborationContext = Optional.<CollaborationContext>empty();
 
     @Autowired
     private IFeatureFlag featureFlagChecker;

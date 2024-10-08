@@ -50,8 +50,8 @@
     <!-- Internal packages -->
       <dependency>
           <groupId>org.opengroup.osdu</groupId>
-          <artifactId>os-core-common-spring6</artifactId>
-          <version>${os-core-common-spring6.version}</version>
+          <artifactId>os-core-common</artifactId>
+          <version>${os-core-common.version}</version>
           <exclusions>
               <exclusion>
                   <groupId>org.springframework</groupId>
@@ -67,7 +67,7 @@
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
             <artifactId>os-core-lib-aws</artifactId>
-        <version>0.26.0-spring6-rc2</version>
+        <version>3.0.1</version>
     </dependency>
 
     <!-- AWS managed packages -->

@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.lambdaworks.redis.RedisException;
+import io.lettuce.core.RedisException;
 import jakarta.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
