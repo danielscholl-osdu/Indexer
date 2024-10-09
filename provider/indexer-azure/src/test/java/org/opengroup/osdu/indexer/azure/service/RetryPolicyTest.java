@@ -24,9 +24,12 @@ import org.opengroup.osdu.core.common.http.FetchServiceHttpRequest;
 import org.opengroup.osdu.core.common.http.UrlFetchServiceImpl;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.HttpResponse;
+import org.opengroup.osdu.indexer.azure.config.RetryPolicyConfig;
+
 import java.util.function.Predicate;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RetryPolicyTest {
@@ -124,9 +127,13 @@ public class RetryPolicyTest {
     private RetryPolicy retryPolicy;
     @Mock
     private JaxRsDpsLog logger;
+    @Mock
+    private RetryPolicyConfig retryPolicyConfig;
 
     @Test
     public void retry_should_be_true_for_jsonResponseWithNotFound() {
+        when(retryPolicyConfig.getMAX_ATTEMPTS()).thenReturn(3);
+        when(retryPolicyConfig.getINITIAL_DELAY()).thenReturn(1000);
         RetryConfig config = this.retryPolicy.retryConfig(response -> this.retryPolicy.batchRetryPolicy(response));
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE_WITH_NOT_FOUND);
@@ -138,6 +145,8 @@ public class RetryPolicyTest {
 
     @Test
     public void retry_should_be_false_for_jsonResponse1WithOut_NotFound() {
+        when(retryPolicyConfig.getMAX_ATTEMPTS()).thenReturn(3);
+        when(retryPolicyConfig.getINITIAL_DELAY()).thenReturn(1000);
         RetryConfig config = this.retryPolicy.retryConfig(response -> this.retryPolicy.batchRetryPolicy(response));
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE1_WITHOUT_NOT_FOUND);
@@ -148,6 +157,8 @@ public class RetryPolicyTest {
 
     @Test
     public void retry_should_be_false_for_jsonResponse2WithOut_NotFound() {
+        when(retryPolicyConfig.getMAX_ATTEMPTS()).thenReturn(3);
+        when(retryPolicyConfig.getINITIAL_DELAY()).thenReturn(1000);
         RetryConfig config = this.retryPolicy.retryConfig(response -> this.retryPolicy.batchRetryPolicy(response));
         Predicate<HttpResponse> retry = config.getResultPredicate();
         response.setBody(JSON_RESPONSE2_WITHOUT_NOT_FOUND);
