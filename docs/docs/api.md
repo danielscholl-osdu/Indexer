@@ -342,7 +342,7 @@ POST /api/indexer/v2/_dps/task-handlers/index-worker HTTP/1.1
 `data` <br />
 &emsp;&emsp;(required, String) Record change event message json string. Supported record-change event payload samples can be found [here](https://community.opengroup.org/osdu/platform/system/register/-/blame/master/register-core/src/main/resources/topics.json?ref_type=heads#L3).
 
-## Monitor indexing progress
+### Monitor indexing progress
 
 Once `index-worker` processes a record change event, it publishes event processing or indexing status to `indexing-progress` topic. Consumers can subscribe to this topic to monitor the indexing progress for a **data-partition**. 
 
