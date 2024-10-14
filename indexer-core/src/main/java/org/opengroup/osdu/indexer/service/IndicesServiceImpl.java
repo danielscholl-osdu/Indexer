@@ -182,16 +182,13 @@ public class IndicesServiceImpl implements IndicesService {
             if (!exists.value()){
                 return false;
             }
-            HealthRequest healthRequest = HealthRequest.of(builder -> builder.index(index)
-                .timeout(REQUEST_TIMEOUT)
-                .waitForStatus(HealthStatus.Yellow)
-            );
-            HealthResponse health = client.cluster().health(healthRequest);
-            if (health.status() == HealthStatus.Green || health.status() == HealthStatus.Yellow) {
-                this.indexCache.put(index, true);
-                return true;
+            List<IndexInfo> indexHealthInfos = this.getIndexInfo(client, index);
+            if (indexHealthInfos.isEmpty()) return false;
+            if ("red".equalsIgnoreCase(indexHealthInfos.get(0).getHealth())) {
+                throw new AppException(HttpStatus.SC_SERVICE_UNAVAILABLE, "Index not available for indexing", String.format("Index: %s primary shards are unassigned", index));
             }
-            return false;
+            this.indexCache.put(index, true);
+            return true;
         } catch (ElasticsearchException exception) {
             if (exception.status() == HttpStatus.SC_NOT_FOUND) return false;
             throw new AppException(
@@ -314,7 +311,7 @@ public class IndicesServiceImpl implements IndicesService {
     }
 
     /**
-     * Remove index in Elasticsearch
+     * Get index information from Elasticsearch
      *
      * @param client       Elasticsearch client
      * @param indexPattern Index pattern
@@ -324,8 +321,8 @@ public class IndicesServiceImpl implements IndicesService {
         Objects.requireNonNull(client, CLIENT_CANNOT_BE_NULL);
 
         String requestUrl = (indexPattern == null || indexPattern.isEmpty())
-            ? "/_cat/indices/*,-.*?h=index,docs.count,creation.date&s=docs.count:asc&format=json"
-            : String.format("/_cat/indices/%s?h=index,docs.count,creation.date&format=json", indexPattern);
+            ? "/_cat/indices/*,-.*?h=index,health,docs.count,creation.date&s=docs.count:asc&format=json"
+            : String.format("/_cat/indices/%s?h=index,health,docs.count,creation.date&format=json", indexPattern);
 
         try (RestClientTransport clientTransport = (RestClientTransport)client._transport()){
             Request request = new Request("GET", requestUrl);
