@@ -268,7 +268,7 @@ Users must be a member of `users.datalake.ops` group.
 
 ### Schema change
 
-Schema change event listener endpoint.
+Schema change event (produced by [Schema Service](https://community.opengroup.org/osdu/platform/system/schema-service)) listener endpoint.
 
 > __Note:__ This is internal API and shouldn't be exposed publicly.
 
@@ -303,6 +303,50 @@ POST /api/indexer/v2/_dps/task-handlers/schema-worker HTTP/1.1
 
 `data` <br />
 &emsp;&emsp;(required, String) Schema change event message json string. Only `create` and `update` events are supported.
+
+### Record change
+
+Record change event (produced by [Storage service](https://community.opengroup.org/osdu/platform/system/storage)) listener endpoint.
+
+> __Note:__ This is internal API and shouldn't be exposed publicly.
+
+#### Request
+
+```http
+POST /api/indexer/v2/_dps/task-handlers/index-worker HTTP/1.1
+{
+    "messageId": "676895654",
+    "publishTime": "2024-03-19T00:00:00",
+    "attributes": {
+        "data-partition-id": "opendes",
+        "correlation-id": "b5a281bd-f59d-4db2-9939-b2d85036fc7e"
+    },
+    "data": "[{\"id\":\"opendes:master-data--Basin:0cfbffb72b2344aea5a8f92bbffd3953\",\"kind\":\"osdu:wks:master-data--Basin:1.0.0\",\"op\":\"create\"}]"
+}
+```
+
+#### Request body
+
+`messageId` <br />
+&emsp;&emsp;(optional, String) Event message id.
+
+`publishTime` <br />
+&emsp;&emsp;(optional, String) Event publish time.
+
+`attributes.data-partition-id` <br />
+&emsp;&emsp;(required, String) Data partition id for which this message is targeted.
+
+`attributes.correlation-id` <br />
+&emsp;&emsp;(optional, String) Correlation-id to enable tracing.
+
+`data` <br />
+&emsp;&emsp;(required, String) Record change event message json string. Supported record-change event payload samples can be found [here](https://community.opengroup.org/osdu/platform/system/register/-/blame/master/register-core/src/main/resources/topics.json?ref_type=heads#L3).
+
+### Monitor indexing progress
+
+Once `index-worker` processes a record change event, it publishes event processing or indexing status to `indexing-progress` topic. Consumers can subscribe to this topic to monitor the indexing progress for a **data-partition**. 
+
+Please be advised, Core services do not provide any additional message level filtering capabilities, so consumers will see status updates for all kinds for a given **data-partition**.
 
 # Troubleshoot Indexing Issues
 
