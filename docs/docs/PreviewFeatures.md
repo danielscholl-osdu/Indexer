@@ -21,19 +21,22 @@ principles.
 The configurations are encoded in OSDU reference-data records, one per each major schema version. The type name
 is IndexPropertyPathConfiguration. With this, the extension properties can be defined as if they were provided by a schema.
 
-In order to reduce the risk when extended evaluation of the solution is still on going, a feature flag that is managed by
-the Partition Service is applied to the solution. Here is an example to enable this feature by setting the property 
+The augmentation feature can be controlled by a feature flag that is managed via
+the `Partition Service`. The feature is `ON` by default since `M25`. The service provider can explicitly turn it off   
+if the augmentation feature is not desirable for its clients. 
+
+Here is an example to turn off augmentation feature by setting the property 
 "index-augmenter-enabled" in a given data partition:
 ```
 {
    "index-augmenter-enabled": {
         "sensitive": false,
-        "value": "true"
+        "value": "false"
     }
 }
 ```
 
-If the property "index-augmenter-enabled" is not created or the property value is set to "false" (String type) in the
+When the property "index-augmenter-enabled" is set to "false" (String type) via `Partition Service` for the
 given data partition, the configurations defined as type IndexPropertyPathConfiguration will be ignored and index extension will be disabled. 
 
 ## Search text with special characters '_' and '.'

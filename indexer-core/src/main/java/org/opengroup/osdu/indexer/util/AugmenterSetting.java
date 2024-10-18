@@ -26,6 +26,6 @@ public class AugmenterSetting {
     private BooleanFeatureFlagClient booleanFeatureFlagClient;
 
     public boolean isEnabled() {
-        return booleanFeatureFlagClient.isEnabled(PROPERTY_NAME, false);
+        return booleanFeatureFlagClient.isEnabled(PROPERTY_NAME, true);
     }
 }
