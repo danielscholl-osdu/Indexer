@@ -43,16 +43,18 @@ public class BooleanFeatureFlagClient {
     private IServiceAccountJwtClient tokenService;
 
     public boolean isEnabled(String featureName, boolean defaultValue) {
-        String dataPartitionId = headers.getPartitionId();
-        if (cache != null && cache.get(featureName) != null)
-            return cache.get(featureName);
+        Boolean isEnabled = this.cache.get(featureName);
+        if (isEnabled != null)
+            return isEnabled;
 
-        boolean isEnabled = defaultValue;
+        String dataPartitionId = headers.getPartitionId();
         try {
             PartitionInfo partitionInfo = getPartitionInfo(dataPartitionId);
             isEnabled = getFeatureValue(partitionInfo, featureName, defaultValue);
+            this.logger.info(String.format("BooleanFeatureFlagClient: The feature flag '%s' in data partition '%s' is set to %s", featureName, dataPartitionId, isEnabled));
         } catch (Exception e) {
-            this.logger.error(String.format("PartitionService: Error getting %s for dataPartition with Id: %s. Turn on the feature flag by default.", featureName, dataPartitionId), e);
+            isEnabled = defaultValue;
+            this.logger.error(String.format("BooleanFeatureFlagClient: Error on getting the feature flag '%s' for data partition '%s'. Using default value %s.", featureName, dataPartitionId, isEnabled), e);
         }
         this.cache.put(featureName, isEnabled);
         return isEnabled;
