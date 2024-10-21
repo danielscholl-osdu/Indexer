@@ -20,8 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
+import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
@@ -37,6 +40,7 @@ import org.opengroup.osdu.indexer.model.*;
 import org.opengroup.osdu.indexer.model.indexproperty.*;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.inject.Inject;
@@ -101,6 +105,11 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     private IRequestInfo requestInfo;
     @Inject
     private JaxRsDpsLog jaxRsDpsLog;
+    @Inject
+    private JobStatus jobStatus;
+
+    @Value("${augmenter.extended_list_value.max_size:1000}")
+    int maxSizeOfExtendedListValue;
 
     @Override
     public boolean isConfigurationEnabled(String kind) {
@@ -243,6 +252,10 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
 
             extendedDataMap.putAll(allPropertyValues);
         }
+
+        // Remove oversized extended properties
+        removeOversizedExtendedProperties(objectId, extendedDataMap);
+
         if (!associatedIdentities.isEmpty()) {
             extendedDataMap.put(ASSOCIATED_IDENTITIES_PROPERTY, Arrays.asList(associatedIdentities.toArray()));
         }
@@ -676,6 +689,21 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             }
         }
         return relatedObjectIds;
+    }
+
+    private void removeOversizedExtendedProperties(String objectId, Map<String, Object> extendedPropertyValues) {
+        List<String> propertyNames = new ArrayList<>(extendedPropertyValues.keySet());
+        for (String propertyName : propertyNames) {
+            Object value = extendedPropertyValues.get(propertyName);
+            if( value instanceof List<? extends Object>) {
+                List<?> values = (List<?>) value;
+                if(values != null && values.size() > maxSizeOfExtendedListValue) {
+                    String message = String.format("Extended property '%s' has an over-sized list:%d items. Removed", propertyName, values.size());
+                    this.jobStatus.addOrUpdateRecordStatus(objectId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, message);
+                    extendedPropertyValues.remove(propertyName);
+                }
+            }
+        }
     }
 
     private Map<String, Object> getExtendedPropertyValues(String extendedPropertyName, Map<String, Object> dataMap, ValueExtraction valueExtraction, boolean isExtractFirstMatch) {
