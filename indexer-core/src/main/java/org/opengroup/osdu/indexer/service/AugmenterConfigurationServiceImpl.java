@@ -253,7 +253,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             extendedDataMap.putAll(allPropertyValues);
         }
 
-        // Remove oversized extended properties
+        // Remove oversized extended properties with array type
         removeOversizedExtendedProperties(objectId, extendedDataMap);
 
         if (!associatedIdentities.isEmpty()) {
@@ -698,7 +698,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             if( value instanceof List<? extends Object>) {
                 List<?> values = (List<?>) value;
                 if(values != null && values.size() > maxSizeOfExtendedListValue) {
-                    String message = String.format("Extended property '%s' has an over-sized list:%d items. Removed", propertyName, values.size());
+                    String message = String.format("Extended property '%s' has an over-sized array with %d items. Removed", propertyName, values.size());
                     this.jobStatus.addOrUpdateRecordStatus(objectId, IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, message);
                     extendedPropertyValues.remove(propertyName);
                 }
