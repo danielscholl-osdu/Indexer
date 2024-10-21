@@ -741,7 +741,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
                                 propertyValues.put(key, values);
                             }
                         }
-                        if (isExtractFirstMatch)
+                        if (!subPropertyValues.isEmpty() && isExtractFirstMatch)
                             break;
                     }
                 }

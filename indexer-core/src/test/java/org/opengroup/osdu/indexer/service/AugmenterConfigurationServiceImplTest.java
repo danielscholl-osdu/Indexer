@@ -275,6 +275,30 @@ public class AugmenterConfigurationServiceImplTest {
         verifyMap(expectedExtendedProperties, extendedProperties);
     }
 
+    @Test
+    public void getExtendedProperties_value_extract_match() throws JsonProcessingException, URISyntaxException {
+        AugmenterConfiguration propertyConfigurations = getConfiguration("value_extraction_match_configuration_record.json");
+        Map<String, Object> originalDataMap = getDataMap("value_extraction_match_data_record.json");
+
+        SearchResponse searchResponse = new SearchResponse();
+        List<SearchRecord> records = new ArrayList<>();
+        searchResponse.setResults(records);
+        SearchRecord record = new SearchRecord();
+        record.setData(originalDataMap);
+        records.add(record);
+
+        when(this.searchService.query(any())).thenReturn(searchResponse);
+
+        Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
+        Double groundLevel = (Double)extendedProperties.getOrDefault("DCGroundlevel", null);
+        Assert.assertNotNull(groundLevel);
+        Assert.assertEquals(1143, groundLevel, 0.00001);
+
+        Double totalDepth = (Double)extendedProperties.getOrDefault("DCTotalDepth", null);
+        Assert.assertNotNull(totalDepth);
+        Assert.assertEquals(4977, totalDepth, 0.00001);
+    }
+
     private void verifyMap(Map<String, Object> expectedExtendedProperties, Map<String, Object> extendedProperties) {
         Assert.assertEquals(expectedExtendedProperties.size(), extendedProperties.size());
 
