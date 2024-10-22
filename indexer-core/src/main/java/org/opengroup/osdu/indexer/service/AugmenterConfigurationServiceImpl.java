@@ -108,7 +108,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     @Inject
     private JobStatus jobStatus;
 
-    @Value("${augmenter.extended_list_value.max_size:1000}")
+    @Value("${augmenter.extended_list_value.max_size:2000}")
     int maxSizeOfExtendedListValue;
 
     @Override
