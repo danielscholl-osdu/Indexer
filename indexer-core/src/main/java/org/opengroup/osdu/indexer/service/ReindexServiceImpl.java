@@ -26,6 +26,8 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
+import org.opengroup.osdu.indexer.model.SearchRequest;
+import org.opengroup.osdu.indexer.model.SearchResponse;
 import org.opengroup.osdu.indexer.model.XcollaborationHolder;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
@@ -42,6 +44,8 @@ public class ReindexServiceImpl implements ReindexService {
     private IndexerConfigurationProperties configurationProperties;
     @Inject
     private StorageService storageService;
+    @Inject
+    private SearchService searchService;
     @Inject
     private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
     @Inject
@@ -96,11 +100,23 @@ public class ReindexServiceImpl implements ReindexService {
 
     @SneakyThrows
     @Override
-    public Records reindexRecords(List<String> recordIds) {
+    public Records reindexRecords(List<String> recordIds, boolean deleteIfNotFound) {
         Records records = this.storageService.getStorageRecords(recordIds);
-        if (records.getRecords().size() > 0) {
+        if (!records.getRecords().isEmpty()) {
             List<RecordInfo> msgs = records.getRecords().stream()
                     .map(record -> RecordInfo.builder().id(record.getId()).kind(record.getKind()).op(OperationType.create.name()).build()).collect(Collectors.toList());
+            this.replayReindexMsg(msgs, 0L, null);
+        }
+        if (deleteIfNotFound && !records.getNotFound().isEmpty()) {
+            String query = String.format("id: (%s)", this.searchService.createIdsFilter(records.getNotFound()));
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.setKind("*:*:*:*");
+            searchRequest.setQuery(query);
+            searchRequest.setLimit(records.getNotFound().size());
+            searchRequest.setReturnedFields(List.of("kind", "id"));
+            SearchResponse searchResponse =  this.searchService.query(searchRequest);
+            List<RecordInfo> msgs = searchResponse.getResults().stream()
+                    .map(record -> RecordInfo.builder().id(record.getId()).kind(record.getKind()).op(OperationType.delete.name()).build()).collect(Collectors.toList());
             this.replayReindexMsg(msgs, 0L, null);
         }
         return records;
