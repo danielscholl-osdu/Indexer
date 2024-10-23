@@ -352,6 +352,14 @@ It is not permitted to
   implemented in the OSDU Data Definition pipeline to ensure that this reserved name does not appear as property in
   the `data` block.
 
+* When the policy `ExtractAllMatches` is applied, the `Index Augmenter` will aggregate the `unique` values from all matched sources
+  to an array. The aggregated array could be large, especially when the relationship is `ParentToChildren`. There is a limitation
+  on the size of the array that ElasticSearch processes. A record will fail to be indexed if its property with array type
+  has more than 10,000 items. In order to balance the performance, the array size of the extended property should not be too
+  large. From M25, if the array size of the extended property exceeds the pre-defined limit, the extended property will be removed
+  and a message will be logged in the index of the record. The pre-defined limit is 2,000 by default. It can be
+  overridden by the setting in the Application.properties, e.g. `augmenter.extended_list_value.max_size=5000`.
+
 
 ## Deployment
 
@@ -381,4 +389,4 @@ the records from the `OSDU search` results, any one of the following mistakes ca
 ```
 
 * If not all extended properties are missing, the `Configurations[]` of the missing extended properties could be invalid. 
-  The `Index Augmenter` engine can do basic syntax check on each configuration and only ignore the invalid ones. 
+  The `Index Augmenter` engine can do basic syntax check on each configuration and only ignore the invalid ones.
