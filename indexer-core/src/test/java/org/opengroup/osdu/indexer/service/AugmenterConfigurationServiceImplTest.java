@@ -39,8 +39,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import lombok.SneakyThrows;
+import org.apache.http.HttpStatus;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -48,6 +51,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.model.indexer.IndexingStatus;
+import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
@@ -108,12 +113,19 @@ public class AugmenterConfigurationServiceImplTest {
     private IRequestInfo requestInfo;
     @Mock
     private JaxRsDpsLog jaxRsDpsLog;
+    @Mock
+    private JobStatus jobStatus;
 
     private final String augmenterConfigurationKind = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
     private String childKind;
     private String childId;
     private String parentKind;
     private String parentId;
+
+    @Before
+    public void setup() {
+        this.sut.maxSizeOfExtendedListValue = 1000;
+    }
 
     @Test
     public void isAugmenterConfigurationEnabled_invalid_kind() {
@@ -239,6 +251,30 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("wellbore_extended_data.json");
         verifyMap(expectedExtendedProperties, extendedProperties);
+        List<String> wellLogs = (List<String>)extendedProperties.getOrDefault("WellLogs", null);
+        Assert.assertNotNull(wellLogs);
+        Assert.assertEquals(88, wellLogs.size());
+        verify(jobStatus, times(0)).addOrUpdateRecordStatus(anyString(), eq(IndexingStatus.WARN), eq(HttpStatus.SC_BAD_REQUEST), anyString());
+    }
+
+    @Test
+    public void getExtendedProperties_from_children_objects_with_small_list_size() throws JsonProcessingException, URISyntaxException {
+        // Set small threshold on the size of extended list value
+        this.sut.maxSizeOfExtendedListValue = 50;
+        AugmenterConfiguration propertyConfigurations = getConfiguration("wellbore_configuration_record.json");
+        Map<String, Object> originalDataMap = getDataMap("wellbore_data.json");
+        String jsonText = getJsonFromFile("welllog_search_records.json");
+        Type type = new TypeToken<List<SearchRecord>>() {}.getType();
+        List<SearchRecord> childrenRecords = gson.fromJson(jsonText, type);
+        SearchResponse response = new SearchResponse();
+        response.setResults(childrenRecords);
+        when(this.searchService.query(any())).thenReturn(response);
+
+        Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
+        List<String> wellLogs = (List<String>)extendedProperties.getOrDefault("WellLogs", null);
+        // WellLogs property should be removed because of oversize
+        Assert.assertNull(wellLogs);
+        verify(jobStatus, times(1)).addOrUpdateRecordStatus(anyString(), eq(IndexingStatus.WARN), eq(HttpStatus.SC_BAD_REQUEST), anyString());
     }
 
     @Test
@@ -273,6 +309,30 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("welllog_extended_data.json");
         verifyMap(expectedExtendedProperties, extendedProperties);
+    }
+
+    @Test
+    public void getExtendedProperties_value_extract_match() throws JsonProcessingException, URISyntaxException {
+        AugmenterConfiguration propertyConfigurations = getConfiguration("value_extraction_match_configuration_record.json");
+        Map<String, Object> originalDataMap = getDataMap("value_extraction_match_data_record.json");
+
+        SearchResponse searchResponse = new SearchResponse();
+        List<SearchRecord> records = new ArrayList<>();
+        searchResponse.setResults(records);
+        SearchRecord record = new SearchRecord();
+        record.setData(originalDataMap);
+        records.add(record);
+
+        when(this.searchService.query(any())).thenReturn(searchResponse);
+
+        Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
+        Double groundLevel = (Double)extendedProperties.getOrDefault("DCGroundlevel", null);
+        Assert.assertNotNull(groundLevel);
+        Assert.assertEquals(1143, groundLevel, 0.00001);
+
+        Double totalDepth = (Double)extendedProperties.getOrDefault("DCTotalDepth", null);
+        Assert.assertNotNull(totalDepth);
+        Assert.assertEquals(4977, totalDepth, 0.00001);
     }
 
     private void verifyMap(Map<String, Object> expectedExtendedProperties, Map<String, Object> extendedProperties) {
