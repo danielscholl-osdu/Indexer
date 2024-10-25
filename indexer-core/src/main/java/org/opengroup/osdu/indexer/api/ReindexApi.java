@@ -80,9 +80,8 @@ public class ReindexApi {
     @PreAuthorize("@authorizationFilter.hasPermission('" + SearchServiceRole.ADMIN + "')")
     @PostMapping(path = "/records", consumes = "application/json")
     public ResponseEntity<?> reindexRecords(
-            @Parameter(description = "Delete the index if not found in storage") @RequestParam(value = "deleteIfNotFound", defaultValue = "false") boolean deleteIfNotFound,
             @NotNull @Valid @RequestBody ReindexRecordsRequest reindexRecordsRequest) {
-        Records records = this.reIndexService.reindexRecords(reindexRecordsRequest.getRecordIds(), deleteIfNotFound);
+        Records records = this.reIndexService.reindexRecords(reindexRecordsRequest.getRecordIds());
         List<String> reindexedRecords = records.getRecords().stream().map(Records.Entity::getId).collect(Collectors.toList());
         if (!reindexedRecords.isEmpty()) {
             this.auditLogger.getReindexRecords(reindexedRecords);

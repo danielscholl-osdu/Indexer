@@ -24,7 +24,7 @@ public interface ReindexService {
 
     String reindexKind(RecordReindexRequest recordReindexRequest, boolean forceClean, boolean updateSchemaMapping);
 
-    Records reindexRecords(List<String> recordIds, boolean deleteIfNotFound);
+    Records reindexRecords(List<String> recordIds);
 
     void fullReindex(boolean forceClean);
 }

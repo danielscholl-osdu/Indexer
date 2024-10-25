@@ -87,9 +87,9 @@ public class ReindexApiTest {
 
     @Test
     public void should_return200_when_valid_record_id_list_provided() {
-        when(this.reIndexService.reindexRecords(recordIds, false)).thenReturn(Records.builder().records(new ArrayList<>()).records(Collections.singletonList(Records.Entity.builder().id("id1").build())).notFound(recordIds).build());
+        when(this.reIndexService.reindexRecords(recordIds)).thenReturn(Records.builder().records(new ArrayList<>()).records(Collections.singletonList(Records.Entity.builder().id("id1").build())).notFound(recordIds).build());
 
-        ResponseEntity<?> response = sut.reindexRecords(false, new ReindexRecordsRequest(recordIds));
+        ResponseEntity<?> response = sut.reindexRecords(new ReindexRecordsRequest(recordIds));
 
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
         verify(auditLogger).getReindexRecords(any());
@@ -97,9 +97,9 @@ public class ReindexApiTest {
 
     @Test
     public void should_notWriteAuditLog_when_no_valid_record_id_list_provided() {
-        when(this.reIndexService.reindexRecords(recordIds, false)).thenReturn(Records.builder().records(new ArrayList<>()).records(Collections.emptyList()).notFound(recordIds).build());
+        when(this.reIndexService.reindexRecords(recordIds)).thenReturn(Records.builder().records(new ArrayList<>()).records(Collections.emptyList()).notFound(recordIds).build());
 
-        ResponseEntity<?> response = sut.reindexRecords(false, new ReindexRecordsRequest(recordIds));
+        ResponseEntity<?> response = sut.reindexRecords(new ReindexRecordsRequest(recordIds));
 
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
         verify(auditLogger, never()).getReindex(any());
@@ -107,15 +107,15 @@ public class ReindexApiTest {
 
     @Test(expected = AppException.class)
     public void should_throwAppException_ifUnknownExceptionCaught_reindexRecordsTest() {
-        when(this.reIndexService.reindexRecords(recordIds, true)).thenThrow(new AppException(500, "", ""));
+        when(this.reIndexService.reindexRecords(recordIds)).thenThrow(new AppException(500, "", ""));
 
-        sut.reindexRecords(true, new ReindexRecordsRequest(recordIds));
+        sut.reindexRecords(new ReindexRecordsRequest(recordIds));
     }
 
     @Test(expected = NullPointerException.class)
     public void should_throwAppException_ifNullPointerExceptionCaught_ReindexRecordsTest() {
-        when(this.reIndexService.reindexRecords(recordIds, false)).thenThrow(new NullPointerException(""));
+        when(this.reIndexService.reindexRecords(recordIds)).thenThrow(new NullPointerException(""));
 
-        sut.reindexRecords(false, new ReindexRecordsRequest(recordIds));
+        sut.reindexRecords(new ReindexRecordsRequest(recordIds));
     }
 }

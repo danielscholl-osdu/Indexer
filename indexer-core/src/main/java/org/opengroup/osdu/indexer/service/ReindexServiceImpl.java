@@ -100,14 +100,14 @@ public class ReindexServiceImpl implements ReindexService {
 
     @SneakyThrows
     @Override
-    public Records reindexRecords(List<String> recordIds, boolean deleteIfNotFound) {
+    public Records reindexRecords(List<String> recordIds) {
         Records records = this.storageService.getStorageRecords(recordIds);
         if (!records.getRecords().isEmpty()) {
             List<RecordInfo> msgs = records.getRecords().stream()
                     .map(record -> RecordInfo.builder().id(record.getId()).kind(record.getKind()).op(OperationType.create.name()).build()).collect(Collectors.toList());
             this.replayReindexMsg(msgs, 0L, null);
         }
-        if (deleteIfNotFound && !records.getNotFound().isEmpty()) {
+        if (!records.getNotFound().isEmpty()) {
             String query = String.format("id: (%s)", this.searchService.createIdsFilter(records.getNotFound()));
             SearchRequest searchRequest = new SearchRequest();
             searchRequest.setKind("*:*:*:*");

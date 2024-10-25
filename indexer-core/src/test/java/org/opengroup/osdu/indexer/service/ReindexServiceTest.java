@@ -165,21 +165,6 @@ public class ReindexServiceTest {
         when(storageService.getStorageRecords(recordIds)).thenReturn(
                 Records.builder().records(Collections.singletonList(Records.Entity.builder().id("id1").kind("kind1").build())).notFound(Collections.singletonList("id2")).build()
         );
-        Records records = sut.reindexRecords(recordIds, false);
-        Assert.assertEquals(1, records.getRecords().size());
-        Assert.assertEquals(1, records.getNotFound().size());
-        verify(indexerQueueTaskBuilder).createWorkerTask("{\"data\":\"[{\\\"id\\\":\\\"id1\\\",\\\"kind\\\":\\\"kind1\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{}}", 0L, headers);
-        verify(searchService, never()).query(any());
-    }
-
-    @Test
-    public void should_deleteNotFoundIndex_givenNotFoundRecordIds_reIndexRecordsTest() throws URISyntaxException {
-        DpsHeaders headers = new DpsHeaders();
-        when(requestInfo.getHeadersWithDwdAuthZ()).thenReturn(headers);
-        List<String> recordIds = Arrays.asList("id1", "id2");
-        when(storageService.getStorageRecords(recordIds)).thenReturn(
-                Records.builder().records(Collections.singletonList(Records.Entity.builder().id("id1").kind("kind1").build())).notFound(Collections.singletonList("id2")).build()
-        );
         when(searchService.createIdsFilter(any())).thenReturn("\"id2\"");
         SearchRecord deletedRecord = new SearchRecord();
         deletedRecord.setKind("kind2");
@@ -187,7 +172,7 @@ public class ReindexServiceTest {
         SearchResponse mockNotFoundRecordsSearchResponse = new SearchResponse();
         mockNotFoundRecordsSearchResponse.setResults(Collections.singletonList(deletedRecord));
         when(searchService.query(any())).thenReturn(mockNotFoundRecordsSearchResponse);
-        Records records = sut.reindexRecords(recordIds, true);
+        Records records = sut.reindexRecords(recordIds);
         Assert.assertEquals(1, records.getRecords().size());
         Assert.assertEquals(1, records.getNotFound().size());
         verify(indexerQueueTaskBuilder).createWorkerTask("{\"data\":\"[{\\\"id\\\":\\\"id1\\\",\\\"kind\\\":\\\"kind1\\\",\\\"op\\\":\\\"create\\\"}]\",\"attributes\":{}}", 0L, headers);
