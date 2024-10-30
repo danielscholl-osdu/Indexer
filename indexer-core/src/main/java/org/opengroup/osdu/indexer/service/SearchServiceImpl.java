@@ -26,10 +26,12 @@ import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
+import org.opengroup.osdu.indexer.util.PropertyUtil;
 import org.springframework.stereotype.Component;
 
 import jakarta.inject.Inject;
 import java.net.URISyntaxException;
+import java.util.List;
 
 @Component
 public class SearchServiceImpl implements SearchService {
@@ -56,6 +58,20 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public SearchResponse queryWithCursor(SearchRequest searchRequest) throws URISyntaxException {
         return searchRecords(searchRequest, QUERY_WITH_CURSOR_PATH);
+    }
+
+    @Override
+    public String createIdsFilter(List<String> ids) {
+        StringBuilder idsBuilder = new StringBuilder();
+        for (String id : ids) {
+            if (!idsBuilder.isEmpty()) {
+                idsBuilder.append(" OR ");
+            }
+            idsBuilder.append("\"");
+            idsBuilder.append(PropertyUtil.removeIdPostfix(id));
+            idsBuilder.append("\"");
+        }
+        return idsBuilder.toString();
     }
 
     private SearchResponse searchRecords(SearchRequest searchRequest, String path) throws URISyntaxException {

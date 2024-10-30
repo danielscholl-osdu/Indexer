@@ -20,6 +20,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SearchServiceImplTest {
@@ -151,5 +153,15 @@ public class SearchServiceImplTest {
         when(this.configurationProperties.getSearchHost()).thenReturn(searchHost);
         when(this.urlFetchService.sendRequest(any())).thenThrow(new AppException(415, "upstream server responded with unsupported media type: text/plain", "Unsupported media type" ));
         assertThrows(URISyntaxException.class, () -> sut.query(new SearchRequest()));
+    }
+
+    @Test
+    public void createIdsFilter_with_emptyIdList() {
+        Assert.assertEquals("", sut.createIdsFilter(new ArrayList<String>()));
+    }
+
+    @Test
+    public void createIdsFilter_with_idList() {
+        Assert.assertEquals("\"id1\" OR \"id2\"", sut.createIdsFilter(List.of("id1", "id2:")));
     }
 }

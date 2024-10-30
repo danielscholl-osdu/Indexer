@@ -464,20 +464,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     }
 
     private String createIdsQuery(List<String> ids) {
-        return String.format("id: (%s)", createIdsFilter(ids));
-    }
-
-    private String createIdsFilter(List<String> ids) {
-        StringBuilder idsBuilder = new StringBuilder();
-        for (String id : ids) {
-            if (idsBuilder.length() > 0) {
-                idsBuilder.append(" OR ");
-            }
-            idsBuilder.append("\"");
-            idsBuilder.append(PropertyUtil.removeIdPostfix(id));
-            idsBuilder.append("\"");
-        }
-        return idsBuilder.toString();
+        return String.format("id: (%s)", this.searchService.createIdsFilter(ids));
     }
 
     private void createWorkerTask(String ancestors, List<RecordInfo> recordInfos) {
@@ -975,7 +962,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
 
     private void updateAssociatedChildrenRecords(String ancestors, String parentKind, List<RecordChangeInfo> recordChangeInfos) {
         List<String> processedIds = recordChangeInfos.stream().map(recordChangeInfo -> recordChangeInfo.getRecordInfo().getId()).toList();
-        String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, createIdsFilter(processedIds));
+        String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, this.searchService.createIdsFilter(processedIds));
 
         List<String> childrenKinds = getChildrenKinds(parentKind);
         for (String ancestryKind : ancestors.split(ANCESTRY_KINDS_DELIMITER)) {

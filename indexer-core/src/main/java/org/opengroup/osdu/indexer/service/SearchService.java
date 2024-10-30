@@ -19,6 +19,7 @@ import org.opengroup.osdu.indexer.model.SearchRequest;
 import org.opengroup.osdu.indexer.model.SearchResponse;
 
 import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Interface to consume schemas from the Schema Service
@@ -39,4 +40,6 @@ public interface SearchService {
      * @throws URISyntaxException
      */
     SearchResponse queryWithCursor(SearchRequest searchRequest) throws URISyntaxException;
+
+    String createIdsFilter(List<String> ids);
 }
