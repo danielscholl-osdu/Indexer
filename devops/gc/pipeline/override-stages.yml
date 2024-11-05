@@ -5,6 +5,10 @@ variables:
 gc-test:
   variables:
     CUCUMBER_OPTIONS: "--tags @as-ingested-coordinates,@default,@bag-of-words,@keyword-lower,@indexer-extended"
+    ELASTIC_8_PORT: $GC_ELASTIC_8_PORT
+    ELASTIC_8_USER_NAME: $GC_ELASTIC_8_USER_NAME
+    ELASTIC_8_PASSWORD: $GC_ELASTIC_8_PASSWORD
+    ELASTIC_8_HOST: $GC_ELASTIC_8_HOST
 
 gc-dev2-test:
   variables:

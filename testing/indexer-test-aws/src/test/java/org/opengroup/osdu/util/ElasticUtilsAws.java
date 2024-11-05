@@ -70,8 +70,8 @@ public class ElasticUtilsAws extends ElasticUtils {
                 new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
                 new BasicHeader("client.transport.ping_timeout", "30s"),
                 new BasicHeader("client.transport.sniff", "false"),
-                new BasicHeader("request.headers.X-Found-Cluster", Config.getElasticHost()),
-                new BasicHeader("cluster.name", Config.getElasticHost()),
+                new BasicHeader("request.headers.X-Found-Cluster", Config.getElastic8Host()),
+                new BasicHeader("cluster.name", Config.getElastic8Host()),
                 new BasicHeader("xpack.security.transport.ssl.enabled", Boolean.toString(true)),
                 new BasicHeader("Authorization", basicAuthenticationHeaderVal),
         };

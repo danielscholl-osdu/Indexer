@@ -114,10 +114,10 @@ public class ElasticUtils {
     private ElasticsearchClient elasticsearchClient;
 
     public ElasticUtils() {
-        this.username = Config.getUserName();
-        this.password = Config.getPassword();
-        this.host = Config.getElasticHost();
-        this.sslEnabled = Config.isElasticSslEnabled();
+        this.username = Config.getElastic8UserName();
+        this.password = Config.getElastic8Password();
+        this.host = Config.getElastic8Host();
+        this.sslEnabled = Config.isElastic8SslEnabled();
     }
 
     public void createIndex(String index, String mapping) {
@@ -438,11 +438,13 @@ public class ElasticUtils {
         String pointY, Double topPointY, Double bottomPointY) throws Exception {
         ElasticsearchClient client = this.getOrCreateClient(username, password, host);
         try {
-            RangeQuery xRangeQuery = RangeQuery.of(
-                builder -> builder.field(pointX).lte(JsonData.of(topPointX)).gte(JsonData.of(bottomPointX)));
+            RangeQuery xRangeQuery = RangeQuery.of(builder -> builder.untyped(
+                untypedBuilder -> untypedBuilder.field(pointX).lte(JsonData.of(topPointX))
+                    .gte(JsonData.of(bottomPointX))));
 
-            RangeQuery yRangeQuery = RangeQuery.of(
-                builder -> builder.field(pointY).lte(JsonData.of(topPointY)).gte(JsonData.of(bottomPointY)));
+            RangeQuery yRangeQuery = RangeQuery.of(builder -> builder.untyped(
+                untypedBuilder -> untypedBuilder.field(pointY).lte(JsonData.of(topPointY))
+                    .gte(JsonData.of(bottomPointY))));
 
             BoolQuery boolQuery = BoolQuery.of(
                 builder -> builder.must(xRangeQuery._toQuery()).must(yRangeQuery._toQuery()));
@@ -611,7 +613,7 @@ public class ElasticUtils {
     private ElasticsearchClient getOrCreateClient(String username, String password, String host) {
         if (this.elasticsearchClient == null) {
             ElasticsearchClient restHighLevelClient;
-            int port = Config.getPort();
+            int port = Config.getElastic8Port();
             try {
                 String rawString = String.format("%s:%s", username, password);
 
@@ -645,8 +647,8 @@ public class ElasticUtils {
                     new BasicHeader("client.transport.nodes_sampler_interval", "30s"),
                     new BasicHeader("client.transport.ping_timeout", "30s"),
                     new BasicHeader("client.transport.sniff", "false"),
-                    new BasicHeader("request.headers.X-Found-Cluster", Config.getElasticHost()),
-                    new BasicHeader("cluster.name", Config.getElasticHost()),
+                    new BasicHeader("request.headers.X-Found-Cluster", Config.getElastic8Host()),
+                    new BasicHeader("cluster.name", Config.getElastic8Host()),
                     new BasicHeader("xpack.security.transport.ssl.enabled", Boolean.toString(true)),
                 new BasicHeader("Authorization", String.format("Basic %s", Base64.getEncoder().encodeToString(usernameAndPassword.getBytes()))),
             };

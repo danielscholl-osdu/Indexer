@@ -16,8 +16,9 @@ package org.opengroup.osdu.indexer.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
 import com.google.gson.Gson;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.opengroup.osdu.core.common.http.HeadersUtil;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
@@ -34,9 +35,6 @@ import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.service.IndexerService;
 import org.opengroup.osdu.indexer.service.SchemaEventsProcessor;
-import org.opengroup.osdu.indexer.service.SchemaService;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 

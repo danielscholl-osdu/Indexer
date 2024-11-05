@@ -366,8 +366,9 @@ public class IndexerMappingServiceTest {
         when(indicesService.isIndexExist(any(), any())).thenReturn(true);
         when(elasticsearchClient.indices()).thenReturn(indicesClient);
         TypeMapping typeMapping = TypeMapping.of(builder -> builder.withJson(new StringReader(mapping)));
+
         GetMappingResponse getMappingResponse = GetMappingResponse.of(
-            responseBuilder -> responseBuilder.putResult(
+            responseBuilder -> responseBuilder.result(
                 "index", IndexMappingRecord.of(mappingRecordBuilder -> mappingRecordBuilder.mappings(typeMapping))
             )
         );
