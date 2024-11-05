@@ -29,6 +29,42 @@ public class Config {
         return Integer.parseInt(getEnvironmentVariableOrDefaultValue("ELASTIC_PORT", String.valueOf(PORT)));
     }
 
+    public static String getUserName() {
+        return getEnvironmentVariableOrDefaultValue("ELASTIC_USER_NAME", DEFAULT_ELASTIC_USER_NAME);
+    }
+
+    public static String getPassword() {
+        return getEnvironmentVariableOrDefaultValue("ELASTIC_PASSWORD", DEFAULT_ELASTIC_PASSWORD);
+    }
+
+    public static String getElasticHost() {
+        return getEnvironmentVariableOrDefaultValue("ELASTIC_HOST", DEFAULT_ELASTIC_HOST);
+    }
+
+    public static boolean isElasticSslEnabled() {
+        return Boolean.parseBoolean(getEnvironmentVariableOrDefaultValue("ELASTIC_SSL_ENABLED", DEFAULT_ELASTIC_SSL_ENABLED));
+    }
+
+    public static int getElastic8Port() {
+        return Integer.parseInt(getEnvironmentVariableOrDefaultValue("ELASTIC_8_PORT", String.valueOf(getPort())));
+    }
+
+    public static String getElastic8UserName() {
+        return getEnvironmentVariableOrDefaultValue("ELASTIC_8_USER_NAME", getUserName());
+    }
+
+    public static String getElastic8Password() {
+        return getEnvironmentVariableOrDefaultValue("ELASTIC_8_PASSWORD", getPassword());
+    }
+
+    public static String getElastic8Host() {
+        return getEnvironmentVariableOrDefaultValue("ELASTIC_8_HOST", getElasticHost());
+    }
+
+    public static boolean isElastic8SslEnabled() {
+        return Boolean.parseBoolean(getEnvironmentVariableOrDefaultValue("ELASTIC_8_SSL_ENABLED", String.valueOf(isElasticSslEnabled())));
+    }
+
     public static String getOtherRelevantDataCountries() {
         return getEnvironmentVariableOrDefaultValue("OTHER_RELEVANT_DATA_COUNTRIES", DEFAULT_OTHER_RELEVANT_DATA_COUNTRIES);
     }
@@ -47,22 +83,6 @@ public class Config {
 
     public static String getDataPartitionIdTenant2() {
         return getEnvironmentVariableOrDefaultValue("DEFAULT_DATA_PARTITION_ID_TENANT2", DEFAULT_DATA_PARTITION_ID_TENANT2);
-    }
-
-    public static String getUserName() {
-        return getEnvironmentVariableOrDefaultValue("ELASTIC_USER_NAME", DEFAULT_ELASTIC_USER_NAME);
-    }
-
-    public static String getPassword() {
-        return getEnvironmentVariableOrDefaultValue("ELASTIC_PASSWORD", DEFAULT_ELASTIC_PASSWORD);
-    }
-
-    public static String getElasticHost() {
-        return getEnvironmentVariableOrDefaultValue("ELASTIC_HOST", DEFAULT_ELASTIC_HOST);
-    }
-
-    public static boolean isElasticSslEnabled() {
-        return Boolean.parseBoolean(getEnvironmentVariableOrDefaultValue("ELASTIC_SSL_ENABLED", DEFAULT_ELASTIC_SSL_ENABLED));
     }
 
     public static String getIndexerBaseURL() {

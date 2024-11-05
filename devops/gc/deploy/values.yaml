@@ -35,7 +35,7 @@ data:
 conf:
   appName: "indexer"
   configmap: "indexer-config"
-  elasticSecretName: "indexer-elastic-secret"
+  elasticSecretName: "indexer-elastic-secret-8"
   keycloakSecretName: "indexer-keycloak-secret"
   rabbitmqSecretName: "rabbitmq-secret"
   indexerRedisSecretName: "indexer-redis-secret"
