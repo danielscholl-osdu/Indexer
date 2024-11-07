@@ -202,9 +202,11 @@ public class IndexerServiceImpl implements IndexerService {
             }
 
             if (this.augmenterSetting.isEnabled()) {
+                Map<String, List<String>> upsertKindIds = null;
+                Map<String, List<String>> deleteKindIds = null;
                 try {
-                    Map<String, List<String>> upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
-                    Map<String, List<String>> deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
+                    upsertKindIds = getUpsertRecordIdsForConfigurationsEnabledKinds(upsertRecordMap, retryRecordIds);
+                    deleteKindIds = getDeleteRecordIdsForConfigurationsEnabledKinds(deleteRecordMap, retryRecordIds);
                     if (!upsertKindIds.isEmpty() || !deleteKindIds.isEmpty()) {
                         augmenterConfigurationService.updateAssociatedRecords(message, upsertKindIds, deleteKindIds, deletedRecordsWithParentReferred);
                     }
@@ -215,7 +217,18 @@ public class IndexerServiceImpl implements IndexerService {
                     }
                 }
                 catch(Exception ex) {
-                    jaxRsDpsLog.error("Augmenter: Failed to update associated records", ex);
+                    List<String> ids = new ArrayList<>();
+                    if(upsertKindIds != null) {
+                        for (List<String> values : upsertKindIds.values()) {
+                            ids.addAll(values);
+                        }
+                    }
+                    if(deleteKindIds != null) {
+                        for (List<String> values : deleteKindIds.values()) {
+                            ids.addAll(values);
+                        }
+                    }
+                    jaxRsDpsLog.error(String.format("Augmenter: Failed to update associated records of the records: [%s]", String.join(",", ids)), ex);
                 }
             }
         } catch (IOException e) {
@@ -483,6 +496,8 @@ public class IndexerServiceImpl implements IndexerService {
                         }
                     }
                     catch(Exception ex) {
+                        String message = String.format("Augmenter error: %s", ex.getMessage());
+                        this.jobStatus.addOrUpdateRecordStatus(storageRecord.getId(), IndexingStatus.WARN, HttpStatus.SC_BAD_REQUEST, message);
                         jaxRsDpsLog.error(String.format("Augmenter: Failed to merge extended properties of the record with id: '%s' and kind: '%s'", storageRecord.getId(), storageRecord.getKind()), ex);
                     }
                 }

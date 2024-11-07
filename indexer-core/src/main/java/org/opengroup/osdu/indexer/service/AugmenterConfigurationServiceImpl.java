@@ -206,12 +206,8 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
                     if (relatedObjectsSpec.isChildToParent()) {
                         List<String> relatedObjectIds = getRelatedObjectIds(originalDataMap, relatedObjectsSpec);
                         for (String relatedObjectId : relatedObjectIds) {
-                            // Store all ids
-                            associatedIdentities.add(PropertyUtil.removeIdPostfix(relatedObjectId));
-                        }
-
-                        for (String relatedObjectId : relatedObjectIds) {
                             String id = PropertyUtil.removeIdPostfix(relatedObjectId);
+                            associatedIdentities.add(id);
                             Map<String, Object> relatedObject = idObjectDataMap.getOrDefault(id, new HashMap<>());
                             Map<String, Object> propertyValues = getExtendedPropertyValues(extendedPropertyName, relatedObject, path.getValueExtraction(), configuration.isExtractFirstMatch());
                             if (allPropertyValues.isEmpty() && configuration.isExtractFirstMatch()) {
@@ -1188,6 +1184,12 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         searchRequest.setKind(kind);
         String query = String.format("%s: \"%s\"", childrenObjectField, parentId);
         searchRequest.setQuery(query);
+        // Though it might affect the performance but query with offset might not work correctly
+        // when there are more than 1K records from search results.
+        SortQuery sortQuery = new SortQuery();
+        sortQuery.setField(List.of("id"));
+        sortQuery.setOrder(List.of(SortOrder.ASC));
+        searchRequest.setSort(sortQuery);
         return searchRecords(searchRequest);
     }
 
