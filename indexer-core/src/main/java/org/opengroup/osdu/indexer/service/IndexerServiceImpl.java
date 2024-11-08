@@ -219,14 +219,10 @@ public class IndexerServiceImpl implements IndexerService {
                 catch(Exception ex) {
                     List<String> ids = new ArrayList<>();
                     if(upsertKindIds != null) {
-                        for (List<String> values : upsertKindIds.values()) {
-                            ids.addAll(values);
-                        }
+                        upsertKindIds.values().forEach(ids::addAll);
                     }
                     if(deleteKindIds != null) {
-                        for (List<String> values : deleteKindIds.values()) {
-                            ids.addAll(values);
-                        }
+                        deleteKindIds.values().forEach(ids::addAll);
                     }
                     jaxRsDpsLog.error(String.format("Augmenter: Failed to update associated records of the records:[%s]", String.join(",", ids)), ex);
                 }
