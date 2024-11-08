@@ -228,7 +228,7 @@ public class IndexerServiceImpl implements IndexerService {
                             ids.addAll(values);
                         }
                     }
-                    jaxRsDpsLog.error(String.format("Augmenter: Failed to update associated records of the records: [%s]", String.join(",", ids)), ex);
+                    jaxRsDpsLog.error(String.format("Augmenter: Failed to update associated records of the records:[%s]", String.join(",", ids)), ex);
                 }
             }
         } catch (IOException e) {
