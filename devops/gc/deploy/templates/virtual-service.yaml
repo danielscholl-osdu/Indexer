@@ -15,14 +15,13 @@ spec:
   gateways:
     - service-gateway
   http:
-    # FIXME: use it when migrate to istio 1.6
-    # - match:
-    #     - uri:
-    #         prefix: "/api/indexer/v2/_dps"
-    #   directResponse:
-    #     status: 403
-    #     body:
-    #       string: "Forbidden"
+    - match:
+        - uri:
+            prefix: "/api/indexer/v2/_dps"
+      directResponse:
+        status: 403
+        body:
+          string: "Forbidden"
     - match:
         - uri:
             prefix: "/api/indexer/v2"
