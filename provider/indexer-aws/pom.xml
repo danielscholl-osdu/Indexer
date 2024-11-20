@@ -30,7 +30,7 @@
   
   <properties>
       <deployment.environment>dev</deployment.environment>
-      <netty.version>4.1.51.Final</netty.version>
+      <netty.version>4.1.115.Final</netty.version>
       <mockito.version>3.11.2</mockito.version>
   </properties>
 
@@ -67,20 +67,18 @@
     <dependency>
         <groupId>org.opengroup.osdu.core.aws</groupId>
             <artifactId>os-core-lib-aws</artifactId>
-        <version>3.0.1</version>
+        <version>3.0.2</version>
     </dependency>
-
-    <!-- AWS managed packages -->
-    <dependency>
-       <groupId>io.netty</groupId>
-       <artifactId>netty-codec</artifactId>
-       <version>4.1.104.Final</version>
-     </dependency>
 
     <!-- Third party Apache 2.0 license packages -->
     <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-config</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-web</artifactId>
+        <version>6.3.4</version>
     </dependency>
     <dependency>
         <groupId>org.springframework.boot</groupId>
