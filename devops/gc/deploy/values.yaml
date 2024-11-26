@@ -4,7 +4,6 @@
 
 global:
   domain: ""
-  onPremEnabled: false
   limitsEnabled: true
   logLevel: "ERROR"
   tier: ""
@@ -36,8 +35,6 @@ conf:
   appName: "indexer"
   configmap: "indexer-config"
   elasticSecretName: "indexer-elastic-secret"
-  keycloakSecretName: "indexer-keycloak-secret"
-  rabbitmqSecretName: "rabbitmq-secret"
   indexerRedisSecretName: "indexer-redis-secret"
   replicas: 2
 

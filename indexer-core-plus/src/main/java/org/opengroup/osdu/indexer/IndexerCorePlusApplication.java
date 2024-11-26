@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2022 Google LLC
- *  Copyright 2020-2022 EPAM Systems, Inc
+ *  Copyright 2020-2024 Google LLC
+ *  Copyright 2020-2024 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,15 +22,15 @@ import org.opengroup.osdu.indexer.web.config.WebAppMainContextConfiguration;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.PropertySource;
 
 @SpringBootConfiguration
 @PropertySource("classpath:swagger.properties")
 public class IndexerCorePlusApplication {
 
-    public static void main(String[] args) {
-        SpringApplicationBuilder springApplicationBuilder = new SpringApplicationBuilder(IndexerCorePlusApplication.class)
+  public static void main(String[] args) {
+    SpringApplicationBuilder springApplicationBuilder =
+        new SpringApplicationBuilder(IndexerCorePlusApplication.class)
             .sources(IndexerCorePlusApplication.class)
             .web(WebApplicationType.NONE)
             .child(CustomContextConfiguration.class)
@@ -38,6 +38,6 @@ public class IndexerCorePlusApplication {
             .child(WebAppMainContextConfiguration.class)
             .web(WebApplicationType.SERVLET);
 
-        ConfigurableApplicationContext context = springApplicationBuilder.run(args);
-    }
+    springApplicationBuilder.run(args);
+  }
 }

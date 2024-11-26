@@ -30,7 +30,6 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | Name                     | Description                                             | Type    | Default | Required |
 |--------------------------|---------------------------------------------------------|---------|---------|----------|
 | **global.domain**        | your domain for the external endpoint, ex `example.com` | string  | -       | yes      |
-| **global.onPremEnabled** | whether on-prem is enabled                              | boolean | `false` | yes      |
 | **global.limitsEnabled** | whether CPU and memory limits are enabled               | boolean | `true`  | yes      |
 | **global.logLevel**      | severity of logging level                               | string  | `ERROR` | yes      |
 | **global.tier**          | Only PROD must be used to enable autoscaling            | string  | ""      | no       |
@@ -46,6 +45,7 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | **data.schemaHost**                    | schema host                                                                                  | string  | `http://schema`       | yes                                             |
 | **data.securityHttpsCertificateTrust** | whether https is enabled                                                                     | boolean | `true`                | yes                                             |
 | **data.storageHost**                   | storage host                                                                                 | string  | `http://storage`      | yes                                             |
+| **data.searchHost**                   | search host                                                                                 | string  | `http://search`      | yes                                             |
 | **data.redisIndexerHost**              | The host for redis instance. If empty (by default), helm installs an internal redis instance | string  | -                     | yes                                             |
 | **data.redisIndexerPort**              | The port for redis instance                                                                  | digit   | `6379`                | yes                                             |
 
@@ -69,8 +69,6 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | **conf.appName**                | name of the app                                                           | string | `indexer`                 | yes      |
 | **conf.configmap**              | configmap to be used                                                      | string | `indexer-config`          | yes      |
 | **conf.elasticSecretName**      | secret for elastic                                                        | string | `indexer-elastic-secret`  | yes      |
-| **conf.keycloakSecretName**     | secret for keycloak                                                       | string | `indexer-keycloak-secret` | yes      |
-| **conf.rabbitmqSecretName**     | secret for rabbitmq                                                       | string | `rabbitmq-secret`         | yes      |
 | **conf.indexerRedisSecretName** | indexer Redis secret that contains redis password with REDIS_PASSWORD key | string | `indexer-redis-secret`    | yes      |
 
 ### ISTIO variables
