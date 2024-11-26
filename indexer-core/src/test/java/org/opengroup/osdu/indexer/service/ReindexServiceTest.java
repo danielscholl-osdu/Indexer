@@ -30,20 +30,22 @@ import org.opengroup.osdu.core.common.model.indexer.Records;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.SearchRecord;
-import org.opengroup.osdu.indexer.model.SearchResponse;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.opengroup.osdu.indexer.util.QueryUtil;
+import org.opengroup.osdu.indexer.util.SearchClient;
 
 import java.util.*;
 
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.net.URISyntaxException;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ReindexServiceTest {
@@ -59,7 +61,9 @@ public class ReindexServiceTest {
     @Mock
     private StorageService storageService;
     @Mock
-    private SearchService searchService;
+    private SearchClient searchClient;
+    @Mock
+    private QueryUtil queryUtil;
     @Mock
     private IRequestInfo requestInfo;
     @Mock
@@ -160,20 +164,18 @@ public class ReindexServiceTest {
     }
 
     @Test
-    public void should_createReindexTaskForValidRecords_givenValidRecordIds_reIndexRecordsTest() throws URISyntaxException {
+    public void should_createReindexTaskForValidRecords_givenValidRecordIds_reIndexRecordsTest() throws Exception {
         DpsHeaders headers = new DpsHeaders();
         when(requestInfo.getHeadersWithDwdAuthZ()).thenReturn(headers);
         List<String> recordIds = Arrays.asList("id1", "id2");
         when(storageService.getStorageRecords(recordIds)).thenReturn(
                 Records.builder().records(Collections.singletonList(Records.Entity.builder().id("id1").kind("kind1").build())).notFound(Collections.singletonList("id2")).build()
         );
-        when(searchService.createIdsFilter(any())).thenReturn("\"id2\"");
         SearchRecord deletedRecord = new SearchRecord();
         deletedRecord.setKind("kind2");
         deletedRecord.setId("id2");
-        SearchResponse mockNotFoundRecordsSearchResponse = new SearchResponse();
-        mockNotFoundRecordsSearchResponse.setResults(Collections.singletonList(deletedRecord));
-        when(searchService.query(any())).thenReturn(mockNotFoundRecordsSearchResponse);
+        List<SearchRecord> mockNotFoundRecordsSearchResponse = List.of(deletedRecord);
+        when(searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(mockNotFoundRecordsSearchResponse);
         Records records = sut.reindexRecords(recordIds);
         Assert.assertEquals(1, records.getRecords().size());
         Assert.assertEquals(1, records.getNotFound().size());
