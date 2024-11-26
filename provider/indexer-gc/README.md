@@ -57,10 +57,6 @@ In the current version, the mappers are equipped with several drivers to the sto
 
 * GCloud SDK with java (latest version)
 
-### Baremetal Service Configuration
-
-[Baremetal service configuration](docs/baremetal/README.md)
-
 ##***REMOVED*** Service Configuration
 
 [Google Cloud service configuration](docs/gc/README.md)
@@ -145,9 +141,15 @@ mvn clean install -DskipTests
 After configuring your environment as specified above, you can follow these steps to build and run the application. These steps should be invoked from the *repository root.*
 
 ```bash
-cd provider/indexer-gc && mvn spring-boot:run
+cd provider/indexer-gc
 ```
 
+```bash
+java --add-opens java.base/java.lang=ALL-UNNAMED \
+         --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
+         -Dloader.main=org.opengroup.osdu.indexer.provider.gcp.IndexerGcpApplication \
+         -jar /target/indexer-${VERSION}-spring-boot.jar
+```
 ## Testing
 
 Navigate to indexer service's root folder and run all the tests:
@@ -161,45 +163,18 @@ $ (cd testing/indexer-test-core/ && mvn clean install)
 
 This section describes how to run cloud OSDU E2E tests.
 
-### Baremetal test configuration
-
-[Baremetal service configuration](docs/baremetal/README.md)
-
 ##***REMOVED*** test configuration
 
 [Google Cloud service configuration](docs/gc/README.md)
 
 ## Deployment
 
-* Data-Lake Indexer Google Cloud Endpoints on App Engine Flex environment
-  * Edit the app.yaml
-    * Open the [app.yaml](indexer/src/main/appengine/app.yaml) file in editor, and replace the YOUR-PROJECT-ID `GOOGLE_CLOUD_PROJECT` line with Google Cloud Platform project Id. Also update `AUTHORIZE_API`, `CRON_JOB_IP`, `LEGAL_HOSTNAME`, `REGION` and `SECURITY_HTTPS_CERTIFICATE_TRUST` based on your deployment
+Indexer Service is compatible with Cloud Run.
 
-  * Deploy
-
-    ```sh
-    mvn appengine:deploy -pl org.opengroup.osdu.indexer:indexer -amd
-    ```
-
-  * If you wish to deploy the search service without running tests
-
-    ```sh
-    mvn appengine:deploy -pl org.opengroup.osdu.indexer:indexer -amd -DskipTests
-    ```
-
-or
-
-* Google Documentation: <https://cloud.google.com/cloud-build/docs/deploying-builds/deploy-appengine>
-
-#### Memory Store (Redis Instance) Setup
-
-Create a new Standard tier Redis instance on the ***service project***
-
-The Redis instance must be created under the same region with the App Engine application which needs to access it.
-
-```bash
-    gcloud beta redis instances create redis-cache-search --size=10 --region=<service-deployment-region> --zone=<service-deployment-zone> --tier=STANDARD
-```
+- To deploy into Cloud run, please, use this documentation:
+  <https://cloud.google.com/run/docs/quickstarts/build-and-deploy>
+- To deploy into GKE, please, use this documentation:
+  <https://cloud.google.com/cloud-build/docs/deploying-builds/deploy-gke>
 
 ## Entitlements groups
 

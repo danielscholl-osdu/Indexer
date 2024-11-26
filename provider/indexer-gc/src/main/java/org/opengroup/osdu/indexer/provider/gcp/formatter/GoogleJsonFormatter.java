@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2022 Google LLC
- *  Copyright 2020-2022 EPAM Systems, Inc
+ *  Copyright 2020-2024 Google LLC
+ *  Copyright 2020-2024 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,8 +14,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-/**
- * This module is used to provide common bean configuration, for both web app context that serves user request, and non-web app context that process indexing
- * events.
- */
-package org.opengroup.osdu.indexer.provider.gcp.common;
+package org.opengroup.osdu.indexer.provider.gcp.formatter;
+
+import ch.qos.logback.contrib.jackson.JacksonJsonFormatter;
+import java.io.IOException;
+import java.util.Map;
+
+public class GoogleJsonFormatter extends JacksonJsonFormatter {
+
+  private static final String SEVERITY = "severity";
+  private static final String LEVEL = "level";
+
+  @Override
+  public String toJsonString(Map map) throws IOException {
+    map.put(SEVERITY, map.remove(LEVEL));
+    return super.toJsonString(map);
+  }
+}

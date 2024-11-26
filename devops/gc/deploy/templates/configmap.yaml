@@ -20,10 +20,6 @@ data:
   REDIS_GROUP_PORT: {{ .Values.data.redisIndexerPort | quote }}
   SCHEMA_BASE_HOST: {{ .Values.data.schemaHost | quote }}
   SECURITY_HTTPS_CERTIFICATE_TRUST: {{ .Values.data.securityHttpsCertificateTrust | quote }}
-  {{- if .Values.global.onPremEnabled }}
-  SPRING_PROFILES_ACTIVE: "anthos"
-  {{- else }}
   SPRING_PROFILES_ACTIVE: "gcp"
-  {{- end }}
   STORAGE_HOST: {{ .Values.data.storageHost | quote }}
   SEARCH_BASE_HOST: {{ .Values.data.searchHost | quote }}

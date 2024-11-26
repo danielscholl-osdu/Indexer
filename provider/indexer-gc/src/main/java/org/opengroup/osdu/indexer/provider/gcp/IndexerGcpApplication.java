@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2022 Google LLC
- *  Copyright 2020-2022 EPAM Systems, Inc
+ *  Copyright 2020-2024 Google LLC
+ *  Copyright 2020-2024 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,20 +17,30 @@
 
 package org.opengroup.osdu.indexer.provider.gcp;
 
-import org.opengroup.osdu.indexer.provider.gcp.indexing.config.CustomContextConfiguration;
-import org.opengroup.osdu.indexer.provider.gcp.web.config.WebAppMainContextConfiguration;
+import org.opengroup.osdu.indexer.IndexerApplication;
+import org.opengroup.osdu.indexer.IndexerCorePlusApplication;
+import org.opengroup.osdu.indexer.indexing.config.CustomContextConfiguration;
+import org.opengroup.osdu.indexer.web.config.WebAppMainContextConfiguration;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.PropertySource;
 
+@ComponentScan(
+    excludeFilters = {
+      @ComponentScan.Filter(
+          type = FilterType.ASSIGNABLE_TYPE,
+          value = {IndexerCorePlusApplication.class, IndexerApplication.class})
+    })
 @SpringBootConfiguration
 @PropertySource("classpath:swagger.properties")
 public class IndexerGcpApplication {
 
-    public static void main(String[] args) {
-        SpringApplicationBuilder springApplicationBuilder = new SpringApplicationBuilder(IndexerGcpApplication.class)
+  public static void main(String[] args) {
+    SpringApplicationBuilder springApplicationBuilder =
+        new SpringApplicationBuilder(IndexerGcpApplication.class)
             .sources(IndexerGcpApplication.class)
             .web(WebApplicationType.NONE)
             .child(CustomContextConfiguration.class)
@@ -38,6 +48,6 @@ public class IndexerGcpApplication {
             .child(WebAppMainContextConfiguration.class)
             .web(WebApplicationType.SERVLET);
 
-       springApplicationBuilder.run(args);
-    }
+    springApplicationBuilder.run(args);
+  }
 }

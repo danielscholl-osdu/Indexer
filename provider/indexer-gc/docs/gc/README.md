@@ -1,19 +1,5 @@
 ## Service Configuration for Google Cloud
 
-## Run args
-
-In order to run Indexer with Java 17 additional run args must be provided:
-
-```bash
---add-opens java.base/java.lang=ALL-UNNAMED --add-opens  java.base/java.lang.reflect=ALL-UNNAMED
-```
-
-Full command:
-
-```bash
-java -jar indexer.jar --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED
-```
-
 ## Environment variables
 
 Define the following environment variables.
@@ -56,11 +42,11 @@ Usage of spring profiles is preferred.
 | `OQMDRIVER`              | `rabbitmq` or `pubsub` | Oqm driver mode that defines which message broker will be used                                                            | no         | -      |
 | `SERVICE_TOKEN_PROVIDER` | `GCP` or `OPENID`      | Service account token provider, `GCP` means use Google service account `OPEIND` means use OpenId provider like `Keycloak` | no         | -      |
 
-## Pubsub configuration
+## Pub/Sub configuration
 
 ![Screenshot](../baremetal/pics/indexer.png)
 
-Pubsub should have topics and subscribers with names and configs:
+Pub/Sub should have topics and subscribers with names and configs:
 
 | TOPIC NAME                       | Subscription name          | Subscription config                                                                                                                                                                                                                |
 |----------------------------------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
