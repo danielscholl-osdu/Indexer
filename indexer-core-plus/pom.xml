@@ -18,7 +18,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>core-plus-common-lib</artifactId>
-            <version>0.27.0-rc3</version>
+            <version>0.27.2</version>
         </dependency>
         <dependency>
             <groupId>org.opengroup.osdu.indexer</groupId>
@@ -61,12 +61,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.26</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-utils</artifactId>
             <version>4.0.1</version>
@@ -105,24 +99,7 @@
         <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>os-oqm-core</artifactId>
-            <version>0.25.0-rc1</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>os-core-common</artifactId>
-                    <groupId>org.opengroup.osdu</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.opengroup.osdu</groupId>
-            <artifactId>apd-core</artifactId>
-            <version>0.27.0-rc1</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>os-core-common</artifactId>
-                    <groupId>org.opengroup.osdu</groupId>
-                </exclusion>
-            </exclusions>
+            <version>0.27.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
