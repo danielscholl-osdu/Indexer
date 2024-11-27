@@ -72,6 +72,8 @@ public class SearchClient {
     private final Set<String> queryableExcludes =
             new HashSet<>(Collections.singletonList(RecordMetaAttribute.INDEX_STATUS.getValue()));
 
+    private final Gson gson = new Gson();
+
     public List<SearchRecord> search(String kind, Query query, List<SortOptions> sortOptions, List<String> returnedFields, int limit) throws Exception {
         if(StringUtils.isEmpty(kind)) {
             throw new Exception("kind can't be null or empty");
@@ -201,7 +203,6 @@ public class SearchClient {
             ResponseBody<Map<String, Object>> searchResponse) {
         List<SearchRecord> results = new ArrayList<>();
         HitsMetadata<Map<String, Object>> searchHits = searchResponse.hits();
-        Gson gson = new Gson();
         if (searchHits.hits() != null) {
             for (Hit<Map<String, Object>> hit : searchHits.hits()) {
                 Map<String, Object> hitFields = hit.source();

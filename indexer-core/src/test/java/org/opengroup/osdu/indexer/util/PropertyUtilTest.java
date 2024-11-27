@@ -340,6 +340,10 @@ public class PropertyUtilTest {
         List<String> expectedChangedWellProperties = Arrays.asList("VirtualProperties.DefaultName", "VerticalMeasurements[].VerticalMeasurementID", "FacilityName");
         changedProperties.forEach(p -> Assert.assertTrue(expectedChangedWellProperties.contains(p)));
 
+        dataMapRight = getDataMap("well_no_null.json");
+        changedProperties = PropertyUtil.getChangedProperties(dataMapLeft, dataMapRight);
+        Assert.assertTrue(changedProperties.isEmpty());
+
         dataMapLeft = getDataMap("wellLog.json");
         dataMapRight = getDataMap("wellLog2.json");
         changedProperties = PropertyUtil.getChangedProperties(dataMapLeft, dataMapRight);
