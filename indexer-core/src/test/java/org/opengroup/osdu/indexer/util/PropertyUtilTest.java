@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -50,7 +49,6 @@ public class PropertyUtilTest {
     }
 
     @Test
-    @Ignore
     public void getValueOfNoneNestedProperty() {
         Map<String, Object> data = this.getDataMap("wellLog.json");
 
@@ -76,9 +74,9 @@ public class PropertyUtilTest {
             Assert.assertTrue(value.containsKey(propertyName));
             Assert.assertNotNull(value.get(propertyName));
         }
+        // The null value is ignored
         for(String propertyName : propertyNamesWithNullValues) {
-            Assert.assertTrue(value.containsKey(propertyName));
-            Assert.assertNull(value.get(propertyName));
+            Assert.assertFalse(value.containsKey(propertyName));
         }
 
         value = PropertyUtil.getValueOfNoneNestedProperty("Curves[].CurveID", data);

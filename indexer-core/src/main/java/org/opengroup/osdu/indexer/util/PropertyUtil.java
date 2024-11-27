@@ -222,7 +222,7 @@ public class PropertyUtil {
         if(rightMap == null) {
             rightMap = new HashMap<>();
         }
-        // If leftMap does not have property A and rightMap has a property A but with null value
+        // If leftMap does not have property A and rightMap has a property A with null value
         // Maps.difference will consider that leftMap and rightMap are different.
         // In our case, they are the same. Using Gson serialization/deserialization to remove
         // the properties with null value on both sides
@@ -248,7 +248,7 @@ public class PropertyUtil {
                     Object left = valueDifference.leftValue();
                     Object right = valueDifference.rightValue();
                     if(left == null && right == null) {
-                        continue;
+                        //Same
                     }
                     else if(left == null || right == null) {
                         changedProperties.add(entry.getKey());
