@@ -25,21 +25,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QueryUtil {
+    private static final String CONFIGURATIONS_PATH = "data.Configurations";
+    private static final String CONFIGURATIONS_PATHS_PATH = "data.Configurations.Paths";
+    private static final String RELATIONSHIP_DIRECTION_FIELD = "data.Configurations.Paths.RelatedObjectsSpec.RelationshipDirection";
+    private static final String RELATED_OBJECT_KIND_FIELD = "data.Configurations.Paths.RelatedObjectsSpec.RelatedObjectKind";
+
     public static Query createQueryForParentConfigs(String childKind) {
         String queryString =
-                String.format("data.Configurations.Paths.RelatedObjectsSpec.RelationshipDirection: ParentToChildren AND data.Configurations.Paths.RelatedObjectsSpec.RelatedObjectKind:\"%s\"", childKind);
+                String.format("%s:ParentToChildren AND %s:\"%s\"", RELATIONSHIP_DIRECTION_FIELD, RELATED_OBJECT_KIND_FIELD, childKind);
         return createQueryForRelatedConfig(queryString);
     }
 
     public static Query createQueryForChildrenConfigs(String parentKind) {
         String queryString =
-                String.format("data.Configurations.Paths.RelatedObjectsSpec.RelationshipDirection: ChildToParent AND data.Configurations.Paths.RelatedObjectsSpec.RelatedObjectKind:\"%s\"", parentKind);
+                String.format("%s:ChildToParent AND %s:\"%s\"", RELATIONSHIP_DIRECTION_FIELD, RELATED_OBJECT_KIND_FIELD, parentKind);
         return createQueryForRelatedConfig(queryString);
     }
 
     public static Query createQueryForConfigurations(String kind) {
-        Query singleQuery = createSimpleTextQuery(String.format("data.Code: \"%s\"", kind));
-        String nestedQueryString = String.format("data.Configurations.Paths.RelatedObjectsSpec.RelatedObjectKind:\"%s\"", kind);
+        Query singleQuery = createSimpleTextQuery(String.format("data.Code:\"%s\"", kind));
+        String nestedQueryString = String.format("%s:\"%s\"", RELATED_OBJECT_KIND_FIELD, kind);
         Query nestedQuery = createQueryForRelatedConfig(nestedQueryString);
 
         BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
@@ -119,13 +124,13 @@ public class QueryUtil {
     private static Query createQueryForRelatedConfig(String queryString) {
         Query simpleTextQuery = createSimpleTextQuery(queryString);
         Query.Builder innerNestedBuilder = (Query.Builder) new Query.Builder().nested(
-                n ->n.path("data.Configurations.Paths")
+                n ->n.path(CONFIGURATIONS_PATHS_PATH)
                         .query(simpleTextQuery)
                         .boost(1.0f)
                         .ignoreUnmapped(true)
                         .scoreMode(ChildScoreMode.Avg));
         Query.Builder nestedBuilder = (Query.Builder) new Query.Builder().nested(
-                n ->n.path("data.Configurations")
+                n ->n.path(CONFIGURATIONS_PATH)
                         .query(innerNestedBuilder.build())
                         .boost(1.0f)
                         .ignoreUnmapped(true)

@@ -18,11 +18,8 @@ package org.opengroup.osdu.indexer.util;
 import com.google.api.client.util.Strings;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.opengroup.osdu.indexer.model.Kind;
 
-import java.lang.reflect.Type;
 import java.util.*;
 
 public class PropertyUtil {
@@ -37,9 +34,6 @@ public class PropertyUtil {
     private static final String NESTED_OBJECT_DELIMITER = "[].";
     private static final String ARRAY_SYMBOL = "[]";
     private static final String DATA_PREFIX = "data" + PROPERTY_DELIMITER;
-
-    private static final Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
-    private static final Gson gson = new Gson();
 
     public static boolean isPropertyPathMatched(String propertyPath, String parentPropertyPath) {
         // We should not just use propertyPath.startsWith(parentPropertyPath)
@@ -224,8 +218,8 @@ public class PropertyUtil {
         }
         // If leftMap does not have property A and rightMap has a property A with null value
         // Maps.difference will consider that leftMap and rightMap are different.
-        // In our case, they are the same. Using Gson serialization/deserialization to remove
-        // the properties with null value on both sides
+        // In our case, they are the same. The properties with null value should be removed
+        // in the cloned map objects
         leftMap = removeNullValues(leftMap);
         rightMap = removeNullValues(rightMap);
 
@@ -304,11 +298,9 @@ public class PropertyUtil {
     }
 
     private static Map<String, Object> removeNullValues(Map<String, Object> dataMap) {
-        try {
-            return gson.fromJson(gson.toJson(dataMap), mapType);
-        } catch(Exception ex) {
-            //Ignore
-            return dataMap;
-        }
+        // The original object should not be changed
+        dataMap = new HashMap<>(dataMap);
+        dataMap.entrySet().removeIf(entry -> entry.getValue() == null);
+        return dataMap;
     }
 }
