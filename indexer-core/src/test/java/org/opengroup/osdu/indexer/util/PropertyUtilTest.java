@@ -349,6 +349,19 @@ public class PropertyUtilTest {
         changedProperties.forEach(p -> Assert.assertTrue(expectedChangedWellLogProperties.contains(p)));
     }
 
+    @Test
+    public void getChangedProperties_should_not_modify_originalObjects() {
+        Map<String, Object> dataMapLeft = getDataMap("well.json");
+        Map<String, Object> dataMapRight = getDataMap("well2.json");
+        String dataMapLeftText = dataMapLeft.toString();
+        String dataMapRightText = dataMapRight.toString();
+
+        PropertyUtil.getChangedProperties(dataMapLeft, dataMapRight);
+
+        Assert.assertEquals(dataMapLeftText, dataMapLeft.toString());
+        Assert.assertEquals(dataMapRightText, dataMapRightText.toString());
+    }
+
     private Map<String, Object> getDataMap(String file) {
         String jsonText = getJsonFromFile(file);
         Type type = new TypeToken<Map<String, Object>>() {}.getType();
