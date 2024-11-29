@@ -139,8 +139,9 @@ public class SearchClient {
     private List<SearchRecord> queryWithPit(ElasticsearchClient client, String pitId, Query query, List<SortOptions> sortOptions, List<String> returnedFields, int pageSize, int limit) throws Exception {
         List<SearchRecord> results = new ArrayList<>();
         List<FieldValue> fieldValues = null;
-        // SortOptions can't be null
-        if(sortOptions == null) {
+        // SortOptions can't be null or empty in search with search_after and PIT
+        // Otherwise, the returned fieldValues will be empty and cause infinite loop
+        if(sortOptions == null || sortOptions.isEmpty()) {
             sortOptions = new ArrayList<>();
             sortOptions.add(SortOptions.of(so -> so.score(s -> s.order(SortOrder.Desc))));
         }

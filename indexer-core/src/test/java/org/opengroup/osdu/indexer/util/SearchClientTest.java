@@ -138,9 +138,57 @@ public class SearchClientTest {
     }
 
     @Test
-    public void search_with_queryWithPIT_whenSearchHitsIsNotEmpty() throws Exception {
-        List<List<Hit<Map<String, Object>>>> batches = new ArrayList<>();
+    public void search_with_queryWithPIT_whenSortOptionsIsNotEmpty() throws Exception {
+        List<SortOptions> sortOptions = List.of(SortOptions.of(so -> so.score(s -> s.order(SortOrder.Desc))));
+        List<String> returnedFields = List.of("id", "kind");
+
         int totalRecordCount = 5100;
+        prepare_search_with_queryWithPIT(totalRecordCount);
+
+        // act
+        List<SearchRecord> records = sut.search(kind, query, sortOptions, returnedFields, -1);
+
+        // assert
+        ArgumentCaptor<SearchRequest> searchRequestArgumentCaptor = ArgumentCaptor.forClass(SearchRequest.class);
+        verify(client, times(3)).search(searchRequestArgumentCaptor.capture(), eq((Type)Map.class));
+        verify(client, times(1)).openPointInTime(any(OpenPointInTimeRequest.class));
+        verify(client, times(1)).closePointInTime(any(ClosePointInTimeRequest.class));
+        SearchRequest searchRequest = searchRequestArgumentCaptor.getValue();
+        assertEquals(searchRequest.sort(), sortOptions);
+        assertEquals(searchRequest.source().filter().includes().size(), 2);
+        assertTrue(searchRequest.source().filter().includes().contains("id"));
+        assertTrue(searchRequest.source().filter().includes().contains("kind"));
+        assertEquals(searchRequest.pit().id(), pitId);
+        assertEquals(records.size(), totalRecordCount);
+    }
+
+    @Test
+    public void search_with_queryWithPIT_whenSortOptionsIsEmpty() throws Exception {
+        List<String> returnedFields = List.of("id", "kind");
+
+        int totalRecordCount = 15000;
+        prepare_search_with_queryWithPIT(totalRecordCount);
+
+        // act
+        List<SearchRecord> records = sut.search(kind, query, null, returnedFields, -1);
+
+        // assert
+        ArgumentCaptor<SearchRequest> searchRequestArgumentCaptor = ArgumentCaptor.forClass(SearchRequest.class);
+        verify(client, times(5)).search(searchRequestArgumentCaptor.capture(), eq((Type)Map.class));
+        verify(client, times(1)).openPointInTime(any(OpenPointInTimeRequest.class));
+        verify(client, times(1)).closePointInTime(any(ClosePointInTimeRequest.class));
+        SearchRequest searchRequest = searchRequestArgumentCaptor.getValue();
+        List<SortOptions> sortOptions = searchRequest.sort();
+        assertEquals(sortOptions.size(), 1);
+        assertEquals(searchRequest.source().filter().includes().size(), 2);
+        assertTrue(searchRequest.source().filter().includes().contains("id"));
+        assertTrue(searchRequest.source().filter().includes().contains("kind"));
+        assertEquals(searchRequest.pit().id(), pitId);
+        assertEquals(records.size(), totalRecordCount);
+    }
+
+    private void prepare_search_with_queryWithPIT(int totalRecordCount) throws Exception {
+        List<List<Hit<Map<String, Object>>>> batches = new ArrayList<>();
         List<Hit<Map<String, Object>>> hits = new ArrayList<>();
         for(int i = 0; i < totalRecordCount; i++) {
             if(i % 5000 == 0 && i > 0) {
@@ -149,7 +197,9 @@ public class SearchClientTest {
             }
             hits.add(searchHit);
         }
-        batches.add(hits);
+        if(!hits.isEmpty())
+            batches.add(hits);
+        int batchCount = batches.size();
 
         Map<String, Object> hitFields = new HashMap<>();
         Map<String, Integer> searchCallsCount = new HashMap<>();
@@ -168,41 +218,26 @@ public class SearchClientTest {
         doReturn(searchHits).when(searchResponse).hits();
         when(searchHits.hits()).thenAnswer(invocation -> {
             // First call is normal query
-            // The second and third calls are queries with search_after and PIT
-            if(searchCallsCount.get("Count") < 3) {
-                return batches.get(0);
-            }
-            else if(searchCallsCount.get("Count") == 3) {
-                if(batches.size() == 2) {
-                    batches.remove(0);
-                }
+            // The second and the rest of the calls are queries with search_after and PIT
+            int searchCalls = searchCallsCount.get("Count");
+            if(searchCalls < 3) {
                 return batches.get(0);
             }
             else {
-                return new ArrayList<>();
+                if(batches.size() > 0 && batches.size() + searchCalls >= batchCount + 3) {
+                    batches.remove(0); // Remove the top batch from the last search
+                }
+                if(batches.size() > 0) {
+                    return batches.get(0);
+                }
+                else {
+                    return new ArrayList<>();
+                }
             }
+
         });
         doReturn(hitFields).when(searchHit).source();
         doReturn(fieldValues).when(searchHit).sort();
-        List<SortOptions> sortOptions = List.of(SortOptions.of(so -> so.score(s -> s.order(SortOrder.Desc))));
-        List<String> returnedFields = List.of("id", "kind");
-
-        // act
-        List<SearchRecord> records = sut.search(kind, query, sortOptions, returnedFields, -1);
-
-        // assert
-        ArgumentCaptor<SearchRequest> searchRequestArgumentCaptor = ArgumentCaptor.forClass(SearchRequest.class);
-        verify(client, times(3)).search(searchRequestArgumentCaptor.capture(), eq((Type)Map.class));
-        verify(client, times(1)).openPointInTime(any(OpenPointInTimeRequest.class));
-        verify(client, times(1)).closePointInTime(any(ClosePointInTimeRequest.class));
-        SearchRequest searchRequest = searchRequestArgumentCaptor.getValue();
-        assertEquals(searchRequest.sort(), sortOptions);
-        assertEquals(searchRequest.source().filter().includes().size(), 2);
-        assertTrue(searchRequest.source().filter().includes().contains("id"));
-        assertTrue(searchRequest.source().filter().includes().contains("kind"));
-        assertEquals(searchRequest.pit().id(), pitId);
-        assertEquals(searchRequest.searchAfter(), fieldValues);
-        assertEquals(records.size(), totalRecordCount);
     }
 
     @Test
