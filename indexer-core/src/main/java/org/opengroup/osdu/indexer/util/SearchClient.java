@@ -20,6 +20,7 @@ import co.elastic.clients.elasticsearch._types.ExpandWildcard;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SearchType;
 import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.Time;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.ClosePointInTimeRequest;
@@ -138,6 +139,11 @@ public class SearchClient {
     private List<SearchRecord> queryWithPit(ElasticsearchClient client, String pitId, Query query, List<SortOptions> sortOptions, List<String> returnedFields, int pageSize, int limit) throws Exception {
         List<SearchRecord> results = new ArrayList<>();
         List<FieldValue> fieldValues = null;
+        // SortOptions can't be null
+        if(sortOptions == null) {
+            sortOptions = new ArrayList<>();
+            sortOptions.add(SortOptions.of(so -> so.score(s -> s.order(SortOrder.Desc))));
+        }
         while(true) {
             // Build the SearchRequest
             SearchRequest.Builder queryBuilder = createSearchBuilder(query, sortOptions, returnedFields, pageSize);
