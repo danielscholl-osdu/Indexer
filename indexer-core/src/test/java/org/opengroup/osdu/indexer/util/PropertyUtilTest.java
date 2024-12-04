@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -50,7 +49,6 @@ public class PropertyUtilTest {
     }
 
     @Test
-    @Ignore
     public void getValueOfNoneNestedProperty() {
         Map<String, Object> data = this.getDataMap("wellLog.json");
 
@@ -76,9 +74,9 @@ public class PropertyUtilTest {
             Assert.assertTrue(value.containsKey(propertyName));
             Assert.assertNotNull(value.get(propertyName));
         }
+        // The null value is ignored
         for(String propertyName : propertyNamesWithNullValues) {
-            Assert.assertTrue(value.containsKey(propertyName));
-            Assert.assertNull(value.get(propertyName));
+            Assert.assertFalse(value.containsKey(propertyName));
         }
 
         value = PropertyUtil.getValueOfNoneNestedProperty("Curves[].CurveID", data);
@@ -340,11 +338,28 @@ public class PropertyUtilTest {
         List<String> expectedChangedWellProperties = Arrays.asList("VirtualProperties.DefaultName", "VerticalMeasurements[].VerticalMeasurementID", "FacilityName");
         changedProperties.forEach(p -> Assert.assertTrue(expectedChangedWellProperties.contains(p)));
 
+        dataMapRight = getDataMap("well_no_null.json");
+        changedProperties = PropertyUtil.getChangedProperties(dataMapLeft, dataMapRight);
+        Assert.assertTrue(changedProperties.isEmpty());
+
         dataMapLeft = getDataMap("wellLog.json");
         dataMapRight = getDataMap("wellLog2.json");
         changedProperties = PropertyUtil.getChangedProperties(dataMapLeft, dataMapRight);
         List<String> expectedChangedWellLogProperties = Arrays.asList("Curves[].CurveID");
         changedProperties.forEach(p -> Assert.assertTrue(expectedChangedWellLogProperties.contains(p)));
+    }
+
+    @Test
+    public void getChangedProperties_should_not_modify_originalObjects() {
+        Map<String, Object> dataMapLeft = getDataMap("well.json");
+        Map<String, Object> dataMapRight = getDataMap("well2.json");
+        String dataMapLeftText = dataMapLeft.toString();
+        String dataMapRightText = dataMapRight.toString();
+
+        PropertyUtil.getChangedProperties(dataMapLeft, dataMapRight);
+
+        Assert.assertEquals(dataMapLeftText, dataMapLeft.toString());
+        Assert.assertEquals(dataMapRightText, dataMapRightText.toString());
     }
 
     private Map<String, Object> getDataMap(String file) {

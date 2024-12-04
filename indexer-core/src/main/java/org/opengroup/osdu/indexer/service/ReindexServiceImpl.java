@@ -14,6 +14,7 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 
@@ -26,12 +27,13 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.indexer.*;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
-import org.opengroup.osdu.indexer.model.SearchRequest;
-import org.opengroup.osdu.indexer.model.SearchResponse;
+import org.opengroup.osdu.indexer.model.SearchRecord;
 import org.opengroup.osdu.indexer.model.XcollaborationHolder;
+import org.opengroup.osdu.indexer.util.QueryUtil;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
 import org.opengroup.osdu.core.common.provider.interfaces.IRequestInfo;
+import org.opengroup.osdu.indexer.util.SearchClient;
 import org.springframework.stereotype.Component;
 
 import jakarta.inject.Inject;
@@ -45,8 +47,6 @@ public class ReindexServiceImpl implements ReindexService {
     @Inject
     private StorageService storageService;
     @Inject
-    private SearchService searchService;
-    @Inject
     private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
     @Inject
     private IRequestInfo requestInfo;
@@ -56,6 +56,8 @@ public class ReindexServiceImpl implements ReindexService {
     private JaxRsDpsLog jaxRsDpsLog;
     @Inject
     private XcollaborationHolder xCollaborationHolder;
+    @Inject
+    private SearchClient searchClient;
 
     @SneakyThrows
     @Override
@@ -108,16 +110,19 @@ public class ReindexServiceImpl implements ReindexService {
             this.replayReindexMsg(msgs, 0L, null);
         }
         if (!records.getNotFound().isEmpty()) {
-            String query = String.format("id: (%s)", this.searchService.createIdsFilter(records.getNotFound()));
-            SearchRequest searchRequest = new SearchRequest();
-            searchRequest.setKind("*:*:*:*");
-            searchRequest.setQuery(query);
-            searchRequest.setLimit(records.getNotFound().size());
-            searchRequest.setReturnedFields(List.of("kind", "id"));
-            SearchResponse searchResponse =  this.searchService.query(searchRequest);
-            List<RecordInfo> msgs = searchResponse.getResults().stream()
-                    .map(record -> RecordInfo.builder().id(record.getId()).kind(record.getKind()).op(OperationType.delete.name()).build()).collect(Collectors.toList());
-            this.replayReindexMsg(msgs, 0L, null);
+            String queryString = String.format("id: (%s)", QueryUtil.createIdsFilter(records.getNotFound()));
+            Query query = QueryUtil.createSimpleTextQuery(queryString);
+            List<String> returnedFields = List.of("kind", "id");
+            try {
+                List<SearchRecord> results = searchClient.search("*:*:*:*", query, null, returnedFields, records.getNotFound().size());
+                List<RecordInfo> msgs = results.stream()
+                        .map(record -> RecordInfo.builder().id(record.getId()).kind(record.getKind()).op(OperationType.delete.name()).build()).collect(Collectors.toList());
+                this.replayReindexMsg(msgs, 0L, null);
+            }
+            catch(Exception ex) {
+                jaxRsDpsLog.error("reindexRecords: Failed to search", ex);
+            }
+
         }
         return records;
     }

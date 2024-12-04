@@ -216,6 +216,13 @@ public class PropertyUtil {
         if(rightMap == null) {
             rightMap = new HashMap<>();
         }
+        // If leftMap does not have property A and rightMap has a property A with null value
+        // Maps.difference will consider that leftMap and rightMap are different.
+        // In our case, they are the same. The properties with null value should be removed
+        // in the cloned map objects
+        leftMap = removeNullValues(leftMap);
+        rightMap = removeNullValues(rightMap);
+
         MapDifference<String, Object> difference = Maps.difference(leftMap, rightMap);
         if(difference.areEqual()) {
             return new ArrayList<>();
@@ -235,7 +242,7 @@ public class PropertyUtil {
                     Object left = valueDifference.leftValue();
                     Object right = valueDifference.rightValue();
                     if(left == null && right == null) {
-                        continue;
+                        //Same
                     }
                     else if(left == null || right == null) {
                         changedProperties.add(entry.getKey());
@@ -288,5 +295,12 @@ public class PropertyUtil {
         }
 
         return new ArrayList<>(changedProperties);
+    }
+
+    private static Map<String, Object> removeNullValues(Map<String, Object> dataMap) {
+        // The original object should not be changed
+        dataMap = new HashMap<>(dataMap);
+        dataMap.entrySet().removeIf(entry -> entry.getValue() == null);
+        return dataMap;
     }
 }

@@ -16,13 +16,13 @@
 package org.opengroup.osdu.indexer.service;
 
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
@@ -74,10 +74,9 @@ import org.opengroup.osdu.indexer.model.SchemaIdentity;
 import org.opengroup.osdu.indexer.model.SchemaInfo;
 import org.opengroup.osdu.indexer.model.SchemaInfoResponse;
 import org.opengroup.osdu.indexer.model.SearchRecord;
-import org.opengroup.osdu.indexer.model.SearchRequest;
-import org.opengroup.osdu.indexer.model.SearchResponse;
 import org.opengroup.osdu.indexer.model.indexproperty.AugmenterConfiguration;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
+import org.opengroup.osdu.indexer.util.SearchClient;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -104,7 +103,7 @@ public class AugmenterConfigurationServiceImplTest {
     @Mock
     private RecordChangeInfoCache recordChangeInfoCache;
     @Mock
-    private SearchService searchService;
+    private SearchClient searchClient;
     @Mock
     private SchemaService schemaService;
     @Mock
@@ -123,7 +122,7 @@ public class AugmenterConfigurationServiceImplTest {
     private String parentId;
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         this.sut.maxSizeOfExtendedListValue = 1000;
     }
 
@@ -151,22 +150,19 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void isAugmenterConfigurationEnabled_with_result_from_search() throws URISyntaxException {
+    public void isAugmenterConfigurationEnabled_with_result_from_search() throws Exception {
         String kind = "anyAuth:anySource:anyEntity:1.";
-        SearchResponse response = new SearchResponse();
-        response.setResults(Arrays.asList(new SearchRecord()));
         when(this.augmenterConfigurationEnabledCache.get(any())).thenReturn(null);
-        when(this.searchService.query(any())).thenReturn(response);
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(List.of(new SearchRecord()));
         Assert.assertTrue(sut.isConfigurationEnabled(kind));
         verify(this.augmenterConfigurationEnabledCache, times(1)).put(any(), any());
     }
 
     @Test
-    public void isAugmenterConfigurationEnabled_without_result_from_search() throws URISyntaxException {
+    public void isAugmenterConfigurationEnabled_without_result_from_search() throws Exception {
         String kind = "anyAuth:anySource:anyEntity:1.";
-        SearchResponse response = new SearchResponse();
         when(this.augmenterConfigurationEnabledCache.get(any())).thenReturn(null);
-        when(this.searchService.query(any())).thenReturn(response);
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(new ArrayList<>());
         Assert.assertFalse(sut.isConfigurationEnabled(kind));
         verify(this.augmenterConfigurationEnabledCache, times(1)).put(any(), any());
     }
@@ -203,15 +199,12 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void getAugmenterConfiguration_with_result_from_search() throws URISyntaxException {
+    public void getAugmenterConfiguration_with_result_from_search() throws Exception {
         Map<String, Object> data = this.getDataMap("well_configuration_record.json");
         SearchRecord searchRecord = new SearchRecord();
         searchRecord.setData(data);
         List<SearchRecord> results = Arrays.asList(searchRecord);
-        SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setResults(results);
-        searchResponse.setTotalCount(results.size());
-        when(this.searchService.query(any())).thenReturn(searchResponse);
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(results);
         String kind = "osdu:wks:master-data--Well:1.0.0";
         String code = "osdu:wks:master-data--Well:1.";
         AugmenterConfiguration configuration = sut.getConfiguration(kind);
@@ -225,8 +218,8 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void getAugmenterConfiguration_without_result_from_search() throws URISyntaxException {
-        when(this.searchService.query(any())).thenReturn(new SearchResponse());
+    public void getAugmenterConfiguration_without_result_from_search() throws Exception {
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(new ArrayList<>());
 
         String kind = "osdu:wks:master-data--Well:1.0.0";
         AugmenterConfiguration configuration = sut.getConfiguration(kind);
@@ -238,15 +231,13 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void getExtendedProperties_from_children_objects() throws JsonProcessingException, URISyntaxException {
+    public void getExtendedProperties_from_children_objects() throws Exception {
         AugmenterConfiguration propertyConfigurations = getConfiguration("wellbore_configuration_record.json");
         Map<String, Object> originalDataMap = getDataMap("wellbore_data.json");
         String jsonText = getJsonFromFile("welllog_search_records.json");
         Type type = new TypeToken<List<SearchRecord>>() {}.getType();
         List<SearchRecord> childrenRecords = gson.fromJson(jsonText, type);
-        SearchResponse response = new SearchResponse();
-        response.setResults(childrenRecords);
-        when(this.searchService.query(any())).thenReturn(response);
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(childrenRecords);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("wellbore_extended_data.json");
@@ -258,7 +249,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void getExtendedProperties_from_children_objects_with_small_list_size() throws JsonProcessingException, URISyntaxException {
+    public void getExtendedProperties_from_children_objects_with_small_list_size() throws Exception {
         // Set small threshold on the size of extended list value
         this.sut.maxSizeOfExtendedListValue = 50;
         AugmenterConfiguration propertyConfigurations = getConfiguration("wellbore_configuration_record.json");
@@ -266,9 +257,7 @@ public class AugmenterConfigurationServiceImplTest {
         String jsonText = getJsonFromFile("welllog_search_records.json");
         Type type = new TypeToken<List<SearchRecord>>() {}.getType();
         List<SearchRecord> childrenRecords = gson.fromJson(jsonText, type);
-        SearchResponse response = new SearchResponse();
-        response.setResults(childrenRecords);
-        when(this.searchService.query(any())).thenReturn(response);
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(childrenRecords);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         List<String> wellLogs = (List<String>)extendedProperties.getOrDefault("WellLogs", null);
@@ -278,14 +267,11 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void getExtendedProperties_from_self_and_parent_objects() throws JsonProcessingException, URISyntaxException {
+    public void getExtendedProperties_from_self_and_parent_objects() throws Exception {
         AugmenterConfiguration propertyConfigurations = getConfiguration("welllog_configuration_record.json");
         Map<String, Object> originalDataMap = getDataMap("welllog_original_data.json");
 
-        SearchResponse searchResponse = new SearchResponse();
         List<SearchRecord> records = new ArrayList<>();
-        searchResponse.setResults(records);
-
         Map<String, Object> relatedObjectData = getDataMap("wellbore_data.json");
         SearchRecord record = new SearchRecord();
         record.setId("opendes:master-data--Wellbore:nz-100000113552");
@@ -304,7 +290,7 @@ public class AugmenterConfigurationServiceImplTest {
         record.setData(relatedObjectData);
         records.add(record);
 
-        when(this.searchService.query(any())).thenReturn(searchResponse);
+        when(this.searchClient.search(any(List.class), any(), any(), any(), anyInt())).thenReturn(records);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Map<String, Object> expectedExtendedProperties = getDataMap("welllog_extended_data.json");
@@ -312,18 +298,16 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void getExtendedProperties_value_extract_match() throws JsonProcessingException, URISyntaxException {
+    public void getExtendedProperties_value_extract_match() throws Exception {
         AugmenterConfiguration propertyConfigurations = getConfiguration("value_extraction_match_configuration_record.json");
         Map<String, Object> originalDataMap = getDataMap("value_extraction_match_data_record.json");
 
-        SearchResponse searchResponse = new SearchResponse();
         List<SearchRecord> records = new ArrayList<>();
-        searchResponse.setResults(records);
         SearchRecord record = new SearchRecord();
         record.setData(originalDataMap);
         records.add(record);
 
-        when(this.searchService.query(any())).thenReturn(searchResponse);
+        when(this.searchClient.search(any(List.class), any(), any(), any(), anyInt())).thenReturn(records);
 
         Map<String, Object> extendedProperties = this.sut.getExtendedProperties("anyId", originalDataMap, propertyConfigurations);
         Double groundLevel = (Double)extendedProperties.getOrDefault("DCGroundlevel", null);
@@ -468,7 +452,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void cacheDataRecord_create_record() throws URISyntaxException {
+    public void cacheDataRecord_create_record() throws Exception {
         ArgumentCaptor<RecordChangeInfo> recordInfoArgumentCaptor = ArgumentCaptor.forClass(RecordChangeInfo.class);
         ArgumentCaptor<RecordData> dataMapArgumentCaptor = ArgumentCaptor.forClass(RecordData.class);
         String recordId = "anyId";
@@ -476,7 +460,7 @@ public class AugmenterConfigurationServiceImplTest {
         Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("p1", "v1");
 
-        when(this.searchService.query(any())).thenReturn(new SearchResponse());
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(new ArrayList<>());
 
         this.sut.cacheDataRecord(recordId, kind, dataMap);
 
@@ -488,7 +472,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void cacheDataRecord_update_record() throws URISyntaxException {
+    public void cacheDataRecord_update_record() throws Exception {
         ArgumentCaptor<RecordChangeInfo> recordInfoArgumentCaptor = ArgumentCaptor.forClass(RecordChangeInfo.class);
         ArgumentCaptor<RecordData> dataMapArgumentCaptor = ArgumentCaptor.forClass(RecordData.class);
         String recordId = "anyId";
@@ -503,10 +487,7 @@ public class AugmenterConfigurationServiceImplTest {
         searchRecord.setKind(kind);
         searchRecord.setId(recordId);
         searchRecord.setData(previousDataMap);
-        SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setResults(Arrays.asList(searchRecord));
-        searchResponse.setTotalCount(1);
-        when(this.searchService.query(any())).thenReturn(searchResponse);
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(List.of(searchRecord));
 
         this.sut.cacheDataRecord(recordId, kind, dataMap);
 
@@ -523,7 +504,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void cacheDataRecord_update_record_merge_previous_UpdateChangedInfo() throws URISyntaxException {
+    public void cacheDataRecord_update_record_merge_previous_UpdateChangedInfo() throws Exception {
         ArgumentCaptor<RecordChangeInfo> recordInfoArgumentCaptor = ArgumentCaptor.forClass(RecordChangeInfo.class);
         ArgumentCaptor<RecordData> dataMapArgumentCaptor = ArgumentCaptor.forClass(RecordData.class);
         String recordId = "anyId";
@@ -546,11 +527,8 @@ public class AugmenterConfigurationServiceImplTest {
         searchRecord.setKind(kind);
         searchRecord.setId(recordId);
         searchRecord.setData(previousDataMap);
-        SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setResults(Arrays.asList(searchRecord));
-        searchResponse.setTotalCount(1);
 
-        when(this.searchService.query(any())).thenReturn(searchResponse);
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(List.of(searchRecord));
         when(this.recordChangeInfoCache.get(any())).thenReturn(previousChangedInfo);
 
         this.sut.cacheDataRecord(recordId, kind, dataMap);
@@ -568,7 +546,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void cacheDataRecord_update_record_merge_previous_CreateChangedInfo() throws URISyntaxException {
+    public void cacheDataRecord_update_record_merge_previous_CreateChangedInfo() throws Exception {
         ArgumentCaptor<RecordChangeInfo> recordInfoArgumentCaptor = ArgumentCaptor.forClass(RecordChangeInfo.class);
         ArgumentCaptor<RecordData> dataMapArgumentCaptor = ArgumentCaptor.forClass(RecordData.class);
         String recordId = "anyId";
@@ -590,11 +568,8 @@ public class AugmenterConfigurationServiceImplTest {
         searchRecord.setKind(kind);
         searchRecord.setId(recordId);
         searchRecord.setData(previousDataMap);
-        SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setResults(Arrays.asList(searchRecord));
-        searchResponse.setTotalCount(1);
 
-        when(this.searchService.query(any())).thenReturn(searchResponse);
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenReturn(List.of(searchRecord));
         when(this.recordChangeInfoCache.get(any())).thenReturn(previousChangedInfo);
 
         this.sut.cacheDataRecord(recordId, kind, dataMap);
@@ -610,16 +585,16 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedParentRecords_for_created_childRecord() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedParentRecords_for_created_childRecord() throws Exception {
         updateAssociatedRecords_updateAssociatedParentRecords_for_created_delete(OperationType.create);
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedParentRecords_for_deleted_childRecord() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedParentRecords_for_deleted_childRecord() throws Exception {
         updateAssociatedRecords_updateAssociatedParentRecords_for_created_delete(OperationType.delete);
     }
 
-    private void updateAssociatedRecords_updateAssociatedParentRecords_for_created_delete(OperationType operationType) throws URISyntaxException {
+    private void updateAssociatedRecords_updateAssociatedParentRecords_for_created_delete(OperationType operationType) throws Exception {
         updateAssociatedRecords_updateAssociatedParentRecords_baseSetup();
 
         // Test
@@ -647,7 +622,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedParentRecords_for_updated_childRecord_with_extendedPropertyChanged() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedParentRecords_for_updated_childRecord_with_extendedPropertyChanged() throws Exception {
         updateAssociatedRecords_updateAssociatedParentRecords_baseSetup();
 
         RecordChangeInfo recordChangeInfo = new RecordChangeInfo();
@@ -681,7 +656,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedParentRecords_for_updated_childRecord_without_extendedPropertyChanged() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedParentRecords_for_updated_childRecord_without_extendedPropertyChanged() throws Exception {
         updateAssociatedRecords_updateAssociatedParentRecords_baseSetup();
 
         RecordChangeInfo recordChangeInfo = new RecordChangeInfo();
@@ -706,7 +681,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedParentRecords_circularIndexing() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedParentRecords_circularIndexing() throws Exception {
         updateAssociatedRecords_updateAssociatedParentRecords_baseSetup();
 
         // Test
@@ -723,29 +698,34 @@ public class AugmenterConfigurationServiceImplTest {
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
     }
 
-    private void updateAssociatedRecords_updateAssociatedParentRecords_baseSetup() throws URISyntaxException {
+    private void updateAssociatedRecords_updateAssociatedParentRecords_baseSetup() throws Exception {
         childKind = "osdu:wks:work-product-component--WellLog:1.0.0";
         childId = "anyChildId";
         parentKind = "osdu:wks:master-data--Wellbore:1.0.0";
         parentId = "anyParentId";
 
-        // Setup search response for searchService.query(...)
-        when(this.searchService.query(any())).thenAnswer(invocation -> {
-            SearchRequest searchRequest = invocation.getArgument(0);
-            SearchResponse searchResponse = new SearchResponse();
-            if (searchRequest.getKind().toString().equals(augmenterConfigurationKind)) {
-                if (searchRequest.getQuery().contains("ParentToChildren")) {
+        // Setup search response for searchClient.search(...)
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenAnswer(invocation -> {
+            String kind = invocation.getArgument(0);
+            return this.searchClient.search(List.of(kind), invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3), invocation.getArgument(4));
+        });
+        when(this.searchClient.search(any(List.class), any(), any(), any(), anyInt())).thenAnswer(invocation -> {
+            String kind = ((List<String>)invocation.getArgument(0)).get(0);
+            List<SearchRecord> records = new ArrayList<>();
+            if (kind.toString().equals(augmenterConfigurationKind)) {
+                String queryString = invocation.getArgument(1).toString();
+                if (queryString.contains("ParentToChildren")) {
                     // Return of getParentChildRelatedObjectsSpecs(...)
                     Map<String, Object> dataMap = getDataMap("wellbore_configuration_record.json");
                     SearchRecord searchRecord = new SearchRecord();
                     searchRecord.setData(dataMap);
-                    searchResponse.setResults(Arrays.asList(searchRecord));
+                    records.add(searchRecord);
                 } else {
                     // search ChildToParent.
                     // NO result
                 }
             } else {
-                if(searchRequest.getKind().toString().equals(childKind)) {
+                if(kind.toString().equals(childKind)) {
                     // Return of searchUniqueParentIds(...)
                     SearchRecord searchRecord = new SearchRecord();
                     Map<String, Object> childDataMap = new HashMap<>();
@@ -753,17 +733,17 @@ public class AugmenterConfigurationServiceImplTest {
                     searchRecord.setKind(childKind);
                     searchRecord.setId(childId);
                     searchRecord.setData(childDataMap);
-                    searchResponse.setResults(Arrays.asList(searchRecord));
+                    records.add(searchRecord);
                 }
-                else if(searchRequest.getKind().toString().equals("osdu:wks:master-data--Wellbore:1.*")) {
+                else if(kind.toString().equals("osdu:wks:master-data--Wellbore:1.*")) {
                     // Return of searchKindIds(...)
                     SearchRecord searchRecord = new SearchRecord();
                     searchRecord.setKind(parentKind);
                     searchRecord.setId(parentId);
-                    searchResponse.setResults(Arrays.asList(searchRecord));
+                    records.add(searchRecord);
                 }
             }
-            return searchResponse;
+            return records;
         });
 
         // setup headers
@@ -775,16 +755,16 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedChildrenRecords_for_created_parentRecord() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedChildrenRecords_for_created_parentRecord() throws Exception {
         updateAssociatedRecords_updateAssociatedChildrenRecords_for_created_delete(OperationType.create);
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedChildrenRecords_for_deleted_parentRecord() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedChildrenRecords_for_deleted_parentRecord() throws Exception {
         updateAssociatedRecords_updateAssociatedChildrenRecords_for_created_delete(OperationType.delete);
     }
 
-    private void updateAssociatedRecords_updateAssociatedChildrenRecords_for_created_delete(OperationType op) throws URISyntaxException {
+    private void updateAssociatedRecords_updateAssociatedChildrenRecords_for_created_delete(OperationType op) throws Exception {
         updateAssociatedRecords_updateAssociatedChildrenRecords_baseSetup();
 
         // Test
@@ -812,7 +792,7 @@ public class AugmenterConfigurationServiceImplTest {
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedChildrenRecords_for_updated_parentRecord_with_extendedPropertyChanged() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedChildrenRecords_for_updated_parentRecord_with_extendedPropertyChanged() throws Exception {
         updateAssociatedRecords_updateAssociatedChildrenRecords_baseSetup();
 
         RecordChangeInfo recordChangeInfo = new RecordChangeInfo();
@@ -843,11 +823,11 @@ public class AugmenterConfigurationServiceImplTest {
         Assert.assertEquals(1, infoList.size());
         Assert.assertEquals(childKind, infoList.get(0).getKind());
         Assert.assertEquals(childId, infoList.get(0).getId());
-        verify(this.searchService,times(0)).queryWithCursor(any());
+        verify(this.searchClient,times(4)).search(any(List.class), any(), any(), any(), anyInt());
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedChildrenRecords_for_updated_parentRecord_without_extendedPropertyChanged() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedChildrenRecords_for_updated_parentRecord_without_extendedPropertyChanged() throws Exception {
         updateAssociatedRecords_updateAssociatedChildrenRecords_baseSetup();
 
         RecordChangeInfo recordChangeInfo = new RecordChangeInfo();
@@ -869,11 +849,11 @@ public class AugmenterConfigurationServiceImplTest {
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
-        verify(this.searchService,times(0)).queryWithCursor(any());
+        verify(this.searchClient,times(4)).search(any(List.class), any(), any(), any(), anyInt());
     }
 
     @Test
-    public void updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing() throws URISyntaxException {
+    public void updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing() throws Exception {
         updateAssociatedRecords_updateAssociatedChildrenRecords_baseSetup();
 
         // Test
@@ -888,33 +868,39 @@ public class AugmenterConfigurationServiceImplTest {
 
         // Verify
         verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
-        verify(this.searchService,times(0)).queryWithCursor(any());
+        verify(this.searchClient,times(2)).search(any(List.class), any(), any(), any(), anyInt());
     }
 
-    private void updateAssociatedRecords_updateAssociatedChildrenRecords_baseSetup() throws URISyntaxException {
+    private void updateAssociatedRecords_updateAssociatedChildrenRecords_baseSetup() throws Exception {
         childKind = "osdu:wks:master-data--Well:1.0.0";
         childId = "anyChildId";
         parentKind = "osdu:wks:master-data--GeoPoliticalEntity:1.0.0";
         parentId = "anyParentId";
 
-        // Setup search response for searchService.query(...)
-        when(this.searchService.query(any())).thenAnswer(invocation -> {
-            SearchRequest searchRequest = invocation.getArgument(0);
-            SearchResponse searchResponse = new SearchResponse();
-            if (searchRequest.getKind().toString().equals(augmenterConfigurationKind)) {
-                if (searchRequest.getQuery().contains("ChildToParent") || searchRequest.getQuery().contains("data.Code:")) {
+        // Setup search response for searchClient.search(...)
+        when(this.searchClient.search(anyString(), any(), any(), any(), anyInt())).thenAnswer(invocation -> {
+            String kind = invocation.getArgument(0);
+            return this.searchClient.search(List.of(kind), invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3), invocation.getArgument(4));
+        });
+        when(this.searchClient.search(any(List.class), any(), any(), any(), anyInt())).thenAnswer(invocation -> {
+            String kind = ((List<String>)invocation.getArgument(0)).get(0);
+            Query query = invocation.getArgument(1);
+            List<SearchRecord> records = new ArrayList<>();
+            if (kind.toString().equals(augmenterConfigurationKind)) {
+                String queryString = query.toString();
+                if (queryString.contains("ChildToParent") || queryString.contains("data.Code:")) {
                     // Return of getParentChildRelatedObjectsSpecs(...) or
                     // getPropertyConfigurations(...)
                     Map<String, Object> dataMap = getDataMap("well_configuration_record.json");
                     SearchRecord searchRecord = new SearchRecord();
                     searchRecord.setData(dataMap);
-                    searchResponse.setResults(Arrays.asList(searchRecord));
+                    records.add(searchRecord);
                 } else {
                     // Search ParentToChildren
                     // No result
                 }
             }
-            else if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
+            else if(kind.toString().contains("osdu:wks:master-data--Well:1.")) {
                 // Return of searchUniqueParentIds(...)
                 SearchRecord searchRecord = new SearchRecord();
                 Map<String, Object> childDataMap = new HashMap<>();
@@ -922,147 +908,14 @@ public class AugmenterConfigurationServiceImplTest {
                 searchRecord.setKind(childKind);
                 searchRecord.setId(childId);
                 searchRecord.setData(childDataMap);
-                searchResponse.setResults(Arrays.asList(searchRecord));
+                records.add(searchRecord);
             }
             else {
                 // This branch is a setup for test case:
                 // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
                 throw new Exception("Unexpected search");
             }
-            return searchResponse;
-        });
-
-        // setup headers
-        DpsHeaders dpsHeaders = new DpsHeaders();
-        dpsHeaders.put(DpsHeaders.AUTHORIZATION, "testAuth");
-        dpsHeaders.put(DpsHeaders.DATA_PARTITION_ID, "opendes");
-        dpsHeaders.put(DpsHeaders.CORRELATION_ID, "123");
-        when(this.requestInfo.getHeadersWithDwdAuthZ()).thenReturn(dpsHeaders);
-    }
-
-    @Test
-    public void updateAssociatedRecords_updateAssociatedChildrenRecords_with_cursor_query_for_updated_parentRecord_with_extendedPropertyChanged() throws URISyntaxException {
-        updateAssociatedRecords_updateAssociatedChildrenRecords_with_query_by_cursor_baseSetup();
-
-        RecordChangeInfo recordChangeInfo = new RecordChangeInfo();
-        RecordInfo recordInfo = new RecordInfo();
-        recordInfo.setKind(parentKind);
-        recordInfo.setId(parentId);
-        recordInfo.setOp(OperationType.update.getValue());
-        recordChangeInfo.setRecordInfo(recordInfo);
-        recordChangeInfo.setUpdatedProperties(Arrays.asList("GeoPoliticalEntityName"));
-        when(this.recordChangeInfoCache.get(any())).thenReturn(recordChangeInfo);
-
-        // Test
-        RecordChangedMessages recordChangedMessages = new RecordChangedMessages();
-        recordChangedMessages.setAttributes(new HashMap<>());
-        Map<String, List<String>> upsertKindIds = new HashMap<>();
-        Map<String, List<String>> deleteKindIds = new HashMap<>();
-        upsertKindIds.put(parentKind, Arrays.asList(parentId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
-
-        // Verify
-        ArgumentCaptor<String> payloadArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        verify(this.indexerQueueTaskBuilder,times(1)).createWorkerTask(payloadArgumentCaptor.capture(), any(), any());
-
-        RecordChangedMessages newMessages = gson.fromJson(payloadArgumentCaptor.getValue(), RecordChangedMessages.class);
-        Type type = new TypeToken<List<RecordInfo>>() {}.getType();
-        List<RecordInfo> infoList = gson.fromJson(newMessages.getData(), type);
-        Assert.assertEquals(parentKind, newMessages.getAttributes().get(Constants.ANCESTRY_KINDS));
-        Assert.assertEquals(1, infoList.size());
-        Assert.assertEquals(childKind, infoList.get(0).getKind());
-        Assert.assertEquals(childId, infoList.get(0).getId());
-
-        verify(this.searchService,times(1)).queryWithCursor(any());
-    }
-
-    @Test
-    public void updateAssociatedRecords_updateAssociatedChildrenRecords_with_cursor_query_for_updated_parentRecord_without_extendedPropertyChanged() throws URISyntaxException {
-        updateAssociatedRecords_updateAssociatedChildrenRecords_with_query_by_cursor_baseSetup();
-
-        RecordChangeInfo recordChangeInfo = new RecordChangeInfo();
-        RecordInfo recordInfo = new RecordInfo();
-        recordInfo.setKind(parentKind);
-        recordInfo.setId(parentId);
-        recordInfo.setOp(OperationType.update.getValue());
-        recordChangeInfo.setRecordInfo(recordInfo);
-        recordChangeInfo.setUpdatedProperties(Arrays.asList("abc"));
-        when(this.recordChangeInfoCache.get(any())).thenReturn(recordChangeInfo);
-
-        // Test
-        RecordChangedMessages recordChangedMessages = new RecordChangedMessages();
-        recordChangedMessages.setAttributes(new HashMap<>());
-        Map<String, List<String>> upsertKindIds = new HashMap<>();
-        Map<String, List<String>> deleteKindIds = new HashMap<>();
-        upsertKindIds.put(parentKind, Arrays.asList(parentId));
-        this.sut.updateAssociatedRecords(recordChangedMessages, upsertKindIds, deleteKindIds, new ArrayList<>());
-
-        // Verify
-        verify(this.indexerQueueTaskBuilder,times(0)).createWorkerTask(any(), any(), any());
-        verify(this.searchService,times(1)).queryWithCursor(any());
-    }
-    
-    private void updateAssociatedRecords_updateAssociatedChildrenRecords_with_query_by_cursor_baseSetup() throws URISyntaxException {
-        childKind = "osdu:wks:master-data--Well:1.0.0";
-        childId = "anyChildId";
-        parentKind = "osdu:wks:master-data--GeoPoliticalEntity:1.0.0";
-        parentId = "anyParentId";
-
-        // Setup search response for searchService.query(...)
-        when(this.searchService.query(any())).thenAnswer(invocation -> {
-            SearchRequest searchRequest = invocation.getArgument(0);
-            SearchResponse searchResponse = new SearchResponse();
-            if (searchRequest.getKind().toString().equals(augmenterConfigurationKind)) {
-                if (searchRequest.getQuery().contains("ChildToParent") || searchRequest.getQuery().contains("data.Code:")) {
-                    // Return of getParentChildRelatedObjectsSpecs(...) or
-                    // getPropertyConfigurations(...)
-                    Map<String, Object> dataMap = getDataMap("well_configuration_record.json");
-                    SearchRecord searchRecord = new SearchRecord();
-                    searchRecord.setData(dataMap);
-                    searchResponse.setResults(Arrays.asList(searchRecord));
-                } else {
-                    // Search ParentToChildren
-                    // No result
-                }
-            }
-            else if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
-                // Return of searchUniqueParentIds(...)
-                SearchRecord searchRecord = new SearchRecord();
-                Map<String, Object> childDataMap = new HashMap<>();
-                childDataMap.put("AssociatedIdentities", Arrays.asList(parentId));
-                searchRecord.setKind(childKind);
-                searchRecord.setId(childId);
-                searchRecord.setData(childDataMap);
-                searchResponse.setResults(Arrays.asList(searchRecord));
-                searchResponse.setTotalCount(10000);
-            }
-            else {
-                // This branch is a setup for test case:
-                // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
-                throw new Exception("Unexpected search");
-            }
-            return searchResponse;
-        });
-
-        when(this.searchService.queryWithCursor(any())).thenAnswer(invocation -> {
-            SearchRequest searchRequest = invocation.getArgument(0);
-            SearchResponse searchResponse = new SearchResponse();
-            if(searchRequest.getKind().toString().contains("osdu:wks:master-data--Well:1.")) {
-                // Return of searchUniqueParentIds(...)
-                SearchRecord searchRecord = new SearchRecord();
-                Map<String, Object> childDataMap = new HashMap<>();
-                childDataMap.put("AssociatedIdentities", Arrays.asList(parentId));
-                searchRecord.setKind(childKind);
-                searchRecord.setId(childId);
-                searchRecord.setData(childDataMap);
-                searchResponse.setResults(Arrays.asList(searchRecord));
-            }
-            else {
-                // This branch is a setup for test case:
-                // updateAssociatedRecords_updateAssociatedChildrenRecords_circularIndexing
-                throw new Exception("Unexpected search");
-            }
-            return searchResponse;
+            return records;
         });
 
         // setup headers

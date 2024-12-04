@@ -15,6 +15,9 @@
 
 package org.opengroup.osdu.indexer.service;
 
+import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
@@ -28,8 +31,6 @@ import org.opengroup.osdu.core.common.model.indexer.JobStatus;
 import org.opengroup.osdu.core.common.model.indexer.OperationType;
 import org.opengroup.osdu.core.common.model.indexer.RecordInfo;
 import org.opengroup.osdu.core.common.model.search.RecordChangedMessages;
-import org.opengroup.osdu.core.common.model.search.SortOrder;
-import org.opengroup.osdu.core.common.model.search.SortQuery;
 import org.opengroup.osdu.core.common.model.storage.RecordData;
 import org.opengroup.osdu.core.common.model.storage.Schema;
 import org.opengroup.osdu.core.common.model.storage.SchemaItem;
@@ -38,13 +39,14 @@ import org.opengroup.osdu.indexer.cache.partitionsafe.*;
 import org.opengroup.osdu.indexer.config.IndexerConfigurationProperties;
 import org.opengroup.osdu.indexer.model.*;
 import org.opengroup.osdu.indexer.model.indexproperty.*;
+import org.opengroup.osdu.indexer.util.QueryUtil;
 import org.opengroup.osdu.indexer.util.IndexerQueueTaskBuilder;
 import org.opengroup.osdu.indexer.util.PropertyUtil;
+import org.opengroup.osdu.indexer.util.SearchClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.inject.Inject;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,14 +58,6 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     private static final String ASSOCIATED_IDENTITIES_PROPERTY_STORAGE_FORMAT_TYPE = "[]string";
     private static final String INDEX_PROPERTY_PATH_CONFIGURATION_KIND = "osdu:wks:reference-data--IndexPropertyPathConfiguration:*";
     private static final String ANCESTRY_KINDS_DELIMITER = ",";
-    private static final String PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT =
-            "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ParentToChildren AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
-    private static final String CHILDREN_PARENT_CONFIGURATION_QUERY_FORMAT =
-            "nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelationshipDirection: ChildToParent AND RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
-    private static final String HAS_CONFIGURATIONS_QUERY_FORMAT =  "data.Code: \"%s\" OR nested(data.Configurations, nested(data.Configurations.Paths, (RelatedObjectsSpec.RelatedObjectKind:\"%s\")))";
-    private static final int MAX_SEARCH_LIMIT = 1000;
-    private static final int MAX_TOTAL_COUNT = 10000;
-
     private static final String PROPERTY_DELIMITER = ".";
     private static final String NESTED_OBJECT_DELIMITER = "[].";
     private static final String ARRAY_SYMBOL = "[]";
@@ -74,7 +68,9 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     private static final String STRING_ARRAY_KIND = "[]string";
 
     private static final AugmenterConfiguration EMPTY_AUGMENTER_CONFIGURATION = new AugmenterConfiguration();
-    private static final String SEARCH_GENERAL_ERROR = "Failed to call search service.";
+    private static final String SEARCH_GENERAL_ERROR = "Augmenter: Failed to search.";
+
+    private static final int NO_LIMIT = -1;
 
     private final Gson gson = new Gson();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -96,8 +92,6 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     @Inject
     private RecordChangeInfoCache recordChangeInfoCache;
     @Inject
-    private SearchService searchService;
-    @Inject
     private SchemaService schemaService;
     @Inject
     private IndexerQueueTaskBuilder indexerQueueTaskBuilder;
@@ -107,6 +101,8 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     private JaxRsDpsLog jaxRsDpsLog;
     @Inject
     private JobStatus jobStatus;
+    @Inject
+    private SearchClient searchClient;
 
     @Value("${augmenter.extended_list_value.max_size:2000}")
     int maxSizeOfExtendedListValue;
@@ -119,11 +115,8 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
 
         Boolean enabled = augmenterConfigurationEnabledCache.get(kind);
         if(enabled == null) {
-            SearchRequest searchRequest = new SearchRequest();
-            searchRequest.setKind(INDEX_PROPERTY_PATH_CONFIGURATION_KIND);
-            String query = String.format(HAS_CONFIGURATIONS_QUERY_FORMAT, kind, kind);
-            searchRequest.setQuery(query);
-            if(searchFirstRecord(searchRequest) != null) {
+            Query query = QueryUtil.createQueryForConfigurations(kind);
+            if(searchFirstRecord(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query) != null) {
                 enabled = true;
             }
             else {
@@ -460,7 +453,7 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     }
 
     private String createIdsQuery(List<String> ids) {
-        return String.format("id: (%s)", this.searchService.createIdsFilter(ids));
+        return String.format("id: (%s)", QueryUtil.createIdsFilter(ids));
     }
 
     private void createWorkerTask(String ancestors, List<RecordInfo> recordInfos) {
@@ -482,12 +475,9 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
         RecordData recordData = relatedObjectCache.get(id);
         Map<String, Object> data = (recordData != null)? recordData.getData() : null;
         if (data == null) {
-            SearchRequest searchRequest = new SearchRequest();
-            searchRequest.setKind(kind);
-            String query = String.format("id: \"%s\"", id);
-            searchRequest.setQuery(query);
-            SearchRecord searchRecord = searchFirstRecord(searchRequest);
-
+            String queryString = String.format("id: \"%s\"", id);
+            Query query = QueryUtil.createSimpleTextQuery(queryString);
+            SearchRecord searchRecord = searchFirstRecord(kind, query);
             if (searchRecord != null) {
                 data = searchRecord.getData();
                 recordData = new RecordData();
@@ -957,9 +947,6 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     }
 
     private void updateAssociatedChildrenRecords(String ancestors, String parentKind, List<RecordChangeInfo> recordChangeInfos) {
-        List<String> processedIds = recordChangeInfos.stream().map(recordChangeInfo -> recordChangeInfo.getRecordInfo().getId()).toList();
-        String query = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, this.searchService.createIdsFilter(processedIds));
-
         List<String> childrenKinds = getChildrenKinds(parentKind);
         for (String ancestryKind : ancestors.split(ANCESTRY_KINDS_DELIMITER)) {
             // Exclude the kinds in the ancestryKinds to prevent circular chasing
@@ -974,12 +961,14 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
             String kindWithMajor = PropertyUtil.getKindWithMajor(kind) + "*.*";
             multiKinds.add(kindWithMajor);
         }
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(multiKinds);
-        searchRequest.setQuery(query);
-        searchRequest.setReturnedFields(Arrays.asList("kind", "id", "data." + ASSOCIATED_IDENTITIES_PROPERTY));
+        List<String> processedIds = recordChangeInfos.stream().map(recordChangeInfo -> recordChangeInfo.getRecordInfo().getId()).toList();
+        String queryString = String.format("data.%s:(%s)", ASSOCIATED_IDENTITIES_PROPERTY, QueryUtil.createIdsFilter(processedIds));
+        Query query = QueryUtil.createSimpleTextQuery(queryString);
+        List<String> returnedFields = List.of("kind", "id", "data." + ASSOCIATED_IDENTITIES_PROPERTY);
+        List<SearchRecord> records = this.search(multiKinds, query, null, returnedFields, NO_LIMIT);
+
         List<RecordInfo> recordInfos = new ArrayList<>();
-        for (SearchRecord searchRecord : searchRecords(searchRequest)) {
+        for (SearchRecord searchRecord : records) {
             Map<String, Object> data = searchRecord.getData();
             if (!data.containsKey(ASSOCIATED_IDENTITIES_PROPERTY) || data.get(ASSOCIATED_IDENTITIES_PROPERTY) == null)
                 continue;
@@ -1055,24 +1044,20 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     }
 
     /****************************** search methods that use search service to get the data **************************************/
-    private SearchRequest createSearchRequest(String kind, String query) {
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(kind);
-        searchRequest.setQuery(query);
-        return searchRequest;
-    }
-
     private AugmenterConfiguration searchConfiguration(String kind) {
-        String query = String.format("data.Code: \"%s\"", kind);
-        SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
+        String queryString = String.format("data.Code: \"%s\"", kind);
+        Query query = QueryUtil.createSimpleTextQuery(queryString);
         // If there is more than PropertyConfigurations, pick the one that was last modified.
         // Given the property "modifyTime" is not set for new created record, we use property "version"
         // to sort the search result in descending order
-        SortQuery sort = new SortQuery();
-        sort.setField(Arrays.asList(VERSION_PROPERTY));
-        sort.setOrder(Arrays.asList(SortOrder.DESC));
-        searchRequest.setSort(sort);
-        List<AugmenterConfiguration> augmenterConfigurations = searchConfigurations(searchRequest);
+        List<SortOptions> sortOptionsList = null;
+        try {
+            sortOptionsList = QueryUtil.createSortOptionsList(List.of(VERSION_PROPERTY), List.of(SortOrder.Desc));
+        } catch(Exception ex) {
+          // Should not reach here. Ignore
+        }
+
+        List<AugmenterConfiguration> augmenterConfigurations = searchConfigurations(query, sortOptionsList);
         if(!augmenterConfigurations.isEmpty()) {
             if(augmenterConfigurations.size() > 1) {
                 jaxRsDpsLog.warning(String.format("There is more than one PropertyConfigurations for kind: %s", kind));
@@ -1083,20 +1068,19 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
     }
 
     private List<AugmenterConfiguration> searchParentKindConfigurations(String childKind) {
-        String query = String.format(PARENT_CHILDREN_CONFIGURATION_QUERY_FORMAT, childKind);
-        SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
-        return searchConfigurations(searchRequest);
+        Query query = QueryUtil.createQueryForParentConfigs(childKind);
+        return searchConfigurations(query, null);
     }
 
     private List<AugmenterConfiguration> searchChildrenKindConfigurations(String parentKind) {
-        String query = String.format(CHILDREN_PARENT_CONFIGURATION_QUERY_FORMAT, parentKind);
-        SearchRequest searchRequest = createSearchRequest(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query);
-        return searchConfigurations(searchRequest);
+        Query query = QueryUtil.createQueryForChildrenConfigs(parentKind);
+        return searchConfigurations(query,null);
     }
 
-    private List<AugmenterConfiguration> searchConfigurations(SearchRequest searchRequest) {
+    private List<AugmenterConfiguration> searchConfigurations(Query query, List<SortOptions> sortOptions) {
         List<AugmenterConfiguration> augmenterConfigurations = new ArrayList<>();
-        for (SearchRecord searchRecord : searchRecords(searchRequest)) {
+        List<SearchRecord> records = this.search(INDEX_PROPERTY_PATH_CONFIGURATION_KIND, query, sortOptions, null, NO_LIMIT);
+        for (SearchRecord searchRecord : records) {
             try {
                 String data = objectMapper.writeValueAsString(searchRecord.getData());
                 AugmenterConfiguration configurations = objectMapper.readValue(data, AugmenterConfiguration.class);
@@ -1104,35 +1088,33 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
                 augmenterConfigurationCache.put(kind, configurations);
                 augmenterConfigurations.add(configurations);
             } catch (JsonProcessingException e) {
-                jaxRsDpsLog.error("failed to deserialize PropertyConfigurations object", e);
+                jaxRsDpsLog.error("Augmenter(searchConfigurations): failed to deserialize PropertyConfigurations object", e);
             }
         }
         return augmenterConfigurations;
     }
 
     private List<SearchRecord> searchRelatedRecords(List<String> relatedObjectKinds, List<String> relatedObjectIds) {
-        SearchRequest searchRequest = new SearchRequest();
         List<String> kinds = new ArrayList<>();
         for(String kind : relatedObjectKinds) {
             if(!PropertyUtil.isConcreteKind(kind))
                 kind += "*";
             kinds.add(kind);
         }
-        searchRequest.setKind(kinds);
-        String query = createIdsQuery(relatedObjectIds);
-        searchRequest.setQuery(query);
-        return searchRecords(searchRequest);
+        String queryString = createIdsQuery(relatedObjectIds);
+        Query query = QueryUtil.createSimpleTextQuery(queryString);
+        return this.search(kinds, query, null, null, NO_LIMIT);
     }
 
     private Map<String, List<String>> searchKindIds(String majorKind, List<String> ids) {
-        Map<String, List<String>> kindIds = new HashMap<>();
-        SearchRequest searchRequest = new SearchRequest();
         String kind = PropertyUtil.isConcreteKind(majorKind) ? majorKind : majorKind + "*";
-        searchRequest.setKind(kind);
-        String query = createIdsQuery(ids);
-        searchRequest.setReturnedFields(Arrays.asList("kind", "id"));
-        searchRequest.setQuery(query);
-        for (SearchRecord searchRecord : searchRecords(searchRequest)) {
+        String queryString = createIdsQuery(ids);
+        Query query = QueryUtil.createSimpleTextQuery(queryString);
+        List<String> returnedFields = List.of("kind", "id");
+
+        Map<String, List<String>> kindIds = new HashMap<>();
+        List<SearchRecord> records = this.search(kind, query, null, returnedFields, NO_LIMIT);
+        for (SearchRecord searchRecord : records) {
             if (kindIds.containsKey(searchRecord.getKind())) {
                 kindIds.get(searchRecord.getKind()).add(searchRecord.getId());
             } else {
@@ -1146,13 +1128,12 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
 
     private List<String> searchUniqueParentIds(String childKind, List<String> childRecordIds, String parentObjectIdPath) {
         Set<String> parentIds = new HashSet<>();
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(childKind);
-        String query = createIdsQuery(childRecordIds);
-        searchRequest.setReturnedFields(Arrays.asList(parentObjectIdPath));
-        searchRequest.setQuery(query);
+        String queryString = createIdsQuery(childRecordIds);
+        Query query = QueryUtil.createSimpleTextQuery(queryString);
+        List<String> returnedFields = Arrays.asList(parentObjectIdPath);
+
+        List<SearchRecord> searchRecords = this.search(childKind, query, null, returnedFields, NO_LIMIT);
         parentObjectIdPath = PropertyUtil.removeDataPrefix(parentObjectIdPath);
-        List<SearchRecord> searchRecords = searchRecords(searchRequest);
         Map<String, SearchRecord> idRecords = searchRecords.stream().collect(Collectors.toMap(SearchRecord::getId, record -> record));
         for(String childRecordId :  childRecordIds) {
             RecordData recordData = this.relatedObjectCache.get(childRecordId);
@@ -1166,7 +1147,6 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
                     data = searchRecord.getData();
                 }
             }
-
             if(data != null && data.containsKey(parentObjectIdPath)) {
                 Object id = data.get(parentObjectIdPath);
                 if (id != null && !parentIds.contains(id)) {
@@ -1174,85 +1154,41 @@ public class AugmenterConfigurationServiceImpl implements AugmenterConfiguration
                 }
             }
         }
-
         return new ArrayList<>(parentIds);
     }
 
     private List<SearchRecord> searchChildrenRecords(String childrenObjectKind, String childrenObjectField, String parentId) {
         String kind = PropertyUtil.isConcreteKind(childrenObjectKind) ? childrenObjectKind : childrenObjectKind + "*";
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setKind(kind);
-        String query = String.format("%s: \"%s\"", childrenObjectField, parentId);
-        searchRequest.setQuery(query);
-        // Though it might affect the performance but query with offset might not work correctly
-        // when there are more than 1K records from search results.
-        SortQuery sortQuery = new SortQuery();
-        sortQuery.setField(List.of("id"));
-        sortQuery.setOrder(List.of(SortOrder.ASC));
-        searchRequest.setSort(sortQuery);
-        return searchRecords(searchRequest);
+        String queryString = String.format("%s: \"%s\"", childrenObjectField, parentId);
+        Query query = QueryUtil.createSimpleTextQuery(queryString);
+        return this.search(kind, query, null, null, NO_LIMIT);
     }
 
-    private List<SearchRecord> searchRecordsWithCursor(SearchRequest searchRequest) {
-        searchRequest.setLimit(MAX_SEARCH_LIMIT);
-        List<SearchRecord> allRecords = new ArrayList<>();
-        try {
-            List<SearchRecord> results = null;
-            String cursor = null;
-            do {
-                SearchResponse searchResponse = searchService.queryWithCursor(searchRequest);
-                results = searchResponse.getResults();
-                cursor = searchResponse.getCursor();
-                if (!CollectionUtils.isEmpty(results)) {
-                    allRecords.addAll(results);
-                    if (!Strings.isNullOrEmpty(cursor)) {
-                        searchRequest.setCursor(cursor);
-                    }
-                }
-            } while(results != null && cursor != null);
-        } catch (URISyntaxException e) {
-            jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, e);
-        }
-        return allRecords;
-    }
-
-    private List<SearchRecord> searchRecords(SearchRequest searchRequest) {
-        searchRequest.setLimit(MAX_SEARCH_LIMIT);
-        int offset = 0;
-        List<SearchRecord> allRecords = new ArrayList<>();
-        try {
-            List<SearchRecord> results = null;
-            do {
-                SearchResponse searchResponse = searchService.query(searchRequest);
-                if(searchResponse.getTotalCount() >= MAX_TOTAL_COUNT) {
-                    // The search without cursor can return max. 10,000 records
-                    // If the totalCount reaches 10,1000 records, we should switch to using query with cursor
-                    return searchRecordsWithCursor(searchRequest);
-                }
-                results = searchResponse.getResults();
-                if (!CollectionUtils.isEmpty(results)) {
-                    allRecords.addAll(results);
-                    offset += results.size();
-                    searchRequest.setOffset(offset);
-                }
-            } while(results != null && results.size() == MAX_SEARCH_LIMIT);
-        } catch (URISyntaxException e) {
-            jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, e);
-        }
-        return allRecords;
-    }
-
-    private SearchRecord searchFirstRecord(SearchRequest searchRequest) {
-        searchRequest.setLimit(1);
-        try {
-            SearchResponse searchResponse = searchService.query(searchRequest);
-            List<SearchRecord> results = searchResponse.getResults();
-            if (results != null && !results.isEmpty()) {
-                return results.get(0);
-            }
-        } catch (URISyntaxException e) {
-            jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, e);
+    private SearchRecord searchFirstRecord(String kind, Query query) {
+        List<SearchRecord> results = this.search(kind, query, null, null, 1);
+        if (!results.isEmpty()) {
+            return results.get(0);
         }
         return null;
+    }
+
+    private List<SearchRecord> search(String kind, Query query, List<SortOptions> sortOptions, List<String> returnedFields, int limit) {
+        try {
+            return searchClient.search(kind, query, sortOptions, returnedFields, limit);
+        }
+        catch (Exception ex) {
+            this.jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, ex);
+        }
+        return new ArrayList<>();
+    }
+
+    private List<SearchRecord> search(List<String> kinds, Query query, List<SortOptions> sortOptions, List<String> returnedFields, int limit) {
+        try {
+            return searchClient.search(kinds, query, sortOptions, returnedFields, limit);
+        }
+        catch (Exception ex) {
+            this.jaxRsDpsLog.error(SEARCH_GENERAL_ERROR, ex);
+        }
+        return new ArrayList<>();
     }
 }
