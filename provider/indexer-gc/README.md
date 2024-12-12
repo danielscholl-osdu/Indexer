@@ -1,6 +1,6 @@
 # Indexer Service
 
-Indexer-gc is a [Spring Boot](https://spring.io/projects/spring-boot) service that is responsible for indexing Records that enable the `search` service to execute OSDU R2 domain searches against Elasticsearch.
+Indexer GC is a [Spring Boot](https://spring.io/projects/spring-boot) service that is responsible for indexing Records that enable the `search` service to execute OSDU R3 domain searches against Elasticsearch.
 
 ## Table of Contents <a name="TOC"></a>
 
@@ -21,21 +21,9 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## Service Configuration
 
-### Baremetal
-
-[Baremetal service configuration](docs/baremetal/README.md)
-
 ##***REMOVED***
 
 [Google Cloud service configuration](docs/gc/README.md)
-
-## Mappers
-
-This is a universal solution created using EPAM OQM mappers technology. It allows you to work with various
-implementations of message brokers.
-
-For more information about mappers:
-* [OQM Readme](https://community.opengroup.org/osdu/platform/system/lib/cloud/gcp/oqm/-/blob/master/README.md)
 
 ### Limitations of the current version
 
@@ -120,11 +108,6 @@ gcloud auth application-default login
 ```
 
 * Navigate to indexer service's root folder and run:
-
-```bash
-mvn jetty:run
-## Testing
-* Navigate to indexer service's root folder and run:
  
 ```bash
 mvn clean install   
@@ -177,13 +160,14 @@ Indexer Service is compatible with Cloud Run.
   <https://cloud.google.com/cloud-build/docs/deploying-builds/deploy-gke>
 
 ## Entitlements groups
+Entitlements groups of Indexer Service Account:
 
-Storage service account should have entitlements groups listed below:
-* service.entitlements.user
-* users
-* service.schema-service.viewers
-* service.storage.admin
-* service.search.admin
+| Required Roles                   |
+|----------------------------------|
+| service.entitlements.user        |
+| service.schema-service.viewers   |
+| service.storage.admin            |
+| service.search.admin             |
 
 ## Licence
 
