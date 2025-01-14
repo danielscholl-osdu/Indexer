@@ -101,7 +101,7 @@ The following software have components provided under the terms of this license:
 - Jackson-dataformat-YAML (from https://github.com/FasterXML/jackson, https://github.com/FasterXML/jackson-dataformats-text)
 - Jackson-module-parameter-names (from https://repo1.maven.org/maven2/com/fasterxml/jackson/module/jackson-module-parameter-names)
 - Jakarta Dependency Injection (from https://github.com/eclipse-ee4j/injection-api)
-- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://maven.atlassian.com/3rdparty/jakarta/ws/rs/jakarta.ws.rs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 - Jakarta Servlet (from https://projects.eclipse.org/projects/ee4j.servlet)
 - Jakarta Validation API (from https://beanvalidation.org)
 - Java Native Access (from https://github.com/java-native-access/jna, https://github.com/twall/jna)
@@ -298,7 +298,7 @@ The following software have components provided under the terms of this license:
 - Jakarta Annotations API (from https://projects.eclipse.org/projects/ee4j.ca)
 - Jakarta JSON Processing API (from https://github.com/eclipse-ee4j/jsonp, https://javaee.github.io/jsonp)
 - Jakarta Messaging API (from https://projects.eclipse.org/projects/ee4j.jms)
-- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://maven.atlassian.com/3rdparty/jakarta/ws/rs/jakarta.ws.rs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api, https://repo1.maven.org/maven2/org/jboss/spec/javax/xml/bind/jboss-jaxb-api_2.3_spec)
 - Kryo (from https://repo1.maven.org/maven2/com/esotericsoftware/kryo)
 - MinLog (from https://github.com/EsotericSoftware/minlog)
@@ -435,7 +435,7 @@ The following software have components provided under the terms of this license:
 - Jakarta Dependency Injection (from https://github.com/eclipse-ee4j/injection-api)
 - Jakarta JSON Processing API (from https://github.com/eclipse-ee4j/jsonp, https://javaee.github.io/jsonp)
 - Jakarta Messaging API (from https://projects.eclipse.org/projects/ee4j.jms)
-- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://maven.atlassian.com/3rdparty/jakarta/ws/rs/jakarta.ws.rs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 - Jakarta Servlet (from https://projects.eclipse.org/projects/ee4j.servlet)
 - Jakarta Validation API (from https://beanvalidation.org)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api, https://repo1.maven.org/maven2/org/jboss/spec/javax/xml/bind/jboss-jaxb-api_2.3_spec)
@@ -475,7 +475,7 @@ The following software have components provided under the terms of this license:
 - Jakarta Dependency Injection (from https://github.com/eclipse-ee4j/injection-api)
 - Jakarta JSON Processing API (from https://github.com/eclipse-ee4j/jsonp, https://javaee.github.io/jsonp)
 - Jakarta Messaging API (from https://projects.eclipse.org/projects/ee4j.jms)
-- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://maven.atlassian.com/3rdparty/jakarta/ws/rs/jakarta.ws.rs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 - Jakarta Servlet (from https://projects.eclipse.org/projects/ee4j.servlet)
 - Jakarta Validation API (from https://beanvalidation.org)
 - Jakarta XML Binding API (from https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api, https://repo1.maven.org/maven2/org/jboss/spec/javax/xml/bind/jboss-jaxb-api_2.3_spec)
@@ -650,7 +650,7 @@ efsl-1.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
+- Jakarta RESTful WS API (from https://github.com/eclipse-ee4j/jaxrs-api, https://maven.atlassian.com/3rdparty/jakarta/ws/rs/jakarta.ws.rs-api, https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api)
 
 ========================================================================
 gpl-2.0-classpath
