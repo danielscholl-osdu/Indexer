@@ -105,6 +105,10 @@ public class GlobalExceptionMapperCore extends ResponseEntityExceptionHandler {
             this.jaxRsDpsLogger.warning(exceptionMsg, e);
         }
 
+        if (e.getError().getDebuggingInfo() != null) {
+            this.jaxRsDpsLogger.warning(e.getError().getDebuggingInfo());
+        }
+
         // Support for non standard HttpStatus Codes
         HttpStatus httpStatus = HttpStatus.resolve(e.getError().getCode());
         if (httpStatus == null) {
