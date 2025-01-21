@@ -9,6 +9,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Objects;
 import javax.net.ssl.SSLContext;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.java.Log;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -89,7 +92,9 @@ public class ElasticClientHandler {
       RestClientBuilder builder = createClientBuilder(host, basicAuthenticationHeaderVal, port,
           protocolScheme, tls);
 
-      RestClientTransport transport = new RestClientTransport(builder.build(), new JacksonJsonpMapper());
+      ObjectMapper objectMapper = new ObjectMapper();
+      objectMapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+      RestClientTransport transport = new RestClientTransport(builder.build(), new JacksonJsonpMapper(objectMapper));
 
       return new ElasticsearchClient(transport);
     } catch (AppException e) {
