@@ -16,11 +16,13 @@ package org.opengroup.osdu.indexer.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.HealthStatus;
 import co.elastic.clients.elasticsearch._types.Time;
-import co.elastic.clients.elasticsearch._types.analysis.*;
-import co.elastic.clients.elasticsearch.cluster.HealthRequest;
-import co.elastic.clients.elasticsearch.cluster.HealthResponse;
+import co.elastic.clients.elasticsearch._types.analysis.Analyzer;
+import co.elastic.clients.elasticsearch._types.analysis.CharFilter;
+import co.elastic.clients.elasticsearch._types.analysis.CharFilterDefinition;
+import co.elastic.clients.elasticsearch._types.analysis.CustomAnalyzer;
+import co.elastic.clients.elasticsearch._types.analysis.MappingCharFilter;
+import co.elastic.clients.elasticsearch._types.analysis.PatternReplaceCharFilter;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest.Builder;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
@@ -29,8 +31,8 @@ import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
 import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
-import co.elastic.clients.elasticsearch.indices.IndexSettingsAnalysis;
 import co.elastic.clients.elasticsearch.indices.IndexSettings;
+import co.elastic.clients.elasticsearch.indices.IndexSettingsAnalysis;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,7 +61,11 @@ import org.springframework.web.context.annotation.RequestScope;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequestScope
@@ -117,7 +123,7 @@ public class IndicesServiceImpl implements IndicesService {
             boolean indexStatus = createIndexResponse.acknowledged() && createIndexResponse.shardsAcknowledged();
             if (indexStatus) {
                 this.indexCache.put(index, true);
-                this.log.info(String.format("Time taken to successfully create new index %s : %d milliseconds", index, stopTime-startTime));
+                this.log.info(String.format("Time taken to successfully create new index %s : %d milliseconds", index, stopTime - startTime));
 
                 // Create alias for index
                 indexAliasService.createIndexAlias(client, elasticIndexNameResolver.getKindFromIndexName(index));
@@ -158,10 +164,10 @@ public class IndicesServiceImpl implements IndicesService {
                 return false;
             }
             throw new AppException(
-                exception.status(),
-                exception.getMessage(),
-                String.format("Error getting index: %s status", index),
-                exception);
+                    exception.status(),
+                    exception.getMessage(),
+                    String.format("Error getting index: %s status", index),
+                    exception);
         }
     }
 
@@ -174,31 +180,30 @@ public class IndicesServiceImpl implements IndicesService {
      */
     public boolean isIndexReady(ElasticsearchClient client, String index) throws IOException {
         try {
-            if (this.indexExistInCache(index)){
+            if (this.indexExistInCache(index)) {
                 return true;
             }
             ExistsRequest existsRequest = ExistsRequest.of(builder -> builder.index(index));
             BooleanResponse exists = client.indices().exists(existsRequest);
-            if (!exists.value()){
+            if (!exists.value()) {
                 return false;
             }
-            HealthRequest healthRequest = HealthRequest.of(builder -> builder.index(index)
-                .timeout(REQUEST_TIMEOUT)
-                .waitForStatus(HealthStatus.Yellow)
-            );
-            HealthResponse health = client.cluster().health(healthRequest);
-            if (health.status() == HealthStatus.Green || health.status() == HealthStatus.Yellow) {
-                this.indexCache.put(index, true);
-                return true;
+            List<IndexInfo> indexHealthInfos = this.getIndexInfo(client, index);
+            if (indexHealthInfos.isEmpty()) {
+                return false;
             }
-            return false;
+            if ("red".equalsIgnoreCase(indexHealthInfos.get(0).getHealth())) {
+                throw new AppException(HttpStatus.SC_SERVICE_UNAVAILABLE, "Index not available for indexing", String.format("Index: %s primary shards are unassigned", index));
+            }
+            this.indexCache.put(index, true);
+            return true;
         } catch (ElasticsearchException exception) {
             if (exception.status() == HttpStatus.SC_NOT_FOUND) return false;
             throw new AppException(
-                exception.status(),
-                exception.getMessage(),
-                String.format("Error getting index: %s status", index),
-                exception);
+                    exception.status(),
+                    exception.getMessage(),
+                    String.format("Error getting index: %s status", index),
+                    exception);
         }
     }
 
@@ -207,7 +212,7 @@ public class IndicesServiceImpl implements IndicesService {
         builder.refreshInterval(Time.of(timeBuilder -> timeBuilder.time("30s")));
         builder.numberOfShards("1");
         builder.numberOfReplicas("1");
-        if(customIndexAnalyzerSetting.isEnabled()) {
+        if (customIndexAnalyzerSetting.isEnabled()) {
             IndexSettingsAnalysis analysis = getCustomAnalyzer();
             builder.analysis(analysis);
         }
@@ -258,7 +263,7 @@ public class IndicesServiceImpl implements IndicesService {
     public boolean deleteIndex(ElasticsearchClient client, String index) throws ElasticsearchException, IOException, AppException {
         List<String> indices = this.resolveIndex(client, index);
         boolean responseStatus = true;
-        for (String idx: indices) {
+        for (String idx : indices) {
             responseStatus &= removeIndexInElasticsearch(client, idx);
         }
         if (responseStatus) {
@@ -314,26 +319,29 @@ public class IndicesServiceImpl implements IndicesService {
     }
 
     /**
-     * Remove index in Elasticsearch
+     * Get index information from Elasticsearch
      *
      * @param client       Elasticsearch client
      * @param indexPattern Index pattern
+     * @return List of indices matching indexPattern
      * @throws IOException Throws {@link IOException} if elastic cannot complete the request
      */
     public List<IndexInfo> getIndexInfo(ElasticsearchClient client, String indexPattern) throws IOException {
         Objects.requireNonNull(client, CLIENT_CANNOT_BE_NULL);
 
         String requestUrl = (indexPattern == null || indexPattern.isEmpty())
-            ? "/_cat/indices/*,-.*?h=index,docs.count,creation.date&s=docs.count:asc&format=json"
-            : String.format("/_cat/indices/%s?h=index,docs.count,creation.date&format=json", indexPattern);
+                ? "/_cat/indices/*,-.*?h=index,health,docs.count,creation.date&s=docs.count:asc&format=json"
+                : String.format("/_cat/indices/%s?h=index,health,docs.count,creation.date&format=json", indexPattern);
 
-        RestClientTransport clientTransport = (RestClientTransport)client._transport();
-        Request request = new Request("GET", requestUrl);
-        Response response = clientTransport.restClient().performRequest(request);
-        String responseBody = EntityUtils.toString(response.getEntity());
+        try (RestClientTransport clientTransport = (RestClientTransport) client._transport()) {
+            Request request = new Request("GET", requestUrl);
+            Response response = clientTransport.restClient().performRequest(request);
+            String responseBody = EntityUtils.toString(response.getEntity());
 
-        Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
-        return new Gson().fromJson(responseBody, typeOf);
+            Type typeOf = new TypeToken<List<IndexInfo>>() {
+            }.getType();
+            return new Gson().fromJson(responseBody, typeOf);
+        }
     }
 
     private void clearCacheOnIndexDeletion(String index) {

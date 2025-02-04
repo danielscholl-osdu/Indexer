@@ -376,7 +376,7 @@ public class IndicesServiceTest {
                 "    \"creation.date\": \"1545912860994\"" +
                 "  }" +
                 "]";
-        Request request = new Request("GET", "/_cat/indices/*,-.*?h=index,docs.count,creation.date&s=docs.count:asc&format=json");
+        Request request = new Request("GET", "/_cat/indices/*,-.*?h=index,health,docs.count,creation.date&s=docs.count:asc&format=json");
         StringEntity entity = new StringEntity(responseJson, ContentType.APPLICATION_JSON);
         when(this.restHighLevelClient._transport()).thenReturn(this.restClientTransport);
         when(this.restClientTransport.restClient()).thenReturn(this.restClient);
@@ -402,7 +402,7 @@ public class IndicesServiceTest {
                 "    \"creation.date\": \"1545912868416\"" +
                 "  }" +
                 "]";
-        Request request = new Request("GET", "/_cat/indices/tenant1-aapg-*?h=index,docs.count,creation.date&format=json");
+        Request request = new Request("GET", "/_cat/indices/tenant1-aapg-*?h=index,health,docs.count,creation.date&format=json");
         StringEntity entity = new StringEntity(responseJson, ContentType.APPLICATION_JSON);
         when(this.restHighLevelClient._transport()).thenReturn(this.restClientTransport);
         when(this.restClientTransport.restClient()).thenReturn(this.restClient);
@@ -468,16 +468,52 @@ public class IndicesServiceTest {
         BooleanResponse booleanResponse = new BooleanResponse(true);
         doReturn(booleanResponse).when(indicesClient).exists(any(ExistsRequest.class));
 
-        HealthResponse healthResponse = mock(HealthResponse.class);
-        when(healthResponse.status()).thenReturn(HealthStatus.Green);
-        doReturn(clusterClient).when(restHighLevelClient).cluster();
-        doReturn(healthResponse).when(clusterClient).health(any(HealthRequest.class));
+        String responseJson = "[" +
+                "  {" +
+                "    \"index\": \"anyIndex\"," +
+                "    \"health\": \"yellow\"," +
+                "    \"docs.count\": \"92\"," +
+                "    \"creation.date\": \"1545912860994\"" +
+                "  }" +
+                "]";
+        Request request = new Request("GET", "/_cat/indices/anyIndex?h=index,health,docs.count,creation.date&format=json");
+        StringEntity entity = new StringEntity(responseJson, ContentType.APPLICATION_JSON);
+        when(this.restHighLevelClient._transport()).thenReturn(this.restClientTransport);
+        when(this.restClientTransport.restClient()).thenReturn(this.restClient);
+        when(this.restClient.performRequest(request)).thenReturn(response);
+        when(this.response.getEntity()).thenReturn(entity);
 
         boolean result = this.sut.isIndexReady(restHighLevelClient, "anyIndex");
 
         assertTrue(result);
         verify(this.indicesExistCache, times(1)).get("anyIndex");
         verify(this.indicesExistCache, times(1)).put("anyIndex", true);
+    }
+
+    @Test(expected = AppException.class)
+    public void should_throwIndexUnavailableException_whenIndexNotReady() throws IOException {
+        when(this.indicesExistCache.get("anyIndex")).thenReturn(false);
+        doReturn(indicesClient).when(restHighLevelClient).indices();
+
+        BooleanResponse booleanResponse = new BooleanResponse(true);
+        doReturn(booleanResponse).when(indicesClient).exists(any(ExistsRequest.class));
+
+        String responseJson = "[" +
+                "  {" +
+                "    \"index\": \"anyIndex\"," +
+                "    \"health\": \"red\"," +
+                "    \"docs.count\": \"92\"," +
+                "    \"creation.date\": \"1545912860994\"" +
+                "  }" +
+                "]";
+        Request request = new Request("GET", "/_cat/indices/anyIndex?h=index,health,docs.count,creation.date&format=json");
+        StringEntity entity = new StringEntity(responseJson, ContentType.APPLICATION_JSON);
+        when(this.restHighLevelClient._transport()).thenReturn(this.restClientTransport);
+        when(this.restClientTransport.restClient()).thenReturn(this.restClient);
+        when(this.restClient.performRequest(request)).thenReturn(response);
+        when(this.response.getEntity()).thenReturn(entity);
+
+        boolean result = this.sut.isIndexReady(restHighLevelClient, "anyIndex");
     }
 
 }
