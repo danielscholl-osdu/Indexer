@@ -29,6 +29,8 @@ variables:
   AZURE_TEST_SUBDIR: testing/indexer-test-azure
   SERVICE_JAVA_VERSION: "17"
 
+  ACCEPTANCE_TEST_DIR: "indexer-acceptance-test"
+
 include:
   - project: "osdu/platform/ci-cd-pipelines"
     file: "standard-setup.yml"
