@@ -17,7 +17,6 @@
 
 package org.opengroup.osdu.util;
 
-import com.google.common.base.Strings;
 import lombok.ToString;
 import lombok.extern.java.Log;
 
@@ -25,23 +24,14 @@ import lombok.extern.java.Log;
 @ToString
 public class AnthosHTTPClient extends HTTPClient {
 
-    public static final String INTEGRATION_TESTER_TOKEN = "ROOT_USER_TOKEN";
     private static String token = null;
-    private static OpenIDTokenProvider openIDTokenProvider;
-
-    public AnthosHTTPClient() {
-        token = System.getProperty(INTEGRATION_TESTER_TOKEN, System.getenv(INTEGRATION_TESTER_TOKEN));
-
-        if (Strings.isNullOrEmpty(token)) {
-            openIDTokenProvider = new OpenIDTokenProvider();
-        }
-    }
+    private static OpenIDTokenProvider openIDTokenProvider = new OpenIDTokenProvider();
 
     @Override
     public synchronized String getAccessToken() {
-        if (Strings.isNullOrEmpty(token)) {
-            token = openIDTokenProvider.getToken();
+        if (token == null) {
+            token = "Bearer " + openIDTokenProvider.getToken();
         }
-        return "Bearer " + token;
+        return token;
     }
 }
