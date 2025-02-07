@@ -34,9 +34,9 @@ public class OpenIDProviderConfig {
 
     public static OpenIDProviderConfig Instance() {
         try {
-            openIDProviderConfig.clientId = System.getProperty("TEST_OPENID_PROVIDER_CLIENT_ID", System.getenv("TEST_OPENID_PROVIDER_CLIENT_ID"));
+            openIDProviderConfig.clientId = System.getProperty("PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID", System.getenv("PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID"));
             openIDProviderConfig.url = System.getProperty("TEST_OPENID_PROVIDER_URL", System.getenv("TEST_OPENID_PROVIDER_URL"));
-            openIDProviderConfig.clientSecret = System.getProperty("TEST_OPENID_PROVIDER_CLIENT_SECRET", System.getenv("TEST_OPENID_PROVIDER_CLIENT_SECRET"));
+            openIDProviderConfig.clientSecret = System.getProperty("PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET", System.getenv("PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET"));
             Issuer issuer = new Issuer(openIDProviderConfig.url);
             OIDCProviderConfigurationRequest request = new OIDCProviderConfigurationRequest(issuer);
             HTTPRequest httpRequest = request.toHTTPRequest();

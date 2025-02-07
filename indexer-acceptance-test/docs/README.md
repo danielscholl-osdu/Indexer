@@ -18,14 +18,14 @@ You will need to have the following environment variables defined.
 
 Authentication can be provided as OIDC config:
 
-| name                                 | value                                   | description             | sensitive? | source |
-|--------------------------------------|-----------------------------------------|-------------------------|------------|--------|
-| `TEST_OPENID_PROVIDER_CLIENT_ID`     | `********`                              | ROOT_USER Client Id     | yes        | -      |
-| `TEST_OPENID_PROVIDER_CLIENT_SECRET` | `********`                              | ROOT_USER Client Secret | yes        | -      |
-| `TEST_OPENID_PROVIDER_URL`           | `https://keycloak.com/auth/realms/osdu` | OpenID Provider Url     | yes        | -      |
-| `ELASTIC_USER_NAME`                  | `********`                              | Elastic User            | ?          | -      |
-| `ELASTIC_PASSWORD`                   | `********`                              | Elastic User Password   | yes        | -      |
-| `ELASTIC_PORT`                       | `********`                              | Elastic Request Port    | ?          | -      |
+| name                                            | value                                   | description             | sensitive? | source |
+|-------------------------------------------------|-----------------------------------------|-------------------------|------------|--------|
+| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID`     | `********`                              | ROOT_USER Client Id     | yes        | -      |
+| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET` | `********`                              | ROOT_USER Client Secret | yes        | -      |
+| `TEST_OPENID_PROVIDER_URL`                      | `https://keycloak.com/auth/realms/osdu` | OpenID Provider Url     | yes        | -      |
+| `ELASTIC_USER_NAME`                             | `********`                              | Elastic User            | ?          | -      |
+| `ELASTIC_PASSWORD`                              | `********`                              | Elastic User Password   | yes        | -      |
+| `ELASTIC_PORT`                                  | `********`                              | Elastic Request Port    | ?          | -      |
 Or tokens can be used directly from env variables:
 
 | name              | value      | description           | sensitive? | source |
@@ -34,15 +34,17 @@ Or tokens can be used directly from env variables:
 
 #### Entitlements configuration for Integration Accounts
 
-| ROOT_USER                           |
-|-------------------------------------|
-| users                               |
-| service.schema-service.system-admin |
-| service.entitlements.user           |
-| service.schema-service.viewers      |
-| service.schema-service.editors      |
-| data.integration.test               |
-| data.test1                          |
+| INTEGRATION_TESTER            | NO_DATA_ACCESS_TESTER |
+|-------------------------------|-----------------------|
+| users                         |                       |
+| users.datalake.ops            |                       |
+| service.storage.creator       |                       |
+| service.entitlements.user     |                       |
+| service.search.user           |                       |
+| service.search.admin          |                       |
+| data.test1                    |                       |
+| data.integration.test         |                       |
+| users@{tenant1}@{groupId}.com |                       |
 
 Execute following command to build code and run all the integration tests:
 
