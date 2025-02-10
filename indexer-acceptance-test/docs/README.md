@@ -2,35 +2,35 @@
 
 You will need to have the following environment variables defined.
 
-| name                                | value                                  | description                              | sensitive? | source |
-|-------------------------------------|----------------------------------------|------------------------------------------|------------|--------|
-| `HOST`                              | eg. `https://osdu.com`                 | -                                        | no         | -      |
-| `INDEXER_HOST`                      | eg. `https://osdu.com/api/indexer/v2/` | -                                        | no         | -      |
-| `ELASTIC_HOST`                      | eg. `elastic.core.com`                 | -                                        | no         | -      |
-| `SEARCH_HOST`                       | eg. `https://osdu.com/api/search/v2/`  | -                                        | no         | -      |
-| `STORAGE_HOST`                      | eg. `https://osdu.com/api/storage/v2/` | -                                        | no         | -      |
-| `SECURITY_HTTPS_CERTIFICATE_TRUST`  | eg. `true` / `false`                   | -                                        | no         | -      |
-| `DEFAULT_DATA_PARTITION_ID_TENANT1` | eg. `osdu`                             | OSDU tenant used for testing             | no         | -      |
-| `DEFAULT_DATA_PARTITION_ID_TENANT2` | eg. `osdu`                             | Alternative OSDU tenant used for testing | no         | -      |
-| `ENTITLEMENTS_DOMAIN`               | eg. `group`                            | -                                        | no         | -      |
-| `LEGAL_TAG`                         | eg. `osdu-legaltag`                    | -                                        | no         | -      |
-| `OTHER_RELEVANT_DATA_COUNTRIES`     | eg. `US`                               | -                                        | no         | -      |
+| name                                | value                                                            | description                                                                                       | sensitive? | source                              |
+|-------------------------------------|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|------------|-------------------------------------|
+| `HOST`                              | eg. `https://osdu.com`                                           | -                                                                                                 | no         | -                                   |
+| `INDEXER_HOST`                      | eg. `https://os-indexer-dot-opendes.appspot.com/api/indexer/v2/` | Indexer API endpoint                                                                              | no         | output of infrastructure deployment |
+| `SEARCH_HOST`                       | eg. `https://osdu.com/api/search/v2/`                            | -                                                                                                 | no         | -                                   |
+| `STORAGE_HOST`                      | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/`   | Storage API endpoint                                                                              | no         | output of infrastructure deployment |
+| `SECURITY_HTTPS_CERTIFICATE_TRUST`  | ex `false`                                                       | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true'                         | no         | output of infrastructure deployment |
+| `DEFAULT_DATA_PARTITION_ID_TENANT1` | ex `opendes`                                                     | HTTP Header 'Data-Partition-ID'                                                                   | no         | -                                   |
+| `DEFAULT_DATA_PARTITION_ID_TENANT2` | ex `opendes`                                                     | HTTP Header 'Data-Partition-ID'                                                                   | no         | -                                   |
+| `ENTITLEMENTS_DOMAIN`               | eg. `group`                                                      | -                                                                                                 | no         | -                                   |
+| `LEGAL_TAG`                         | ex `opendes-demo-legaltag`                                       | valid legal tag with a other relevant data countries from `DEFAULT_OTHER_RELEVANT_DATA_COUNTRIES` | no         | -                                   |
+| `OTHER_RELEVANT_DATA_COUNTRIES`     | ex `US`                                                          | valid legal tag with a other relevant data countries                                              | no         | -                                   |
 
 Authentication can be provided as OIDC config:
 
-| name                                            | value                                   | description             | sensitive? | source |
-|-------------------------------------------------|-----------------------------------------|-------------------------|------------|--------|
-| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID`     | `********`                              | ROOT_USER Client Id     | yes        | -      |
-| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET` | `********`                              | ROOT_USER Client Secret | yes        | -      |
-| `TEST_OPENID_PROVIDER_URL`                      | `https://keycloak.com/auth/realms/osdu` | OpenID Provider Url     | yes        | -      |
-| `ELASTIC_USER_NAME`                             | `********`                              | Elastic User            | ?          | -      |
-| `ELASTIC_PASSWORD`                              | `********`                              | Elastic User Password   | yes        | -      |
-| `ELASTIC_PORT`                                  | `********`                              | Elastic Request Port    | ?          | -      |
+| name                                            | value                                   | description                         | sensitive? | source                              |
+|-------------------------------------------------|-----------------------------------------|-------------------------------------|------------|-------------------------------------|
+| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID`     | `********`                              | Client Id for `$INTEGRATION_TESTER` | yes        | -                                   |
+| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET` | `********`                              | secret for `$INTEGRATION_TESTER`    | yes        | -                                   |
+| `TEST_OPENID_PROVIDER_URL`                      | `https://keycloak.com/auth/realms/osdu` | OpenID provider url                 | yes        | -                                   |
+| `ELASTIC_HOST`                                  | eg. `elastic.domain.com`                | Host Elasticsearch                  | yes        | output of infrastructure deployment |
+| `ELASTIC_USER_NAME`                             | `********`                              | User name for Elasticsearch         | yes        | output of infrastructure deployment |
+| `ELASTIC_PASSWORD`                              | `********`                              | Password for Elasticsearch          | yes        | output of infrastructure deployment |
+| `ELASTIC_PORT`                                  | ex `9243`                               | Port Elasticsearch                  | yes        | output of infrastructure deployment |
 Or tokens can be used directly from env variables:
 
 | name              | value      | description           | sensitive? | source |
 |-------------------|------------|-----------------------|------------|--------|
-| `ROOT_USER_TOKEN` | `********` | PRIVILEGED_USER Token | yes        | -      |
+| `PRIVILEGED_USER` | `********` | PRIVILEGED_USER Token | yes        | -      |
 
 #### Entitlements configuration for Integration Accounts
 
