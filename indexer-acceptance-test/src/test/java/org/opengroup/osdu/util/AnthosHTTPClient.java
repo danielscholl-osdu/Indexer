@@ -25,12 +25,12 @@ import lombok.extern.java.Log;
 @ToString
 public class AnthosHTTPClient extends HTTPClient {
 
-    public static final String INTEGRATION_TESTER_TOKEN = "ROOT_USER_TOKEN";
+    public static final String PRIVILEGED_USER_TOKEN = "ROOT_USER_TOKEN";
     private static String token = null;
     private static OpenIDTokenProvider openIDTokenProvider;
 
     public AnthosHTTPClient() {
-        token = System.getProperty(INTEGRATION_TESTER_TOKEN, System.getenv(INTEGRATION_TESTER_TOKEN));
+        token = System.getProperty(PRIVILEGED_USER_TOKEN, System.getenv(PRIVILEGED_USER_TOKEN));
 
         if (Strings.isNullOrEmpty(token)) {
             openIDTokenProvider = new OpenIDTokenProvider();

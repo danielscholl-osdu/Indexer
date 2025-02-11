@@ -28,9 +28,9 @@ Authentication can be provided as OIDC config:
 | `ELASTIC_PORT`                                  | ex `9243`                               | Port Elasticsearch                  | yes        | output of infrastructure deployment |
 Or tokens can be used directly from env variables:
 
-| name              | value      | description           | sensitive? | source |
-|-------------------|------------|-----------------------|------------|--------|
-| `PRIVILEGED_USER` | `********` | PRIVILEGED_USER Token | yes        | -      |
+| name                    | value      | description           | sensitive? | source |
+|-------------------------|------------|-----------------------|------------|--------|
+| `PRIVILEGED_USER_TOKEN` | `********` | PRIVILEGED_USER Token | yes        | -      |
 
 #### Entitlements configuration for Integration Accounts
 
