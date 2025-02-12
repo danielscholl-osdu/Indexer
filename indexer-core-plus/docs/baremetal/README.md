@@ -22,7 +22,6 @@ Must have:
 
 | name                                         | value                                      | description                                                                                                                                                                                                                                                                                               | sensitive? | source |
 |----------------------------------------------|--------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|--------|
-| `SPRING_PROFILES_ACTIVE`                     | ex `anthos`                                | Spring profile that activate default configuration for Google Cloud environment                                                                                                                                                                                                                           | false      | -      |
 | `OPENID_PROVIDER_CLIENT_ID`                  | `*****`                                    | Client id that represents this service and serves to request tokens, example `workload-identity-legal`                                                                                                                                                                                                    | yes        | -      |
 | `OPENID_PROVIDER_CLIENT_SECRET`              | `*****`                                    | This client secret that serves to request tokens                                                                                                                                                                                                                                                          | yes        | -      |
 | `OPENID_PROVIDER_URL`                        | `https://keycloack.com/auth/realms/master` | URL of OpenID Connect provider, it will be used as `<OpenID URL> + /.well-known/openid-configuration` to auto configure endpoint for token request                                                                                                                                                        | no         | -      |
@@ -67,11 +66,11 @@ This variable should be present in environment of service that need that variabl
 Example:
 ```json
     "elasticsearch.port": {
-      "sensitive": false, <- value not sensitive 
+      "sensitive": false, <- value not sensitive
       "value": "9243"  <- will be used as is.
     },
       "elasticsearch.password": {
-      "sensitive": true, <- value is sensitive 
+      "sensitive": true, <- value is sensitive
       "value": "ELASTIC_SEARCH_PASSWORD_OSDU" <- service consumer should have env variable ELASTIC_SEARCH_PASSWORD_OSDU with elastic search password
     }
 ```
@@ -265,7 +264,6 @@ You will need to have the following environment variables defined.
 | `LEGAL_TAG`                          | ex `opendes-demo-legaltag`                                            | valid legal tag with a other relevant data countries from `DEFAULT_OTHER_RELEVANT_DATA_COUNTRIES` | no                                      | -                                   |
 | `DEFAULT_DATA_PARTITION_ID_TENANT1`  | ex `opendes`                                                          | HTTP Header 'Data-Partition-ID'                                                                   | no                                      | -                                   |
 | `DEFAULT_DATA_PARTITION_ID_TENANT2`  | ex `opendes`                                                          | HTTP Header 'Data-Partition-ID'                                                                   | no                                      | -                                   |
-| `SEARCH_HOST`                        | ex `http://localhost:8080/api/search/v2/`                             | Endpoint of search service                                                                        | no                                      | -                                   |
 | `STORAGE_HOST`                       | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/`        | Storage API endpoint                                                                              | no                                      | output of infrastructure deployment |
 | `SECURITY_HTTPS_CERTIFICATE_TRUST`   | ex `false`                                                            | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true'                         | false                                   | output of infrastructure deployment |
 | `TEST_OPENID_PROVIDER_CLIENT_ID`     | `********`                                                            | Client Id for `$INTEGRATION_TESTER`                                                               | yes                                     | --                                  |
@@ -275,7 +273,7 @@ You will need to have the following environment variables defined.
 
 **Entitlements configuration for integration accounts**
 
-| INTEGRATION_TESTER                                                                                                                                                                                                 | NO_DATA_ACCESS_TESTER | 
+| INTEGRATION_TESTER                                                                                                                                                                                                 | NO_DATA_ACCESS_TESTER |
 |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
 | users<br/>users.datalake.ops<br/>service.storage.creator<br/>service.entitlements.user<br/>service.search.user<br/>service.search.admin<br/>data.test1<br/>data.integration.test<br/>users@{tenant1}@{groupId}.com |                       |
 

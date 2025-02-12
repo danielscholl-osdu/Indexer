@@ -45,7 +45,6 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | **data.schemaHost**                    | schema host                                                                                  | string  | `http://schema`       | yes                                             |
 | **data.securityHttpsCertificateTrust** | whether https is enabled                                                                     | boolean | `true`                | yes                                             |
 | **data.storageHost**                   | storage host                                                                                 | string  | `http://storage`      | yes                                             |
-| **data.searchHost**                   | search host                                                                                 | string  | `http://search`      | yes                                             |
 | **data.redisIndexerHost**              | The host for redis instance. If empty (by default), helm installs an internal redis instance | string  | -                     | yes                                             |
 | **data.redisIndexerPort**              | The port for redis instance                                                                  | digit   | `6379`                | yes                                             |
 

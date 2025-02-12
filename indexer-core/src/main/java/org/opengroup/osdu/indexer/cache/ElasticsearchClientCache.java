@@ -18,11 +18,11 @@
 package org.opengroup.osdu.indexer.cache;
 
 import static org.opengroup.osdu.indexer.model.Constants.CLIENT_CACHE_EXPIRATION;
-import static org.opengroup.osdu.indexer.model.Constants.CLIENT_CACHE_SIZE;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.opengroup.osdu.core.common.cache.ICache;
 import org.opengroup.osdu.core.common.cache.VmCache;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,8 +30,11 @@ public class ElasticsearchClientCache implements ICache<String, ElasticsearchCli
 
   private final VmCache<String, ElasticsearchClient> vmCache;
 
+  @Value("${elasticsearch.client.cache.size:50}")
+  private int clientCacheSize;
+
   public ElasticsearchClientCache() {
-    this.vmCache = new VmCache<>(CLIENT_CACHE_EXPIRATION, CLIENT_CACHE_SIZE);
+    this.vmCache = new VmCache<>(CLIENT_CACHE_EXPIRATION, clientCacheSize);
   }
 
   @Override

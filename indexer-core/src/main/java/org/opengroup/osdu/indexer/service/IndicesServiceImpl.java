@@ -327,14 +327,13 @@ public class IndicesServiceImpl implements IndicesService {
             ? "/_cat/indices/*,-.*?h=index,docs.count,creation.date&s=docs.count:asc&format=json"
             : String.format("/_cat/indices/%s?h=index,docs.count,creation.date&format=json", indexPattern);
 
-        try (RestClientTransport clientTransport = (RestClientTransport)client._transport()){
-            Request request = new Request("GET", requestUrl);
-            Response response = clientTransport.restClient().performRequest(request);
-            String responseBody = EntityUtils.toString(response.getEntity());
+        RestClientTransport clientTransport = (RestClientTransport)client._transport();
+        Request request = new Request("GET", requestUrl);
+        Response response = clientTransport.restClient().performRequest(request);
+        String responseBody = EntityUtils.toString(response.getEntity());
 
-            Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
-            return new Gson().fromJson(responseBody, typeOf);
-        }
+        Type typeOf = new TypeToken<List<IndexInfo>>() {}.getType();
+        return new Gson().fromJson(responseBody, typeOf);
     }
 
     private void clearCacheOnIndexDeletion(String index) {

@@ -25,7 +25,6 @@ public class Constants {
     public static final int SPEC_MAX_CACHE_SIZE = 20000;
 
     public static final int CLIENT_CACHE_EXPIRATION = 600;
-    public static final int CLIENT_CACHE_SIZE = 50;
 
     // Data id itself is partition safe
     public static final int DATA_CACHE_EXPIRATION = 120;
