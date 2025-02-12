@@ -21,4 +21,3 @@ data:
   SCHEMA_BASE_HOST: {{ .Values.data.schemaHost | quote }}
   SECURITY_HTTPS_CERTIFICATE_TRUST: {{ .Values.data.securityHttpsCertificateTrust | quote }}
   STORAGE_HOST: {{ .Values.data.storageHost | quote }}
-  SEARCH_BASE_HOST: {{ .Values.data.searchHost | quote }}

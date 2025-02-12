@@ -17,7 +17,6 @@ data:
   schemaHost: "http://schema"
   securityHttpsCertificateTrust: "true"
   storageHost: "http://storage"
-  searchHost: "http://search"
   # Deployment
   requestsCpu: "100m"
   requestsMemory: "640Mi"

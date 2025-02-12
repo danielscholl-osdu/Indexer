@@ -8,7 +8,6 @@ Must have:
 
 | name                                         | value                                 | description                                                                                                                                                                                                                                                                                               | sensitive? | source                                            |
 |----------------------------------------------|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|---------------------------------------------------|
-| `SPRING_PROFILES_ACTIVE`                     | ex `gcp`                              | Spring profile that activate default configuration for Google Cloud environment                                                                                                                                                                                                                           | false      | -                                                 |
 | `<ELASTICSEARCH_USER_ENV_VARIABLE_NAME>`     | ex `user`                             | Elasticsearch user, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#properties-set-in-partition-service)     | yes        | -                                                 |
 | `<ELASTICSEARCH_PASSWORD_ENV_VARIABLE_NAME>` | ex `password`                         | Elasticsearch password, name of that variable not defined at the service level, the name will be received through partition service. Each tenant can have it's own ENV name value, and it must be present in ENV of Indexer service, see [Partition properties set](#properties-set-in-partition-service) | false      | -                                                 |
 
@@ -72,15 +71,15 @@ It is possible, but not necessary to adjust consumer throughput via Partition se
 
 ```json
     "max.sub.parallel.streams": {
-      "sensitive": false, 
-      "value": 2 
+      "sensitive": false,
+      "value": 2
     },
     "max.sub.thread.per.stream": {
-      "sensitive": false, 
+      "sensitive": false,
       "value": 5
     },
     "max.sub.max.outstanding.elements": {
-      "sensitive": true, 
+      "sensitive": true,
       "value": 100
     }
 ```
@@ -94,11 +93,11 @@ Example:
 
 ```json
     "elasticsearch.port": {
-      "sensitive": false, <- value not sensitive 
+      "sensitive": false, <- value not sensitive
       "value": "9243"  <- will be used as is.
     },
       "elasticsearch.password": {
-      "sensitive": true, <- value is sensitive 
+      "sensitive": true, <- value is sensitive
       "value": "ELASTIC_SEARCH_PASSWORD_OSDU" <- service consumer should have env variable ELASTIC_SEARCH_PASSWORD_OSDU with elastic search password
     }
 ```
@@ -188,7 +187,6 @@ You will need to have the following environment variables defined.
 | `DEFAULT_DATA_PARTITION_ID_TENANT1` | ex `opendes`                                                          | HTTP Header 'Data-Partition-ID'                                                                   | no         | -                                                            |
 | `DEFAULT_DATA_PARTITION_ID_TENANT2` | ex `opendes`                                                          | HTTP Header 'Data-Partition-ID'                                                                   | no         | -                                                            |
 | `SEARCH_INTEGRATION_TESTER`         | `ewogICJ0....` or `tmp/service-acc.json`                              | Service account for API calls. Note: this user must have entitlements configured already          | yes        | <https://console.cloud.google.com/iam-admin/serviceaccounts> |
-| `SEARCH_HOST`                       | ex `http://localhost:8080/api/search/v2/`                             | Endpoint of search service                                                                        | no         | -                                                            |
 | `STORAGE_HOST`                      | ex `http://os-storage-dot-opendes.appspot.com/api/storage/v2/`        | Storage API endpoint                                                                              | no         | output of infrastructure deployment                          |
 | `SECURITY_HTTPS_CERTIFICATE_TRUST`  | ex `false`                                                            | Elastic client connection uses TrustSelfSignedStrategy(), if it is 'true'                         | false      | output of infrastructure deployment                          |
 | `CUCUMBER_OPTIONS`                  | `--tags '~@indexer-extended'` OR `--tags '~@* and @indexer-extended'` | By default `--tags '~@indexer-extended'` to disable experimental feature testing                  | no         | --                                                           |
