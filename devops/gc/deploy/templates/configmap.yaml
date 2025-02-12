@@ -20,6 +20,4 @@ data:
   REDIS_GROUP_PORT: {{ .Values.data.redisIndexerPort | quote }}
   SCHEMA_BASE_HOST: {{ .Values.data.schemaHost | quote }}
   SECURITY_HTTPS_CERTIFICATE_TRUST: {{ .Values.data.securityHttpsCertificateTrust | quote }}
-  SPRING_PROFILES_ACTIVE: "gcp"
   STORAGE_HOST: {{ .Values.data.storageHost | quote }}
-  SEARCH_BASE_HOST: {{ .Values.data.searchHost | quote }}
