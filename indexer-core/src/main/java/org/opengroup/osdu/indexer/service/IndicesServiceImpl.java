@@ -55,6 +55,7 @@ import org.opengroup.osdu.indexer.util.CustomIndexAnalyzerSetting;
 import org.opengroup.osdu.indexer.util.ElasticClientHandler;
 import org.opengroup.osdu.indexer.util.TypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -66,6 +67,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import static co.elastic.clients.elasticsearch._types.HealthStatus.*;
 
 @Service
 @RequestScope
@@ -91,6 +95,10 @@ public class IndicesServiceImpl implements IndicesService {
     private ObjectMapper objectMapper;
     @Autowired
     private CustomIndexAnalyzerSetting customIndexAnalyzerSetting;
+    @Value("${index.health.retry.threshold:5}")
+    private int healthRetryThreshold;
+    @Value("${index.health.retry.sleepPeriodInMilliseconds:5000}")
+    private int healthRetrySleepPeriodInMilliseconds;
 
     /**
      * Create a new index in Elasticsearch
@@ -183,20 +191,11 @@ public class IndicesServiceImpl implements IndicesService {
             if (this.indexExistInCache(index)) {
                 return true;
             }
-            ExistsRequest existsRequest = ExistsRequest.of(builder -> builder.index(index));
-            BooleanResponse exists = client.indices().exists(existsRequest);
-            if (!exists.value()) {
-                return false;
+            boolean isHealthy = isIndexHealthy(client, index);
+            if (isHealthy) {
+                this.indexCache.put(index, true);
             }
-            List<IndexInfo> indexHealthInfos = this.getIndexInfo(client, index);
-            if (indexHealthInfos.isEmpty()) {
-                return false;
-            }
-            if ("red".equalsIgnoreCase(indexHealthInfos.get(0).getHealth())) {
-                throw new AppException(HttpStatus.SC_SERVICE_UNAVAILABLE, "Index not available for indexing", String.format("Index: %s primary shards are unassigned", index));
-            }
-            this.indexCache.put(index, true);
-            return true;
+            return isHealthy;
         } catch (ElasticsearchException exception) {
             if (exception.status() == HttpStatus.SC_NOT_FOUND) return false;
             throw new AppException(
@@ -204,6 +203,39 @@ public class IndicesServiceImpl implements IndicesService {
                     exception.getMessage(),
                     String.format("Error getting index: %s status", index),
                     exception);
+        }
+    }
+
+    private boolean isIndexHealthy(ElasticsearchClient client, String index) throws IOException {
+        ExistsRequest existsRequest = ExistsRequest.of(builder -> builder.index(index));
+        BooleanResponse exists = client.indices().exists(existsRequest);
+        if (!exists.value()) {
+            return false;
+        }
+        String actualHealthStatus = null;
+        for(int retryCount = 0; retryCount <= healthRetryThreshold; retryCount++) {
+            List<IndexInfo> indexHealthInfos = this.getIndexInfo(client, index);
+            if (!indexHealthInfos.isEmpty()) {
+                actualHealthStatus = indexHealthInfos.get(0).getHealth();
+                if (Green.jsonValue().equalsIgnoreCase(actualHealthStatus) || Yellow.jsonValue().equalsIgnoreCase(actualHealthStatus)) {
+                    return true;
+                }
+            }
+            sleepInMilliSeconds(healthRetrySleepPeriodInMilliseconds);
+        }
+        if (Red.jsonValue().equalsIgnoreCase(actualHealthStatus)) {
+            throw new AppException(HttpStatus.SC_SERVICE_UNAVAILABLE,
+                    "Index not available for indexing",
+                    String.format("Index: %s primary shards are unassigned", index));
+        }
+        return false;
+    }
+
+    private void sleepInMilliSeconds(int milliseconds) {
+        try {
+            TimeUnit.MILLISECONDS.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 

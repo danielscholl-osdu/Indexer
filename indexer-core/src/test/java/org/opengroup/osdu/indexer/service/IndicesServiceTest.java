@@ -18,12 +18,8 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.ErrorResponse;
-import co.elastic.clients.elasticsearch._types.HealthStatus;
 import co.elastic.clients.elasticsearch._types.analysis.Analyzer;
 import co.elastic.clients.elasticsearch._types.analysis.CharFilter;
-import co.elastic.clients.elasticsearch.cluster.ElasticsearchClusterClient;
-import co.elastic.clients.elasticsearch.cluster.HealthRequest;
-import co.elastic.clients.elasticsearch.cluster.HealthResponse;
 import co.elastic.clients.elasticsearch.indices.*;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -66,6 +62,7 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.opengroup.osdu.indexer.testutils.ReflectionTestUtil.setFieldValueForClass;
 
 @RunWith(SpringRunner.class)
 public class IndicesServiceTest {
@@ -95,16 +92,16 @@ public class IndicesServiceTest {
 
     private ElasticsearchClient restHighLevelClient;
     private ElasticsearchIndicesClient indicesClient;
-    private ElasticsearchClusterClient clusterClient;
     private RestClientTransport restClientTransport;
 
     @Before
     public void setup() {
         initMocks(this);
         indicesClient = mock(ElasticsearchIndicesClient.class);
-        clusterClient = mock(ElasticsearchClusterClient.class);
         restHighLevelClient = mock(ElasticsearchClient.class);
         restClientTransport = mock(RestClientTransport.class);
+        setFieldValueForClass(sut, "healthRetryThreshold", 1);
+        setFieldValueForClass(sut, "healthRetrySleepPeriodInMilliseconds", 1);
     }
 
     @Test
@@ -513,7 +510,7 @@ public class IndicesServiceTest {
         when(this.restClient.performRequest(request)).thenReturn(response);
         when(this.response.getEntity()).thenReturn(entity);
 
-        boolean result = this.sut.isIndexReady(restHighLevelClient, "anyIndex");
+        this.sut.isIndexReady(restHighLevelClient, "anyIndex");
     }
 
 }
