@@ -29,7 +29,7 @@
 
   <properties>
     <!-- Core Dependencies -->
-    <core-lib-azure.version>2.0.2</core-lib-azure.version>
+    <core-lib-azure.version>2.0.4</core-lib-azure.version>
     <azure-core.version>1.46.0</azure-core.version>
 
     <!-- Plugin Versions -->
