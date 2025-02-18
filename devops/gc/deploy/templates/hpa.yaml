@@ -12,31 +12,69 @@ spec:
   minReplicas: {{ .Values.hpa.minReplicas }}
   maxReplicas: {{ .Values.hpa.maxReplicas }}
   metrics:
-    - type: External
-      external:
+    - external:
         metric:
-          name: istio.io|service|server|request_count
+          name: pubsub.googleapis.com|subscription|num_undelivered_messages
           selector:
             matchLabels:
-              metric.labels.destination_workload_name: {{ .Values.conf.appName | quote }}
+              resource.labels.subscription_id: indexer-records-changed
         target:
-          type: {{ .Values.hpa.targetType | quote }}
-          {{- if eq .Values.hpa.targetType "AverageValue" }}
-          averageValue: {{ .Values.hpa.targetValue }}
-          {{- else if eq .Values.hpa.targetType "Value" }}
-          value: {{ .Values.hpa.targetValue }}
-          {{- end }}
+          type: {{ .Values.hpa.pubsubTargetType | quote }}
+          averageValue: {{ .Values.hpa.pubsubTargetValue }}
+      type: External
+    - external:
+        metric:
+          name: pubsub.googleapis.com|subscription|num_undelivered_messages
+          selector:
+            matchLabels:
+              resource.labels.subscription_id: indexer-reindex
+        target:
+          type: {{ .Values.hpa.pubsubTargetType | quote }}
+          averageValue: {{ .Values.hpa.pubsubTargetValue }}
+      type: External
+    - external:
+        metric:
+          name: pubsub.googleapis.com|subscription|num_undelivered_messages
+          selector:
+            matchLabels:
+              resource.labels.subscription_id: indexer-reprocess
+        target:
+          type: {{ .Values.hpa.pubsubTargetType | quote }}
+          averageValue: {{ .Values.hpa.pubsubTargetValue }}
+      type: External
+    - external:
+        metric:
+          name: pubsub.googleapis.com|subscription|num_messages_received
+          selector:
+            matchLabels:
+              resource.labels.subscription_id: indexer-schema-changed
+        target:
+          type: {{ .Values.hpa.pubsubTargetType | quote }}
+          averageValue: {{ .Values.hpa.pubsubTargetValue }}
+      type: External
+    - resource:
+        name: cpu
+        target:
+          type: {{ .Values.hpa.cpuTargetType | quote }}
+          averageUtilization: {{ .Values.hpa.cpuTargetValue }}
+      type: Resource
+    - resource:
+        name: memory
+        target:
+          type: {{ .Values.hpa.memoryTargetType | quote }}
+          averageUtilization: {{ .Values.hpa.memoryTargetValue }}
+      type: Resource
   behavior:
     scaleUp:
       stabilizationWindowSeconds: {{ .Values.hpa.behaviorScaleUpStabilizationWindowSeconds }}
       policies:
-        - type: Percent
+        - type: Pods
           value: {{ .Values.hpa.behaviorScaleUpPoliciesValue }}
           periodSeconds: {{ .Values.hpa.behaviorScaleUpPoliciesPeriodSeconds }}
     scaleDown:
       stabilizationWindowSeconds: {{ .Values.hpa.behaviorScaleDownStabilizationWindowSeconds }}
       policies:
-        - type: Percent
+        - type: Pods
           value: {{ .Values.hpa.behaviorScaleDownPoliciesValue }}
           periodSeconds: {{ .Values.hpa.behaviorScaleDownPoliciesPeriodSeconds }}
 {{- end }}

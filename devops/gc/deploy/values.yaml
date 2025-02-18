@@ -47,14 +47,18 @@ istio:
 hpa:
   minReplicas: 6
   maxReplicas: 15
-  targetType: "AverageValue"
-  targetValue: 340 #200rps*0.85.*2
-  behaviorScaleUpStabilizationWindowSeconds: 10
-  behaviorScaleUpPoliciesValue: 50
-  behaviorScaleUpPoliciesPeriodSeconds: 15
+  pubsubTargetType: AverageValue
+  pubsubTargetValue: 50
+  cpuTargetType: Utilization
+  cpuTargetValue: 70
+  memoryTargetType: Utilization
+  memoryTargetValue: 70
+  behaviorScaleUpStabilizationWindowSeconds: 60
+  behaviorScaleUpPoliciesValue: 1
+  behaviorScaleUpPoliciesPeriodSeconds: 120
   behaviorScaleDownStabilizationWindowSeconds: 60
-  behaviorScaleDownPoliciesValue: 25
-  behaviorScaleDownPoliciesPeriodSeconds: 60
+  behaviorScaleDownPoliciesValue: 1
+  behaviorScaleDownPoliciesPeriodSeconds: 120
 
 limits:
   maxTokens: 200 #rps

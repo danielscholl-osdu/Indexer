@@ -84,16 +84,20 @@ First you need to set variables in **values.yaml** file using any code editor. S
 
 | Name                                                | Description                                                                   | Type    | Default        | Required                                                       |
 |-----------------------------------------------------|-------------------------------------------------------------------------------|---------|----------------|----------------------------------------------------------------|
-| **hpa.minReplicas**                                 | minimum number of replicas                                                    | integer | 6              | only if `global.autoscaling` is true and `global.tier` is PROD |
-| **hpa.maxReplicas**                                 | maximum number of replicas                                                    | integer | 15             | only if `global.autoscaling` is true and `global.tier` is PROD |
-| **hpa.targetType**                                  | type of measurements: AverageValue or Value                                   | string  | "AverageValue" | only if `global.autoscaling` is true and `global.tier` is PROD |
-| **hpa.targetValue**                                 | threshold value to trigger the scaling up                                     | integer | 80             | only if `global.autoscaling` is true and `global.tier` is PROD |
-| **hpa.behaviorScaleUpStabilizationWindowSeconds**   | time to start implementing the scale up when it is triggered                  | integer | 10             | only if `global.autoscaling` is true and `global.tier` is PROD |
-| **hpa.behaviorScaleUpPoliciesValue**                | the maximum number of new replicas to create (in percents from current state) | integer | 50             | only if `global.autoscaling` is true and `global.tier` is PROD |
-| **hpa.behaviorScaleUpPoliciesPeriodSeconds**        | pause for every new scale up decision                                         | integer | 15             | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.minReplicas**  | minimum number of replicas | integer | 6 | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.maxReplicas**  | maximum number of replicas | integer | 15 | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.pubsubTargetType** | type of measurements: AverageValue | string | "AverageValue" | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.pubsubTargetValue**   | threshold value to trigger the scaling up | integer | 50 | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.cpuTargetType**   | type of measurements: Utilization | string | "Utilization" | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.cpuTargetValue**  | threshold value to trigger the scaling up | integer | 70 | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.memoryTargetType** | type of measurements: Utilization | string | "Utilization" | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.memoryTargetValue** | threshold value to trigger the scaling up | integer | 70 | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.behaviorScaleUpStabilizationWindowSeconds**   | time to start implementing the scale up when it is triggered                  | integer | 60             | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.behaviorScaleUpPoliciesValue**                | the maximum number of new replicas to create (in percents from current state) | integer | 1             | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.behaviorScaleUpPoliciesPeriodSeconds**        | pause for every new scale up decision                                         | integer | 120             | only if `global.autoscaling` is true and `global.tier` is PROD |
 | **hpa.behaviorScaleDownStabilizationWindowSeconds** | time to start implementing the scale down when it is triggered                | integer | 60             | only if `global.autoscaling` is true and `global.tier` is PROD |
-| **hpa.behaviorScaleDownPoliciesValue**              | the maximum number of replicas to destroy (in percents from current state)    | integer | 25             | only if `global.autoscaling` is true and `global.tier` is PROD |
-| **hpa.behaviorScaleDownPoliciesPeriodSeconds**      | pause for every new scale down decision                                       | integer | 60             | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.behaviorScaleDownPoliciesValue**              | the maximum number of replicas to destroy (in percents from current state)    | integer | 1             | only if `global.autoscaling` is true and `global.tier` is PROD |
+| **hpa.behaviorScaleDownPoliciesPeriodSeconds**      | pause for every new scale down decision                                       | integer | 120             | only if `global.autoscaling` is true and `global.tier` is PROD |
 
 ### Limits variables
 
