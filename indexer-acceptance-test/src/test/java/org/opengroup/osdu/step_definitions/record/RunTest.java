@@ -15,23 +15,17 @@
  *  limitations under the License.
  */
 
-package org.opengroup.osdu.util;
+package org.opengroup.osdu.step_definitions.record;
 
-import lombok.ToString;
-import lombok.extern.java.Log;
+import cucumber.api.CucumberOptions;
+import cucumber.api.junit.Cucumber;
+import org.junit.runner.RunWith;
 
-@Log
-@ToString
-public class AnthosHTTPClient extends HTTPClient {
+@RunWith(Cucumber.class)
+@CucumberOptions(
+    features = "classpath:features/indexrecord/indexRecord-schema-service.feature",
+    glue = {"classpath:org.opengroup.osdu.step_definitions.record"},
+    plugin = {"pretty", "junit:target/cucumber-reports/TEST-indexrecord.xml"})
+public class RunTest {
 
-    private static String token = null;
-    private static OpenIDTokenProvider openIDTokenProvider = new OpenIDTokenProvider();
-
-    @Override
-    public synchronized String getAccessToken() {
-        if (token == null) {
-            token = "Bearer " + openIDTokenProvider.getToken();
-        }
-        return token;
-    }
 }
