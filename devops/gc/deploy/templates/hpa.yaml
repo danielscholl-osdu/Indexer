@@ -1,0 +1,80 @@
+{{- if and (eq .Values.global.tier "PROD") (eq .Values.global.autoscaling true) }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ printf "%s-hpa" .Values.conf.appName | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.conf.appName | quote }}
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+    - external:
+        metric:
+          name: pubsub.googleapis.com|subscription|num_undelivered_messages
+          selector:
+            matchLabels:
+              resource.labels.subscription_id: indexer-records-changed
+        target:
+          type: {{ .Values.hpa.pubsubTargetType | quote }}
+          averageValue: {{ .Values.hpa.pubsubTargetValue }}
+      type: External
+    - external:
+        metric:
+          name: pubsub.googleapis.com|subscription|num_undelivered_messages
+          selector:
+            matchLabels:
+              resource.labels.subscription_id: indexer-reindex
+        target:
+          type: {{ .Values.hpa.pubsubTargetType | quote }}
+          averageValue: {{ .Values.hpa.pubsubTargetValue }}
+      type: External
+    - external:
+        metric:
+          name: pubsub.googleapis.com|subscription|num_undelivered_messages
+          selector:
+            matchLabels:
+              resource.labels.subscription_id: indexer-reprocess
+        target:
+          type: {{ .Values.hpa.pubsubTargetType | quote }}
+          averageValue: {{ .Values.hpa.pubsubTargetValue }}
+      type: External
+    - external:
+        metric:
+          name: pubsub.googleapis.com|subscription|num_messages_received
+          selector:
+            matchLabels:
+              resource.labels.subscription_id: indexer-schema-changed
+        target:
+          type: {{ .Values.hpa.pubsubTargetType | quote }}
+          averageValue: {{ .Values.hpa.pubsubTargetValue }}
+      type: External
+    - resource:
+        name: cpu
+        target:
+          type: {{ .Values.hpa.cpuTargetType | quote }}
+          averageUtilization: {{ .Values.hpa.cpuTargetValue }}
+      type: Resource
+    - resource:
+        name: memory
+        target:
+          type: {{ .Values.hpa.memoryTargetType | quote }}
+          averageUtilization: {{ .Values.hpa.memoryTargetValue }}
+      type: Resource
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: {{ .Values.hpa.behaviorScaleUpStabilizationWindowSeconds }}
+      policies:
+        - type: Pods
+          value: {{ .Values.hpa.behaviorScaleUpPoliciesValue }}
+          periodSeconds: {{ .Values.hpa.behaviorScaleUpPoliciesPeriodSeconds }}
+    scaleDown:
+      stabilizationWindowSeconds: {{ .Values.hpa.behaviorScaleDownStabilizationWindowSeconds }}
+      policies:
+        - type: Pods
+          value: {{ .Values.hpa.behaviorScaleDownPoliciesValue }}
+          periodSeconds: {{ .Values.hpa.behaviorScaleDownPoliciesPeriodSeconds }}
+{{- end }}

@@ -1,0 +1,3 @@
+variables:
+  CORE_SERVICE: indexer
+  CORE_BUILD_PATH: indexer-core-plus/cloudbuild/Dockerfile

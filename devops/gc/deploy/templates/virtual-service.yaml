@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Values.conf.appName | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  hosts:
+    {{- if .Values.global.domain }}
+    - {{ .Values.global.domain | quote }}
+    {{- else }}
+    - "*"
+    {{- end }}
+  gateways:
+    - service-gateway
+  http:
+    - match:
+        - uri:
+            prefix: "/api/indexer/v2/_dps"
+      directResponse:
+        status: 403
+        body:
+          string: "Forbidden"
+    - match:
+        - uri:
+            prefix: "/api/indexer/v2"
+      route:
+        - destination:
+            port:
+              number: 80
+            host: {{ printf "%s.%s.svc.cluster.local" .Values.conf.appName .Release.Namespace | quote }}
